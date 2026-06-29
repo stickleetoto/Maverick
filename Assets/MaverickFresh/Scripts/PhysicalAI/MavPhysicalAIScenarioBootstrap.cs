@@ -4,7 +4,7 @@ namespace MaverickFresh
 {
     /// <summary>
     /// Installs v0.16 Physical AI components and optionally builds an AI target scenario.
-    /// Put this on MaverickFresh_Manager or F15E_Player.
+    /// Put this on MaverickFresh_Manager or Mav_Player.
     /// </summary>
     [DisallowMultipleComponent]
     public class MavPhysicalAIScenarioBootstrap : MonoBehaviour
@@ -42,7 +42,7 @@ namespace MaverickFresh
         public void Setup()
         {
             if (aircraftObject == null)
-                aircraftObject = GameObject.Find("F15E_Player");
+                aircraftObject = MavPlayerResolver.FindPlayerObject();
 
             if (aircraftObject == null)
             {

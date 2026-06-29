@@ -8,7 +8,7 @@ namespace MaverickFresh
     /// - simple AI pilot
     /// - ghost trail
     /// 
-    /// Put this on MaverickFresh_Manager or directly on F15E_Player.
+    /// Put this on MaverickFresh_Manager or directly on Mav_Player.
     /// </summary>
     [DisallowMultipleComponent]
     public class MavPhysicalAIStarterBootstrap : MonoBehaviour
@@ -38,7 +38,7 @@ namespace MaverickFresh
         public void Setup()
         {
             if (aircraftObject == null)
-                aircraftObject = GameObject.Find("F15E_Player");
+                aircraftObject = MavPlayerResolver.FindPlayerObject();
 
             if (aircraftObject == null)
             {

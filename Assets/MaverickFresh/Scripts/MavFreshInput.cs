@@ -81,6 +81,21 @@ namespace MaverickFresh
 #endif
         }
 
+        public static float GetMouseScrollDelta()
+        {
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.mouseScrollDelta.y;
+#elif ENABLE_INPUT_SYSTEM
+            if (Mouse.current == null)
+                return 0f;
+
+            float y = Mouse.current.scroll.ReadValue().y;
+            return Mathf.Abs(y) > 10f ? y / 120f : y;
+#else
+            return 0f;
+#endif
+        }
+
 #if ENABLE_INPUT_SYSTEM
         private static ButtonControl ResolveKey(KeyCode key)
         {
@@ -111,6 +126,8 @@ namespace MaverickFresh
                 case KeyCode.K: return k.kKey;
                 case KeyCode.J: return k.jKey;
                 case KeyCode.I: return k.iKey;
+                case KeyCode.M: return k.mKey;
+                case KeyCode.N: return k.nKey;
                 case KeyCode.Q: return k.qKey;
                 case KeyCode.R: return k.rKey;
                 case KeyCode.S: return k.sKey;

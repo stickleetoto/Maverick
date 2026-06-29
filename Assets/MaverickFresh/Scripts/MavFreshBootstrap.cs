@@ -4,7 +4,7 @@ namespace MaverickFresh
 {
     /// <summary>
     /// Fresh standalone bootstrap.
-    /// Put this on an empty object, assign F15E_Player and Main Camera, then press Play.
+    /// Put this on an empty object, assign a generic Mav_Player and Main Camera, then press Play.
     /// This deliberately disables old MAVERICK / EaglePhysicalAI components on the aircraft and camera.
     /// </summary>
     public class MavFreshBootstrap : MonoBehaviour
@@ -12,6 +12,11 @@ namespace MaverickFresh
         [Header("Required")]
         public GameObject aircraftObject;
         public Camera mainCamera;
+
+        [Header("Generic Player Root")]
+        public string genericPlayerName = "Mav_Player";
+        public bool createGenericPlayerIfMissing = false;
+        public bool applyLegacyF15Profile = false;
 
         [Header("Fresh Mode")]
         public bool setupOnAwake = true;
@@ -22,6 +27,13 @@ namespace MaverickFresh
         public bool installPhysicalAIStarter = true;
         public bool installCASStarter = true;
         public bool installWTPolish = true;
+        public bool installStateSanityPatch = true;
+        public bool installTGPStateManager = true;
+        public bool installMountValidator = true;
+        public bool installStandaloneControlDebugOverlay = false;
+        public bool preserveExistingRadarSystems = true;
+        public bool forceRadarOffOnStart = true;
+        public bool hideLegacyRadarHudOnStart = true;
 
         [Header("Air Start")]
         public bool applyAirStart = true;
@@ -31,7 +43,7 @@ namespace MaverickFresh
 
         [Header("Fresh Tuning")]
         public float jetThrust = 220f;
-        public Vector3 jetTurnTorque = new Vector3(125f, 16f, 150f);
+        public Vector3 jetTurnTorque = new Vector3(38f, 16f, 52f);
         public float jetForceMult = 1000f;
         public float mouseSensitivity = 3f;
         public float aimDistance = 600f;
@@ -49,6 +61,9 @@ namespace MaverickFresh
         public MavCASStarterBootstrap casStarter;
         public MavWTFeelPolishController wtPolish;
         public MavWTQuickHelpOverlay quickHelp;
+        public MavTGPStateManager tgpStateManager;
+        public MavAircraftMountValidator mountValidator;
+        public MavControlDebugOverlay controlDebugOverlay;
 
         private void Awake()
         {
@@ -59,8 +74,19 @@ namespace MaverickFresh
         [ContextMenu("Setup Fresh MouseFlight")]
         public void SetupFreshMouseFlight()
         {
+            // Resolve the aircraft player object generically so non-F-15 aircraft work too.
+            if (aircraftObject == null && !string.IsNullOrEmpty(genericPlayerName))
+                aircraftObject = GameObject.Find(genericPlayerName);
+
             if (aircraftObject == null)
-                aircraftObject = GameObject.Find("F15E_Player");
+                aircraftObject = FindObjectOfType<MavMouseFlightJet>()?.gameObject;
+
+            if (aircraftObject == null && createGenericPlayerIfMissing)
+            {
+                aircraftObject = new GameObject(string.IsNullOrEmpty(genericPlayerName) ? "Mav_Player" : genericPlayerName);
+                aircraftObject.transform.position = new Vector3(0f, startAltitude, 0f);
+                aircraftObject.transform.rotation = Quaternion.Euler(startEulerAngles);
+            }
 
             if (mainCamera == null)
                 mainCamera = Camera.main;
@@ -85,7 +111,7 @@ namespace MaverickFresh
             rb.mass = 12000f;
             rb.linearDamping = 0.015f;
             rb.angularDamping = 1.2f;
-            rb.maxAngularVelocity = 3.5f;
+            rb.maxAngularVelocity = Mathf.Max(rb.maxAngularVelocity, 8f);
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
@@ -109,9 +135,31 @@ namespace MaverickFresh
             if (jet == null)
                 jet = aircraftObject.AddComponent<MavMouseFlightJet>();
 
+            if (aircraftObject.GetComponent<MavAeroBody>() == null)
+                aircraftObject.AddComponent<MavAeroBody>();
+
             jet.controller = rig;
             jet.thrust = jetThrust;
             jet.turnTorque = jetTurnTorque;
+            jet.useAccelerationTorqueMode = true;
+            jet.accelerationModeTorque = jetTurnTorque;
+            jet.forceModeTorque = new Vector3(6200f, 3200f, 8200f);
+            jet.maxAppliedTorqueAccelerationMode = new Vector3(80f, 34f, 105f);
+            jet.maxAppliedTorqueForceMode = new Vector3(9000f, 4200f, 10500f);
+            jet.maxAppliedTorque = jet.maxAppliedTorqueAccelerationMode;
+            jet.angularDamping = 1.2f;
+            jet.maxAngularVelocity = 8f;
+            jet.controlSurfaceResponse = 16f;
+            jet.controlSurfaceReleaseResponse = 9f;
+            jet.maxPitchCommandRate = 11f;
+            jet.maxYawCommandRate = 5.5f;
+            jet.maxRollCommandRate = 13f;
+            jet.manualDampingReduction = 0.45f;
+            jet.manualEnvelopeBypassFactor = 0.65f;
+            jet.manualPitchMinAuthority = 0.78f;
+            jet.manualRollMinAuthority = 0.82f;
+            jet.manualYawMinAuthority = 0.60f;
+            jet.useDirectManualTorqueAssist = true;
             jet.forceMult = jetForceMult;
             jet.gravityOff = forceGravityOff;
 
@@ -147,14 +195,23 @@ namespace MaverickFresh
             profile.ApplyPreset(profile.preset);
 
             f15eProfile = aircraftObject.GetComponent<MavF15EFlightSpecProfile>();
-            if (f15eProfile == null)
-                f15eProfile = aircraftObject.AddComponent<MavF15EFlightSpecProfile>();
+            if (applyLegacyF15Profile)
+            {
+                if (f15eProfile == null)
+                    f15eProfile = aircraftObject.AddComponent<MavF15EFlightSpecProfile>();
 
-            f15eProfile.jet = jet;
-            f15eProfile.rig = rig;
-            f15eProfile.instructor = instructor;
-            f15eProfile.rb = rb;
-            f15eProfile.ApplyF15EProfile();
+                f15eProfile.jet = jet;
+                f15eProfile.rig = rig;
+                f15eProfile.instructor = instructor;
+                f15eProfile.rb = rb;
+                f15eProfile.applyOnStart = false;
+                f15eProfile.ApplyF15EProfile();
+            }
+            else if (f15eProfile != null)
+            {
+                // The generic multi-aircraft player must not be forced back into F-15 tuning.
+                f15eProfile.applyOnStart = false;
+            }
 
             if (disableOldCameras)
                 DisableNonMainScreenCameras();
@@ -193,6 +250,8 @@ namespace MaverickFresh
                 wtPolish.rig = rig;
                 wtPolish.targetingPod = aircraftObject.GetComponent<MavTargetingPodSystem>();
                 wtPolish.weapons = aircraftObject.GetComponent<MavCASWeaponSystem>();
+                // v0.19+: keep hotkeys alive, but do not let Start re-apply the F-15 preset after aircraft selection.
+                wtPolish.applyOnStart = false;
                 wtPolish.ApplyPreset(MavWTFeelPreset.WarThunderF15Balanced);
 
                 quickHelp = aircraftObject.GetComponent<MavWTQuickHelpOverlay>();
@@ -200,7 +259,50 @@ namespace MaverickFresh
                     quickHelp = aircraftObject.AddComponent<MavWTQuickHelpOverlay>();
             }
 
+            SetupStateSanityPatch();
+            ConfigureRadarStartupState();
             rig.CenterAim();
+        }
+
+        private void SetupStateSanityPatch()
+        {
+            if (!installStateSanityPatch || aircraftObject == null)
+                return;
+
+            if (installTGPStateManager)
+            {
+                tgpStateManager = aircraftObject.GetComponent<MavTGPStateManager>();
+                if (tgpStateManager == null)
+                    tgpStateManager = aircraftObject.AddComponent<MavTGPStateManager>();
+
+                tgpStateManager.targetingPod = aircraftObject.GetComponent<MavTargetingPodSystem>();
+                tgpStateManager.forceOffOnStart = true;
+                tgpStateManager.startHidden = true;
+                tgpStateManager.SetOff();
+            }
+
+            if (installMountValidator)
+            {
+                mountValidator = aircraftObject.GetComponent<MavAircraftMountValidator>();
+                if (mountValidator == null)
+                    mountValidator = aircraftObject.AddComponent<MavAircraftMountValidator>();
+
+                mountValidator.ordnanceAssets = aircraftObject.GetComponent<MavCASOrdnanceAssets>();
+                mountValidator.targetingPod = aircraftObject.GetComponent<MavTargetingPodSystem>();
+                mountValidator.validateOnStart = true;
+            }
+
+            if (installStandaloneControlDebugOverlay && mainCamera != null)
+            {
+                controlDebugOverlay = mainCamera.GetComponent<MavControlDebugOverlay>();
+                if (controlDebugOverlay == null)
+                    controlDebugOverlay = mainCamera.gameObject.AddComponent<MavControlDebugOverlay>();
+
+                controlDebugOverlay.rig = rig;
+                controlDebugOverlay.jet = jet;
+                controlDebugOverlay.instructor = instructor;
+                controlDebugOverlay.targetingPod = aircraftObject.GetComponent<MavTargetingPodSystem>();
+            }
         }
 
         private void ApplyAirStart(Rigidbody rb)
@@ -227,6 +329,9 @@ namespace MaverickFresh
                 if (typeName.StartsWith("MaverickFresh."))
                     continue;
 
+                if (preserveExistingRadarSystems && IsRadarSafetyComponent(typeName))
+                    continue;
+
                 if (typeName.StartsWith("EaglePhysicalAI.") || typeName.Contains("Maverick") || typeName.Contains("Eagle"))
                     mb.enabled = false;
             }
@@ -240,6 +345,9 @@ namespace MaverickFresh
 
                     string typeName = mb.GetType().FullName;
                     if (typeName.StartsWith("MaverickFresh."))
+                        continue;
+
+                    if (preserveExistingRadarSystems && IsRadarSafetyComponent(typeName))
                         continue;
 
                     if (typeName.StartsWith("EaglePhysicalAI.") || typeName.Contains("Maverick") || typeName.Contains("WarThunder"))
@@ -283,6 +391,61 @@ namespace MaverickFresh
                 mainCamera.enabled = true;
                 mainCamera.depth = 100;
             }
+        }
+
+        private void ConfigureRadarStartupState()
+        {
+            if (!preserveExistingRadarSystems || aircraftObject == null)
+                return;
+
+            MonoBehaviour[] behaviours = aircraftObject.GetComponentsInChildren<MonoBehaviour>(true);
+            foreach (MonoBehaviour mb in behaviours)
+            {
+                if (mb == null)
+                    continue;
+
+                string typeName = mb.GetType().FullName;
+                if (!IsRadarSafetyComponent(typeName))
+                    continue;
+
+                mb.enabled = true;
+
+                if (forceRadarOffOnStart)
+                {
+                    SetBoolField(mb, "radarOn", false);
+                    SetBoolField(mb, "radarMasterOn", false);
+                }
+
+                if (hideLegacyRadarHudOnStart)
+                {
+                    SetBoolField(mb, "show", false);
+                    SetBoolField(mb, "showRadarHud", false);
+                }
+            }
+        }
+
+        private bool IsRadarSafetyComponent(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return false;
+
+            return typeName.Contains(".Sensors.Radar.") ||
+                typeName.EndsWith(".Sensors.UI.RadarHud") ||
+                typeName.Contains("RadarHotas");
+        }
+
+        private void SetBoolField(MonoBehaviour target, string fieldName, bool value)
+        {
+            if (target == null)
+                return;
+
+            System.Reflection.FieldInfo field = target.GetType().GetField(
+                fieldName,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
+            );
+
+            if (field != null && field.FieldType == typeof(bool))
+                field.SetValue(target, value);
         }
     }
 }

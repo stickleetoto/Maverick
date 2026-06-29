@@ -1,3 +1,4 @@
+using System.Reflection;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -39,20 +40,76 @@ namespace MaverickFresh
         public MavCASWeapon selectedSecondaryWeapon = MavCASWeapon.Rockets;
 
         [Header("Ammo")]
-        public int gunAmmo = 950;
+        public int gunAmmo = 1200;
         public int rocketAmmo = 28;
         public int bombAmmo = 6;
         public int precisionAmmo = 4;
         public int missileAmmo = 4;
 
         [Header("Gun")]
-        public float gunDamage = 22f;
-        public float gunRange = 2400f;
-        public float gunCooldown = 0.055f;
+        public float gunDamage = 12f;
+        public float gunRange = 3200f;
+        [Tooltip("Seconds between rounds. 0.018 = about 3300 RPM visual/gameplay rate.")]
+        public float gunCooldown = 0.018f;
         public float gunScreenRadius = 0.055f;
         public bool gunUsesFixedMuzzleDirection = true;
         public bool gunUseConvergence;
-        public float gunConvergenceDistance = 800f;
+        public float gunConvergenceDistance = 850f;
+
+        [Header("Gun Neon Tracer Pass")]
+        public bool useNeonGunTracers = true;
+        public bool useHitscanGunWhenNeon = true;
+        public bool damageAircraftWithGun = true;
+        public int gunRoundsPerTriggerStep = 1;
+        public float gunSpreadDeg = 0.22f;
+        public float gunTracerDuration = 0.045f;
+        public float gunTracerWidth = 0.055f;
+        public Color gunTracerColor = new Color(0.12f, 0.92f, 1.0f, 1.0f);
+        public bool spawnTracerOnMiss = true;
+
+        [Header("Detailed Gun Model")]
+        public bool useDetailedGunModel = true;
+        [Tooltip("Approximate visual/gameplay rounds per second. 100 = 6000 RPM.")]
+        public float gunRoundsPerSecond = 82f;
+        public int maxGunRoundsPerFrame = 8;
+        public bool useGunSpinUp = true;
+        public float gunSpinUpSeconds = 0.18f;
+        public float gunSpinDownSeconds = 0.34f;
+        [Range(0f, 1f)] public float minSpinToFire = 0.32f;
+        public bool consumeAmmoPerRound = true;
+
+        [Header("Detailed Gun Spread / Heat")]
+        public float gunBaseSpreadDeg = 0.12f;
+        public float gunHeatSpreadDeg = 0.42f;
+        public float gunSustainedFireSpreadDeg = 0.18f;
+        public float gunHighGSpreadDeg = 0.20f;
+        public float gunHeatPerRound = 0.012f;
+        public float gunHeatCoolingPerSecond = 0.72f;
+        public float gunOverheatThreshold = 0.92f;
+        public float gunOverheatCooldownThreshold = 0.55f;
+        public bool gunCanOverheat = true;
+
+        [Header("Detailed Gun Visual Rhythm")]
+        public int tracerEveryNRounds = 2;
+        public int sparkEveryNRounds = 1;
+        public bool brightTracerOnLastRound = true;
+        public float gunTracerJitterMeters = 0.35f;
+        public float gunMuzzleFlashScale = 0.34f;
+        public float gunMuzzleFlashLife = 0.028f;
+
+        [Header("Detailed Gun Recoil")]
+        [Tooltip("Disabled by default. Modern aircraft gun recoil is not applied to flight physics in Maverick.")]
+        public bool applyGunRecoil = false;
+        public float gunRecoilForce = 0f;
+        public float gunRecoilTorque = 0f;
+
+        [Header("Gun Debug")]
+        [Range(0f, 1f)] public float debugGunSpin;
+        [Range(0f, 1f)] public float debugGunHeat;
+        public bool debugGunOverheated;
+        public float debugGunRps;
+        public float debugGunDispersionDeg;
+        public int debugGunRoundsFired;
 
         [Header("Rockets")]
         public float rocketDamage = 85f;
@@ -93,6 +150,13 @@ namespace MaverickFresh
         public float rocketLife = 8.0f;
         public float bombLife = 14.0f;
 
+        [Header("Projectile Velocity Inheritance")]
+        public bool projectileInheritsAircraftVelocity = true;
+        public float projectileVelocityInheritanceFactor = 0.75f;
+        public float muzzleSpawnForwardOffset = 1.5f;
+        public bool ignoreAircraftCollisionsForProjectiles = true;
+        public float projectileSelfCollisionIgnoreTime = 0.35f;
+
         [Header("Runtime")]
         public string lastEvent = "ready";
         public Vector3 lastImpactPoint;
@@ -114,6 +178,12 @@ namespace MaverickFresh
         private float nextPrecisionFireTime;
         private float nextMissileFireTime;
 
+        private float gunShotAccumulator;
+        private int gunRoundSequence;
+        private float gunSustainedFireTimer;
+        private MavGunTracerImpactVfx gunVfx;
+        private Rigidbody cachedRigidbody;
+
         private void Awake()
         {
             Resolve();
@@ -123,6 +193,9 @@ namespace MaverickFresh
         {
             Resolve();
             NormalizeSecondarySelection();
+
+            bool primaryHeld = MavFreshInput.GetKey(firePrimaryKey);
+            UpdateDetailedGunRuntime(primaryHeld);
 
             if (MavFreshInput.GetKeyDown(nextWeaponKey))
                 CycleWeapon(1);
@@ -136,7 +209,7 @@ namespace MaverickFresh
             if (MavFreshInput.GetKeyDown(quickSelectBombKey))
                 SelectSecondaryWeapon(MavCASWeapon.TrainingBomb);
 
-            if (MavFreshInput.GetKey(firePrimaryKey))
+            if (primaryHeld)
                 TryFirePrimary();
 
             if (MavFreshInput.GetKeyDown(fireSecondaryKey))
@@ -150,6 +223,8 @@ namespace MaverickFresh
             if (playerCamera == null) playerCamera = Camera.main;
             if (ccip == null) ccip = GetComponent<MavCASCCIPPredictor>();
             if (ordnanceAssets == null) ordnanceAssets = GetComponent<MavCASOrdnanceAssets>();
+            if (gunVfx == null) gunVfx = GetComponent<MavGunTracerImpactVfx>();
+            if (cachedRigidbody == null) cachedRigidbody = GetComponent<Rigidbody>();
         }
 
         public void CycleWeapon(int dir)
@@ -207,6 +282,74 @@ namespace MaverickFresh
 
         private bool FireGun()
         {
+            if (gunAmmo <= 0)
+            {
+                lastEvent = "gun_empty";
+                return false;
+            }
+
+            if (!useDetailedGunModel)
+                return FireGunLegacy();
+
+            if (gunCanOverheat && debugGunOverheated)
+            {
+                lastEvent = "gun_overheated";
+                return false;
+            }
+
+            if (useGunSpinUp && debugGunSpin < minSpinToFire)
+            {
+                lastEvent = "gun_spinup";
+                SpawnMuzzleFlash(GetFallbackGunMuzzlePosition(), 0.45f);
+                return false;
+            }
+
+            float rps = Mathf.Max(1f, gunRoundsPerSecond) * Mathf.Clamp01(useGunSpinUp ? debugGunSpin : 1f);
+            debugGunRps = rps;
+            gunShotAccumulator += rps * Time.deltaTime;
+
+            int requested = Mathf.FloorToInt(gunShotAccumulator);
+            int rounds = Mathf.Clamp(requested, 0, Mathf.Max(1, maxGunRoundsPerFrame));
+            if (rounds <= 0)
+                return false;
+
+            bool anyHit = false;
+            for (int i = 0; i < rounds; i++)
+            {
+                if (consumeAmmoPerRound)
+                {
+                    if (gunAmmo <= 0)
+                    {
+                        lastEvent = "gun_empty";
+                        break;
+                    }
+                    gunAmmo--;
+                }
+
+                bool visibleTracer = ShouldSpawnTracerForRound(i, rounds);
+                bool visibleSpark = (sparkEveryNRounds <= 1) || (gunRoundSequence % Mathf.Max(1, sparkEveryNRounds) == 0);
+                anyHit |= FireNeonHitscanGunRound(visibleTracer, visibleSpark);
+
+                debugGunRoundsFired++;
+                gunRoundSequence++;
+                debugGunHeat = Mathf.Clamp01(debugGunHeat + Mathf.Max(0f, gunHeatPerRound));
+                gunSustainedFireTimer = Mathf.Min(4f, gunSustainedFireTimer + 0.035f);
+                // No flight-physics recoil: keep gun effects visual only.
+            }
+
+            gunShotAccumulator -= rounds;
+            nextGunFireTime = Time.time + Mathf.Max(0.001f, 1f / Mathf.Max(1f, rps));
+            if (gunCanOverheat && debugGunHeat >= gunOverheatThreshold)
+                debugGunOverheated = true;
+
+            if (!consumeAmmoPerRound)
+                gunAmmo--;
+
+            return true;
+        }
+
+        private bool FireGunLegacy()
+        {
             if (Time.time < nextGunFireTime)
                 return false;
 
@@ -219,77 +362,271 @@ namespace MaverickFresh
             gunAmmo--;
             nextGunFireTime = Time.time + gunCooldown;
 
+            if (useNeonGunTracers && useHitscanGunWhenNeon)
+            {
+                bool anyHit = false;
+                int rounds = Mathf.Max(1, gunRoundsPerTriggerStep);
+                for (int i = 0; i < rounds; i++)
+                    anyHit |= FireNeonHitscanGunRound(true, true);
+                return true;
+            }
+
             if (useBallisticProjectiles)
             {
-                SpawnProjectile(MavCASProjectileKind.GunShell, gunDamage, 3.5f, gunMuzzleSpeed, gunShellLife, false, "GunShell");
+                MavCASBallisticProjectile shell = SpawnProjectile(MavCASProjectileKind.GunShell, gunDamage, 3.5f, gunMuzzleSpeed, gunShellLife, false, "GunShell");
+                if (useNeonGunTracers && shell != null)
+                    MavNeonTracer.Spawn(shell.transform.position, shell.transform.position + shell.velocity.normalized * Mathf.Min(gunRange, 180f), gunTracerDuration, gunTracerWidth, gunTracerColor);
                 lastEvent = "gun_shell_fire";
                 return true;
             }
 
-            MavCASTarget best = PickGunTarget();
+            return FireNeonHitscanGunRound(true, true);
+        }
 
-            if (best != null)
+        private void UpdateDetailedGunRuntime(bool triggerHeld)
+        {
+            float dt = Mathf.Max(0f, Time.deltaTime);
+            if (!useDetailedGunModel)
+                return;
+
+            float spinTarget = triggerHeld ? 1f : 0f;
+            float spinSeconds = triggerHeld ? gunSpinUpSeconds : gunSpinDownSeconds;
+            float spinRate = spinSeconds <= 0.001f ? 999f : 1f / spinSeconds;
+            debugGunSpin = Mathf.MoveTowards(debugGunSpin, spinTarget, spinRate * dt);
+
+            if (!triggerHeld)
             {
-                bool wasAlive = best.IsAlive();
-                best.ApplyDamage(gunDamage, "Gun");
-                hitCount++;
-                lastImpactPoint = best.transform.position;
-                lastImpactRadius = 4f;
-                lastEvent = "gun_hit_" + best.displayName;
+                gunShotAccumulator = 0f;
+                gunSustainedFireTimer = Mathf.MoveTowards(gunSustainedFireTimer, 0f, 1.6f * dt);
+            }
 
-                if (wasAlive && !best.IsAlive())
+            debugGunHeat = Mathf.MoveTowards(debugGunHeat, 0f, Mathf.Max(0f, gunHeatCoolingPerSecond) * dt);
+            if (debugGunOverheated && debugGunHeat <= gunOverheatCooldownThreshold)
+                debugGunOverheated = false;
+
+            debugGunDispersionDeg = ComputeCurrentGunSpreadDeg();
+        }
+
+        private bool ShouldSpawnTracerForRound(int roundIndexInFrame, int frameRounds)
+        {
+            if (!useNeonGunTracers)
+                return false;
+            if (tracerEveryNRounds <= 1)
+                return true;
+            if (brightTracerOnLastRound && roundIndexInFrame == frameRounds - 1)
+                return true;
+            return (gunRoundSequence % Mathf.Max(1, tracerEveryNRounds)) == 0;
+        }
+
+        private bool FireNeonHitscanGunRound(bool visibleTracer = true, bool visibleSpark = true)
+        {
+            Transform gunMuzzle = ordnanceAssets != null ? ordnanceAssets.GetSpawnFor(MavCASProjectileKind.GunShell) : null;
+            Vector3 origin = gunMuzzle != null ? gunMuzzle.position : GetFallbackGunMuzzlePosition();
+            Vector3 direction = GetGunFireDirection(gunMuzzle);
+            if (direction.sqrMagnitude < 0.0001f)
+                direction = transform.forward;
+
+            direction = ApplyGunSpread(direction.normalized);
+            origin += direction * Mathf.Max(0f, muzzleSpawnForwardOffset);
+
+            Vector3 visualEnd = origin + direction * gunRange;
+            bool hitSomething = false;
+            bool aircraftHit = false;
+            Vector3 hitNormal = -direction;
+
+            if (Physics.Raycast(origin, direction, out RaycastHit hit, gunRange, ~0, QueryTriggerInteraction.Ignore))
+            {
+                visualEnd = hit.point;
+                hitNormal = hit.normal;
+                hitSomething = true;
+
+                MavCASTarget target = hit.collider.GetComponentInParent<MavCASTarget>();
+                if (target != null && target.IsAlive())
+                {
+                    bool wasAlive = target.IsAlive();
+                    target.ApplyDamage(gunDamage, "DetailedGun");
+                    hitCount++;
+                    lastImpactPoint = hit.point;
+                    lastImpactRadius = 4f;
+                    lastEvent = "gun_hit_" + target.displayName;
+
+                    if (wasAlive && !target.IsAlive())
+                        destroyedCount++;
+                }
+                else if (damageAircraftWithGun && TryDamageAircraft(hit.collider, gunDamage, hit.point, "DetailedGun"))
+                {
+                    aircraftHit = true;
+                    hitCount++;
+                    lastImpactPoint = hit.point;
+                    lastImpactRadius = 4f;
+                    lastEvent = "gun_hit_aircraft";
+                }
+                else
+                {
+                    lastImpactPoint = hit.point;
+                    lastImpactRadius = 2f;
+                    lastEvent = "gun_spark";
+                }
+            }
+            else
+            {
+                lastImpactPoint = visualEnd;
+                lastImpactRadius = 2f;
+                lastEvent = "gun_miss";
+            }
+
+            if (visibleTracer && useNeonGunTracers && (hitSomething || spawnTracerOnMiss))
+            {
+                Vector3 jitter = Random.insideUnitSphere * Mathf.Max(0f, gunTracerJitterMeters);
+                MavNeonTracer.SpawnAdvanced(origin, visualEnd + jitter, gunTracerDuration, gunTracerWidth, gunTracerColor, debugGunHeat);
+            }
+
+            if (gunVfx != null)
+                gunVfx.NotifyGunRound(origin, visualEnd, hitSomething && visibleSpark, hitNormal, aircraftHit, debugGunHeat);
+
+            if (visibleTracer)
+                SpawnMuzzleFlash(origin, 1f);
+
+            return hitSomething;
+        }
+
+        private Vector3 ApplyGunSpread(Vector3 direction)
+        {
+            float spread = ComputeCurrentGunSpreadDeg();
+            if (spread <= 0.001f)
+                return direction;
+
+            Vector2 disk = Random.insideUnitCircle;
+            Quaternion random = Quaternion.Euler(disk.y * spread, disk.x * spread, Random.Range(-spread, spread) * 0.15f);
+            return (random * direction).normalized;
+        }
+
+        private float ComputeCurrentGunSpreadDeg()
+        {
+            float spread = useDetailedGunModel ? gunBaseSpreadDeg : gunSpreadDeg;
+            if (useDetailedGunModel)
+            {
+                spread += debugGunHeat * gunHeatSpreadDeg;
+                spread += Mathf.Clamp01(gunSustainedFireTimer / 2.5f) * gunSustainedFireSpreadDeg;
+                spread += EstimateCurrentGLoad01() * gunHighGSpreadDeg;
+            }
+            else
+            {
+                spread = Mathf.Max(0f, gunSpreadDeg);
+            }
+            return Mathf.Max(0f, spread);
+        }
+
+        private float EstimateCurrentGLoad01()
+        {
+            MavMouseFlightJet jet = GetComponent<MavMouseFlightJet>();
+            if (jet == null)
+                return 0f;
+            float g = Mathf.Abs(jet.gEstimate);
+            return Mathf.Clamp01((g - 1f) / 8f);
+        }
+
+        private void ApplyGunRecoil()
+        {
+            // Intentionally no-op by default.
+            // Maverick treats the gun as visual/ballistic feedback only; it must not kick the aircraft physics.
+            if (!applyGunRecoil)
+                return;
+            if (gunRecoilForce <= 0f)
+                return;
+            if (cachedRigidbody == null)
+                cachedRigidbody = GetComponent<Rigidbody>();
+            if (cachedRigidbody == null)
+                return;
+
+            // Optional debug-only recoil for experiments. Keep zero/default off.
+            cachedRigidbody.AddForce(-transform.forward * gunRecoilForce, ForceMode.Force);
+        }
+
+        private void SpawnMuzzleFlash(Vector3 origin, float intensity)
+        {
+            if (gunMuzzleFlashScale <= 0f || gunMuzzleFlashLife <= 0f)
+                return;
+
+            GameObject flash = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            flash.name = "Mav_Gun_Muzzle_Flash";
+            flash.transform.position = origin;
+            flash.transform.localScale = Vector3.one * gunMuzzleFlashScale * Mathf.Clamp(intensity, 0.2f, 2.0f);
+            Collider col = flash.GetComponent<Collider>();
+            if (col != null) col.enabled = false;
+            Renderer r = flash.GetComponent<Renderer>();
+            if (r != null)
+            {
+                Shader shader = Shader.Find("Sprites/Default");
+                if (shader == null) shader = Shader.Find("Unlit/Color");
+                if (shader == null) shader = Shader.Find("Standard");
+                Material mat = new Material(shader);
+                mat.color = new Color(gunTracerColor.r, gunTracerColor.g, gunTracerColor.b, 0.95f);
+                r.material = mat;
+            }
+            Destroy(flash, Mathf.Max(0.005f, gunMuzzleFlashLife));
+        }
+
+        private bool TryDamageAircraft(Collider collider, float amount, Vector3 point, string source)
+        {
+            if (collider == null)
+                return false;
+
+            Component[] components = collider.GetComponentsInParent<Component>();
+            for (int i = 0; i < components.Length; i++)
+            {
+                Component component = components[i];
+                if (component == null)
+                    continue;
+                if (component.GetType().Name != "MavAircraftDamageState")
+                    continue;
+
+                if (!ReflectionIsAlive(component))
+                    return false;
+
+                bool wasAlive = ReflectionIsAlive(component);
+                bool applied = ReflectionApplyDamage(component, amount, source, point);
+                if (!applied)
+                    return false;
+                bool aliveNow = ReflectionIsAlive(component);
+                if (wasAlive && !aliveNow)
                     destroyedCount++;
-
                 return true;
             }
 
-            Vector3 point = transform.position + transform.forward * gunRange;
-            if (playerCamera != null)
-            {
-                Vector2 aim = rig != null ? rig.cursorViewport : new Vector2(0.5f, 0.5f);
-                Ray ray = playerCamera.ViewportPointToRay(new Vector3(aim.x, aim.y, 0f));
-                point = ray.origin + ray.direction * gunRange;
-            }
-
-            lastImpactPoint = point;
-            lastImpactRadius = 2f;
-            lastEvent = "gun_miss";
-            return true;
+            return false;
         }
 
-        private MavCASTarget PickGunTarget()
+        private bool ReflectionIsAlive(Component component)
         {
-            if (playerCamera == null)
-                return null;
+            MethodInfo method = component.GetType().GetMethod("IsAlive", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (method == null)
+                return true;
+            object result = method.Invoke(component, null);
+            return result is bool b ? b : true;
+        }
 
-            MavCASTarget[] all = FindObjectsOfType<MavCASTarget>();
-            Vector2 aim = rig != null ? rig.cursorViewport : new Vector2(0.5f, 0.5f);
-
-            MavCASTarget best = null;
-            float bestDist = float.MaxValue;
-
-            foreach (MavCASTarget t in all)
+        private bool ReflectionApplyDamage(Component component, float amount, string source, Vector3 point)
+        {
+            MethodInfo method = component.GetType().GetMethod("ApplyDamage", new[] { typeof(float), typeof(string), typeof(Vector3) });
+            if (method != null)
             {
-                if (t == null || !t.IsAlive())
-                    continue;
-
-                float range = Vector3.Distance(transform.position, t.transform.position);
-                if (range > gunRange)
-                    continue;
-
-                Vector3 vp = playerCamera.WorldToViewportPoint(t.transform.position + Vector3.up * 2f);
-                if (vp.z <= 0f)
-                    continue;
-
-                float d = Vector2.Distance(new Vector2(vp.x, vp.y), aim);
-                if (d < bestDist && d <= gunScreenRadius)
-                {
-                    bestDist = d;
-                    best = t;
-                }
+                method.Invoke(component, new object[] { amount, source, point });
+                return true;
             }
-
-            return best;
+            method = component.GetType().GetMethod("ApplyDamage", new[] { typeof(float), typeof(string) });
+            if (method != null)
+            {
+                method.Invoke(component, new object[] { amount, source });
+                return true;
+            }
+            method = component.GetType().GetMethod("TakeDamage", new[] { typeof(float) });
+            if (method != null)
+            {
+                method.Invoke(component, new object[] { amount });
+                return true;
+            }
+            return false;
         }
 
         private bool FireRocket()
@@ -525,7 +862,7 @@ namespace MaverickFresh
                 aimDir = GetGunFireDirection(spawn);
             }
 
-            if ((kind == MavCASProjectileKind.Rocket || kind == MavCASProjectileKind.Missile || (kind == MavCASProjectileKind.GunShell && !gunUsesFixedMuzzleDirection)) && playerCamera != null && rig != null)
+            if ((kind == MavCASProjectileKind.Rocket || kind == MavCASProjectileKind.Missile) && playerCamera != null && rig != null)
             {
                 Vector2 aim = rig.cursorViewport;
                 Ray ray = playerCamera.ViewportPointToRay(new Vector3(aim.x, aim.y, 0f));
@@ -539,9 +876,15 @@ namespace MaverickFresh
             if (aimDir.sqrMagnitude < 0.0001f)
                 aimDir = transform.forward;
 
+            aimDir = aimDir.normalized;
+            origin += aimDir * Mathf.Max(0f, muzzleSpawnForwardOffset);
+
             Rigidbody rb = GetComponent<Rigidbody>();
             Vector3 aircraftVelocity = rb != null ? rb.linearVelocity : Vector3.zero;
-            Vector3 initialVelocity = aircraftVelocity + aimDir * muzzleSpeed;
+            Vector3 inheritedVelocity = projectileInheritsAircraftVelocity
+                ? aircraftVelocity * projectileVelocityInheritanceFactor
+                : Vector3.zero;
+            Vector3 initialVelocity = aimDir * muzzleSpeed + inheritedVelocity;
 
             GameObject go = CreateOrdnanceObject(kind, origin, aimDir);
             MavCASBallisticProjectile p = go.GetComponent<MavCASBallisticProjectile>();
@@ -552,7 +895,10 @@ namespace MaverickFresh
             p.lifeTime = life;
             p.useGravity = gravityOn;
             p.destroyRoot = go;
+            p.inheritedVelocity = inheritedVelocity;
             p.Init(origin, initialVelocity, damage, radius, source, kind);
+            p.SetIgnoredRoot(transform, projectileSelfCollisionIgnoreTime);
+            IgnoreProjectileAircraftCollisions(go);
 
             if (kind == MavCASProjectileKind.Missile)
                 p.guided = true;
@@ -567,9 +913,6 @@ namespace MaverickFresh
 
         private Vector3 GetGunFireDirection(Transform gunMuzzle)
         {
-            if (!gunUsesFixedMuzzleDirection)
-                return GetCurrentAimDirection();
-
             if (gunMuzzle != null)
             {
                 if (gunUseConvergence)
@@ -584,18 +927,8 @@ namespace MaverickFresh
                     return gunMuzzle.forward.normalized;
             }
 
-            return transform.forward;
-        }
-
-        private Vector3 GetCurrentAimDirection()
-        {
-            if (playerCamera != null)
-            {
-                Vector2 aim = rig != null ? rig.cursorViewport : new Vector2(0.5f, 0.5f);
-                Ray ray = playerCamera.ViewportPointToRay(new Vector3(aim.x, aim.y, 0f));
-                if (ray.direction.sqrMagnitude > 0.0001f)
-                    return ray.direction.normalized;
-            }
+            if (!gunUsesFixedMuzzleDirection)
+                return transform.forward;
 
             return transform.forward;
         }
@@ -675,10 +1008,35 @@ namespace MaverickFresh
             p.useGravity = true;
             p.destroyRoot = go;
             p.Init(origin, initialVelocity, bombDamage, bombRadius, "TrainingBomb", MavCASProjectileKind.Bomb);
+            p.SetIgnoredRoot(transform, projectileSelfCollisionIgnoreTime);
+            IgnoreProjectileAircraftCollisions(go);
 
             lastImpactPoint = ccip != null ? ccip.predictedBombImpact : origin + aircraftVelocity.normalized * 500f;
             lastImpactRadius = bombRadius;
             return p;
+        }
+
+        private void IgnoreProjectileAircraftCollisions(GameObject projectileRoot)
+        {
+            if (!ignoreAircraftCollisionsForProjectiles || projectileRoot == null)
+                return;
+
+            Collider[] projectileColliders = projectileRoot.GetComponentsInChildren<Collider>(true);
+            Collider[] aircraftColliders = GetComponentsInChildren<Collider>(true);
+
+            foreach (Collider projectileCollider in projectileColliders)
+            {
+                if (projectileCollider == null)
+                    continue;
+
+                foreach (Collider aircraftCollider in aircraftColliders)
+                {
+                    if (aircraftCollider == null || aircraftCollider == projectileCollider)
+                        continue;
+
+                    Physics.IgnoreCollision(projectileCollider, aircraftCollider, true);
+                }
+            }
         }
 
         private void OnDrawGizmos()

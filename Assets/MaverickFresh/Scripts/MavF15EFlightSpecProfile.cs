@@ -38,24 +38,34 @@ namespace MaverickFresh
 
         [Header("Fresh branch tuning output")]
         public float tunedThrust = 220f;
-        public Vector3 tunedTurnTorque = new Vector3(125f, 16f, 150f);
+        public Vector3 tunedTurnTorque = new Vector3(20f, 9f, 26f);
+        public Vector3 tunedForceModeTorque = new Vector3(6200f, 3200f, 8200f);
+        public Vector3 tunedAccelerationTorqueClamp = new Vector3(42f, 18f, 52f);
+        public Vector3 tunedForceTorqueClamp = new Vector3(9000f, 4200f, 10500f);
         public float tunedForceMult = 1000f;
-        public float tunedLinearDamping = 0.021f;
-        public float tunedAngularDamping = 1.35f;
-        public float tunedMaxAngularVelocity = 4.8f;
+        public float tunedLinearDamping = 0.006f;
+        public float tunedAngularDamping = 1.6f;
+        public float tunedMaxAngularVelocity = 6f;
 
         [Header("MouseFlight tuning output")]
         public float tunedSensitivity = 3.85f;
         public float tunedAggressiveTurnAngle = 9.5f;
-        public float tunedPitchGain = 0.76f;
-        public float tunedYawGain = 0.22f;
-        public float tunedRollGain = 1.18f;
-        public float tunedMaxAutoPitch = 0.62f;
+        public float tunedPitchGain = 0.82f;
+        public float tunedYawGain = 0.24f;
+        public float tunedRollGain = 1.25f;
+        public float tunedMaxAutoPitch = 0.68f;
         public float tunedNoseDownTrim = 0.115f;
-        public float tunedInputSmoothing = 6.8f;
+        public float tunedInputSmoothing = 5.8f;
+
+        [Header("Throttle tuning output")]
+        public float tunedThrottlePercent = 95f;
+        public float tunedThrottleChangeRatePercentPerSecond = 45f;
+        public float tunedThrottleSpoolUpRate = 1.8f;
+        public float tunedThrottleSpoolDownRate = 2.4f;
+        public float tunedAfterburnerThrustMultiplier = 1.35f;
 
         [Header("Camera tuning output")]
-        public float tunedCameraFov = 64f;
+        public float tunedCameraFov = 68f;
         public float tunedZoomFov = 42f;
         public float tunedCameraFarClip = 24000f;
         [Range(0f, 1f)] public float tunedCameraRollFollowStrength = 0.30f;
@@ -105,15 +115,27 @@ namespace MaverickFresh
                 jet.forceMult = tunedForceMult;
                 jet.gravityOff = true;
                 jet.linearDamping = tunedLinearDamping;
-                jet.angularDamping = tunedAngularDamping;
-                jet.maxAngularVelocity = tunedMaxAngularVelocity;
-                jet.useAccelerationTorqueMode = false;
+                jet.angularDamping = 1.75f;
+                jet.maxAngularVelocity = 6.0f;
+                jet.useAccelerationTorqueMode = true;
+                jet.useRateBasedControl = true;
+                jet.targetPitchRateDeg = 48f;
+                jet.targetYawRateDeg = 18f;
+                jet.targetRollRateDeg = 72f;
+                jet.rateControlP = new Vector3(0.42f, 0.28f, 0.38f);
+                jet.rateControlD = new Vector3(0.10f, 0.12f, 0.09f);
+                jet.maxRateControlTorque = new Vector3(32f, 14f, 40f);
+                jet.accelerationModeTorque = tunedTurnTorque;
+                jet.forceModeTorque = tunedForceModeTorque;
+                jet.maxAppliedTorqueAccelerationMode = tunedAccelerationTorqueClamp;
+                jet.maxAppliedTorqueForceMode = tunedForceTorqueClamp;
+                jet.maxAppliedTorque = jet.maxAppliedTorqueAccelerationMode;
 
                 jet.sensitivity = tunedSensitivity;
                 jet.aggressiveTurnAngle = tunedAggressiveTurnAngle;
                 jet.pitchGain = tunedPitchGain;
                 jet.yawGain = tunedYawGain;
-                jet.rollGain = tunedRollGain;
+                jet.rollGain = 1.25f;
                 jet.maxAutoPitch = tunedMaxAutoPitch;
                 jet.noseDownTrim = tunedNoseDownTrim;
                 jet.inputSmoothing = tunedInputSmoothing;
@@ -130,16 +152,16 @@ namespace MaverickFresh
                 jet.turnBandWidth = 95f;
                 jet.bestTurnPitchBoost = 1.28f;
                 jet.bestTurnRollBoost = 1.12f;
-                jet.manualPitchBoost = 2.15f;
+                jet.manualPitchBoost = 2.75f;
                 jet.manualRollBoost = 1.05f;
 
-                jet.pitchUpCommand = -2.35f;
-                jet.pitchDownCommand = 2.15f;
+                jet.pitchUpCommand = -2.85f;
+                jet.pitchDownCommand = 2.65f;
                 jet.keyboardYawAuthority = 0.55f;
-                jet.keyboardElevatorMouseBlend = 0.05f;
-                jet.keyboardElevatorResponse = 22f;
-                jet.keyboardElevatorReleaseBlend = 6.5f;
-                jet.keyboardElevatorRateDamping = 0.06f;
+                jet.keyboardElevatorMouseBlend = 0.03f;
+                jet.keyboardElevatorResponse = 34f;
+                jet.keyboardElevatorReleaseBlend = 8.5f;
+                jet.keyboardElevatorRateDamping = 0.045f;
 
                 jet.useSpeedAuthorityCurve = true;
                 jet.lowSpeedPitchAuthority = 0.58f;
@@ -148,6 +170,10 @@ namespace MaverickFresh
                 jet.lowSpeedRollAuthority = 0.70f;
                 jet.bestSpeedRollAuthority = 1.05f;
                 jet.highSpeedRollAuthority = 0.82f;
+                jet.pitchLimiterStartSpeed = 310f;
+                jet.pitchLimiterFullSpeed = 500f;
+                jet.highSpeedPitchAuthorityMin = 0.55f;
+                jet.highSpeedManualPitchAuthorityMin = 0.78f;
 
                 jet.useGLimiter = true;
                 jet.softGLimit = 8.8f;
@@ -162,7 +188,7 @@ namespace MaverickFresh
 
                 jet.yawDamper = true;
                 jet.yawRateDampingStrength = 0.42f;
-                jet.sideSlipDampingStrength = 0.082f;
+                jet.sideSlipDampingStrength = 0.55f;
                 jet.maxAutoYawCommand = 0.24f;
                 jet.keyboardYawAuthority = 0.55f;
                 jet.preferBankTurnOverYaw = true;
@@ -173,19 +199,56 @@ namespace MaverickFresh
                 jet.coordinatedYawFullSpeed = 210f;
                 jet.coordinatedYawBankFactor = 0.35f;
                 jet.coordinatedYawTurnDemandFactor = 0.35f;
-                jet.coordinatedYawDamping = 0.20f;
+                jet.coordinatedYawDamping = 0.28f;
+                jet.useVelocityTurnAssist = true;
+                jet.velocityTurnAssistStrength = 0.018f;
+                jet.velocityTurnAssistMaxAccel = 14f;
+                jet.velocityTurnAssistMinSpeed = 80f;
+                jet.velocityTurnAssistFullSpeed = 230f;
+                jet.velocityTurnAssistInputFactor = 0.58f;
+                jet.velocityTurnAssistAoSLimit = 45f;
                 jet.aoaSoftLimitDeg = 24f;
                 jet.aoaHardLimitDeg = 34f;
                 jet.aoaPitchReduction = 0.45f;
                 jet.highGShortTermAllowance = 10.8f;
                 jet.sustainedGLimit = 8.8f;
+                jet.finalTorqueSmoothing = 10.5f;
+                jet.controlSurfaceResponse = 7.5f;
+                jet.controlSurfaceReleaseResponse = 6.5f;
+                jet.maxPitchCommandRate = 4.8f;
+                jet.maxYawCommandRate = 2.8f;
+                jet.maxRollCommandRate = 5.8f;
+                jet.useManualControlAuthorityBoost = true;
+                jet.manualPitchAuthorityBoost = 1.35f;
+                jet.manualRollAuthorityBoost = 1.45f;
+                jet.manualYawAuthorityBoost = 1.15f;
+                jet.manualPitchResponseMultiplier = 1.7f;
+                jet.manualRollResponseMultiplier = 1.8f;
+                jet.manualLimiterBypassFactor = 0.35f;
+                jet.manualDampingReduction = 0.45f;
+                jet.manualEnvelopeBypassFactor = 0.65f;
+                jet.manualPitchMinAuthority = 0.78f;
+                jet.manualRollMinAuthority = 0.82f;
+                jet.manualYawMinAuthority = 0.60f;
+                jet.useDirectManualTorqueAssist = false;
+                jet.directManualPitchAssist = 0f;
+                jet.directManualRollAssist = 0f;
+                jet.directManualYawAssist = 0f;
+                jet.sideSlipDamping = 0.14f;
+                jet.sideSlipDampingHighAoS = 0.30f;
+                jet.aoaDragStrength = 0.018f;
+                jet.aosDragStrength = 0.026f;
+                jet.highSpeedTurnDragStrength = 0.018f;
+                jet.angularRateDampingPitch = 0.09f;
+                jet.angularRateDampingYaw = 0.12f;
+                jet.angularRateDampingRoll = 0.075f;
 
                 jet.useMousePitchComfort = true;
-                jet.mousePitchDeadzoneY = 0.025f;
+                jet.mousePitchDeadzoneY = 0.020f;
                 jet.mousePitchFullAtY = 0.42f;
                 jet.mousePitchExponent = 1.25f;
-                jet.centerPitchLevelStrength = 0.10f;
-                jet.noseHighPitchDownAssist = 0.12f;
+                jet.centerPitchLevelStrength = 0.08f;
+                jet.noseHighPitchDownAssist = 0.10f;
                 jet.noseHighAssistStartAngle = 8f;
                 jet.noseHighAssistFullAngle = 24f;
 
@@ -195,9 +258,20 @@ namespace MaverickFresh
                 jet.noRollZoneLevelingBoost = 1.35f;
                 jet.useScreenRollZoneBankHold = true;
                 jet.maxScreenRollBankAngle = 72f;
-                jet.bankHoldProportional = 0.052f;
-                jet.bankHoldRollRateDamping = 0.19f;
+                jet.bankHoldProportional = 0.048f;
+                jet.bankHoldRollRateDamping = 0.24f;
                 jet.invertScreenRollBankTarget = false;
+                jet.rollCommandDeadzone = 0.055f;
+                jet.bankHoldDeadzoneDeg = 4.0f;
+                jet.rollCommandSlewRate = 12f;
+                jet.yawAssistDeadzoneAosDeg = 2.5f;
+                jet.centerRollStabilizeStrength = 0.12f;
+                jet.mouseRollDeadzone = 0.055f;
+                jet.mouseYawDeadzone = 0.045f;
+                jet.rollRateDeadzoneDeg = 3.0f;
+                jet.aosYawAssistDeadzoneDeg = 2.5f;
+                jet.rollInputEnterDeadzone = 0.065f;
+                jet.rollInputExitDeadzone = 0.040f;
                 jet.useContinuousScreenBankHold = false;
                 jet.continuousBankDeadzone = 0.035f;
                 jet.continuousBankFullAtX = 0.42f;
@@ -208,6 +282,33 @@ namespace MaverickFresh
                 jet.noPitchZoneLevelingBoost = 1.20f;
 
                 jet.maxThrottle = 1.40f;
+                jet.minThrottlePercent = -5f;
+                jet.idleThrottlePercent = 0f;
+                jet.militaryThrottlePercent = 100f;
+                jet.maxThrottlePercent = 110f;
+                jet.throttlePercent = tunedThrottlePercent;
+                jet.displayedThrottlePercent = tunedThrottlePercent;
+                jet.throttle = Mathf.Clamp(tunedThrottlePercent / 100f, -0.05f, jet.maxThrottle);
+                jet.engineOn = true;
+                jet.engineToggleKey = KeyCode.I;
+                jet.throttleUpKey = KeyCode.LeftShift;
+                jet.throttleDownKey = KeyCode.LeftControl;
+                jet.throttleIdleKey = KeyCode.X;
+                jet.throttleChangeRatePercentPerSecond = tunedThrottleChangeRatePercentPerSecond;
+                jet.throttleWheelStepPercent = 5f;
+                jet.throttleKeyboardStepPercent = 0f;
+                jet.useMouseWheelThrottle = true;
+                jet.holdThrottleKeysContinuous = true;
+                jet.idleThrust01 = 0.04f;
+                jet.negativeThrottleBrakeDrag = 0.018f;
+                jet.afterburnerStartPercent = 100f;
+                jet.afterburnerMaxPercent = 110f;
+                jet.afterburnerThrustMultiplier = tunedAfterburnerThrustMultiplier;
+                jet.afterburnerFuelBurnMultiplier = 2.5f;
+                jet.useAfterburner = true;
+                jet.useNegativeThrottleBrakeDrag = true;
+                jet.throttleSpoolUpRate = tunedThrottleSpoolUpRate;
+                jet.throttleSpoolDownRate = tunedThrottleSpoolDownRate;
                 jet.SetupPublicRigidbody();
                 jet.PushLegacyTuningToInstructor();
                 if (instructor == null)
@@ -223,6 +324,24 @@ namespace MaverickFresh
                 rig.cameraFov = tunedCameraFov;
                 rig.zoomFov = tunedZoomFov;
                 rig.cameraFarClip = tunedCameraFarClip;
+                rig.useCameraLag = true;
+                rig.cameraPositionLag = 7f;
+                rig.cameraRotationLag = 8f;
+                rig.hardManeuverCameraLagMultiplier = 0.65f;
+                rig.maxCameraLagDistance = 6f;
+                rig.useSpeedBasedFov = true;
+                rig.minSpeedFov = 60f;
+                rig.cruiseSpeedFov = 68f;
+                rig.maxSpeedFov = 78f;
+                rig.fovSmooth = 4f;
+                rig.fovSpeedMin = 80f;
+                rig.fovSpeedMax = 360f;
+                rig.useCameraCollisionAvoidance = true;
+                rig.cameraMinDistance = 9f;
+                rig.cameraMaxDistance = 18f;
+                rig.diveCameraPullback = 4f;
+                rig.steepDivePitchThreshold = -55f;
+                rig.cameraCollisionRadius = 0.8f;
                 rig.useMouseAimCameraFollow = true;
                 rig.mouseAimCameraFollowStrength = 0.55f;
                 rig.mouseAimCameraFollowSmooth = 12.0f;

@@ -18,6 +18,7 @@ namespace MaverickFresh
         public bool addWeapons = true;
         public bool addRangeSpawner = false;
         public bool addTargetingPod = true;
+        public bool addTGPStateManager = true;
 
         [Header("Created")]
         public MavCASTargetingSystem targeting;
@@ -26,6 +27,7 @@ namespace MaverickFresh
         public MavCASOrdnanceAssets ordnanceAssets;
         public MavCASTestRangeSpawner rangeSpawner;
         public MavTargetingPodSystem targetingPod;
+        public MavTGPStateManager tgpStateManager;
 
         private void Awake()
         {
@@ -37,7 +39,7 @@ namespace MaverickFresh
         public void Setup()
         {
             if (aircraftObject == null)
-                aircraftObject = GameObject.Find("F15E_Player");
+                aircraftObject = MavPlayerResolver.FindPlayerObject();
 
             if (aircraftObject == null)
             {
@@ -88,6 +90,18 @@ namespace MaverickFresh
 
                 targetingPod.casTargeting = targeting;
                 targetingPod.casWeapons = weapons;
+            }
+
+            if (addTGPStateManager)
+            {
+                tgpStateManager = aircraftObject.GetComponent<MavTGPStateManager>();
+                if (tgpStateManager == null)
+                    tgpStateManager = aircraftObject.AddComponent<MavTGPStateManager>();
+
+                tgpStateManager.targetingPod = aircraftObject.GetComponent<MavTargetingPodSystem>();
+                tgpStateManager.forceOffOnStart = true;
+                tgpStateManager.startHidden = true;
+                tgpStateManager.SetOff();
             }
 
             if (addRangeSpawner)

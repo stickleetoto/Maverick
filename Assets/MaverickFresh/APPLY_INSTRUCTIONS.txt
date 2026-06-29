@@ -1,0 +1,14 @@
+MaverickFresh v0.22.7r Aero Phase-A Rollback — Scripts-only
+
+1. Close Unity or let it finish compiling.
+2. Unzip this patch.
+3. Copy the Scripts folder into:
+   Assets/MaverickFresh/Scripts/
+4. Allow overwrite when asked.
+5. Reopen Unity and wait for compile.
+
+This rollback only reverts the v0.22.7 Aero Stability Phase-A changes:
+- MavAeroBody.cs
+- MavThrustVectorControl.cs
+
+It does not touch scenes, prefabs, models, materials, guns, missiles, sensors, AI, or editor tools.

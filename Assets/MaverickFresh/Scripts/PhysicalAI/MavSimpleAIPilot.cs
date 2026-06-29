@@ -181,7 +181,7 @@ namespace MaverickFresh
             if (instructor != null)
                 instructor.SetThrottleIntent(nextThrottle);
 
-            jet.throttle = nextThrottle;
+            jet.SetThrottleIntent(nextThrottle);
         }
     }
 }

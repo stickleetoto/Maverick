@@ -6,8 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/MaverickFresh/Scenes/Mav_MainLobby.unity
+    guid: 0d46e3e47bedd344481c3fe275f86ac1
+  - enabled: 1
+    path: Assets/MaverickFresh/Scenes/Mav_Hangar.unity
+    guid: d451960d7b063a143b933cc9db83cabc
+  - enabled: 1
+    path: Assets/MaverickFresh/Scenes/Mav_InGame.unity
+    guid: fb2ec8e92c5369a47a754f2387b43aea
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

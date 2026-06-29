@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace MaverickFresh
 {
@@ -18,7 +19,7 @@ namespace MaverickFresh
     /// - Slew with I/J/K/L
     /// - Zoom with 5/6 or +/- keys
     /// - Lock point with R
-    /// - Send designation to MavCASTargetingSystem with G
+    /// - Send designation to MavCASTargetingSystem with B (G is landing gear)
     ///
     /// This is a gameplay TGP, not a real sensor simulation.
     /// </summary>
@@ -33,18 +34,31 @@ namespace MaverickFresh
         public MavCASWeaponSystem casWeapons;
 
         [Header("Display")]
-        public MavTargetingPodDisplayMode displayMode = MavTargetingPodDisplayMode.PictureInPicture;
+        public MavTargetingPodDisplayMode displayMode = MavTargetingPodDisplayMode.Off;
+        public bool startHidden = true;
+        public bool forceOffOnStart = true;
+        public bool showPipByDefault = false;
         public bool allowFullscreenMode;
         public int textureSize = 512;
-        public Rect pipRect = new Rect(18f, 270f, 390f, 285f);
+        public Rect pipRect = new Rect(18f, 240f, 320f, 220f);
+        public CanvasGroup pipCanvasGroup;
+        public RawImage pipRawImage;
+        public Vector2 defaultPipAnchorMin = new Vector2(0.72f, 0.62f);
+        public Vector2 defaultPipAnchorMax = new Vector2(0.98f, 0.96f);
+        public float defaultPipAlpha = 1f;
+        public bool applyDefaultPipAnchorsOnStart = true;
         public bool drawOverlay = true;
         public bool drawDebugText = true;
 
         [Header("Controls")]
-        public KeyCode toggleDisplayKey = KeyCode.T;
+        [Tooltip("Disabled by default so T is reserved for radar/lock controls. Enable manually only when using the legacy CAS targeting pod.")]
+        public bool inputEnabled = false;
+        public KeyCode toggleDisplayKey = KeyCode.None;
+        public KeyCode toggleFocusKey = KeyCode.V;
+        public KeyCode exitFocusKey = KeyCode.Escape;
         public KeyCode cycleDisplayKey = KeyCode.O;
         public KeyCode lockPointKey = KeyCode.R;
-        public KeyCode pushDesignationKey = KeyCode.G;
+        public KeyCode pushDesignationKey = KeyCode.B;
         public KeyCode recenterKey = KeyCode.U;
         public KeyCode slewUpKey = KeyCode.I;
         public KeyCode slewDownKey = KeyCode.K;
@@ -79,6 +93,8 @@ namespace MaverickFresh
         public bool lockedToTarget;
         public MavCASTarget lockedTarget;
         public MavCASTarget candidateTarget;
+        public bool isPipVisible;
+        public bool isFocusActive;
         public Vector3 lockPoint;
         public Vector3 lookPoint;
         public bool hasLookPoint;
@@ -89,6 +105,9 @@ namespace MaverickFresh
 
         private GUIStyle labelStyle;
         private GUIStyle centerStyle;
+        private bool startupStateApplied;
+        private bool pipBeforeFocus;
+        private bool warnedMainCameraReference;
 
         private void Awake()
         {
@@ -97,6 +116,8 @@ namespace MaverickFresh
             EnsureCameraAndTexture();
             RecenterToBoresight();
             ClampDisplayMode();
+            ConfigureDefaultPipUi();
+            ApplyStartupDisplayState();
         }
 
         private void OnEnable()
@@ -105,6 +126,18 @@ namespace MaverickFresh
             EnsurePodMount();
             EnsureCameraAndTexture();
             ClampDisplayMode();
+            ConfigureDefaultPipUi();
+
+            if (!startupStateApplied)
+                ApplyStartupDisplayState();
+            else
+                ApplyDisplayState();
+        }
+
+        private void Start()
+        {
+            if (forceOffOnStart)
+                ApplyStartupDisplayState();
         }
 
         private void OnDestroy()
@@ -123,6 +156,7 @@ namespace MaverickFresh
             EnsurePodMount();
             EnsureCameraAndTexture();
             ClampDisplayMode();
+            ApplyDisplayState();
 
             HandleInput();
             UpdateLookDirection();
@@ -171,6 +205,17 @@ namespace MaverickFresh
                 podTexture.Create();
             }
 
+            if (podCamera != null && podCamera == Camera.main)
+            {
+                if (!warnedMainCameraReference)
+                {
+                    Debug.LogWarning("MavTargetingPodSystem: Main Camera was assigned as podCamera. Creating a dedicated TGP camera so the main view stays normal.", this);
+                    warnedMainCameraReference = true;
+                }
+
+                podCamera = null;
+            }
+
             if (podCamera == null)
             {
                 GameObject camObj = new GameObject("MavTGP_Camera");
@@ -182,6 +227,7 @@ namespace MaverickFresh
             }
 
             podCamera.targetTexture = podTexture;
+            podCamera.enabled = true;
             podCamera.fieldOfView = fov;
             podCamera.nearClipPlane = 0.05f;
             podCamera.farClipPlane = maxRange;
@@ -189,33 +235,36 @@ namespace MaverickFresh
 
         private void HandleInput()
         {
-            if (MavFreshInput.GetKeyDown(toggleDisplayKey))
-            {
-                displayMode = displayMode == MavTargetingPodDisplayMode.PictureInPicture
-                    ? MavTargetingPodDisplayMode.Off
-                    : MavTargetingPodDisplayMode.PictureInPicture;
-            }
+            if (!inputEnabled)
+                return;
 
-            if (MavFreshInput.GetKeyDown(cycleDisplayKey))
+            if (IsKeyDown(toggleDisplayKey))
+                SetPip(displayMode != MavTargetingPodDisplayMode.PictureInPicture);
+
+            if (IsKeyDown(toggleFocusKey))
+                SetFocus(displayMode != MavTargetingPodDisplayMode.Fullscreen);
+
+            if (IsKeyDown(exitFocusKey) && displayMode == MavTargetingPodDisplayMode.Fullscreen)
+                SetFocus(false);
+
+            if (IsKeyDown(cycleDisplayKey))
             {
                 if (!allowFullscreenMode)
                 {
-                    displayMode = displayMode == MavTargetingPodDisplayMode.Off
-                        ? MavTargetingPodDisplayMode.PictureInPicture
-                        : MavTargetingPodDisplayMode.Off;
+                    SetPip(displayMode == MavTargetingPodDisplayMode.Off);
                 }
-                else if (displayMode == MavTargetingPodDisplayMode.Off) displayMode = MavTargetingPodDisplayMode.PictureInPicture;
-                else if (displayMode == MavTargetingPodDisplayMode.PictureInPicture) displayMode = MavTargetingPodDisplayMode.Fullscreen;
-                else displayMode = MavTargetingPodDisplayMode.Off;
+                else if (displayMode == MavTargetingPodDisplayMode.Off) SetPip(true);
+                else if (displayMode == MavTargetingPodDisplayMode.PictureInPicture) SetFocus(true);
+                else SetOff();
             }
 
-            if (MavFreshInput.GetKeyDown(recenterKey))
+            if (IsKeyDown(recenterKey))
                 RecenterToBoresight();
 
-            if (MavFreshInput.GetKeyDown(lockPointKey))
+            if (IsKeyDown(lockPointKey))
                 ToggleLock();
 
-            if (MavFreshInput.GetKeyDown(pushDesignationKey))
+            if (IsKeyDown(pushDesignationKey))
                 PushDesignationToCAS();
 
             float fine = MavFreshInput.GetKey(KeyCode.LeftShift) ? fineSlewMultiplier : 1f;
@@ -223,22 +272,82 @@ namespace MaverickFresh
 
             if (!isLocked)
             {
-                if (MavFreshInput.GetKey(slewLeftKey)) yaw -= slew;
-                if (MavFreshInput.GetKey(slewRightKey)) yaw += slew;
-                if (MavFreshInput.GetKey(slewUpKey)) pitch += slew;
-                if (MavFreshInput.GetKey(slewDownKey)) pitch -= slew;
+                if (IsKeyHeld(slewLeftKey)) yaw -= slew;
+                if (IsKeyHeld(slewRightKey)) yaw += slew;
+                if (IsKeyHeld(slewUpKey)) pitch += slew;
+                if (IsKeyHeld(slewDownKey)) pitch -= slew;
 
                 yaw = Mathf.Clamp(yaw, -maxYaw, maxYaw);
                 pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
             }
 
-            bool zoomIn = MavFreshInput.GetKey(zoomInKey) || MavFreshInput.GetKey(zoomInAltKey);
-            bool zoomOut = MavFreshInput.GetKey(zoomOutKey) || MavFreshInput.GetKey(zoomOutAltKey);
+            bool zoomIn = IsKeyHeld(zoomInKey) || IsKeyHeld(zoomInAltKey);
+            bool zoomOut = IsKeyHeld(zoomOutKey) || IsKeyHeld(zoomOutAltKey);
 
             if (zoomIn) fov -= zoomSpeed * Time.deltaTime;
             if (zoomOut) fov += zoomSpeed * Time.deltaTime;
 
             fov = Mathf.Clamp(fov, minFov, maxFov);
+        }
+
+        private bool IsKeyDown(KeyCode key)
+        {
+            return key != KeyCode.None && MavFreshInput.GetKeyDown(key);
+        }
+
+        private bool IsKeyHeld(KeyCode key)
+        {
+            return key != KeyCode.None && MavFreshInput.GetKey(key);
+        }
+
+        public void SetOff()
+        {
+            displayMode = MavTargetingPodDisplayMode.Off;
+            allowFullscreenMode = false;
+            isLocked = false;
+            lockedToTarget = false;
+            lockedTarget = null;
+            status = "off";
+            ApplyDisplayState();
+        }
+
+        public void SetPip(bool enabled)
+        {
+            allowFullscreenMode = false;
+            displayMode = enabled ? MavTargetingPodDisplayMode.PictureInPicture : MavTargetingPodDisplayMode.Off;
+            status = enabled ? "pip" : "off";
+            ApplyDisplayState();
+        }
+
+        public void SetFocus(bool enabled)
+        {
+            if (enabled)
+            {
+                pipBeforeFocus = displayMode == MavTargetingPodDisplayMode.PictureInPicture;
+                allowFullscreenMode = true;
+                displayMode = MavTargetingPodDisplayMode.Fullscreen;
+                status = "focus";
+            }
+            else
+            {
+                displayMode = pipBeforeFocus ? MavTargetingPodDisplayMode.PictureInPicture : MavTargetingPodDisplayMode.Off;
+                allowFullscreenMode = false;
+                status = displayMode == MavTargetingPodDisplayMode.PictureInPicture ? "pip" : "off";
+            }
+
+            ApplyDisplayState();
+        }
+
+        public void ApplyStartupDisplayState()
+        {
+            startupStateApplied = true;
+            pipBeforeFocus = false;
+            allowFullscreenMode = false;
+
+            if (!forceOffOnStart && showPipByDefault && !startHidden)
+                SetPip(true);
+            else
+                SetOff();
         }
 
         public void RecenterToBoresight()
@@ -440,7 +549,43 @@ namespace MaverickFresh
         private void ClampDisplayMode()
         {
             if (!allowFullscreenMode && displayMode == MavTargetingPodDisplayMode.Fullscreen)
-                displayMode = MavTargetingPodDisplayMode.PictureInPicture;
+                displayMode = MavTargetingPodDisplayMode.Off;
+        }
+
+        private void ConfigureDefaultPipUi()
+        {
+            if (!applyDefaultPipAnchorsOnStart || pipRawImage == null)
+                return;
+
+            RectTransform rt = pipRawImage.rectTransform;
+            if (rt == null)
+                return;
+
+            rt.anchorMin = defaultPipAnchorMin;
+            rt.anchorMax = defaultPipAnchorMax;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+        }
+
+        private void ApplyDisplayState()
+        {
+            ClampDisplayMode();
+
+            isPipVisible = displayMode == MavTargetingPodDisplayMode.PictureInPicture;
+            isFocusActive = displayMode == MavTargetingPodDisplayMode.Fullscreen;
+
+            if (pipRawImage != null)
+            {
+                pipRawImage.texture = podTexture;
+                pipRawImage.enabled = isPipVisible;
+            }
+
+            if (pipCanvasGroup != null)
+            {
+                pipCanvasGroup.alpha = isPipVisible ? defaultPipAlpha : 0f;
+                pipCanvasGroup.interactable = false;
+                pipCanvasGroup.blocksRaycasts = false;
+            }
         }
 
         private Vector3 NormalizeEuler(Vector3 e)

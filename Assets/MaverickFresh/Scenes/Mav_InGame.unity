@@ -1,0 +1,2103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!29 &1
+OcclusionCullingSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_OcclusionBakeSettings:
+    smallestOccluder: 5
+    smallestHole: 0.25
+    backfaceThreshold: 100
+  m_SceneGUID: 00000000000000000000000000000000
+  m_OcclusionCullingData: {fileID: 0}
+--- !u!104 &2
+RenderSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 10
+  m_Fog: 0
+  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  m_FogMode: 3
+  m_FogDensity: 0.01
+  m_LinearFogStart: 0
+  m_LinearFogEnd: 300
+  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+  m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+  m_AmbientIntensity: 1
+  m_AmbientMode: 0
+  m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
+  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_HaloStrength: 0.5
+  m_FlareStrength: 1
+  m_FlareFadeSpeed: 3
+  m_HaloTexture: {fileID: 0}
+  m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
+  m_DefaultReflectionMode: 0
+  m_DefaultReflectionResolution: 128
+  m_ReflectionBounces: 1
+  m_ReflectionIntensity: 1
+  m_CustomReflection: {fileID: 0}
+  m_Sun: {fileID: 0}
+  m_UseRadianceAmbientProbe: 0
+--- !u!157 &3
+LightmapSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
+  m_GISettings:
+    serializedVersion: 2
+    m_BounceScale: 1
+    m_IndirectOutputScale: 1
+    m_AlbedoBoost: 1
+    m_EnvironmentLightingMode: 0
+    m_EnableBakedLightmaps: 1
+    m_EnableRealtimeLightmaps: 0
+  m_LightmapEditorSettings:
+    serializedVersion: 12
+    m_Resolution: 2
+    m_BakeResolution: 40
+    m_AtlasSize: 1024
+    m_AO: 0
+    m_AOMaxDistance: 1
+    m_CompAOExponent: 1
+    m_CompAOExponentDirect: 0
+    m_ExtractAmbientOcclusion: 0
+    m_Padding: 2
+    m_LightmapParameters: {fileID: 0}
+    m_LightmapsBakeMode: 1
+    m_TextureCompression: 1
+    m_ReflectionCompression: 2
+    m_MixedBakeMode: 2
+    m_BakeBackend: 1
+    m_PVRSampling: 1
+    m_PVRDirectSampleCount: 32
+    m_PVRSampleCount: 512
+    m_PVRBounces: 2
+    m_PVREnvironmentSampleCount: 256
+    m_PVREnvironmentReferencePointCount: 2048
+    m_PVRFilteringMode: 1
+    m_PVRDenoiserTypeDirect: 1
+    m_PVRDenoiserTypeIndirect: 1
+    m_PVRDenoiserTypeAO: 1
+    m_PVRFilterTypeDirect: 0
+    m_PVRFilterTypeIndirect: 0
+    m_PVRFilterTypeAO: 0
+    m_PVREnvironmentMIS: 1
+    m_PVRCulling: 1
+    m_PVRFilteringGaussRadiusDirect: 1
+    m_PVRFilteringGaussRadiusIndirect: 5
+    m_PVRFilteringGaussRadiusAO: 2
+    m_PVRFilteringAtrousPositionSigmaDirect: 0.5
+    m_PVRFilteringAtrousPositionSigmaIndirect: 2
+    m_PVRFilteringAtrousPositionSigmaAO: 1
+    m_ExportTrainingData: 0
+    m_TrainingDataDestination: TrainingData
+    m_LightProbeSampleCountMultiplier: 4
+  m_LightingDataAsset: {fileID: 20201, guid: 0000000000000000f000000000000000, type: 0}
+  m_LightingSettings: {fileID: 0}
+--- !u!196 &4
+NavMeshSettings:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_BuildSettings:
+    serializedVersion: 3
+    agentTypeID: 0
+    agentRadius: 0.5
+    agentHeight: 2
+    agentSlope: 45
+    agentClimb: 0.4
+    ledgeDropHeight: 0
+    maxJumpAcrossDistance: 0
+    minRegionArea: 2
+    manualCellSize: 0
+    cellSize: 0.16666667
+    manualTileSize: 0
+    tileSize: 256
+    buildHeightMesh: 0
+    maxJobWorkers: 0
+    preserveTilesOutsideBounds: 0
+    debug:
+      m_Flags: 0
+  m_NavMeshData: {fileID: 0}
+--- !u!1001 &96604521
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -120.929306
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.50125426
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 25.197945
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+      propertyPath: m_Name
+      value: Hoshimi Miyabi (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+--- !u!1 &330585543
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 330585546}
+  - component: {fileID: 330585545}
+  - component: {fileID: 330585544}
+  - component: {fileID: 330585547}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!81 &330585544
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+--- !u!20 &330585545
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 50000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!4 &330585546
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.674845, y: 0, z: 0, w: 0.73795956}
+  m_LocalPosition: {x: 0, y: 101.9, z: -5.64}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &330585547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 1
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
+--- !u!1 &410087039
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 410087041}
+  - component: {fileID: 410087040}
+  - component: {fileID: 410087042}
+  m_Layer: 0
+  m_Name: Directional Light
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!108 &410087040
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 410087039}
+  m_Enabled: 1
+  serializedVersion: 12
+  m_Type: 1
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Intensity: 2
+  m_Range: 10
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize2D: {x: 10, y: 10}
+  m_Shadows:
+    m_Type: 2
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+    m_CullingMatrixOverride:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    m_UseCullingMatrixOverride: 0
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 4
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_ColorTemperature: 5000
+  m_UseColorTemperature: 1
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
+  m_ForceVisible: 0
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
+--- !u!4 &410087041
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 410087039}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &410087042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 410087039}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 1
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
+--- !u!1 &832575517
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 832575519}
+  - component: {fileID: 832575518}
+  m_Layer: 0
+  m_Name: Global Volume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &832575518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 832575517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+--- !u!4 &832575519
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 832575517}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &939370117
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 939370119}
+  - component: {fileID: 939370118}
+  m_Layer: 0
+  m_Name: CAS_TestRange
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &939370118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 939370117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0574286b4b25084fbc4e83e50d29053, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavCASTestRangeSpawner
+  buildOnStart: 0
+  targetRows: 2
+  targetsPerRow: 5
+  spacing: 90
+  rangeCenter: {x: 0, y: 0, z: 1600}
+  targetMaterial: {fileID: 0}
+  createGroundPlane: 1
+  groundSize: {x: 1600, y: 1, z: 2200}
+--- !u!4 &939370119
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 939370117}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 88.46557, y: 0.5, z: 6.53772}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1408157545
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1408157546}
+  - component: {fileID: 1408157560}
+  - component: {fileID: 1408157559}
+  - component: {fileID: 1408157558}
+  - component: {fileID: 1408157557}
+  - component: {fileID: 1408157556}
+  - component: {fileID: 1408157555}
+  - component: {fileID: 1408157554}
+  - component: {fileID: 1408157553}
+  - component: {fileID: 1408157552}
+  - component: {fileID: 1408157551}
+  - component: {fileID: 1408157550}
+  - component: {fileID: 1408157549}
+  - component: {fileID: 1408157548}
+  - component: {fileID: 1408157547}
+  - component: {fileID: 1408157561}
+  - component: {fileID: 1408157563}
+  - component: {fileID: 1408157562}
+  m_Layer: 0
+  m_Name: Mav_Player
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1408157546
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 500, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1853147845}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1408157547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7254728925556748a8291d154821c22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavWTQuickHelpOverlay
+  visible: 0
+  toggleKey: 104
+  fontSize: 13
+  rect:
+    serializedVersion: 2
+    x: 18
+    y: 520
+    width: 560
+    height: 230
+--- !u!114 &1408157548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05a3812c2d97f8418ea3d707b5e98c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavFreshHud
+  mouseFlight: {fileID: 1411922571}
+  jet: {fileID: 1408157559}
+  instructor: {fileID: 1408157558}
+  playerCam: {fileID: 330585545}
+  recorder: {fileID: 0}
+  aiPilot: {fileID: 0}
+  casTargeting: {fileID: 0}
+  casWeapons: {fileID: 0}
+  casCCIP: {fileID: 0}
+  targetingPod: {fileID: 0}
+  wtPolish: {fileID: 1408157557}
+  physicalAI: {fileID: 0}
+  rewardLogger: {fileID: 0}
+  aircraftProfile: {fileID: 1408157556}
+  aeroBody: {fileID: 1408157554}
+  atmosphericEngine: {fileID: 1408157553}
+  flapSystem: {fileID: 1408157552}
+  landingGear: {fileID: 0}
+  thrustVectorControl: {fileID: 1408157551}
+  visible: 1
+  controlDebugVisible: 0
+  showDeveloperDebugOnHud: 0
+  controlDebugToggleKey: 283
+--- !u!114 &1408157549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c690775c703f80a825e97c5d77c65186, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavF22SensorSuite
+  useSensorSuite: 1
+  mode: 1
+  ownTeam: 0
+  radarRangeMeters: 12500
+  radarFovDeg: 72
+  radarSensitivity: 1.35
+  irstRangeMeters: 6200
+  scanInterval: 0.16
+  sttLockTime: 1.15
+  cycleTargetKey: 120
+  sensorModeKey: 122
+  clearLockKey: 8
+  allowInput: 1
+  selectedTarget: {fileID: 0}
+  debugContactCount: 0
+  debugSelectedName: NONE
+  debugSelectedDistance: 0
+  debugSelectedAspectDeg: 0
+  debugSelectedQuality: 0
+  debugHasLock: 0
+  debugLockProgress01: 0
+  debugModeLabel: TWS
+--- !u!114 &1408157550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49ae542d6d8083cf36c77490b5247d33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavRadarSignature
+  displayName: F-22A
+  team: 0
+  isAirTarget: 1
+  isDestroyed: 0
+  radarCrossSectionSqm: 0.03
+  irSignature: 0.72
+  stealthRating: 9.5
+  radarJamming: 0
+  debugLastDetectionQuality: 0
+  debugLastDistance: 0
+  debugLastAspectDeg: 0
+--- !u!114 &1408157551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39c32feb0ca9f1144916b2004f4ddd83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavThrustVectorControl
+  useThrustVectorControl: 1
+  pitchAuthority: 5.5
+  rollAuthority: 1.2
+  yawAuthority: 0
+  activationAoADeg: 18
+  fullAoADeg: 46
+  lowSpeedFull: 145
+  lowSpeedFadeOut: 360
+  maxTorque: 7.5
+  response: 8
+  requireEngineOn: 1
+  pitchOnlyWhenLowSpeedOrHighAoA: 1
+  minimumThrottle01: 0.08
+  debugActive: 0
+  debugAoAFactor: 0
+  debugSpeedFactor: 0
+  debugThrottleFactor: 0
+  debugTorque: {x: 0, y: 0, z: 0}
+--- !u!114 &1408157552
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d7cb1739304b047abd7a5dd9108c31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavCombatFlapSystem
+  useFlaps: 1
+  cycleKey: 102
+  state: 0
+  autoRetractAtHighSpeed: 1
+  combatMaxSpeed: 255
+  landingMaxSpeed: 155
+  combatLiftSlopeMultiplier: 1.03
+  combatCd0Add: 0.01
+  combatStallAoAAdd: 2
+  combatLowSpeedPitchAuthorityMultiplier: 1.1
+  combatMaxLiftGAdd: 0.35
+  landingLiftSlopeMultiplier: 1.1
+  landingCd0Add: 0.03
+  landingStallAoAAdd: 4
+  landingLowSpeedPitchAuthorityMultiplier: 1.18
+  landingMaxLiftGAdd: 0.55
+  debugState: UP
+  debugSpeed: 0
+  debugAutoRetracted: 0
+  debugHasBaseline: 1
+--- !u!114 &1408157553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f0944056ffbc6c4f9469909729b2c55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavAtmosphericEngine
+  useAtmosphericEngine: 1
+  engineModelBlend: 0.74
+  seaLevelThrustScale: 1
+  highAltitudeThrustFloor: 0.58
+  thrustScaleHeight: 12800
+  ramRecovery: 0.26
+  ramMachStart: 0.55
+  ramMachFull: 1.6
+  afterburnerRamBonus: 0.06
+  minThrustScale: 0.35
+  maxThrustScale: 1.26
+  applyWaveDrag: 1
+  transonicMachStart: 0.88
+  transonicMachEnd: 1.18
+  waveDragStrength: 0.22
+  supersonicDragStrength: 0.12
+  maxWaveDragAccel: 18
+  debugAltitude: 0
+  debugSpeed: 0
+  debugMach: 0
+  debugAltitudeScale: 1
+  debugRamScale: 1
+  debugThrustScale: 1
+  debugWaveDragAccel: 0
+  debugAfterburnerSeen: 0
+--- !u!114 &1408157554
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca022cef32c33ef4ab4bdeeedb491348, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavAeroBody
+  useAeroBody: 1
+  aeroBlend: 0.54
+  liftBlend: 0.68
+  dragBlend: 0.68
+  manageRigidbodyGravity: 1
+  useCustomGravity: 1
+  gravityBlend: 0.43
+  minAeroSpeed: 20
+  wingArea: 78
+  airDensitySeaLevel: 1.225
+  airDensityScaleHeight: 8500
+  densityFloor: 0.18
+  clSlopePerDeg: 0.068
+  zeroLiftAoADeg: 0
+  stallAoADeg: 32
+  fullStallAoADeg: 62
+  postStallLiftFactor: 0.58
+  maxAbsCl: 1.65
+  postStallDrag: 0.16
+  sideSlipDragPerDeg: 0.00035
+  cd0: 0.024
+  aspectRatio: 2.36
+  oswaldEfficiency: 0.78
+  maxDragG: 2.4
+  maxLiftG: 9.8
+  velocityAssistFade: 0.58
+  aeroSideSlipDamping: 0.1
+  provideControlAuthority: 1
+  referenceControlSpeed: 230
+  authorityExponent: 2
+  minControlAuthority: 0.5
+  maxControlAuthority: 1.12
+  authorityResponse: 3.5
+  debugDrawForces: 0
+  debugSpeed: 0
+  debugAoADeg: 0
+  debugAoSDeg: 0
+  debugCl: 0
+  debugCd: 0
+  debugLiftN: 0
+  debugDragN: 0
+  debugLiftG: 0
+  debugDragG: 0
+  debugStallFactor: 0
+  debugAirDensity: 0
+  debugDynamicPressure: 0
+  debugControlAuthority: 1
+  debugAeroBlendApplied: 0
+  debugLiftForce: {x: 0, y: 0, z: 0}
+  debugDragForce: {x: 0, y: 0, z: 0}
+  debugGravityForce: {x: 0, y: 0, z: 0}
+--- !u!114 &1408157555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 292496af0c8070f42baf3ad009744594, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavAircraftVisualSwitcher
+  visualRoot: {fileID: 1853147845}
+  visualRootName: AircraftVisuals
+  f15Visual: {fileID: 8147217481801138718, guid: d1fc59ac0894f34479829fb306aac96a, type: 3}
+  f16Visual: {fileID: 2300705509227771391, guid: 9ce3913d95b70624bb50e65d6a4fde8c, type: 3}
+  fa18Visual: {fileID: 3401542857200340017, guid: a00f9ae284eec1048983d6c962f15dba, type: 3}
+  f22Visual: {fileID: 2237175046662065072, guid: f1be10879c588cb4c8ba0ad59513588c, type: 3}
+  f35Visual: {fileID: 4937867623608709359, guid: 8537176218b789d4e844d4081b809d84, type: 3}
+  autoFindSceneVisuals: 0
+  claimLooseSceneVisuals: 0
+  createPlaceholderIfMissing: 0
+  preclaimAllResolvedVisuals: 1
+  disableVisualColliders: 1
+  disableVisualRigidbodies: 1
+  preserveClaimedSceneScale: 1
+  applyProfileScaleToPrefabInstances: 1
+  preferVisualRootChildren: 1
+  renameRuntimeVisuals: 0
+  activeAircraft: 3
+  activeVisual: {fileID: 0}
+  activeVisualName: none
+  lastVisualWasPlaceholder: 0
+--- !u!114 &1408157556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e8182b1dd973ba4d917a5e5be486f7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavAircraftProfileApplier
+  aircraft: 3
+  applyOnStart: 0
+  renameObject: 0
+  allowGlobalRigLookup: 1
+  lastApplied: F-22A RAPTOR / 23:54:43
+--- !u!114 &1408157557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d18699ba3b36b5041a9339a77ca1e555, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavWTFeelPolishController
+  jet: {fileID: 1408157559}
+  instructor: {fileID: 1408157558}
+  rig: {fileID: 1411922571}
+  targetingPod: {fileID: 0}
+  weapons: {fileID: 0}
+  preset: 0
+  applyOnStart: 0
+  balancedKey: 286
+  smoothKey: 287
+  aggressiveKey: 288
+  debugKey: 289
+  lastApplied: none
+--- !u!114 &1408157558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f193300c6d82beb4fa6937bbbbfdc185, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavInstructorController
+  rig: {fileID: 1411922571}
+  jet: {fileID: 1408157559}
+  rb: {fileID: 0}
+  sensitivity: 3.85
+  aggressiveTurnAngle: 9.5
+  enableMouseFlightAutopilot: 1
+  pitchGain: 0.82
+  yawGain: 0.24
+  rollGain: 1.25
+  maxAutoPitch: 0.68
+  noseDownTrim: 0.115
+  inputSmoothing: 5.8
+  useMousePitchComfort: 1
+  mousePitchDeadzoneY: 0.02
+  mousePitchFullAtY: 0.42
+  mousePitchExponent: 1.25
+  centerPitchLevelStrength: 0.08
+  noseHighPitchDownAssist: 0.1
+  noseHighAssistStartAngle: 8
+  noseHighAssistFullAngle: 24
+  bestTurnSpeed: 236
+  turnBandWidth: 95
+  bestTurnPitchBoost: 1.18
+  bestTurnRollBoost: 1.1
+  lowSpeedTurnPenalty: 0.62
+  highSpeedTurnPenalty: 0.72
+  manualPitchBoost: 2.75
+  manualRollBoost: 1.05
+  useManualControlAuthorityBoost: 1
+  manualPitchAuthorityBoost: 1.35
+  manualRollAuthorityBoost: 1.45
+  manualYawAuthorityBoost: 1.15
+  manualPitchResponseMultiplier: 1.7
+  manualRollResponseMultiplier: 1.8
+  manualLimiterBypassFactor: 0.35
+  manualDampingReduction: 0.45
+  manualEnvelopeBypassFactor: 0.65
+  manualPitchMinAuthority: 0.78
+  manualRollMinAuthority: 0.82
+  manualYawMinAuthority: 0.6
+  controlSurfaceResponse: 7.5
+  controlSurfaceReleaseResponse: 6.5
+  maxPitchCommandRate: 4.8
+  maxYawCommandRate: 2.8
+  maxRollCommandRate: 5.8
+  useRateBasedControl: 1
+  targetPitchRateDeg: 66
+  targetYawRateDeg: 20
+  targetRollRateDeg: 92
+  rateControlP: {x: 0.42, y: 0.28, z: 0.38}
+  rateControlD: {x: 0.1, y: 0.12, z: 0.09}
+  maxRateControlTorque: {x: 32, y: 14, z: 40}
+  useSpeedAuthorityCurve: 1
+  lowSpeedPitchAuthority: 0.55
+  bestSpeedPitchAuthority: 1.06
+  highSpeedPitchAuthority: 0.62
+  lowSpeedRollAuthority: 0.72
+  bestSpeedRollAuthority: 1.04
+  highSpeedRollAuthority: 0.8
+  useGLimiter: 1
+  softGLimit: 8.8
+  hardGLimit: 11.2
+  gPitchReduction: 0.3
+  useLowSpeedNoseDownAssist: 1
+  stallAssistSpeed: 102
+  stallNoseDownAssist: 0.34
+  stallAssistMaxPitchClamp: 0.22
+  aoaSoftLimitDeg: 24
+  aoaHardLimitDeg: 34
+  aoaPitchReduction: 0.45
+  highGShortTermAllowance: 10.8
+  sustainedGLimit: 8.8
+  useHighSpeedPitchLimiter: 1
+  pitchLimiterStartSpeed: 310
+  pitchLimiterFullSpeed: 500
+  highSpeedPitchAuthorityMin: 0.55
+  highSpeedManualPitchAuthorityMin: 0.78
+  highSpeedPitchLimiterSmooth: 6
+  useAoAAoSSoftGuard: 1
+  aoaSoftGuardStart: 18
+  aoaHardGuardStart: 30
+  aosSoftGuardStart: 10
+  aosHardGuardStart: 24
+  highSlipGuardStart: 25
+  highSlipGuardHard: 55
+  guardPitchReduction: 0.55
+  guardYawReduction: 0.45
+  guardRollReduction: 0.35
+  highSpeedPitchLimiterFactor: 1
+  aoaAosGuardFactor: 1
+  attitudeStabilizer: 1
+  rateDampingStrength: 0.145
+  rollLevelStrength: 0.48
+  pitchRecoveryStrength: 0.135
+  pilotInputSuppress: 0.96
+  maxStabilizerTorque: 160
+  centerAimAngleForLeveling: 8.5
+  activeTurnLevelingMultiplier: 0.18
+  centerLevelingMultiplier: 1
+  freeLookLevelingMultiplier: 0.55
+  yawDamper: 1
+  yawRateDampingStrength: 0.42
+  maxAutoYawCommand: 0.24
+  preferBankTurnOverYaw: 1
+  enableCoordinatedYawAssist: 1
+  aosYawAssistStrength: 0.06
+  maxAutoRudderAssist: 0.55
+  coordinatedYawSpeedMin: 85
+  coordinatedYawFullSpeed: 210
+  coordinatedYawBankFactor: 0.35
+  coordinatedYawTurnDemandFactor: 0.35
+  coordinatedYawDamping: 0.28
+  coordinatedYawAssistOutput: 0
+  autoSpeedAssist: 1
+  targetCruiseSpeed: 315
+  minCombatSpeed: 135
+  maxCombatSpeed: 530
+  speedAssistStrength: 0.22
+  overspeedDrag: 0.055
+  lowSpeedThrustBoost: 0.55
+  throttleIntent: 0.95
+  throttleChangeRate: 0.65
+  maxThrottle: 1.4
+  minThrottlePercent: -5
+  idleThrottlePercent: 0
+  militaryThrottlePercent: 100
+  maxThrottlePercent: 110
+  throttlePercent: 95
+  engineOn: 1
+  engineToggleKey: 105
+  throttleUpKey: 304
+  throttleDownKey: 306
+  throttleIdleKey: 120
+  throttleChangeRatePercentPerSecond: 45
+  throttleWheelStepPercent: 5
+  throttleKeyboardStepPercent: 0
+  useMouseWheelThrottle: 1
+  holdThrottleKeysContinuous: 1
+  idleThrust01: 0.04
+  negativeThrottleBrakeDrag: 0.018
+  afterburnerStartPercent: 100
+  afterburnerMaxPercent: 110
+  afterburnerThrustMultiplier: 1.35
+  afterburnerFuelBurnMultiplier: 2.5
+  useAfterburner: 1
+  useNegativeThrottleBrakeDrag: 1
+  throttleSpoolUpRate: 1.8
+  throttleSpoolDownRate: 2.4
+  effectiveThrottle01: 0
+  displayedThrottlePercent: 95
+  afterburnerActive: 0
+  negativeThrottleActive: 0
+  keyboardOverride: 1
+  invertKeyboardRoll: 0
+  invertKeyboardPitch: 0
+  invertKeyboardYaw: 0
+  keyboardRollThreshold: 0.1
+  keyboardPitchThreshold: 0.02
+  pitchUpCommand: -2.85
+  pitchDownCommand: 2.65
+  keyboardYawAuthority: 0.55
+  keyboardPitchSuppressesMouseAim: 1
+  useWTKeyboardElevatorOverride: 1
+  keyboardElevatorMouseBlend: 0.03
+  keyboardElevatorResponse: 34
+  keyboardElevatorReleaseBlend: 8.5
+  keyboardElevatorRateDamping: 0.045
+  keyboardElevatorUsesGLimit: 1
+  useScreenRollZoneSteering: 1
+  screenRollZoneStrength: 1
+  suppressAutoRollInNoRollZone: 1
+  noRollZoneLevelingBoost: 1.35
+  useScreenRollZoneBankHold: 1
+  maxScreenRollBankAngle: 72
+  bankHoldProportional: 0.048
+  bankHoldRollRateDamping: 0.24
+  invertScreenRollBankTarget: 0
+  rollCommandDeadzone: 0.025
+  bankHoldDeadzoneDeg: 2.5
+  rollCommandSlewRate: 12
+  yawAssistDeadzoneAosDeg: 1.2
+  centerRollStabilizeStrength: 0.12
+  mouseRollDeadzone: 0.055
+  mouseYawDeadzone: 0.045
+  rollRateDeadzoneDeg: 3
+  aosYawAssistDeadzoneDeg: 2.5
+  rollInputEnterDeadzone: 0.065
+  rollInputExitDeadzone: 0.04
+  useContinuousScreenBankHold: 0
+  continuousBankDeadzone: 0.035
+  continuousBankFullAtX: 0.42
+  continuousBankExponent: 1.15
+  useScreenPitchZoneSteering: 0
+  screenPitchZoneStrength: 1
+  suppressAutoPitchInNoPitchZone: 1
+  noPitchZoneLevelingBoost: 1.2
+  pitch: 0
+  yaw: 0
+  roll: 0
+  flyTarget: {x: 0, y: 0, z: 0}
+  localFlyTarget: {x: 0, y: 0, z: 0}
+  angleOffTarget: 0
+  signedBankAngle: 0
+  targetBankAngle: 0
+  bankHoldRollCommand: 0
+  signedPitchAngle: 0
+  speed: 0
+  gEstimate: 0
+  aoaEstimateDeg: 0
+  aosEstimateDeg: 0
+  verticalSpeed: 0
+  localVelocity: {x: 0, y: 0, z: 0}
+  velocityPitchAngleDeg: 0
+  velocityYawAngleDeg: 0
+  forwardVelocityAlignment: 1
+  forwardVelocityAngleDeg: 0
+  turnBandFactor: 0
+  pitchAuthorityFactor: 1
+  rollAuthorityFactor: 1
+  instructorState: ready
+  aggressiveRoll: 0
+  wingsLevelRoll: 0
+  wingsLevelInfluence: 0
+  autoPitchRaw: 0
+  pitchTorqueFactor: 1
+  rollTorqueFactor: 1
+  localAngularVelocity: {x: 0, y: 0, z: 0}
+  speedRegime: normal
+  state: ready
+  debugWPressed: 0
+  debugSPressed: 0
+  debugAPressed: 0
+  debugDPressed: 0
+  debugManualPitchInput: 0
+  debugManualRollInput: 0
+  debugRawPitchCommand: 0
+  debugRawYawCommand: 0
+  debugRawRollCommand: 0
+  debugFinalPitchCommand: 0
+  debugFinalYawCommand: 0
+  debugFinalRollCommand: 0
+  debugPitchAuthorityFactor: 1
+  debugRollAuthorityFactor: 1
+  debugControlState: ready
+  debugManualPitchBoostActive: 0
+  debugManualRollBoostActive: 0
+  debugManualYawBoostActive: 0
+  debugKeyboardPitchInput: 0
+  debugMousePitchInput: 0
+  debugMouseYawInput: 0
+  debugFinalPitchBeforeSmoothing: 0
+  debugFinalPitchAfterSmoothing: 0
+  debugFinalYawBeforeSmoothing: 0
+  debugFinalYawAfterSmoothing: 0
+  debugFinalRollBeforeSmoothing: 0
+  debugFinalRollAfterSmoothing: 0
+  debugRollHysteresisActive: 0
+  debugManualPitchActive: 0
+  debugManualRollActive: 0
+  debugManualYawActive: 0
+  debugMouseCenterQuiet: 0
+--- !u!114 &1408157559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef98df56a97de3e4d8f5db285dbe552e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavMouseFlightJet
+  controller: {fileID: 1411922571}
+  instructor: {fileID: 1408157558}
+  allowGlobalRigLookup: 1
+  thrust: 205
+  turnTorque: {x: 30, y: 9, z: 31}
+  forceMult: 1000
+  gravityOff: 1
+  linearDamping: 0.02
+  angularDamping: 1.22
+  maxAngularVelocity: 7.8
+  useAccelerationTorqueMode: 1
+  accelerationModeTorque: {x: 30, y: 9, z: 31}
+  forceModeTorque: {x: 7200, y: 3000, z: 9000}
+  maxAppliedTorqueAccelerationMode: {x: 58, y: 18, z: 62}
+  maxAppliedTorqueForceMode: {x: 9000, y: 4200, z: 10500}
+  useRateBasedControl: 1
+  targetPitchRateDeg: 66
+  targetYawRateDeg: 20
+  targetRollRateDeg: 92
+  targetAngularRateDeg: {x: 0, y: 0, z: 0}
+  rateControlP: {x: 0.58, y: 0.28, z: 0.48}
+  rateControlD: {x: 0.13, y: 0.13, z: 0.11}
+  maxRateControlTorque: {x: 50, y: 18, z: 60}
+  useFinalTorqueClamp: 1
+  maxAppliedTorque: {x: 58, y: 18, z: 62}
+  finalTorqueSmoothing: 10
+  controlSurfaceResponse: 7.5
+  controlSurfaceReleaseResponse: 6.5
+  maxPitchCommandRate: 4.8
+  maxYawCommandRate: 2.8
+  maxRollCommandRate: 5.8
+  sensitivity: 3.8
+  aggressiveTurnAngle: 9.5
+  enableMouseFlightAutopilot: 1
+  pitchGain: 0.96
+  yawGain: 0.22
+  rollGain: 1.3
+  maxAutoPitch: 0.68
+  noseDownTrim: 0.115
+  inputSmoothing: 5.8
+  useMousePitchComfort: 1
+  mousePitchDeadzoneY: 0.02
+  mousePitchFullAtY: 0.42
+  mousePitchExponent: 1.25
+  centerPitchLevelStrength: 0.08
+  noseHighPitchDownAssist: 0.1
+  noseHighAssistStartAngle: 8
+  noseHighAssistFullAngle: 24
+  bestTurnSpeed: 220
+  turnBandWidth: 95
+  bestTurnPitchBoost: 1.28
+  bestTurnRollBoost: 1.12
+  lowSpeedTurnPenalty: 0.62
+  highSpeedTurnPenalty: 0.72
+  manualPitchBoost: 2.75
+  manualRollBoost: 1.05
+  useManualControlAuthorityBoost: 1
+  manualPitchAuthorityBoost: 1.35
+  manualRollAuthorityBoost: 1.45
+  manualYawAuthorityBoost: 1.15
+  manualPitchResponseMultiplier: 1.7
+  manualRollResponseMultiplier: 1.8
+  manualLimiterBypassFactor: 0.35
+  manualDampingReduction: 0.45
+  manualEnvelopeBypassFactor: 0.65
+  manualPitchMinAuthority: 0.78
+  manualRollMinAuthority: 0.82
+  manualYawMinAuthority: 0.6
+  useDirectManualTorqueAssist: 0
+  directManualPitchAssist: 9
+  directManualRollAssist: 12
+  directManualYawAssist: 3.5
+  useSpeedAuthorityCurve: 1
+  lowSpeedPitchAuthority: 0.95
+  bestSpeedPitchAuthority: 1.27
+  highSpeedPitchAuthority: 0.76
+  lowSpeedRollAuthority: 0.7
+  bestSpeedRollAuthority: 1.05
+  highSpeedRollAuthority: 0.82
+  useGLimiter: 1
+  softGLimit: 8.8
+  hardGLimit: 11.2
+  gPitchReduction: 0.3
+  useLowSpeedNoseDownAssist: 1
+  stallAssistSpeed: 102
+  stallNoseDownAssist: 0.34
+  stallAssistMaxPitchClamp: 0.22
+  aoaSoftLimitDeg: 50
+  aoaHardLimitDeg: 65
+  aoaPitchReduction: 0.45
+  highGShortTermAllowance: 10.8
+  sustainedGLimit: 8.8
+  useHighSpeedPitchLimiter: 1
+  pitchLimiterStartSpeed: 310
+  pitchLimiterFullSpeed: 500
+  highSpeedPitchAuthorityMin: 0.55
+  highSpeedManualPitchAuthorityMin: 0.78
+  highSpeedPitchLimiterSmooth: 6
+  useAoAAoSSoftGuard: 1
+  aoaSoftGuardStart: 18
+  aoaHardGuardStart: 30
+  aosSoftGuardStart: 10
+  aosHardGuardStart: 24
+  highSlipGuardStart: 25
+  highSlipGuardHard: 55
+  guardPitchReduction: 0.55
+  guardYawReduction: 0.45
+  guardRollReduction: 0.35
+  highSpeedTurnDragStrength: 0.014
+  highAoADragStrength: 0.026
+  highAoSDragStrength: 0.034
+  maxEnvelopeDragAccel: 28
+  attitudeStabilizer: 1
+  rateDampingStrength: 0.145
+  rollLevelStrength: 0.48
+  pitchRecoveryStrength: 0.135
+  pilotInputSuppress: 0.96
+  maxStabilizerTorque: 160
+  centerAimAngleForLeveling: 8.5
+  activeTurnLevelingMultiplier: 0.18
+  centerLevelingMultiplier: 1
+  freeLookLevelingMultiplier: 0.55
+  yawDamper: 1
+  yawRateDampingStrength: 0.42
+  sideSlipDampingStrength: 0.55
+  maxAutoYawCommand: 0.24
+  preferBankTurnOverYaw: 1
+  useSemiAeroStabilizer: 1
+  sideSlipDamping: 0.12
+  sideSlipDampingHighAoS: 0.24
+  aoaDragStrength: 0.018
+  aosDragStrength: 0.026
+  forwardAlignmentAssist: 0.008
+  forwardAlignmentMaxTorque: 0.35
+  angularRateDampingPitch: 0.09
+  angularRateDampingYaw: 0.12
+  angularRateDampingRoll: 0.075
+  highAoADragStart: 18
+  highAoDampingStart: 12
+  useVelocityTurnAssist: 1
+  velocityTurnAssistStrength: 0.018
+  velocityTurnAssistMaxAccel: 14
+  velocityTurnAssistMinSpeed: 80
+  velocityTurnAssistFullSpeed: 230
+  velocityTurnAssistInputFactor: 0.58
+  velocityTurnAssistAoSLimit: 45
+  velocityTurnAssistSlipFadeStart: 20
+  velocityTurnAssistSlipFadeEnd: 55
+  aeroBody: {fileID: 0}
+  useAeroBodyAuthority: 1
+  aeroAuthorityBlend: 0.75
+  allowAeroBodyToFadeVelocityAssist: 1
+  debugAeroBodyAuthority: 1
+  debugAeroBodyActive: 0
+  atmosphericEngine: {fileID: 0}
+  useAtmosphericEngineScale: 1
+  debugEngineThrustScale: 1
+  enableCoordinatedYawAssist: 1
+  aosYawAssistStrength: 0.06
+  maxAutoRudderAssist: 0.55
+  coordinatedYawSpeedMin: 85
+  coordinatedYawFullSpeed: 210
+  coordinatedYawBankFactor: 0.35
+  coordinatedYawTurnDemandFactor: 0.35
+  coordinatedYawDamping: 0.28
+  coordinatedYawAssistOutput: 0
+  autoSpeedAssist: 1
+  targetCruiseSpeed: 315
+  minCombatSpeed: 120
+  maxCombatSpeed: 540
+  speedAssistStrength: 0.22
+  overspeedDrag: 0.055
+  lowSpeedThrustBoost: 0.55
+  throttle: 0.95
+  throttleChangeRate: 0.65
+  maxThrottle: 1.4
+  minThrottlePercent: -5
+  idleThrottlePercent: 0
+  militaryThrottlePercent: 100
+  maxThrottlePercent: 110
+  throttlePercent: 95
+  engineOn: 1
+  engineToggleKey: 105
+  throttleUpKey: 304
+  throttleDownKey: 306
+  throttleIdleKey: 120
+  throttleChangeRatePercentPerSecond: 45
+  throttleWheelStepPercent: 5
+  throttleKeyboardStepPercent: 0
+  useMouseWheelThrottle: 1
+  holdThrottleKeysContinuous: 1
+  idleThrust01: 0.04
+  negativeThrottleBrakeDrag: 0.018
+  afterburnerStartPercent: 100
+  afterburnerMaxPercent: 110
+  afterburnerThrustMultiplier: 1.4
+  afterburnerFuelBurnMultiplier: 2.5
+  useAfterburner: 1
+  useNegativeThrottleBrakeDrag: 1
+  throttleSpoolUpRate: 2.2
+  throttleSpoolDownRate: 2.6
+  effectiveThrottle01: 0
+  displayedThrottlePercent: 95
+  afterburnerActive: 0
+  negativeThrottleActive: 0
+  keyboardOverride: 1
+  invertKeyboardRoll: 0
+  invertKeyboardPitch: 0
+  invertKeyboardYaw: 0
+  keyboardRollThreshold: 0.1
+  keyboardPitchThreshold: 0.02
+  pitchUpCommand: -2.85
+  pitchDownCommand: 2.65
+  keyboardYawAuthority: 0.55
+  keyboardPitchSuppressesMouseAim: 1
+  useWTKeyboardElevatorOverride: 1
+  keyboardElevatorMouseBlend: 0.03
+  keyboardElevatorResponse: 34
+  keyboardElevatorReleaseBlend: 8.5
+  keyboardElevatorRateDamping: 0.045
+  keyboardElevatorUsesGLimit: 1
+  useScreenRollZoneSteering: 1
+  screenRollZoneStrength: 1
+  suppressAutoRollInNoRollZone: 1
+  noRollZoneLevelingBoost: 1.35
+  useScreenRollZoneBankHold: 1
+  maxScreenRollBankAngle: 72
+  bankHoldProportional: 0.048
+  bankHoldRollRateDamping: 0.24
+  invertScreenRollBankTarget: 0
+  rollCommandDeadzone: 0.025
+  bankHoldDeadzoneDeg: 2.5
+  rollCommandSlewRate: 12
+  yawAssistDeadzoneAosDeg: 1.2
+  centerRollStabilizeStrength: 0.12
+  mouseRollDeadzone: 0.055
+  mouseYawDeadzone: 0.045
+  rollRateDeadzoneDeg: 3
+  aosYawAssistDeadzoneDeg: 2.5
+  rollInputEnterDeadzone: 0.065
+  rollInputExitDeadzone: 0.04
+  useContinuousScreenBankHold: 0
+  continuousBankDeadzone: 0.035
+  continuousBankFullAtX: 0.42
+  continuousBankExponent: 1.15
+  useScreenPitchZoneSteering: 0
+  screenPitchZoneStrength: 1
+  suppressAutoPitchInNoPitchZone: 1
+  noPitchZoneLevelingBoost: 1.2
+  pitch: 0
+  yaw: 0
+  roll: 0
+  flyTarget: {x: 0, y: 0, z: 0}
+  localFlyTarget: {x: 0, y: 0, z: 0}
+  angleOffTarget: 0
+  aggressiveRoll: 0
+  wingsLevelRoll: 0
+  wingsLevelInfluence: 0
+  autoPitchRaw: 0
+  speed: 0
+  effectiveThrottle: 0
+  machEstimate: 0
+  gEstimate: 0
+  aoaEstimateDeg: 0
+  aosEstimateDeg: 0
+  verticalSpeed: 0
+  localVelocity: {x: 0, y: 0, z: 0}
+  velocityPitchAngleDeg: 0
+  velocityYawAngleDeg: 0
+  forwardVelocityAlignment: 1
+  forwardVelocityAngleDeg: 0
+  speedRegime: normal
+  turnBandFactor: 0
+  pitchTorqueFactor: 1
+  rollTorqueFactor: 1
+  pitchAuthorityFactor: 1
+  rollAuthorityFactor: 1
+  signedBankAngle: 0
+  targetBankAngle: 0
+  bankHoldRollCommand: 0
+  signedPitchAngle: 0
+  localAngularVelocity: {x: 0, y: 0, z: 0}
+  debugAppliedTorque: {x: 0, y: 0, z: 0}
+  debugForwardVelocityAngleDeg: 0
+  debugSideSlipAmount: 0
+  debugSemiAeroActive: 0
+  highSpeedPitchLimiterFactor: 1
+  aoaAosGuardFactor: 1
+  debugFinalTorqueClampActive: 0
+  velocityTurnAssistCurrentFactor: 1
+  envelopeDragAmount: 0
+  debugControlTorqueBeforeClamp: {x: 0, y: 0, z: 0}
+  debugControlTorqueAfterClamp: {x: 0, y: 0, z: 0}
+  debugRawControlCommand: {x: 0, y: 0, z: 0}
+  debugActuatedControlCommand: {x: 0, y: 0, z: 0}
+  debugControlSurfaceResponseActive: 0
+  debugReceivedPitchCommand: 0
+  debugReceivedYawCommand: 0
+  debugReceivedRollCommand: 0
+  debugActuatedPitchCommand: 0
+  debugActuatedYawCommand: 0
+  debugActuatedRollCommand: 0
+  debugFinalTorque: {x: 0, y: 0, z: 0}
+  debugTorqueMode: Acceleration
+  debugManualInputActive: 0
+  debugAngularDragEffective: 0
+  debugAngularVelocity: {x: 0, y: 0, z: 0}
+  debugAngularResponseMagnitude: 0
+  debugActuatorState: ready
+  debugRigidbodyConstraints: 0
+  debugDirectManualAssistActive: 0
+  debugDirectManualAssistTorque: {x: 0, y: 0, z: 0}
+  debugManualPitchBoostActive: 0
+  debugManualRollBoostActive: 0
+  debugManualYawBoostActive: 0
+  debugTargetAngularRateDeg: {x: 0, y: 0, z: 0}
+  debugCurrentAngularRateDeg: {x: 0, y: 0, z: 0}
+  debugRateErrorDeg: {x: 0, y: 0, z: 0}
+  debugRateControlTorque: {x: 0, y: 0, z: 0}
+  debugRollHysteresisActive: 0
+  debugManualPitchActive: 0
+  debugManualRollActive: 0
+  debugManualYawActive: 0
+  debugMouseCenterQuiet: 0
+  debugFinalPitchBeforeSmoothing: 0
+  debugFinalPitchAfterSmoothing: 0
+  debugFinalYawBeforeSmoothing: 0
+  debugFinalYawAfterSmoothing: 0
+  debugFinalRollBeforeSmoothing: 0
+  debugFinalRollAfterSmoothing: 0
+  instructorState: ready
+  state: ready
+--- !u!54 &1408157560
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  serializedVersion: 5
+  m_Mass: 16500
+  m_LinearDamping: 0.02
+  m_AngularDamping: 1.22
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 2
+--- !u!114 &1408157561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9ad7214856d95444954ed9a216d430c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MavLandingGearSystem
+  toggleKey: 103
+  inputEnabled: 1
+  gearDown: 1
+  gearProgress: 1
+  extendSeconds: 0.25
+  retractSeconds: 0.25
+  useLandingOnOffGroups: 1
+  autoFindLandingOnOffGroups: 1
+  landingOnKeywords:
+  - landingon
+  - landing_on
+  - landing on
+  - gearondown
+  - geardown
+  - gear_down
+  - wheelson
+  - wheelsdown
+  landingOffKeywords:
+  - landingoff
+  - landing_off
+  - landing off
+  - gearoffup
+  - gearup
+  - gear_up
+  - wheelsoff
+  - wheelsup
+  landingOnObjects: []
+  landingOffObjects: []
+  autoFindGearVisuals: 1
+  searchActiveAircraftOnly: 1
+  refreshWhenAircraftVisualChanges: 1
+  refreshIntervalSeconds: 0.5
+  gearVisuals: []
+  hideWhenRetracted: 1
+  animateRotation: 0
+  retractRotationOffsetEuler: {x: -90, y: 0, z: 0}
+  retractedScaleMultiplier: 1
+  activeAircraftVisualName: 
+  foundLandingOnCount: 0
+  foundLandingOffCount: 0
+  foundGearCount: 0
+  usingLandingOnOffMode: 0
+  debugLogs: 0
+--- !u!114 &1408157562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daafcc3513ca4a849a358560726e8f8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavGunTracerImpactVfx
+  weaponSystem: {fileID: 0}
+  enableFallbackTracer: 0
+  tracerLifeSeconds: 0.055
+  tracerWidth: 0.055
+  maxTracerLength: 2600
+  tracerColor: {r: 0.15, g: 1, b: 0.95, a: 0.92}
+  muzzleForward: 11.5
+  muzzleRight: 0.85
+  muzzleDown: 1.1
+  enableImpactSparks: 1
+  sparkCount: 5
+  sparkLifeSeconds: 0.18
+  sparkSpeed: 38
+  sparkScale: 0.055
+  sparkColor: {r: 0.2, g: 1, b: 0.95, a: 0.95}
+  hotSparkColor: {r: 1, g: 0.55, b: 0.12, a: 0.95}
+  enableRicochetFlecks: 1
+  fleckCount: 3
+  fleckLifeSeconds: 0.12
+  fleckSpeed: 72
+  fleckScale: 0.028
+  fallbackAmmoDeltaDetection: 1
+  spawnSparksOnlyOnGunHit: 1
+  minimumShotInterval: 0.005
+  debugTracerNotifications: 0
+  debugSparkBursts: 0
+  debugLastVfx: ready
+--- !u!114 &1408157563
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d9195b32c4f7304a90ef02a59a4a32e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavAirToAirLeadSight
+  playerCamera: {fileID: 0}
+  sensorSuite: {fileID: 0}
+  gunSystem: {fileID: 0}
+  ownRigidbody: {fileID: 0}
+  showLeadSight: 1
+  requireSensorOn: 1
+  requireSelectedTarget: 1
+  requireTargetInFront: 1
+  useOwnVelocityInheritance: 1
+  ownVelocityInheritanceFactor: 0.75
+  fallbackGunMuzzleSpeed: 1030
+  maxLeadTimeSeconds: 3.6
+  maxDisplayRangeMeters: 2800
+  maxReticleOffscreenMargin: 80
+  circleSegments: 48
+  reticleRadiusPixels: 15
+  reticleGapPixels: 6
+  reticleLinePixels: 13
+  reticleLineWidth: 2
+  goodColor: {r: 0.25, g: 1, b: 0.95, a: 0.92}
+  marginalColor: {r: 1, g: 0.82, b: 0.25, a: 0.92}
+  noSolutionColor: {r: 1, g: 0.25, b: 0.18, a: 0.78}
+  showText: 1
+  textOffset: {x: 20, y: -30}
+  debugTarget: {fileID: 0}
+  debugLeadPoint: {x: 0, y: 0, z: 0}
+  debugTimeToImpact: 0
+  debugRangeMeters: 0
+  debugAspectDeg: 0
+  debugSolutionQuality: 0
+  debugCue: NO TARGET
+--- !u!1 &1411922570
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1411922572}
+  - component: {fileID: 1411922571}
+  m_Layer: 0
+  m_Name: MaverickFresh_MouseFlightRig
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1411922571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1411922570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c04f8e74a8ef1848ae5011aae8f6ab9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavMouseFlightRig
+  aircraft: {fileID: 1408157546}
+  mouseAim: {fileID: 0}
+  cameraRig: {fileID: 0}
+  playerCamera: {fileID: 330585545}
+  aimInputMode: 0
+  useFixed: 0
+  mouseSensitivity: 3.8
+  aimDistance: 600
+  cursorAimLimit: 0.38
+  cursorAimSmooth: 19
+  showCursorInCursorMode: 1
+  lockCursorInDeltaMode: 1
+  useScreenRollZones: 1
+  rollNoRollHalfWidth: 0.22
+  rollFullAtHalfWidth: 0.42
+  rollZoneExponent: 1.25
+  invertRollZone: 0
+  screenRollCommand: 0
+  isInRollZone: 0
+  useScreenPitchZones: 0
+  pitchNoPitchHalfHeight: 0.16
+  pitchFullAtHalfHeight: 0.4
+  pitchZoneExponent: 1.2
+  invertPitchZone: 0
+  screenPitchCommand: 0
+  isInPitchZone: 0
+  cursorOffsetFromCenter: {x: 0, y: 0}
+  camSmoothSpeed: 10.5
+  cameraLocalPosition: {x: 0, y: 5.8, z: -16.880001}
+  cameraLocalEuler: {x: 0, y: 0, z: 0}
+  cameraFov: 71.36
+  zoomFov: 38
+  fovSmooth: 4
+  cameraNearClip: 0.08
+  cameraFarClip: 24000
+  cameraLooksAtAimWithoutFreeLook: 0
+  rightMouseZoom: 1
+  useCameraLag: 1
+  cameraPositionLag: 7
+  cameraRotationLag: 8
+  hardManeuverCameraLagMultiplier: 0.65
+  maxCameraLagDistance: 6
+  useSpeedBasedFov: 1
+  minSpeedFov: 60
+  cruiseSpeedFov: 68
+  maxSpeedFov: 78
+  fovSpeedMin: 80
+  fovSpeedMax: 360
+  useCameraCollisionAvoidance: 1
+  cameraMinDistance: 9
+  cameraMaxDistance: 18
+  diveCameraPullback: 4
+  steepDivePitchThreshold: -55
+  cameraCollisionRadius: 0.8
+  cameraRollFollowStrength: 0.3
+  stabilizeCameraHorizon: 1
+  horizonStabilizeSmooth: 12
+  useMouseAimCameraFollow: 1
+  mouseAimCameraFollowStrength: 0.45
+  mouseAimCameraFollowSmooth: 10
+  mouseAimCameraMaxAngle: 30
+  disableMouseAimCameraFollowInFreeLook: 1
+  disableMouseAimCameraFollowInTGPFocus: 1
+  useViewportOffsetCameraFollow: 1
+  mouseAimCameraFollowDeadzone: 0.01
+  mouseAimCameraViewportOffset: {x: 0, y: 0}
+  cameraFollowState: ready
+  freeLookKey: 99
+  freeLookAltKey: 308
+  freeLookSensitivity: 3
+  maxFreeLookPitch: 70
+  freeLookReturnSpeed: 9
+  isMouseAimFrozen: 0
+  freeLookHeld: 0
+  frozenDirection: {x: 0, y: 0, z: 1}
+  cursorViewport: {x: 0.5, y: 0.5}
+  freeLookYaw: 0
+  freeLookPitch: 0
+  showDebugInfo: 0
+  rigState: ready
+--- !u!4 &1411922572
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1411922570}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1668255349
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1668255353}
+  - component: {fileID: 1668255352}
+  - component: {fileID: 1668255351}
+  - component: {fileID: 1668255350}
+  m_Layer: 0
+  m_Name: Ground_TestRange
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!64 &1668255350
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1668255349}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1668255351
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1668255349}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9f6ae4d32688511419177a5e5644b257, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1668255352
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1668255349}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1668255353
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1668255349}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 100000, y: 1, z: 100000}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1840020929
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1840020931}
+  - component: {fileID: 1840020932}
+  m_Layer: 0
+  m_Name: MaverickFresh_Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1840020931
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1840020929}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1840020932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1840020929}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a236ee7c74cbf748937835ce3cf458c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavFreshBootstrap
+  aircraftObject: {fileID: 0}
+  mainCamera: {fileID: 330585545}
+  genericPlayerName: Mav_Player
+  createGenericPlayerIfMissing: 0
+  applyLegacyF15Profile: 0
+  setupOnAwake: 1
+  disableOldMaverickComponents: 1
+  disableOldCameras: 1
+  disableWheelAndLanding: 1
+  forceGravityOff: 1
+  installPhysicalAIStarter: 0
+  installCASStarter: 1
+  installWTPolish: 1
+  installStateSanityPatch: 1
+  installTGPStateManager: 1
+  installMountValidator: 1
+  installStandaloneControlDebugOverlay: 0
+  preserveExistingRadarSystems: 1
+  forceRadarOffOnStart: 1
+  hideLegacyRadarHudOnStart: 1
+  applyAirStart: 1
+  startAltitude: 800
+  startSpeed: 280
+  startEulerAngles: {x: 0, y: 0, z: 0}
+  jetThrust: 165
+  jetTurnTorque: {x: 105, y: 30, z: 70}
+  jetForceMult: 1000
+  mouseSensitivity: 3
+  aimDistance: 600
+  aimInputMode: 0
+  rig: {fileID: 0}
+  jet: {fileID: 0}
+  instructor: {fileID: 0}
+  hud: {fileID: 0}
+  profile: {fileID: 0}
+  f15eProfile: {fileID: 0}
+  physicalAIStarter: {fileID: 0}
+  physicalAIScenario: {fileID: 0}
+  casStarter: {fileID: 0}
+  wtPolish: {fileID: 0}
+  quickHelp: {fileID: 0}
+  tgpStateManager: {fileID: 0}
+  mountValidator: {fileID: 0}
+  controlDebugOverlay: {fileID: 0}
+--- !u!1 &1853147844
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1853147845}
+  m_Layer: 0
+  m_Name: AircraftVisuals
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1853147845
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1853147844}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1408157546}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 330585546}
+  - {fileID: 1668255353}
+  - {fileID: 1840020931}
+  - {fileID: 410087041}
+  - {fileID: 832575519}
+  - {fileID: 939370119}
+  - {fileID: 96604521}
+  - {fileID: 1408157546}
+  - {fileID: 1411922572}

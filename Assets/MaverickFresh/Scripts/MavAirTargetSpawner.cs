@@ -43,6 +43,13 @@ namespace MaverickFresh
                 mover.orbitRadius = 350f + i * 170f;
                 mover.orbitSpeedDeg = 10f + i * 2.5f;
                 mover.altitude = centerAltitude + i * 80f;
+
+                MavRadarSignature sig = drone.AddComponent<MavRadarSignature>();
+                sig.displayName = "Drone " + (i + 1).ToString("00");
+                sig.team = 1;
+                sig.isAirTarget = true;
+                sig.radarCrossSectionSqm = 3.0f + i * 0.8f;
+                sig.irSignature = 0.85f + i * 0.10f;
             }
         }
     }

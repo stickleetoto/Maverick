@@ -77,12 +77,35 @@ namespace MaverickFresh
         public Vector3 cameraLocalEuler = Vector3.zero;
         public float cameraFov = 64f;
         public float zoomFov = 42f;
-        public float fovSmooth = 10f;
+        public float fovSmooth = 4f;
         public float cameraNearClip = 0.08f;
         public float cameraFarClip = 24000f;
         [Tooltip("Keep this off for War Thunder-like behavior. If on, camera rotates toward aim even without free look.")]
         public bool cameraLooksAtAimWithoutFreeLook = false;
         public bool rightMouseZoom = true;
+
+        [Header("v0.18.6 Camera Lag")]
+        public bool useCameraLag = true;
+        public float cameraPositionLag = 7f;
+        public float cameraRotationLag = 8f;
+        public float hardManeuverCameraLagMultiplier = 0.65f;
+        public float maxCameraLagDistance = 6f;
+
+        [Header("v0.18.6 Speed FOV")]
+        public bool useSpeedBasedFov = true;
+        public float minSpeedFov = 60f;
+        public float cruiseSpeedFov = 68f;
+        public float maxSpeedFov = 78f;
+        public float fovSpeedMin = 80f;
+        public float fovSpeedMax = 360f;
+
+        [Header("v0.18.6 Camera Protection")]
+        public bool useCameraCollisionAvoidance = true;
+        public float cameraMinDistance = 9f;
+        public float cameraMaxDistance = 18f;
+        public float diveCameraPullback = 4f;
+        public float steepDivePitchThreshold = -55f;
+        public float cameraCollisionRadius = 0.8f;
 
         [Header("WarThunder-like Camera Stabilization")]
         [Range(0f, 1f)]
@@ -353,8 +376,16 @@ namespace MaverickFresh
             }
 
             float smooth = stabilizeCameraHorizon ? horizonStabilizeSmooth : camSmoothSpeed;
+            if (useCameraLag && !freeLookHeld)
+            {
+                float hardT = GetHardManeuverCameraT();
+                smooth = cameraRotationLag * Mathf.Lerp(1f, hardManeuverCameraLagMultiplier, hardT);
+            }
+
             if (!freeLookHeld && (cameraFollowState == "viewport_follow" || cameraFollowState == "aim_follow"))
-                smooth = mouseAimCameraFollowSmooth;
+                smooth = useCameraLag
+                    ? Mathf.Min(smooth, mouseAimCameraFollowSmooth)
+                    : mouseAimCameraFollowSmooth;
 
             cameraRig.rotation = Damp(cameraRig.rotation, targetCameraRotation, smooth, Time.deltaTime);
         }
@@ -584,7 +615,28 @@ namespace MaverickFresh
                 mouseAim.position = aircraft.position;
 
             if (cameraRig != null && aircraft != null)
-                cameraRig.position = aircraft.position;
+            {
+                Vector3 desiredRigPosition = aircraft.position;
+
+                if (useCameraLag)
+                {
+                    float hardT = GetHardManeuverCameraT();
+                    float lag = cameraPositionLag * Mathf.Lerp(1f, hardManeuverCameraLagMultiplier, hardT);
+                    float t = 1f - Mathf.Exp(-lag * Time.deltaTime);
+                    cameraRig.position = Vector3.Lerp(cameraRig.position, desiredRigPosition, t);
+
+                    Vector3 offset = cameraRig.position - desiredRigPosition;
+                    float maxLag = Mathf.Max(0f, maxCameraLagDistance);
+                    if (maxLag > 0f && offset.magnitude > maxLag)
+                        cameraRig.position = desiredRigPosition + offset.normalized * maxLag;
+                }
+                else
+                {
+                    cameraRig.position = desiredRigPosition;
+                }
+            }
+
+            UpdateCameraLocalPosition();
         }
 
         private void UpdateCameraFov()
@@ -593,6 +645,30 @@ namespace MaverickFresh
                 return;
 
             float targetFov = cameraFov;
+            if (useSpeedBasedFov && aircraft != null)
+            {
+                Rigidbody rb = aircraft.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    float speed = rb.linearVelocity.magnitude;
+                    float cruiseSpeed = Mathf.Lerp(fovSpeedMin, fovSpeedMax, 0.5f);
+                    MavMouseFlightJet jet = aircraft.GetComponent<MavMouseFlightJet>();
+                    if (jet != null)
+                        cruiseSpeed = Mathf.Clamp(jet.targetCruiseSpeed, fovSpeedMin + 1f, fovSpeedMax - 1f);
+
+                    if (speed <= cruiseSpeed)
+                    {
+                        float lowT = Mathf.InverseLerp(fovSpeedMin, cruiseSpeed, speed);
+                        targetFov = Mathf.Lerp(minSpeedFov, cruiseSpeedFov, lowT);
+                    }
+                    else
+                    {
+                        float highT = Mathf.InverseLerp(cruiseSpeed, Mathf.Max(cruiseSpeed + 1f, fovSpeedMax), speed);
+                        targetFov = Mathf.Lerp(cruiseSpeedFov, maxSpeedFov, highT);
+                    }
+                }
+            }
+
             if (rightMouseZoom && MavFreshInput.GetKey(KeyCode.Mouse1))
                 targetFov = zoomFov;
 
@@ -600,6 +676,63 @@ namespace MaverickFresh
             playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, targetFov, t);
             playerCamera.nearClipPlane = cameraNearClip;
             playerCamera.farClipPlane = cameraFarClip;
+        }
+
+        private void UpdateCameraLocalPosition()
+        {
+            if (playerCamera == null || cameraRig == null)
+                return;
+
+            Vector3 desiredLocal = cameraLocalPosition;
+            if (useCameraCollisionAvoidance && aircraft != null)
+            {
+                float baseDistance = Mathf.Clamp(Mathf.Abs(cameraLocalPosition.z), cameraMinDistance, cameraMaxDistance);
+                float pitchAngle = Mathf.Asin(Mathf.Clamp(aircraft.forward.y, -1f, 1f)) * Mathf.Rad2Deg;
+                float diveT = Mathf.InverseLerp(steepDivePitchThreshold, -90f, pitchAngle);
+                float targetDistance = Mathf.Clamp(baseDistance + diveCameraPullback * diveT, cameraMinDistance, cameraMaxDistance + diveCameraPullback);
+                desiredLocal.z = -targetDistance;
+
+                Vector3 desiredWorld = cameraRig.TransformPoint(desiredLocal);
+                Vector3 fromAircraft = desiredWorld - aircraft.position;
+                float desiredDistance = fromAircraft.magnitude;
+                if (desiredDistance > cameraMinDistance && fromAircraft.sqrMagnitude > 0.001f)
+                {
+                    Vector3 direction = fromAircraft.normalized;
+                    Vector3 castOrigin = aircraft.position + direction * cameraMinDistance;
+                    float castLength = desiredDistance - cameraMinDistance;
+                    RaycastHit hit;
+                    if (Physics.SphereCast(castOrigin, cameraCollisionRadius, direction, out hit, castLength, ~0, QueryTriggerInteraction.Ignore))
+                    {
+                        float protectedDistance = cameraMinDistance + Mathf.Max(0f, hit.distance - cameraCollisionRadius);
+                        desiredWorld = aircraft.position + direction * protectedDistance;
+                        desiredLocal = cameraRig.InverseTransformPoint(desiredWorld);
+                    }
+                }
+            }
+
+            float lag = useCameraLag ? Mathf.Max(0.01f, cameraPositionLag) : 40f;
+            float t = 1f - Mathf.Exp(-lag * Time.deltaTime);
+            playerCamera.transform.localPosition = Vector3.Lerp(playerCamera.transform.localPosition, desiredLocal, t);
+            playerCamera.transform.localRotation = Quaternion.Euler(cameraLocalEuler);
+        }
+
+        private float GetHardManeuverCameraT()
+        {
+            if (aircraft == null)
+                return 0f;
+
+            Rigidbody rb = aircraft.GetComponent<Rigidbody>();
+            if (rb == null)
+                return 0f;
+
+            float velocityAngle = rb.linearVelocity.sqrMagnitude > 1f
+                ? Vector3.Angle(aircraft.forward, rb.linearVelocity.normalized)
+                : 0f;
+            float angularRateDeg = rb.angularVelocity.magnitude * Mathf.Rad2Deg;
+
+            float angleT = Mathf.InverseLerp(12f, 55f, velocityAngle);
+            float rateT = Mathf.InverseLerp(40f, 160f, angularRateDeg);
+            return Mathf.Clamp01(Mathf.Max(angleT, rateT));
         }
 
         private Quaternion Damp(Quaternion a, Quaternion b, float lambda, float dt)

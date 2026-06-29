@@ -29,6 +29,11 @@ namespace MaverickFresh
         public bool useGravity = true;
         public bool alignToVelocity = true;
 
+        [Header("Launch Safety")]
+        public Vector3 inheritedVelocity;
+        public Transform ignoredRoot;
+        public float ignoreRootUntilTime;
+
         [Header("Guidance")]
         public bool guided;
         public Transform guidedTarget;
@@ -94,6 +99,12 @@ namespace MaverickFresh
             guidedPoint = point;
         }
 
+        public void SetIgnoredRoot(Transform root, float seconds)
+        {
+            ignoredRoot = root;
+            ignoreRootUntilTime = Time.time + Mathf.Max(0f, seconds);
+        }
+
         private void Start()
         {
             spawnTime = Time.time;
@@ -122,14 +133,10 @@ namespace MaverickFresh
             Vector3 delta = next - old;
             float dist = delta.magnitude;
 
-            if (dist > 0.001f && Physics.Raycast(old, delta.normalized, out RaycastHit hit, dist, hitMask, QueryTriggerInteraction.Ignore))
+            if (dist > 0.001f && TryFindImpact(old, delta.normalized, dist, out RaycastHit hit))
             {
-                // Ignore hitting our own trigger-only collider if the prefab has one.
-                if (!hit.collider.transform.IsChildOf(transform))
-                {
-                    Impact(hit.point);
-                    return;
-                }
+                Impact(hit.point);
+                return;
             }
 
             transform.position = next;
@@ -191,6 +198,42 @@ namespace MaverickFresh
                 return guidedTarget.position;
 
             return guidedPoint;
+        }
+
+        private bool TryFindImpact(Vector3 origin, Vector3 direction, float distance, out RaycastHit bestHit)
+        {
+            bestHit = default(RaycastHit);
+            RaycastHit[] hits = Physics.RaycastAll(origin, direction, distance, hitMask, QueryTriggerInteraction.Ignore);
+            float bestDistance = float.MaxValue;
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                RaycastHit h = hits[i];
+                if (ShouldIgnoreCollider(h.collider))
+                    continue;
+
+                if (h.distance < bestDistance)
+                {
+                    bestDistance = h.distance;
+                    bestHit = h;
+                }
+            }
+
+            return bestDistance < float.MaxValue;
+        }
+
+        private bool ShouldIgnoreCollider(Collider candidate)
+        {
+            if (candidate == null)
+                return true;
+
+            if (candidate.transform.IsChildOf(transform))
+                return true;
+
+            if (ignoredRoot != null && Time.time <= ignoreRootUntilTime && candidate.transform.IsChildOf(ignoredRoot))
+                return true;
+
+            return false;
         }
 
         public void Impact(Vector3 point)
