@@ -65,6 +65,40 @@ Aircraft-specific aerodynamic polynomial inputs are converted to the units used 
 - `MavF16ReferenceValidation`: deterministic coefficient, geometry, inertia, and axis-mapping regression checks.
 - Editor runner: `Maverick > Flight Dynamics > Run F-16 Reference Validation`.
 
+### Phase 1 live-FDM infrastructure
+
+- `MavPilotCommand`: aircraft-independent normalized pilot intent (pitch/roll/yaw -1..1, throttle 0..1). No torque, no forces, no deflections.
+- `MavFlightControlLawBase`: `(state, atmosphere, pilotCommand, profile) -> MavControlInput`. Drives the actuator at execution order -300; no Rigidbody access.
+- `MavDirectSurfaceControlLaw`: Phase C0 test law. A linear normalized-intent-to-bounded-deflection mapping and nothing else.
+- `MavControlSurfaceActuatorBase`: aircraft-independent actuator contract, so the core never references an aircraft-specific actuator type.
+- `MavPropulsionModelBase`: `(state, atmosphere, throttle, dt) -> MavPropulsiveLoads`, plus an explicit `HasAuthoritativeData` honesty flag.
+- `MavNullPropulsionModel`: zero-thrust placeholder with power-state plumbing. Used for the F-16 because no authoritative F-16 propulsion data is frozen.
+- `MavPropulsiveLoads`: dimensional propulsive force/moment in aerodynamic body axes.
+- `MavFlightDynamicsLoadSet`: single-step load accumulator with per-source contribution counters, an applied flag, and a finiteness check.
+- `MavFlightDynamicsTelemetry`: one pushed sample per physics step, optional rate-limited console logging (off by default), and optional in-memory CSV capture (off by default, written to disk only on an explicit call).
+- Editor runners: `Run Phase 1 Live-FDM Validation` and `Run All Flight Dynamics Validation`.
+
+### Runtime pipeline
+
+```text
+MavPilotCommand                     normalized intent, no physical units
+  -> MavFlightControlLawBase        (order -300) command shaping
+  -> MavControlInput                physical deflection degrees + throttle
+  -> MavControlSurfaceActuatorBase  (order -200) bounded / rate-limited actual surfaces
+  -> MavAerodynamicModelBase + MavPropulsionModelBase
+  -> MavFlightDynamicsLoadSet       summed exactly once
+  -> MavSixDoFBody                  (order -100) applied exactly once
+  -> Unity Rigidbody
+```
+
+The state a control law reads is the state `MavSixDoFBody` sampled during the previous physics
+step, because the law runs ahead of the body. That is one fixed step of sensor latency. It is
+deterministic and intentional, not an artifact of component ordering.
+
+To fly the C0 test law, set `MavDirectSurfaceControlLaw.pilotCommand`. Do not write
+`MavF16ControlActuator.command` directly while the law is driving the actuator; the law owns that
+field and overwrites it every physics step.
+
 `MavSixDoFBody.simulationEnabled` defaults to `false` intentionally.
 
 ## F-16 Morelli aerodynamic reference envelope
@@ -134,23 +168,99 @@ The validator also checks the frozen geometry, mass conversion, Unity principal 
 
 The new path is designed around one owner per physical effect:
 
+- normalized pilot intent -> `MavPilotCommand`
+- command shaping / control allocation -> `MavFlightControlLawBase` (`MavDirectSurfaceControlLaw` for C0)
+- physical surface state -> `MavControlSurfaceActuatorBase` (`MavF16ControlActuator` for the F-16)
 - aircraft aerodynamic coefficients -> aircraft-specific aero model
 - coefficient dimensionalization -> `MavFlightDynamicsMath`
-- aerodynamic Rigidbody force/moment -> `MavSixDoFBody`
+- propulsive force/moment -> `MavPropulsionModelBase` (`MavNullPropulsionModel`, zero thrust, for the F-16)
+- load summation -> `MavFlightDynamicsLoadSet`
+- final Rigidbody force/moment -> `MavSixDoFBody`, and only `MavSixDoFBody`
 - atmosphere -> `MavAtmosphereModel`
-- physical surface state -> `MavF16ControlActuator`
 - mass / inertia preset -> `MavF16MassReference`
 
-The legacy Maverick force/torque stack remains untouched on this branch. Do not enable both paths on the same live aircraft yet.
+`MavSixDoFBody` is the single load-application boundary for the new path. Nothing else in the new
+path may call `Rigidbody.AddForce` or `Rigidbody.AddTorque`.
+
+Duplicate application is structurally prevented, not merely avoided by convention:
+
+- `MavFlightDynamicsLoadSet` counts contributions per source and refuses a second one per step.
+- The set refuses to be marked applied twice, and refuses application entirely while a duplicate
+  contribution is recorded.
+- `MavSixDoFBody` refuses a second application at the same `Time.fixedTime` and logs an error.
+- A non-finite (NaN / Infinity) total is refused before it can reach the Rigidbody.
+
+Every rejection increments an inspector-visible counter (`debugRejectedDuplicateApplications`,
+`debugRejectedNonFiniteApplications`), so an ownership bug is observable rather than silent.
+
+The legacy Maverick force/torque stack remains untouched on this branch.
+`MavSixDoFBody.simulationEnabled` stays `false` by default, and the F-16 auto-setup explicitly holds
+it off, so the two paths never own the same physical effect at once.
+
+## Propulsion status
+
+No authoritative F-16 propulsion data is frozen in this repository. The F-16 therefore runs
+`MavNullPropulsionModel`, which:
+
+- implements the full propulsion contract so the pipeline can be wired and inspected,
+- returns zero force and zero moment at every throttle setting,
+- reports `HasAuthoritativeData == false`, which telemetry and the readiness log both surface.
+
+No thrust map, installed-thrust figure, or engine spool time constant has been invented. The
+optional power-state lag defaults to 0 s (instant) precisely because no sourced value exists.
+
+## Open issue: moment / rate axis handedness
+
+Recorded here because Phase 1 does not resolve it and it gates C0 flight testing.
+
+The Unity-local basis (X right, Y up, Z forward) and the aerodynamic body basis (X forward, Y right,
+Z down) differ in handedness: the component change of basis has determinant -1. Under such a basis
+change a true vector (force, velocity, position) transforms with the basis change, while a
+pseudo-vector (moment, angular rate) picks up an extra factor of the determinant, which is an extra
+sign on every axis.
+
+`MavFlightDynamicsMath.AeroBodyMomentToUnityLocal` currently applies the true-vector mapping, so it
+carries no such sign. Concretely, with the current helpers:
+
+| aerodynamic moment | mapped Unity torque | Unity physical effect | intended effect |
+| --- | --- | --- | --- |
+| `L = +1` (roll right) | `+Z` | roll left | roll right |
+| `M = +1` (nose up) | `+X` | nose down | nose up |
+| `N = +1` (nose right) | `-Y` | nose left | nose right |
+
+In Unity a positive rotation about `+X` pitches the nose down, about `+Z` rolls left, and about
+`+Y` yaws right.
+
+`MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody` applies the same true-vector mapping on the
+way in, so the two helpers are mutual inverses. That is why the aerodynamic rate-damping terms
+(`Cmq`, `Clp`, `Cnr`, and so on) remain self-consistent: the two sign errors cancel around the rate
+loop. They do not cancel for static or control-derived moments, so with the current helpers both the
+static pitch stability and the control response would act in the wrong direction once
+`simulationEnabled` is armed.
+
+Status and consequences:
+
+- `simulationEnabled` remains `false`, so nothing is wrong with live behaviour today.
+- The frozen coefficient regression vectors are coefficient-space only and are unaffected.
+- Flipping both helpers together preserves their round-trip invariant, so the existing
+  `MavF16ReferenceValidation` axis check stays green either way. That check cannot detect a shared
+  handedness error, which is why the table above exists.
+- `[P7]` in `MavFlightDynamicsPhase1Validation` pins the current mapping and asserts the
+  determinant and round-trip facts, so any change here has to be deliberate.
+
+Resolving this changes the physical meaning of every applied moment, which the architecture document
+gates behind the golden-trace procedure in its section 13. It is therefore reported here rather than
+patched inside the Phase 1 infrastructure task.
 
 ## Next development steps
 
-1. Run the Unity F-16 reference validator and keep it green before further flight-dynamics changes.
-2. Audit the NASA F-16 propulsion description, throttle gearing, power-state dynamics, thrust-map availability, and interpolation convention.
-3. Freeze the propulsion source/data boundary before adding a reference propulsion implementation.
-4. Add propulsion as a separate force owner.
+1. Run `Maverick > Flight Dynamics > Run All Flight Dynamics Validation` and keep it green before further flight-dynamics changes.
+2. Settle the moment / rate axis-handedness question above, under the golden-trace procedure, before any C0 flight test result is trusted.
+3. Audit the NASA F-16 propulsion description, throttle gearing, power-state dynamics, thrust-map availability, and interpolation convention.
+4. Freeze the propulsion source/data boundary, then replace `MavNullPropulsionModel` with a sourced F-16 propulsion model.
 5. Build a deterministic trim solver for straight-and-level subsonic flight.
-6. Build deterministic pitch/roll/yaw step and doublet test cases.
+6. Build deterministic pitch/roll/yaw step and doublet test cases driven through `MavPilotCommand`.
 7. Compare trajectories against AeroBenchVVPython as an external oracle only.
 8. Correct implementation/sign/unit mistakes until the external traces agree within defined tolerances.
-9. Only after validation, begin one-for-one ownership migration from the legacy Maverick flight stack.
+9. Add the C1 rate/G augmentation law above the C0 test law.
+10. Only after validation, begin one-for-one ownership migration from the legacy Maverick flight stack.
