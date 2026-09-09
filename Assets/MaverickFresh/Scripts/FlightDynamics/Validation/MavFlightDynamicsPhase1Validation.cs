@@ -18,7 +18,8 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   [P4] null propulsion honesty (zero loads, non-authoritative flag, power-state plumbing)
     ///   [P5] live-FDM readiness gate
     ///   [P6] telemetry CSV header/row column agreement
-    ///   [P7] Unity/aero axis handedness bookkeeping
+    ///   [P7] Unity/aero axial-vector direction contract
+    ///   [P8] physical damping direction through the whole boundary
     /// </summary>
     public static class MavFlightDynamicsPhase1Validation
     {
@@ -40,7 +41,8 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateNullPropulsion(report, ref passed, ref failed);
             ValidateReadinessGate(report, ref passed, ref failed);
             ValidateTelemetryCsvShape(report, ref passed, ref failed);
-            ValidateAxisHandedness(report, ref passed, ref failed);
+            ValidateAxialVectorDirections(report, ref passed, ref failed);
+            ValidateDampingDirections(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -639,32 +641,22 @@ namespace MaverickFresh.FlightDynamics.Validation
         // ---------------------------------------------------------------- [P7]
 
         /// <summary>
-        /// Records the relationship between the two axis conventions so that any future change to
-        /// the conversion helpers is a deliberate, reviewed act rather than an accident.
+        /// Directional contract for the Unity / aerodynamic axis boundary.
         ///
-        /// Facts these checks pin down:
+        /// The two bases differ in handedness, so the component change of basis has determinant -1.
+        /// A true vector (force, velocity, position) transforms with the basis change alone, while an
+        /// axial vector (moment, angular rate) transforms with the basis change multiplied by that
+        /// determinant, picking up an extra sign on every axis.
         ///
-        ///  * The Unity-local basis (X right, Y up, Z forward) and the aerodynamic body basis
-        ///    (X forward, Y right, Z down) differ in handedness. The component change of basis has
-        ///    determinant -1.
-        ///
-        ///  * Under a basis change of determinant -1, a true vector (force, velocity, position)
-        ///    transforms with the basis change, but a pseudo-vector (moment, angular rate)
-        ///    transforms with an extra factor of the determinant, i.e. an extra sign on every axis.
-        ///
-        ///  * MavFlightDynamicsMath.AeroBodyMomentToUnityLocal currently applies the true-vector
-        ///    mapping and therefore does NOT carry that extra sign. The check named below asserts
-        ///    exactly that, so the current behaviour is pinned and visible.
-        ///
-        /// This is recorded as an OPEN question rather than silently changed here: altering it
-        /// changes the physical meaning of every applied moment, which the architecture document
-        /// gates behind the golden-trace procedure. See the Flight Dynamics README, section
-        /// "Open issue: moment/rate axis handedness".
+        /// These checks assert physical directions, not algebraic shape. A round-trip check is kept
+        /// below, but deliberately not relied on as proof: applying the same wrong sign on the way
+        /// out and on the way back in cancels, so a round trip cannot detect a shared handedness
+        /// error. That is exactly the failure this section exists to catch.
         /// </summary>
-        private static void ValidateAxisHandedness(StringBuilder report, ref int passed, ref int failed)
+        private static void ValidateAxialVectorDirections(StringBuilder report, ref int passed, ref int failed)
         {
             report.AppendLine();
-            report.AppendLine("[P7] Unity/aero axis handedness bookkeeping");
+            report.AppendLine("[P7] Unity/aero axial-vector direction contract");
 
             // Images of the Unity basis vectors in aerodynamic body axes.
             Vector3 ex = MavFlightDynamicsMath.UnityLocalVectorToAeroBody(new Vector3(1f, 0f, 0f));
@@ -682,7 +674,7 @@ namespace MaverickFresh.FlightDynamics.Validation
                 report, ref passed, ref failed
             );
 
-            // Force (true vector) mapping: right stays right, up is minus down, forward stays forward.
+            // --- true vectors keep the plain basis change ---
             Record(
                 NearVector(
                     MavFlightDynamicsMath.AeroBodyVectorToUnityLocal(new Vector3(1f, 0f, 0f)),
@@ -693,32 +685,235 @@ namespace MaverickFresh.FlightDynamics.Validation
                 && NearVector(
                     MavFlightDynamicsMath.AeroBodyVectorToUnityLocal(new Vector3(0f, 0f, 1f)),
                     new Vector3(0f, -1f, 0f), 1e-5f),
-                "aerodynamic force axes map to Unity axes as a true vector (forward/right/down -> forward/right/-up)",
+                "aerodynamic force axes map as a true vector (forward/right/down -> forward/right/-up)",
                 report, ref passed, ref failed
             );
 
-            // PINNED CURRENT BEHAVIOUR: the moment mapping is identical to the force mapping, so it
-            // carries no handedness sign. Recorded as an open issue, not endorsed as correct.
+            // --- moment out: L/M/N -> Unity local torque, asserted as physical directions ---
+            // In Unity a positive rotation about +X pitches the nose DOWN, about +Y yaws the nose
+            // RIGHT, and about +Z rolls LEFT. So roll-right and nose-up must map to NEGATIVE Unity
+            // torque on their axes, and nose-right must map to POSITIVE Unity Y torque.
             Record(
                 NearVector(
-                    MavFlightDynamicsMath.AeroBodyMomentToUnityLocal(new Vector3(1f, 2f, 3f)),
-                    MavFlightDynamicsMath.AeroBodyVectorToUnityLocal(new Vector3(1f, 2f, 3f)),
-                    1e-5f),
-                "PINNED (open issue): the moment mapping equals the force mapping and carries no handedness sign",
+                    MavFlightDynamicsMath.AeroBodyMomentToUnityLocal(new Vector3(1f, 0f, 0f)),
+                    new Vector3(0f, 0f, -1f), 1e-5f),
+                "L +1 (roll right) -> Unity local torque -Z (roll right in Unity)",
+                report, ref passed, ref failed
+            );
+            Record(
+                NearVector(
+                    MavFlightDynamicsMath.AeroBodyMomentToUnityLocal(new Vector3(0f, 1f, 0f)),
+                    new Vector3(-1f, 0f, 0f), 1e-5f),
+                "M +1 (nose up) -> Unity local torque -X (nose up in Unity)",
+                report, ref passed, ref failed
+            );
+            Record(
+                NearVector(
+                    MavFlightDynamicsMath.AeroBodyMomentToUnityLocal(new Vector3(0f, 0f, 1f)),
+                    new Vector3(0f, 1f, 0f), 1e-5f),
+                "N +1 (nose right) -> Unity local torque +Y (nose right in Unity)",
                 report, ref passed, ref failed
             );
 
-            // Self-consistency invariant that must hold regardless of how the open issue is
-            // resolved: converting a moment to Unity and an angular rate back must round-trip.
-            // This is why the aerodynamic rate-damping terms remain self-consistent today.
+            // --- angular rate in: Unity local angular velocity -> p/q/r, asserted as directions ---
+            Record(
+                NearVector(
+                    MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody(new Vector3(0f, 0f, -1f)),
+                    new Vector3(1f, 0f, 0f), 1e-5f),
+                "Unity -Z rate (rolling right) -> p +1",
+                report, ref passed, ref failed
+            );
+            Record(
+                NearVector(
+                    MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody(new Vector3(-1f, 0f, 0f)),
+                    new Vector3(0f, 1f, 0f), 1e-5f),
+                "Unity -X rate (pitching nose up) -> q +1",
+                report, ref passed, ref failed
+            );
+            Record(
+                NearVector(
+                    MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody(new Vector3(0f, 1f, 0f)),
+                    new Vector3(0f, 0f, 1f), 1e-5f),
+                "Unity +Y rate (yawing nose right) -> r +1",
+                report, ref passed, ref failed
+            );
+
+            // --- the axial helpers must carry the determinant sign, i.e. differ from the true-vector
+            //     mapping on every axis. This is the specific regression that guards against someone
+            //     collapsing the axial helpers back into the true-vector helpers.
+            Vector3 probe = new Vector3(1f, 2f, 3f);
+            Vector3 trueVectorMapped = MavFlightDynamicsMath.AeroBodyVectorToUnityLocal(probe);
+            Vector3 axialMapped = MavFlightDynamicsMath.AeroBodyMomentToUnityLocal(probe);
+            Record(
+                NearVector(axialMapped, trueVectorMapped * -1f, 1e-5f),
+                "the moment mapping carries the determinant sign (it is the negated true-vector mapping)",
+                report, ref passed, ref failed
+            );
+
+            // --- necessary but NOT sufficient: kept so a one-sided edit is still caught ---
             Vector3 aeroMoment = new Vector3(2f, -3f, 4f);
             Vector3 unityMoment = MavFlightDynamicsMath.AeroBodyMomentToUnityLocal(aeroMoment);
             Vector3 recovered = MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody(unityMoment);
             Record(
                 NearVector(recovered, aeroMoment, 1e-5f),
-                "moment-out and rate-in conversions are mutual inverses (rate-damping loop stays self-consistent)",
+                "moment-out and rate-in remain mutual inverses (necessary, not sufficient: see above)",
                 report, ref passed, ref failed
             );
+        }
+
+        // ---------------------------------------------------------------- [P8]
+
+        /// <summary>
+        /// End-to-end physical regression across the whole boundary:
+        ///
+        ///   Unity angular velocity -> body rates -> frozen Morelli damping derivatives
+        ///     -> aerodynamic moment -> Unity local torque
+        ///
+        /// For each axis, a body rotation must produce a Unity torque that OPPOSES that rotation.
+        /// The published Morelli damping derivatives are negative at zero alpha (Clp, Cmq, Cnr), so
+        /// aerodynamic damping is the physically expected outcome.
+        ///
+        /// This section is the reason a round-trip check is not enough. Under the previous
+        /// true-vector mapping, the inbound rate sign error and the outbound moment sign error
+        /// cancelled around exactly this loop, so damping still looked correct while static and
+        /// control-derived moments were inverted. These checks assert the damping direction AND the
+        /// static/control direction, so neither can be wrong in isolation or in tandem.
+        /// </summary>
+        private static void ValidateDampingDirections(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[P8] Physical damping direction through the whole boundary");
+
+            const float speedMps = 200f;
+            const float rateRadSec = 0.2f;
+
+            // Rolling right in Unity is a NEGATIVE Unity Z angular velocity.
+            Vector3 rollRightTorque = UnityTorqueForUnityRate(new Vector3(0f, 0f, -rateRadSec), speedMps);
+            Record(
+                rollRightTorque.z > 0f,
+                "rolling right produces a Unity +Z (roll-left) torque: roll damping opposes the motion",
+                report, ref passed, ref failed
+            );
+
+            // Pitching nose up in Unity is a NEGATIVE Unity X angular velocity.
+            Vector3 noseUpTorque = UnityTorqueForUnityRate(new Vector3(-rateRadSec, 0f, 0f), speedMps);
+            Record(
+                noseUpTorque.x > 0f,
+                "pitching nose up produces a Unity +X (nose-down) torque: pitch damping opposes the motion",
+                report, ref passed, ref failed
+            );
+
+            // Yawing nose right in Unity is a POSITIVE Unity Y angular velocity.
+            Vector3 noseRightTorque = UnityTorqueForUnityRate(new Vector3(0f, rateRadSec, 0f), speedMps);
+            Record(
+                noseRightTorque.y < 0f,
+                "yawing nose right produces a Unity -Y (nose-left) torque: yaw damping opposes the motion",
+                report, ref passed, ref failed
+            );
+
+            // Static and control-derived moments must also reach Unity in the demanded direction.
+            // These do NOT benefit from any cancellation, which is why they are checked here too.
+            MavControlSurfaceLimits limits = BuildF16SurfaceLimits();
+
+            Vector3 noseUpCommandTorque = UnityTorqueForSurfaces(
+                MapWithDefaultSigns(new MavPilotCommand { pitch = 1f }, limits), speedMps
+            );
+            Record(
+                noseUpCommandTorque.x < 0f,
+                "a nose-up pilot command reaches the Rigidbody as a Unity -X (nose-up) torque",
+                report, ref passed, ref failed
+            );
+
+            Vector3 rollRightCommandTorque = UnityTorqueForSurfaces(
+                MapWithDefaultSigns(new MavPilotCommand { roll = 1f }, limits), speedMps
+            );
+            Record(
+                rollRightCommandTorque.z < 0f,
+                "a roll-right pilot command reaches the Rigidbody as a Unity -Z (roll-right) torque",
+                report, ref passed, ref failed
+            );
+
+            Vector3 noseRightCommandTorque = UnityTorqueForSurfaces(
+                MapWithDefaultSigns(new MavPilotCommand { yaw = 1f }, limits), speedMps
+            );
+            Record(
+                noseRightCommandTorque.y > 0f,
+                "a nose-right pilot command reaches the Rigidbody as a Unity +Y (nose-right) torque",
+                report, ref passed, ref failed
+            );
+
+            // Static longitudinal restoring moment: at positive alpha with neutral controls the
+            // aerodynamic pitching moment must push the nose back down, not further up.
+            Vector3 alphaTorque = UnityTorqueForState(
+                8f * Mathf.Deg2Rad, 0f, new MavControlInput(), Vector3.zero, speedMps
+            );
+            Record(
+                alphaTorque.x > 0f,
+                "positive alpha with neutral controls yields a Unity +X (nose-down) restoring torque",
+                report, ref passed, ref failed
+            );
+        }
+
+        /// <summary>
+        /// Runs a Unity-local angular velocity through the real boundary and returns the resulting
+        /// Unity-local torque contributed by the rate terms alone (the zero-rate moment is
+        /// subtracted so only the damping contribution remains).
+        /// </summary>
+        private static Vector3 UnityTorqueForUnityRate(Vector3 unityLocalRateRadSec, float speedMps)
+        {
+            Vector3 bodyRates = MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody(unityLocalRateRadSec);
+
+            Vector3 withRate = UnityTorqueForState(0f, 0f, new MavControlInput(), bodyRates, speedMps);
+            Vector3 withoutRate = UnityTorqueForState(0f, 0f, new MavControlInput(), Vector3.zero, speedMps);
+            return withRate - withoutRate;
+        }
+
+        private static Vector3 UnityTorqueForSurfaces(MavControlInput surfaces, float speedMps)
+        {
+            return UnityTorqueForState(0f, 0f, surfaces, Vector3.zero, speedMps);
+        }
+
+        /// <summary>
+        /// Full boundary evaluation: state + surfaces -> frozen Morelli coefficients ->
+        /// dimensionalization -> Unity-local torque. Mirrors what MavSixDoFBody does per step.
+        /// </summary>
+        private static Vector3 UnityTorqueForState(
+            float alphaRad,
+            float betaRad,
+            MavControlInput surfaces,
+            Vector3 bodyRatesRadSec,
+            float speedMps)
+        {
+            MavAeroReferenceGeometry geometry = MavF16MorelliReference.CreateReferenceGeometry();
+            float halfInverseSpeed = 0.5f / Mathf.Max(0.1f, speedMps);
+
+            float pHat = bodyRatesRadSec.x * geometry.wingSpanM * halfInverseSpeed;
+            float qHat = bodyRatesRadSec.y * geometry.meanAerodynamicChordM * halfInverseSpeed;
+            float rHat = bodyRatesRadSec.z * geometry.wingSpanM * halfInverseSpeed;
+
+            MavAeroCoefficients coefficients = MavF16MorelliPolynomial.Evaluate(
+                alphaRad,
+                betaRad,
+                surfaces.elevatorDeg * Mathf.Deg2Rad,
+                surfaces.aileronDeg * Mathf.Deg2Rad,
+                surfaces.rudderDeg * Mathf.Deg2Rad,
+                pHat,
+                qHat,
+                rHat,
+                MavF16MassReference.XcgCbar,
+                MavF16MassReference.XcgReferenceCbar,
+                geometry.meanAerodynamicChordM / geometry.wingSpanM
+            );
+
+            // Representative sea-level dynamic pressure for the reference speed.
+            MavAtmosphereSample atmosphere = MavAtmosphereModel.Sample(0f);
+            float dynamicPressurePa = 0.5f * atmosphere.densityKgM3 * speedMps * speedMps;
+
+            MavAerodynamicLoads loads = MavFlightDynamicsMath.Dimensionalize(
+                coefficients, geometry, dynamicPressurePa
+            );
+
+            return MavFlightDynamicsMath.AeroBodyMomentToUnityLocal(loads.momentAeroBodyNm);
         }
 
         // ---------------------------------------------------------------- helpers
