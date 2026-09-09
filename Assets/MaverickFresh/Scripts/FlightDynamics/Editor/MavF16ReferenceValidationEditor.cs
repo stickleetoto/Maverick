@@ -49,6 +49,27 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             );
         }
 
+        [MenuItem("Maverick/Flight Dynamics/Run F-16 Propulsion Validation")]
+        public static void RunPropulsionValidation()
+        {
+            int passed;
+            int failed;
+            string report = MavF16PropulsionValidation.RunAll(out passed, out failed);
+
+            if (failed == 0)
+                Debug.Log(report);
+            else
+                Debug.LogError(report);
+
+            EditorUtility.DisplayDialog(
+                "F-16 Propulsion Validation",
+                failed == 0
+                    ? "PASS\n\n" + passed + " checks passed."
+                    : "FAIL\n\n" + failed + " checks failed. See Console for details.",
+                "OK"
+            );
+        }
+
         [MenuItem("Maverick/Flight Dynamics/Run All Flight Dynamics Validation")]
         public static void RunAllValidation()
         {
@@ -66,9 +87,16 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 out phase1Failed
             );
 
-            int passed = referencePassed + phase1Passed;
-            int failed = referenceFailed + phase1Failed;
-            string report = referenceReport + "\n\n" + phase1Report;
+            int propulsionPassed;
+            int propulsionFailed;
+            string propulsionReport = MavF16PropulsionValidation.RunAll(
+                out propulsionPassed,
+                out propulsionFailed
+            );
+
+            int passed = referencePassed + phase1Passed + propulsionPassed;
+            int failed = referenceFailed + phase1Failed + propulsionFailed;
+            string report = referenceReport + "\n\n" + phase1Report + "\n\n" + propulsionReport;
 
             if (failed == 0)
                 Debug.Log(report);
