@@ -9,6 +9,7 @@ namespace MaverickFresh.FlightDynamics
     /// with the legacy Maverick flight stack without double-applying forces.
     /// Do not enable it on Mav_Player until the legacy ownership migration begins.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
     public class MavSixDoFBody : MonoBehaviour
