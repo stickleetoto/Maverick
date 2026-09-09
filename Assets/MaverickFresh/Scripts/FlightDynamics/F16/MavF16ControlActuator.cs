@@ -6,10 +6,14 @@ namespace MaverickFresh.FlightDynamics.F16
     /// Physical control-surface state owner for the F-16 flight-dynamics path.
     /// Commands are bounded by the active physical aircraft profile, then converted into
     /// actual surface states. This component never applies Rigidbody torque directly.
+    ///
+    /// Execution order -200 places it after the flight control law (-300) and before
+    /// MavSixDoFBody (-100), so within one physics step the ordering is
+    /// law -> actuator -> aerodynamics -> single load application.
     /// </summary>
     [DefaultExecutionOrder(-200)]
     [DisallowMultipleComponent]
-    public class MavF16ControlActuator : MonoBehaviour
+    public class MavF16ControlActuator : MavControlSurfaceActuatorBase
     {
         [Header("Target")]
         public MavSixDoFBody sixDoFBody;
@@ -47,7 +51,12 @@ namespace MaverickFresh.FlightDynamics.F16
                 sixDoFBody.SetControlInput(actual);
         }
 
-        public void SetCommand(MavControlInput input)
+        public override MavControlInput ActualSurfaceState
+        {
+            get { return actual; }
+        }
+
+        public override void SetCommand(MavControlInput input)
         {
             command = input;
         }
