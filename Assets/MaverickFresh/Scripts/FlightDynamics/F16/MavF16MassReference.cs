@@ -5,14 +5,16 @@ namespace MaverickFresh.FlightDynamics.F16
     /// <summary>
     /// Nominal F-16 mass and inertia reference used by the isolated flight-dynamics branch.
     ///
-    /// Source: Eugene A. Morelli, NASA Langley Research Center,
-    /// "Determining Aircraft Moments of Inertia from Flight Test Data" (2021/2022).
-    /// The published F-16 nonlinear-simulation reference lists:
-    ///   m   = 637 slug
+    /// Authoritative reference for this preset:
+    /// Eugene A. Morelli, NASA Langley Research Center,
+    /// F-16 nonlinear simulation geometry / nominal mass-properties table
+    /// (NASA NTRS 20200003104, 2020):
+    ///   m   = 637.16 slug
     ///   Ix  = 9,496 slug-ft^2
     ///   Iy  = 55,814 slug-ft^2
     ///   Iz  = 63,100 slug-ft^2
     ///   Ixz = 982 slug-ft^2
+    ///   xcg = 0.25 cbar, reference station = 0.35 cbar
     ///
     /// The source body axes are conventional aircraft axes (X forward, Y right, Z down).
     /// Unity local axes are X right, Y up, Z forward, so the inertia tensor is transformed
@@ -24,7 +26,7 @@ namespace MaverickFresh.FlightDynamics.F16
         public const float FootToM = 0.3048f;
         public const float SlugFt2ToKgM2 = 1.35581795f;
 
-        public const float MassSlug = 637f;
+        public const float MassSlug = 637.16f;
         public const float IxSlugFt2 = 9496f;
         public const float IySlugFt2 = 55814f;
         public const float IzSlugFt2 = 63100f;
@@ -35,6 +37,9 @@ namespace MaverickFresh.FlightDynamics.F16
         public const float IyKgM2 = IySlugFt2 * SlugFt2ToKgM2;
         public const float IzKgM2 = IzSlugFt2 * SlugFt2ToKgM2;
         public const float IxzKgM2 = IxzSlugFt2 * SlugFt2ToKgM2;
+
+        public const float XcgCbar = 0.25f;
+        public const float XcgReferenceCbar = 0.35f;
 
         /// <summary>
         /// Creates Unity Rigidbody mass properties from the published body-axis inertia.
