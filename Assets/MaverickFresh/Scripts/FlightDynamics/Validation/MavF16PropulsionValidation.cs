@@ -111,12 +111,20 @@ namespace MaverickFresh.FlightDynamics.Validation
             report.AppendLine();
             report.AppendLine("[E4] Thrust-deck safety boundary");
 
-            MavF16EnginePowerModel model = null;
-            // Structural policy check lives in the implementation: HasAuthoritativeData remains false
-            // until the altitude/Mach thrust deck is frozen. Here we pin the public power functions only;
-            // Unity object construction is intentionally avoided in this side-effect-free suite.
-            Record(model == null,
-                "validation does not instantiate a runtime engine object", report, ref passed, ref failed);
+            MavPropulsiveLoads idle = MavF16EnginePowerModel.BuildZeroThrustLoads(0f);
+            MavPropulsiveLoads military = MavF16EnginePowerModel.BuildZeroThrustLoads(50f);
+            MavPropulsiveLoads max = MavF16EnginePowerModel.BuildZeroThrustLoads(100f);
+
+            Record(idle.forceAeroBodyN == Vector3.zero && idle.momentAeroBodyNm == Vector3.zero,
+                "idle power produces zero loads while thrust deck is absent", report, ref passed, ref failed);
+            Record(military.forceAeroBodyN == Vector3.zero && military.momentAeroBodyNm == Vector3.zero,
+                "military power produces zero loads while thrust deck is absent", report, ref passed, ref failed);
+            Record(max.forceAeroBodyN == Vector3.zero && max.momentAeroBodyNm == Vector3.zero,
+                "maximum power produces zero loads while thrust deck is absent", report, ref passed, ref failed);
+            Record(!idle.hasAuthoritativeData && !military.hasAuthoritativeData && !max.hasAuthoritativeData,
+                "zero-thrust boundary explicitly reports non-authoritative dimensional thrust", report, ref passed, ref failed);
+            Record(Near(idle.powerState01, 0f) && Near(military.powerState01, 0.5f) && Near(max.powerState01, 1f),
+                "power state remains observable at 0/50/100 percent", report, ref passed, ref failed);
         }
 
         private static bool Near(float actual, float expected, float tolerance = Tolerance)
