@@ -14,6 +14,7 @@ Frozen reference documents:
 
 - `F16/F16_REFERENCE_SPEC_V0.1.md`
 - `F16/F16_MORELLI_COEFFICIENT_AUDIT_V0.1.md`
+- `F16/F16_REGRESSION_VECTORS_V0.1.md`
 
 ## Coordinate convention
 
@@ -61,6 +62,8 @@ Aircraft-specific aerodynamic polynomial inputs are converted to the units used 
 - `MavF16MassReference`: published F-16 mass and full body-axis inertia reference transformed into Unity principal inertia.
 - `MavF16ReferenceConfigurator`: safe reference-value helper; it does not enable the simulation by itself.
 - `MavF16ControlActuator`: bounded physical control-surface state owner that publishes deflections to `MavSixDoFBody` without applying direct Rigidbody torque.
+- `MavF16ReferenceValidation`: deterministic coefficient, geometry, inertia, and axis-mapping regression checks.
+- Editor runner: `Maverick > Flight Dynamics > Run F-16 Reference Validation`.
 
 `MavSixDoFBody.simulationEnabled` defaults to `false` intentionally.
 
@@ -104,7 +107,7 @@ The Rigidbody local center-of-mass offset is not guessed. `MavF16ReferenceConfig
 
 Other NASA studies use different F-16 nominal masses. Those are treated as different configurations and are not silently mixed into the v0.1 baseline.
 
-## Coefficient audit status
+## Coefficient audit and regression status
 
 The compact Morelli polynomial constants and equation structure have been manually audited against the 1998 publication and frozen for v0.1.
 
@@ -113,6 +116,10 @@ Important policy result:
 - NASA Morelli values remain authoritative.
 - AeroBench differences do not overwrite Maverick coefficients.
 - Known cross-check discrepancies are documented in `F16_MORELLI_COEFFICIENT_AUDIT_V0.1.md`.
+
+Four deterministic coefficient regression vectors are frozen in `F16_REGRESSION_VECTORS_V0.1.md` and executable through `MavF16ReferenceValidation`.
+
+The validator also checks the frozen geometry, mass conversion, Unity principal inertia values, inertia trace preservation, and axis-conversion round trips. These checks protect the reference implementation from silent sign, unit, decimal, and transform regressions before propulsion and trim work begins.
 
 ## Control-surface ownership
 
@@ -138,10 +145,10 @@ The legacy Maverick force/torque stack remains untouched on this branch. Do not 
 
 ## Next development steps
 
-1. Add coefficient-level regression vectors derived independently from the frozen NASA Morelli equations.
-2. Add inertia-transform sanity tests.
-3. Audit the NASA F-16 propulsion description and available thrust-map data before implementing reference propulsion.
-4. Add propulsion as a separate force owner only after the source/data boundary is frozen.
+1. Run the Unity F-16 reference validator and keep it green before further flight-dynamics changes.
+2. Audit the NASA F-16 propulsion description, throttle gearing, power-state dynamics, thrust-map availability, and interpolation convention.
+3. Freeze the propulsion source/data boundary before adding a reference propulsion implementation.
+4. Add propulsion as a separate force owner.
 5. Build a deterministic trim solver for straight-and-level subsonic flight.
 6. Build deterministic pitch/roll/yaw step and doublet test cases.
 7. Compare trajectories against AeroBenchVVPython as an external oracle only.
