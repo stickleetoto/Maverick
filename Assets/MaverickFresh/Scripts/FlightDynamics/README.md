@@ -33,6 +33,9 @@ Unity local axes are converted only at the flight-dynamics boundary:
 - Unity +Y: up
 - Unity +Z: forward
 
+The two bases differ in handedness, so forces and moments do **not** convert the same way. See
+[Axis conventions: true vectors vs axial vectors](#axis-conventions-true-vectors-vs-axial-vectors).
+
 ## Units
 
 The new core uses SI units only:
@@ -209,53 +212,60 @@ No authoritative F-16 propulsion data is frozen in this repository. The F-16 the
 No thrust map, installed-thrust figure, or engine spool time constant has been invented. The
 optional power-state lag defaults to 0 s (instant) precisely because no sourced value exists.
 
-## Open issue: moment / rate axis handedness
-
-Recorded here because Phase 1 does not resolve it and it gates C0 flight testing.
+## Axis conventions: true vectors vs axial vectors
 
 The Unity-local basis (X right, Y up, Z forward) and the aerodynamic body basis (X forward, Y right,
-Z down) differ in handedness: the component change of basis has determinant -1. Under such a basis
-change a true vector (force, velocity, position) transforms with the basis change, while a
-pseudo-vector (moment, angular rate) picks up an extra factor of the determinant, which is an extra
-sign on every axis.
+Z down) differ in handedness. The component change of basis has determinant -1, so the two kinds of
+quantity do not convert the same way:
 
-`MavFlightDynamicsMath.AeroBodyMomentToUnityLocal` currently applies the true-vector mapping, so it
-carries no such sign. Concretely, with the current helpers:
+- A **true vector** (force, velocity, position) transforms with the basis change alone.
+  Use `UnityLocalVectorToAeroBody` / `AeroBodyVectorToUnityLocal`.
+- An **axial vector** or pseudo-vector (moment, angular rate) transforms with the basis change
+  multiplied by its determinant, so it carries an extra sign on every axis.
+  Use `UnityLocalAngularRateToAeroBody` / `AeroBodyMomentToUnityLocal`.
 
-| aerodynamic moment | mapped Unity torque | Unity physical effect | intended effect |
-| --- | --- | --- | --- |
-| `L = +1` (roll right) | `+Z` | roll left | roll right |
-| `M = +1` (nose up) | `+X` | nose down | nose up |
-| `N = +1` (nose right) | `-Y` | nose left | nose right |
+Physically, in Unity a positive rotation about `+X` pitches the nose **down**, about `+Y` yaws the
+nose **right**, and about `+Z` rolls **left**. In conventional aircraft body axes a positive `L`
+rolls **right**, a positive `M` pitches the nose **up**, and a positive `N` yaws the nose **right**.
+So the roll and pitch channels reverse sign across the boundary and the yaw channel does not.
 
-In Unity a positive rotation about `+X` pitches the nose down, about `+Z` rolls left, and about
-`+Y` yaws right.
+Outbound moment, `AeroBodyMomentToUnityLocal`:
 
-`MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody` applies the same true-vector mapping on the
-way in, so the two helpers are mutual inverses. That is why the aerodynamic rate-damping terms
-(`Cmq`, `Clp`, `Cnr`, and so on) remain self-consistent: the two sign errors cancel around the rate
-loop. They do not cancel for static or control-derived moments, so with the current helpers both the
-static pitch stability and the control response would act in the wrong direction once
-`simulationEnabled` is armed.
+| aerodynamic moment | Unity local torque | Unity physical effect |
+| --- | --- | --- |
+| `L = +1` (roll right) | `-Z` | roll right |
+| `M = +1` (nose up) | `-X` | nose up |
+| `N = +1` (nose right) | `+Y` | nose right |
 
-Status and consequences:
+Inbound rate, `UnityLocalAngularRateToAeroBody`:
 
-- `simulationEnabled` remains `false`, so nothing is wrong with live behaviour today.
-- The frozen coefficient regression vectors are coefficient-space only and are unaffected.
-- Flipping both helpers together preserves their round-trip invariant, so the existing
-  `MavF16ReferenceValidation` axis check stays green either way. That check cannot detect a shared
-  handedness error, which is why the table above exists.
-- `[P7]` in `MavFlightDynamicsPhase1Validation` pins the current mapping and asserts the
-  determinant and round-trip facts, so any change here has to be deliberate.
+| Unity local angular velocity | body rate | aircraft motion |
+| --- | --- | --- |
+| `-Z` | `p > 0` | rolling right |
+| `-X` | `q > 0` | pitching nose up |
+| `+Y` | `r > 0` | yawing nose right |
 
-Resolving this changes the physical meaning of every applied moment, which the architecture document
-gates behind the golden-trace procedure in its section 13. It is therefore reported here rather than
-patched inside the Phase 1 infrastructure task.
+Do not collapse the axial-vector helpers into the true-vector helpers. A round-trip test cannot
+catch that mistake: applying the same wrong sign on the way out and on the way back in cancels, so
+the loop still closes while every static and control-derived moment is inverted. That is why
+validation asserts physical directions:
+
+- `[P7]` asserts the basis determinant, the true-vector force mapping, all six axial-vector
+  directions above, and that the moment mapping is the negated true-vector mapping. The round-trip
+  check is kept, but labelled necessary rather than sufficient.
+- `[P8]` drives the whole boundary end to end: Unity angular velocity to body rates, through the
+  frozen Morelli damping derivatives, back to Unity torque. It asserts that each imposed rotation
+  produces an **opposing** Unity torque, that each pilot command reaches the Rigidbody in the
+  demanded direction, and that positive alpha with neutral controls produces a nose-down restoring
+  torque.
+
+The coefficient-space regression vectors are unaffected by any of this, and were re-run unchanged
+after the conversion fix.
 
 ## Next development steps
 
 1. Run `Maverick > Flight Dynamics > Run All Flight Dynamics Validation` and keep it green before further flight-dynamics changes.
-2. Settle the moment / rate axis-handedness question above, under the golden-trace procedure, before any C0 flight test result is trusted.
+2. Record a golden trace for the corrected axis boundary before relying on C0 flight-test results.
 3. Audit the NASA F-16 propulsion description, throttle gearing, power-state dynamics, thrust-map availability, and interpolation convention.
 4. Freeze the propulsion source/data boundary, then replace `MavNullPropulsionModel` with a sourced F-16 propulsion model.
 5. Build a deterministic trim solver for straight-and-level subsonic flight.
