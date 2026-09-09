@@ -81,19 +81,21 @@ namespace MaverickFresh.FlightDynamics.F16
         public MavF16ControlActuator controlActuator;
         public MavF16ReferenceConfigurator configurator;
 
-        [Header("Auto-wired Phase 1 Control / Propulsion / Telemetry")]
+        [Header("Auto-wired Control / Propulsion / Telemetry")]
         [Tooltip("C0 direct-surface test law. Not an F-16 FLCS; it exists so the physical path can be flown without legacy torque.")]
         public MavDirectSurfaceControlLaw controlLaw;
 
-        [Tooltip("Zero-thrust placeholder. No authoritative F-16 propulsion data is frozen in this branch.")]
-        public MavNullPropulsionModel propulsionModel;
+        [Tooltip("NASA Garza/Morelli throttle gearing + engine power-state dynamics. Dimensional thrust remains zero until the sourced altitude/Mach thrust deck is frozen.")]
+        public MavF16EnginePowerModel enginePowerModel;
 
+        public MavPropulsionModelBase propulsionModel;
         public MavFlightDynamicsTelemetry telemetry;
 
         [Header("Runtime Status")]
         public bool f16Selected;
         public bool referenceStackPrepared;
         public bool liveSixDoFEnabled;
+        public bool propulsionPowerDynamicsAuthoritative;
         public bool propulsionDataAuthoritative;
         [TextArea] public string status;
         [TextArea] public string readinessReason = "not evaluated";
@@ -154,8 +156,6 @@ namespace MaverickFresh.FlightDynamics.F16
             if (configurator != null)
                 configurator.ApplyReferenceValues(false);
 
-            // Readiness is evaluated by the load-application boundary itself, so this binding
-            // cannot disagree with the component that would actually take ownership.
             string bodyReadiness = "no MavSixDoFBody";
             bool bodyReady = sixDoFBody != null && sixDoFBody.IsReadyForLiveFdm(out bodyReadiness);
             readinessReason = bodyReadiness;
@@ -171,19 +171,20 @@ namespace MaverickFresh.FlightDynamics.F16
                 && sixDoFBody.debugProfileValid
                 && bodyReady;
 
+            propulsionPowerDynamicsAuthoritative =
+                enginePowerModel != null && enginePowerModel.HasAuthoritativePowerDynamics;
             propulsionDataAuthoritative =
                 propulsionModel != null && propulsionModel.HasAuthoritativeData;
 
-            // Live ownership remains intentionally OFF. The stack is complete enough to fly, but
-            // no authoritative propulsion data is frozen and no player input is bound to the new
-            // path, so the legacy stack keeps physical ownership until a human arms this manually.
+            // Safety hold remains mandatory: the throttle/power dynamics are now sourced, but the
+            // dimensional thrust deck and player command bridge are still incomplete.
             if (sixDoFBody != null)
                 sixDoFBody.simulationEnabled = false;
 
             liveSixDoFEnabled = false;
             status = referenceStackPrepared
-                ? "F-16 selected: physics profile + Morelli aero + C0 test law + zero-thrust propulsion + telemetry PREPARED. "
-                  + "Live ownership held OFF by default (propulsion data not frozen; no player input bound to the new path)."
+                ? "F-16 selected: Morelli aero + sourced engine power dynamics PREPARED. "
+                  + "Dimensional thrust deck is still pending; live ownership remains OFF."
                 : "F-16 selected, but the new flight-dynamics stack is not fully prepared: " + readinessReason;
 
             if (!loggedSelected)
@@ -197,6 +198,8 @@ namespace MaverickFresh.FlightDynamics.F16
                     + " | readiness=" + readinessReason
                     + " | controlLaw=" + (controlLaw != null ? controlLaw.ControlLawName : "missing")
                     + " | propulsion=" + (propulsionModel != null ? propulsionModel.PropulsionModelName : "missing")
+                    + " | powerDynamicsSourced=" + propulsionPowerDynamicsAuthoritative
+                    + " | thrustDeckSourced=" + propulsionDataAuthoritative
                     + " | liveSixDoF=OFF (safety hold)",
                     this
                 );
@@ -230,11 +233,10 @@ namespace MaverickFresh.FlightDynamics.F16
             if (controlLaw == null)
                 controlLaw = gameObject.AddComponent<MavDirectSurfaceControlLaw>();
 
-            // Zero-thrust on purpose: no authoritative F-16 propulsion data is frozen in this
-            // branch, so the propulsion owner exists and contributes literally nothing.
-            propulsionModel = GetComponent<MavNullPropulsionModel>();
-            if (propulsionModel == null)
-                propulsionModel = gameObject.AddComponent<MavNullPropulsionModel>();
+            enginePowerModel = GetComponent<MavF16EnginePowerModel>();
+            if (enginePowerModel == null)
+                enginePowerModel = gameObject.AddComponent<MavF16EnginePowerModel>();
+            propulsionModel = enginePowerModel;
 
             telemetry = GetComponent<MavFlightDynamicsTelemetry>();
             if (telemetry == null)
@@ -263,8 +265,6 @@ namespace MaverickFresh.FlightDynamics.F16
 
             if (controlLaw != null)
             {
-                // The law owns the surface command from here on. Pilot intent stays neutral because
-                // Phase 1 deliberately binds no player input to the new path.
                 controlLaw.sixDoFBody = sixDoFBody;
                 controlLaw.actuator = controlActuator;
                 controlLaw.driveActuatorInFixedUpdate = true;
@@ -272,7 +272,6 @@ namespace MaverickFresh.FlightDynamics.F16
 
             if (telemetry != null)
             {
-                // Telemetry must never spam the console or touch disk unless a developer asks.
                 telemetry.logToConsole = false;
                 telemetry.captureCsv = false;
             }
