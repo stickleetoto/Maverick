@@ -92,6 +92,18 @@ namespace MaverickFresh
             if (instructor != null)
                 ApplyToInstructor(instructor, profile);
 
+            // Ownership rule: MavMouseFlightJet is the canonical source for the
+            // duplicated legacy flight-tuning fields. The Instructor owns control
+            // interpretation/runtime commands, but must start from the same tuning
+            // snapshot after an aircraft profile is applied. Without this explicit
+            // sync, MavMouseFlightJet.MirrorRuntimeFromInstructor() can copy stale
+            // Instructor tuning back into the Jet on the next physics step.
+            if (jet != null)
+            {
+                jet.PushLegacyTuningToInstructor();
+                instructor = jet.instructor;
+            }
+
             MavWTFeelPolishController wt = GetComponent<MavWTFeelPolishController>();
             if (wt != null)
             {
@@ -212,54 +224,52 @@ namespace MaverickFresh
             aero.velocityAssistFade = p.velocityAssistFade;
         }
 
+        private void ApplyToAtmosphericEngine(MavAtmosphericEngine engine, MavAircraftRuntimeProfile p)
+        {
+            engine.useAtmosphericEngine = p.useAtmosphericEngine;
+            engine.engineModelBlend = p.engineModelBlend;
+            engine.highAltitudeThrustFloor = p.highAltitudeThrustFloor;
+            engine.thrustScaleHeight = p.thrustScaleHeight;
+            engine.ramRecovery = p.ramRecovery;
+            engine.maxThrustScale = p.maxEngineThrustScale;
+            engine.waveDragStrength = p.waveDragStrength;
+            engine.maxWaveDragAccel = p.maxWaveDragAccel;
+        }
 
-private void ApplyToAtmosphericEngine(MavAtmosphericEngine engine, MavAircraftRuntimeProfile p)
-{
-    engine.useAtmosphericEngine = p.useAtmosphericEngine;
-    engine.engineModelBlend = p.engineModelBlend;
-    engine.highAltitudeThrustFloor = p.highAltitudeThrustFloor;
-    engine.thrustScaleHeight = p.thrustScaleHeight;
-    engine.ramRecovery = p.ramRecovery;
-    engine.maxThrustScale = p.maxEngineThrustScale;
-    engine.waveDragStrength = p.waveDragStrength;
-    engine.maxWaveDragAccel = p.maxWaveDragAccel;
-}
+        private void ApplyToFlaps(MavCombatFlapSystem flaps, MavAircraftRuntimeProfile p)
+        {
+            flaps.useFlaps = p.useFlaps;
+            flaps.combatMaxSpeed = p.combatFlapMaxSpeed;
+            flaps.landingMaxSpeed = p.landingFlapMaxSpeed;
+            flaps.combatLiftSlopeMultiplier = p.combatFlapLiftMultiplier;
+            flaps.combatCd0Add = p.combatFlapCd0Add;
+            flaps.landingLiftSlopeMultiplier = p.landingFlapLiftMultiplier;
+            flaps.landingCd0Add = p.landingFlapCd0Add;
+            flaps.SetState(MavFlapState.Retracted);
+        }
 
-private void ApplyToFlaps(MavCombatFlapSystem flaps, MavAircraftRuntimeProfile p)
-{
-    flaps.useFlaps = p.useFlaps;
-    flaps.combatMaxSpeed = p.combatFlapMaxSpeed;
-    flaps.landingMaxSpeed = p.landingFlapMaxSpeed;
-    flaps.combatLiftSlopeMultiplier = p.combatFlapLiftMultiplier;
-    flaps.combatCd0Add = p.combatFlapCd0Add;
-    flaps.landingLiftSlopeMultiplier = p.landingFlapLiftMultiplier;
-    flaps.landingCd0Add = p.landingFlapCd0Add;
-    flaps.SetState(MavFlapState.Retracted);
-}
+        private void ApplyToThrustVectorControl(MavThrustVectorControl tvc, MavAircraftRuntimeProfile p)
+        {
+            tvc.useThrustVectorControl = p.useThrustVectorControl;
+            tvc.pitchAuthority = p.tvcPitchAuthority;
+            tvc.rollAuthority = p.tvcRollAuthority;
+            tvc.yawAuthority = p.tvcYawAuthority;
+            tvc.activationAoADeg = p.tvcActivationAoADeg;
+            tvc.fullAoADeg = p.tvcFullAoADeg;
+            tvc.lowSpeedFull = p.tvcLowSpeedFull;
+            tvc.lowSpeedFadeOut = p.tvcLowSpeedFadeOut;
+            tvc.maxTorque = p.tvcMaxTorque;
+        }
 
-private void ApplyToThrustVectorControl(MavThrustVectorControl tvc, MavAircraftRuntimeProfile p)
-{
-    tvc.useThrustVectorControl = p.useThrustVectorControl;
-    tvc.pitchAuthority = p.tvcPitchAuthority;
-    tvc.rollAuthority = p.tvcRollAuthority;
-    tvc.yawAuthority = p.tvcYawAuthority;
-    tvc.activationAoADeg = p.tvcActivationAoADeg;
-    tvc.fullAoADeg = p.tvcFullAoADeg;
-    tvc.lowSpeedFull = p.tvcLowSpeedFull;
-    tvc.lowSpeedFadeOut = p.tvcLowSpeedFadeOut;
-    tvc.maxTorque = p.tvcMaxTorque;
-}
-
-
-private void ApplyToRadarSignature(MavRadarSignature signature, MavAircraftRuntimeProfile p)
-{
-    signature.displayName = p.shortName;
-    signature.team = 0;
-    signature.isAirTarget = true;
-    signature.radarCrossSectionSqm = p.radarCrossSectionSqm;
-    signature.irSignature = p.irSignature;
-    signature.stealthRating = p.stealthRating;
-}
+        private void ApplyToRadarSignature(MavRadarSignature signature, MavAircraftRuntimeProfile p)
+        {
+            signature.displayName = p.shortName;
+            signature.team = 0;
+            signature.isAirTarget = true;
+            signature.radarCrossSectionSqm = p.radarCrossSectionSqm;
+            signature.irSignature = p.irSignature;
+            signature.stealthRating = p.stealthRating;
+        }
 
         private void ApplyToRig(MavMouseFlightRig rig, MavAircraftRuntimeProfile p)
         {
@@ -276,7 +286,7 @@ private void ApplyToRadarSignature(MavRadarSignature signature, MavAircraftRunti
             Set(instructor, "targetYawRateDeg", p.targetYawRateDeg);
             Set(instructor, "targetRollRateDeg", p.targetRollRateDeg);
             Set(instructor, "maxScreenRollBankAngle", p.maxScreenRollBankAngle);
-            Set(instructor, "mouseSensitivity", p.mouseSensitivity);
+            Set(instructor, "sensitivity", p.mouseSensitivity);
         }
 
         private void ApplyToWeapons(MavCASWeaponSystem weapons, MavAircraftRuntimeProfile p)
