@@ -107,5 +107,43 @@ namespace MaverickFresh.FlightDynamics
     {
         public Vector3 forceAeroBodyN;
         public Vector3 momentAeroBodyNm;
+
+        public static MavAerodynamicLoads Zero
+        {
+            get { return new MavAerodynamicLoads(); }
+        }
+    }
+
+    /// <summary>
+    /// Dimensional propulsive loads in conventional aircraft body axes
+    /// (X forward, Y right, Z down). Force is Newtons, moment is Newton-metres.
+    ///
+    /// The moment channel exists because a thrust line offset from the CG produces a
+    /// real moment. A propulsion model that does not model an offset must return zero
+    /// moment rather than an approximation.
+    ///
+    /// <see cref="hasAuthoritativeData"/> is the honesty flag for this branch: it is
+    /// false whenever the producing model has no frozen source data for the aircraft.
+    /// A model without frozen data must report zero force/moment, not a guess.
+    /// </summary>
+    [Serializable]
+    public struct MavPropulsiveLoads
+    {
+        public Vector3 forceAeroBodyN;
+        public Vector3 momentAeroBodyNm;
+
+        [Tooltip("Reported net axial thrust in Newtons. Debug/telemetry only; the force vector is authoritative.")]
+        public float reportedThrustN;
+
+        [Tooltip("Engine power state 0..1 as tracked by the propulsion model's spool dynamics.")]
+        public float powerState01;
+
+        [Tooltip("False when the producing model has no frozen source data and is therefore returning zero loads.")]
+        public bool hasAuthoritativeData;
+
+        public static MavPropulsiveLoads Zero
+        {
+            get { return new MavPropulsiveLoads(); }
+        }
     }
 }
