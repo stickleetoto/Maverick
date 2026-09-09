@@ -39,11 +39,16 @@ namespace MaverickFresh.FlightDynamics
         public bool driveActuatorInFixedUpdate = true;
 
         [Header("Normalized Pilot Intent")]
-        [Tooltip("Phase 1 has no input binding. This is set by test code, the inspector, or a later instructor layer.")]
+        [Tooltip("Optional command producer. When present and reporting a command, it overrides the inspector field below. Resolved from this GameObject when empty.")]
+        public MavPilotCommandSourceBase commandSource;
+
+        [Tooltip("Fallback intent used when no command source supplies one. Set by test code, the inspector, or a later instructor layer. A value here is a bench input, not an operational command path.")]
         public MavPilotCommand pilotCommand = MavPilotCommand.Neutral;
 
         [Header("Debug")]
         public MavControlInput debugLastOutput;
+        public MavPilotCommand debugLastCommand;
+        public bool debugUsingCommandSource;
         public bool debugDroveActuator;
         public string debugStatus = "idle";
 
@@ -87,10 +92,12 @@ namespace MaverickFresh.FlightDynamics
                 return;
             }
 
+            debugLastCommand = ResolveCommand();
+
             debugLastOutput = Evaluate(
                 sixDoFBody.debugState,
                 sixDoFBody.debugAtmosphere,
-                pilotCommand.Clamped(),
+                debugLastCommand,
                 sixDoFBody.debugProfileValid ? sixDoFBody.activeProfile : null,
                 Time.fixedDeltaTime
             );
@@ -103,7 +110,10 @@ namespace MaverickFresh.FlightDynamics
 
             actuator.SetCommand(debugLastOutput);
             debugDroveActuator = true;
-            debugStatus = ControlLawName + " driving actuator";
+            debugStatus = ControlLawName + " driving actuator | command="
+                + (debugUsingCommandSource
+                    ? commandSource.CommandSourceName
+                    : "inspector fallback (no command source signal)");
         }
 
         protected void ResolvePipeline()
@@ -113,6 +123,34 @@ namespace MaverickFresh.FlightDynamics
 
             if (actuator == null)
                 actuator = GetComponent<MavControlSurfaceActuatorBase>();
+
+            if (commandSource == null)
+                commandSource = GetComponent<MavPilotCommandSourceBase>();
+        }
+
+        /// <summary>
+        /// Picks this step's normalized pilot intent.
+        ///
+        /// A command source that exists but reports no command is NOT treated as a neutral stick:
+        /// the law falls back to its inspector command and says so in debugStatus. Silently
+        /// substituting neutral for "no signal" would hide a broken input path behind an aircraft
+        /// that merely flies straight.
+        /// </summary>
+        protected MavPilotCommand ResolveCommand()
+        {
+            debugUsingCommandSource = false;
+
+            if (commandSource != null && commandSource.isActiveAndEnabled)
+            {
+                MavPilotCommand sourced;
+                if (commandSource.TryGetCommand(out sourced))
+                {
+                    debugUsingCommandSource = true;
+                    return sourced.Clamped();
+                }
+            }
+
+            return pilotCommand.Clamped();
         }
     }
 }
