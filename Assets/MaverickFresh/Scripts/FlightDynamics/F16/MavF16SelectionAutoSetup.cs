@@ -4,14 +4,8 @@ namespace MaverickFresh.FlightDynamics.F16
 {
     /// <summary>
     /// Runtime-only bootstrap for the isolated F-16 reference flight-dynamics path.
-    ///
-    /// When the existing Maverick aircraft selector/profile applier switches a player to
-    /// F-16C, this bootstrap automatically installs and wires the reference-dynamics
-    /// components on the same GameObject. It never edits scenes or prefabs.
-    ///
-    /// Live six-DoF force application intentionally remains disabled until the dedicated
-    /// F-16 propulsion and control-command bridge exist. Auto-enabling the incomplete path
-    /// today would either remove thrust/control or double-apply forces with the legacy stack.
+    /// It prepares the new physics profile + six-DoF stack when F-16C is selected,
+    /// without editing scenes/prefabs or enabling incomplete live ownership.
     /// </summary>
     [DefaultExecutionOrder(-10000)]
     [DisallowMultipleComponent]
@@ -69,9 +63,9 @@ namespace MaverickFresh.FlightDynamics.F16
     }
 
     /// <summary>
-    /// Per-aircraft runtime binding installed by MavF16SelectionAutoSetup.
-    /// It follows MavAircraftProfileApplier.aircraft and prepares the F-16 reference stack
-    /// whenever F16C is selected.
+    /// Per-aircraft runtime binding. The legacy aircraft selector remains the identity source,
+    /// but F-16 physical data now lives in MavF16FlightDynamicsProfile instead of the legacy
+    /// MavAircraftRuntimeProfile tuning blob.
     /// </summary>
     [DefaultExecutionOrder(-9000)]
     [DisallowMultipleComponent]
@@ -80,7 +74,8 @@ namespace MaverickFresh.FlightDynamics.F16
         [Header("Selection Source")]
         public MavAircraftProfileApplier profileApplier;
 
-        [Header("Auto-wired F-16 Reference Stack")]
+        [Header("Auto-wired F-16 Physics Stack")]
+        public MavF16FlightDynamicsProfile physicsProfile;
         public MavSixDoFBody sixDoFBody;
         public MavF16AeroModel aeroModel;
         public MavF16ControlActuator controlActuator;
@@ -94,6 +89,7 @@ namespace MaverickFresh.FlightDynamics.F16
 
         private MavAircraftKind lastObservedAircraft = (MavAircraftKind)(-1);
         private bool preparedByThisBinding;
+        private bool loggedSelected;
 
         private void Awake()
         {
@@ -125,10 +121,14 @@ namespace MaverickFresh.FlightDynamics.F16
 
             if (!f16Selected)
             {
-                // If this binding prepared the isolated stack, keep its force owner off
-                // whenever another aircraft is selected. Never alter the legacy stack.
                 if (preparedByThisBinding && sixDoFBody != null)
                     sixDoFBody.simulationEnabled = false;
+
+                if (loggedSelected)
+                {
+                    Debug.Log("[Maverick/F16/FDM] F-16 deselected; new flight-dynamics ownership OFF.", this);
+                    loggedSelected = false;
+                }
 
                 liveSixDoFEnabled = sixDoFBody != null && sixDoFBody.simulationEnabled;
                 status = "F-16 not selected; reference six-DoF path inactive.";
@@ -142,26 +142,44 @@ namespace MaverickFresh.FlightDynamics.F16
                 configurator.ApplyReferenceValues(false);
 
             referenceStackPrepared =
-                sixDoFBody != null
+                physicsProfile != null
+                && sixDoFBody != null
                 && aeroModel != null
                 && controlActuator != null
-                && configurator != null;
+                && configurator != null
+                && sixDoFBody.debugProfileValid;
 
-            // IMPORTANT: do not enable the new physical force owner yet. The Morelli aero
-            // core is validated in isolation, but live propulsion and player/FBW command
-            // ownership are not implemented. Enabling it alongside legacy flight would
-            // recreate the exact double-force/double-torque failure we are avoiding.
+            // Live ownership remains intentionally OFF until propulsion + player/FBW command
+            // ownership are implemented. This avoids double-applying physics with the legacy stack.
             if (sixDoFBody != null)
                 sixDoFBody.simulationEnabled = false;
 
             liveSixDoFEnabled = false;
             status = referenceStackPrepared
-                ? "F-16 selected: reference dynamics auto-configured. Live six-DoF held OFF until propulsion + control bridge are ready."
-                : "F-16 selected, but reference stack could not be fully prepared.";
+                ? "F-16 selected: dedicated physics profile + Morelli six-DoF stack READY. Live ownership held OFF pending propulsion/control bridge."
+                : "F-16 selected, but the physics profile/six-DoF stack is not fully ready.";
+
+            if (!loggedSelected)
+            {
+                Debug.Log(
+                    "[Maverick/F16/FDM] F-16 selected | profile="
+                    + (physicsProfile != null && physicsProfile.debugBuiltProfile != null
+                        ? physicsProfile.debugBuiltProfile.profileId
+                        : "missing")
+                    + " | stack=" + (referenceStackPrepared ? "READY" : "NOT_READY")
+                    + " | liveSixDoF=OFF (safety hold)",
+                    this
+                );
+                loggedSelected = true;
+            }
         }
 
         private void EnsureReferenceStack()
         {
+            physicsProfile = GetComponent<MavF16FlightDynamicsProfile>();
+            if (physicsProfile == null)
+                physicsProfile = gameObject.AddComponent<MavF16FlightDynamicsProfile>();
+
             sixDoFBody = GetComponent<MavSixDoFBody>();
             if (sixDoFBody == null)
                 sixDoFBody = gameObject.AddComponent<MavSixDoFBody>();
@@ -185,8 +203,11 @@ namespace MaverickFresh.FlightDynamics.F16
         {
             if (sixDoFBody != null)
             {
+                sixDoFBody.profileProvider = physicsProfile;
                 sixDoFBody.aerodynamicModel = aeroModel;
                 sixDoFBody.applyMassPropertiesOnEnable = true;
+                sixDoFBody.autoApplyProfileConfiguration = true;
+                sixDoFBody.ApplyConfiguredProfile(false);
             }
 
             if (controlActuator != null)
@@ -194,6 +215,7 @@ namespace MaverickFresh.FlightDynamics.F16
 
             if (configurator != null)
             {
+                configurator.flightDynamicsProfile = physicsProfile;
                 configurator.sixDoFBody = sixDoFBody;
                 configurator.aeroModel = aeroModel;
                 configurator.applyReferenceValuesOnAwake = false;
