@@ -81,17 +81,48 @@ Aircraft-specific aerodynamic polynomial inputs are converted to the units used 
 - `MavFlightDynamicsTelemetry`: one pushed sample per physics step, optional rate-limited console logging (off by default), and optional in-memory CSV capture (off by default, written to disk only on an explicit call).
 - Editor runners: `Run Phase 1 Live-FDM Validation` and `Run All Flight Dynamics Validation`.
 
+### Phase 2C/2D trim, control law and readiness
+
+Design document: `Docs/FlightDynamics/F16_TRIM_AND_CONTROL_PHASE2_V0.1.md`.
+
+- `MavTrimCondition` / `MavTrimPlant` / `MavTrimResult` / `MavTrimResidual` / `MavTrimSolverSettings`:
+  aircraft-independent trim problem definition. A plant is frozen numbers plus two pure functions, so
+  the solver holds no reference to a Rigidbody, Transform or component.
+- `MavDampedNewtonSolver`: deterministic bounded damped-Newton iteration. Central differences,
+  Gaussian elimination with partial pivoting, strict-decrease line search, hard box bounds. No
+  randomness and no wall-clock input.
+- `MavSteadyFlightTrimSolver`: steady symmetric flight trim. `PoweredSteadyFlight` imposes the
+  flight-path angle and solves for the required thrust; `UnpoweredGlide` pins thrust at zero and
+  solves for the flight-path angle.
+- `MavF16TrimReference`: F-16 plant built from the frozen Morelli geometry, NASA nominal mass, and the
+  Garza/Morelli engine power state. Powered straight-and-level reports
+  `ConvergedButThrustUnavailable`, because there is no frozen thrust deck; unpowered glide converges.
+- `MavF16ControlLawV01`: Phase C1 rate / load-factor augmentation. **Maverick tuning throughout, and
+  explicitly not the real F-16 FLCS.**
+- `MavControlLawProtections`: pure limiter mathematics shared by control laws — soft saturation,
+  compact-support smooth min/max, load-factor and angle-of-attack rate ceilings, roll authority fade,
+  yaw-rate washout, anti-windup integration, dynamic-pressure gain scheduling.
+- `MavPilotCommandSourceBase` / `MavManualPilotCommandSource`: the socket a real input path plugs
+  into. A manual/test source reports itself non-operational unless an operator says otherwise.
+- `MavFlightDynamicsReadiness`: splits `STRUCTURALLY_PREPARED` from `OPERATIONALLY_LIVE_READY`.
+- `MavFlightState.specificForceAeroBodyG` / `LoadFactorNz`: measured accelerometer channel published
+  by `MavSixDoFBody`, so a control law can close a load-factor loop without computing forces itself.
+- `MavFlightDynamicsPhase2Validation` and `MavFlightDynamicsOwnershipScan`.
+- Editor runners: `Run Phase 2 Trim and Control Validation` and `Report F-16 Trim Survey`.
+
 ### Runtime pipeline
 
 ```text
-MavPilotCommand                     normalized intent, no physical units
-  -> MavFlightControlLawBase        (order -300) command shaping
+MavPilotCommandSourceBase           optional command producer (test rig today)
+  -> MavPilotCommand                normalized intent, no physical units
+  -> MavFlightControlLawBase        (order -300) command shaping + protections
   -> MavControlInput                physical deflection degrees + throttle
   -> MavControlSurfaceActuatorBase  (order -200) bounded / rate-limited actual surfaces
   -> MavAerodynamicModelBase + MavPropulsionModelBase
   -> MavFlightDynamicsLoadSet       summed exactly once
   -> MavSixDoFBody                  (order -100) applied exactly once
   -> Unity Rigidbody
+                                    and back out as MavFlightState.specificForceAeroBodyG
 ```
 
 The state a control law reads is the state `MavSixDoFBody` sampled during the previous physics
@@ -102,7 +133,31 @@ To fly the C0 test law, set `MavDirectSurfaceControlLaw.pilotCommand`. Do not wr
 `MavF16ControlActuator.command` directly while the law is driving the actuator; the law owns that
 field and overwrites it every physics step.
 
-`MavSixDoFBody.simulationEnabled` defaults to `false` intentionally.
+`MavSixDoFBody.simulationEnabled` defaults to `false` intentionally, and since Phase 2 it is no
+longer sufficient on its own: `requireOperationalReadinessForLoadApplication` defaults to `true`, so
+loads are applied only at `OPERATIONALLY_LIVE_READY`. Arming a stack that is merely wired together
+refuses to fly, increments `debugRejectedNotLiveReadyApplications`, and logs the reason once.
+
+## Readiness: prepared is not the same as live-ready
+
+```text
+NOT_PREPARED
+STRUCTURALLY_PREPARED     are the parts present and wired?
+OPERATIONALLY_LIVE_READY  would handing this the aircraft actually be correct?
+```
+
+Structural preparation is the Phase 1 rule, unchanged, and `MavSixDoFBody.EvaluateReadiness(...)` still
+answers exactly that question for existing callers. Operational live-readiness additionally requires
+matching aerodynamic geometry, a control law that is enabled and driving *this* actuator, an actuator
+enabled and bound to *this* body, propulsion output that is authoritative or explicitly accepted, a
+command source that reports itself operational, and no legacy physics owner enabled on the same
+Rigidbody.
+
+Legacy ownership is detected by component **type name** against a serialized deny-list, so the new
+core takes no compile dependency on the stack it is replacing and no legacy file has to be edited.
+
+The current F-16 configuration is honestly reported as `STRUCTURALLY_PREPARED`, not live-ready: it has
+no frozen thrust deck and no operational command source.
 
 ## F-16 Morelli aerodynamic reference envelope
 
@@ -171,8 +226,12 @@ The validator also checks the frozen geometry, mass conversion, Unity principal 
 
 The new path is designed around one owner per physical effect:
 
-- normalized pilot intent -> `MavPilotCommand`
-- command shaping / control allocation -> `MavFlightControlLawBase` (`MavDirectSurfaceControlLaw` for C0)
+- normalized pilot intent -> `MavPilotCommandSourceBase` -> `MavPilotCommand`
+- command shaping / protections / control allocation -> `MavFlightControlLawBase`
+  (`MavF16ControlLawV01` for the F-16, `MavDirectSurfaceControlLaw` for isolated C0 testing;
+  exactly one law is ever left enabled, because two laws at execution order -300 would make the
+  actuator command depend on component order)
+- measured specific force / load factor -> published by `MavSixDoFBody` into `MavFlightState`
 - physical surface state -> `MavControlSurfaceActuatorBase` (`MavF16ControlActuator` for the F-16)
 - aircraft aerodynamic coefficients -> aircraft-specific aero model
 - coefficient dimensionalization -> `MavFlightDynamicsMath`
@@ -202,15 +261,23 @@ it off, so the two paths never own the same physical effect at once.
 
 ## Propulsion status
 
-No authoritative F-16 propulsion data is frozen in this repository. The F-16 therefore runs
-`MavNullPropulsionModel`, which:
+The F-16 runs `MavF16EnginePowerModel`, whose throttle gearing and power-state dynamics are sourced
+from NASA/TM-2003-212145 (Garza/Morelli) and frozen in `F16/F16_PROPULSION_REFERENCE_V0.1.md`.
 
-- implements the full propulsion contract so the pipeline can be wired and inspected,
-- returns zero force and zero moment at every throttle setting,
-- reports `HasAuthoritativeData == false`, which telemetry and the readiness log both surface.
+The **thrust deck is not frozen**. The altitude/Mach idle/military/maximum tables are unavailable to
+this repository, so the model:
 
-No thrust map, installed-thrust figure, or engine spool time constant has been invented. The
-optional power-state lag defaults to 0 s (instant) precisely because no sourced value exists.
+- advances and exposes the sourced commanded/actual power state,
+- returns exactly `0 N` force and `0 N*m` moment at every throttle setting,
+- reports `HasAuthoritativeData == false`, which telemetry, the readiness report and the trim solver
+  all surface.
+
+`MavNullPropulsionModel` remains available as the zero-thrust placeholder for any aircraft with no
+frozen propulsion data at all.
+
+No thrust map or installed-thrust figure has been invented. The consequence is visible rather than
+worked around: a powered F-16 trim is not achievable, and the trim solver says so — see
+**Trim status** below.
 
 ## Axis conventions: true vectors vs axial vectors
 
@@ -262,15 +329,30 @@ validation asserts physical directions:
 The coefficient-space regression vectors are unaffected by any of this, and were re-run unchanged
 after the conversion fix.
 
+## Trim status
+
+`MavF16TrimReference` solves steady symmetric flight from the frozen data. Because F-16 thrust is
+exactly zero on this branch:
+
+- **powered straight-and-level reports `ConvergedButThrustUnavailable`**, with `converged == false`,
+  `throttle01 == NaN`, and the required thrust quantified against 0 N available. No throttle is
+  invented and no thrust curve is fabricated;
+- **unpowered glide converges**, because it is the physically well-posed problem at zero thrust, and
+  exercises the solver against real reference aerodynamics.
+
+Level and glide solutions agree on alpha and elevator to three decimals, and imposing the solved glide
+angle back as a powered condition converges needing ~0 N — a cross-check between the two modes.
+
+An L/D near 13 from the compact Morelli `CX` fit is optimistic for a real airframe. These numbers are
+a self-consistency result for *this model*, not a claim about the aircraft.
+
 ## Next development steps
 
 1. Run `Maverick > Flight Dynamics > Run All Flight Dynamics Validation` and keep it green before further flight-dynamics changes.
 2. Record a golden trace for the corrected axis boundary before relying on C0 flight-test results.
-3. Audit the NASA F-16 propulsion description, throttle gearing, power-state dynamics, thrust-map availability, and interpolation convention.
-4. Freeze the propulsion source/data boundary, then replace `MavNullPropulsionModel` with a sourced F-16 propulsion model.
-5. Build a deterministic trim solver for straight-and-level subsonic flight.
-6. Build deterministic pitch/roll/yaw step and doublet test cases driven through `MavPilotCommand`.
-7. Compare trajectories against AeroBenchVVPython as an external oracle only.
-8. Correct implementation/sign/unit mistakes until the external traces agree within defined tolerances.
-9. Add the C1 rate/G augmentation law above the C0 test law.
-10. Only after validation, begin one-for-one ownership migration from the legacy Maverick flight stack.
+3. Compare the trim points and step/doublet responses against AeroBenchVVPython as an external oracle only, in explicitly matched initial conditions.
+4. Freeze the altitude/Mach F-16 thrust deck from an approved source, then re-run the powered trim and expect `Converged`.
+5. Build deterministic pitch/roll/yaw step and doublet test cases driven through `MavPilotCommand`.
+6. Tune the Maverick F-16 control law v0.1 gains against real trajectories; they are currently reasoned and bounds-checked, but unflown.
+7. Add an attitude reference so the load-factor command stops relying on the level-flight relation, and extend the trim solver to steady banked turns.
+8. Only after that, build the War-Thunder-style instructor **above** the control law, and begin one-for-one ownership migration from the legacy Maverick flight stack.
