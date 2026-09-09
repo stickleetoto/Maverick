@@ -41,6 +41,36 @@ namespace MaverickFresh.FlightDynamics
         public float alphaRad;
         public float betaRad;
 
+        /// <summary>
+        /// Non-gravitational (specific) force per unit mass, in aircraft body axes, expressed in g.
+        /// This is what an accelerometer measures: it excludes gravity by construction, exactly
+        /// like a real inertial sensor.
+        ///
+        /// It is published by <see cref="MavSixDoFBody"/> from the summed load set, so a control
+        /// law can close a load-factor loop without computing aerodynamic forces itself - which
+        /// the control-law contract forbids.
+        /// </summary>
+        public Vector3 specificForceAeroBodyG;
+
+        /// <summary>
+        /// False until a load set has actually been summed for this aircraft. A control law must
+        /// check this instead of assuming the accelerometer channel is live: an unflown or
+        /// simulation-disabled body has no measured specific force, and treating a zero reading
+        /// as "0 g" would silently disable a load-factor protection.
+        /// </summary>
+        public bool specificForceValid;
+
+        /// <summary>
+        /// Normal load factor Nz in g, positive for the conventional "pulling g" sense.
+        /// Body +Z points down, so upward specific force is negative Z, hence the sign.
+        /// Returns 0 when no measurement is available; callers must gate on
+        /// <see cref="specificForceValid"/> rather than interpret 0 as a real reading.
+        /// </summary>
+        public float LoadFactorNz
+        {
+            get { return -specificForceAeroBodyG.z; }
+        }
+
         public float AlphaDeg
         {
             get { return alphaRad * Mathf.Rad2Deg; }

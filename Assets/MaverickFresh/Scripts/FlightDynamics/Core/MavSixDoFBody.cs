@@ -37,6 +37,25 @@ namespace MaverickFresh.FlightDynamics
         public bool applyMassPropertiesOnEnable = false;
         public bool zeroUnityDampingWhenEnabled = true;
 
+        [Tooltip("When true (default), loads are applied only at OPERATIONALLY_LIVE_READY. Component presence alone is not enough to take physical ownership of an aircraft.")]
+        public bool requireOperationalReadinessForLoadApplication = true;
+
+        [Tooltip("Explicit operator override: apply loads at STRUCTURALLY_PREPARED. Intended for isolated bench testing of the physical path; logs a warning when it is what allows loads through.")]
+        public bool allowStructuralOnlyLoadApplication = false;
+
+        [Tooltip("Deliberate acknowledgement that a propulsion model reporting HasAuthoritativeData == false may still be flown. OFF by default: an aircraft with no frozen thrust data is not operationally live-ready.")]
+        public bool acceptNonAuthoritativePropulsion = false;
+
+        [Tooltip("Component type names that own aircraft physics in the legacy stack. If any of these is present and enabled on this GameObject, the new path is not operationally live-ready, because two systems would own the same physical effect. Matched by type name so the new core takes no compile dependency on the stack it is replacing.")]
+        public string[] conflictingLegacyPhysicsComponents =
+        {
+            "MavAeroBody",
+            "MavAtmosphericEngine",
+            "MavMouseFlightJet",
+            "MavInstructorController",
+            "MavThrustVectorControl"
+        };
+
         [Header("Physical Profile")]
         public MavFlightDynamicsProfileProvider profileProvider;
         public bool autoApplyProfileConfiguration = true;
@@ -56,6 +75,9 @@ namespace MaverickFresh.FlightDynamics
 
         [Tooltip("Optional. Held for readiness reporting. The actuator publishes actual surface state into controlInput.")]
         public MavControlSurfaceActuatorBase controlSurfaceActuator;
+
+        [Tooltip("Optional. Held for readiness reporting only; the control law reads it directly.")]
+        public MavPilotCommandSourceBase pilotCommandSource;
 
         [Header("Control Input (actual physical surface state, published by the actuator)")]
         public MavControlInput controlInput;
@@ -84,14 +106,34 @@ namespace MaverickFresh.FlightDynamics
         public int debugRejectedNonFiniteApplications;
 
         [Header("Debug / Readiness")]
+        [Tooltip("Structural preparation only: every part present and wired. This is NOT permission to fly.")]
         public bool debugReadyForLiveFdm;
         public string debugReadinessReason = "not evaluated";
+
+        [Tooltip("Full readiness judgement, split into STRUCTURALLY_PREPARED and OPERATIONALLY_LIVE_READY.")]
+        public MavFlightDynamicsReadinessReport debugReadiness;
+        public MavFlightDynamicsReadinessInputs debugReadinessInputs;
+        public string debugLegacyPhysicsOwner = "none";
+        public int debugRejectedNotLiveReadyApplications;
 
         private Rigidbody rb;
         private bool ownershipInitialized;
         private float lastAppliedFixedTime = float.NegativeInfinity;
         private bool loggedDuplicateRejection;
         private bool loggedNonFiniteRejection;
+        private bool loggedNotLiveReadyRejection;
+        private bool loggedStructuralOnlyOverride;
+        private int lastReadinessMask = -1;
+        private bool readinessEvaluatedOnce;
+
+        /// <summary>Physics steps between legacy-ownership component rescans. 25 steps is 0.5 s at the default fixed timestep.</summary>
+        private const int LegacyOwnershipScanIntervalSteps = 25;
+
+        private readonly System.Collections.Generic.List<MonoBehaviour> behaviourScratch =
+            new System.Collections.Generic.List<MonoBehaviour>(32);
+        private int legacyOwnershipScanCountdown;
+        private bool cachedLegacyOwnershipConflict;
+        private string cachedLegacyOwnerName = "none";
 
         private void Awake()
         {
@@ -107,8 +149,15 @@ namespace MaverickFresh.FlightDynamics
             if (autoApplyProfileConfiguration)
                 ApplyConfiguredProfile(false);
 
+            // InitializePhysicsOwnership writes Rigidbody damping and gravity flags, which is a
+            // physical ownership change. It must pass the same readiness gate the per-step load
+            // application does, or an armed-but-not-ready stack could still alter the aircraft.
             if (simulationEnabled)
-                InitializePhysicsOwnership();
+            {
+                EvaluateReadinessReport();
+                if (IsLoadApplicationPermitted())
+                    InitializePhysicsOwnership();
+            }
         }
 
         private void FixedUpdate()
@@ -123,6 +172,16 @@ namespace MaverickFresh.FlightDynamics
             debugLoadSet.BeginStep(debugPhysicsStepIndex);
 
             if (!simulationEnabled || rb == null || aerodynamicModel == null)
+            {
+                ClearLoadDebug();
+                PublishTelemetry(false);
+                return;
+            }
+
+            // Readiness gate. simulationEnabled says "someone armed this"; readiness says whether
+            // arming it is actually correct. Component presence alone must never be sufficient to
+            // take physical ownership of an aircraft.
+            if (!IsLoadApplicationPermitted())
             {
                 ClearLoadDebug();
                 PublishTelemetry(false);
@@ -165,6 +224,13 @@ namespace MaverickFresh.FlightDynamics
 
                 debugLoadSet.AddPropulsive(propulsive);
             }
+
+            // --- publish the measured specific force (accelerometer channel) ---
+            // Done here, from the summed load set, so a control law never has to compute an
+            // aerodynamic force itself. The value belongs to the state that produced it, so the
+            // snapshot a control law reads next step is internally consistent: its alpha, its body
+            // rates and its load factor all come from the same physics step.
+            PublishSpecificForce();
 
             // --- single application boundary ---
             bool applied = TryApplyLoadSet();
@@ -258,9 +324,11 @@ namespace MaverickFresh.FlightDynamics
         }
 
         /// <summary>
-        /// Reports whether the new FDM path is wired completely enough to take physical ownership.
-        /// This is the gate described by the architecture readiness state machine; it never enables
-        /// anything by itself.
+        /// STRUCTURAL preparation only: is the new FDM path wired completely enough to be a
+        /// candidate for physical ownership?
+        ///
+        /// This is deliberately NOT permission to fly. Use <see cref="IsOperationallyLiveReady"/>
+        /// for that question; component presence is not a safety gate.
         /// </summary>
         public bool IsReadyForLiveFdm(out string reason)
         {
@@ -278,12 +346,16 @@ namespace MaverickFresh.FlightDynamics
         }
 
         /// <summary>
-        /// Pure readiness rule, kept static so validation can exercise the exact production logic
-        /// without constructing a GameObject.
+        /// Pure STRUCTURAL readiness rule, kept static so validation can exercise the exact
+        /// production logic without constructing a GameObject.
         ///
-        /// Note: readiness is about wiring completeness, not data quality. A propulsion model that
-        /// honestly reports zero thrust satisfies readiness; whether its data is authoritative is a
-        /// separate, separately reported fact.
+        /// Structural readiness is about wiring completeness, not data quality or safety. A
+        /// propulsion model that honestly reports zero thrust satisfies it; whether that model may
+        /// be flown is an operational question answered by
+        /// <see cref="MavFlightDynamicsReadiness.EvaluateOperational"/>.
+        ///
+        /// The rule itself now lives in <see cref="MavFlightDynamicsReadiness"/>; this overload is
+        /// retained because it is the established entry point for existing callers and validation.
         /// </summary>
         public static bool EvaluateReadiness(
             bool hasRigidbody,
@@ -294,44 +366,19 @@ namespace MaverickFresh.FlightDynamics
             bool hasPropulsionModel,
             out string reason)
         {
-            if (!hasRigidbody)
-            {
-                reason = "no Rigidbody";
-                return false;
-            }
+            MavFlightDynamicsReadinessInputs inputs = new MavFlightDynamicsReadinessInputs();
+            inputs.hasRigidbody = hasRigidbody;
+            inputs.hasValidProfile = hasValidProfile;
+            inputs.hasAerodynamicModel = hasAerodynamicModel;
+            inputs.hasControlSurfaceActuator = hasControlSurfaceActuator;
+            inputs.hasControlLaw = hasControlLaw;
+            inputs.hasPropulsionModel = hasPropulsionModel;
 
-            if (!hasValidProfile)
-            {
-                reason = "no valid physical flight-dynamics profile";
-                return false;
-            }
+            bool structural = MavFlightDynamicsReadiness.EvaluateStructural(inputs, out reason);
+            if (structural)
+                reason = "READY";
 
-            if (!hasAerodynamicModel)
-            {
-                reason = "no aerodynamic model";
-                return false;
-            }
-
-            if (!hasControlSurfaceActuator)
-            {
-                reason = "no control-surface actuator";
-                return false;
-            }
-
-            if (!hasControlLaw)
-            {
-                reason = "no flight control law";
-                return false;
-            }
-
-            if (!hasPropulsionModel)
-            {
-                reason = "no propulsion model";
-                return false;
-            }
-
-            reason = "READY";
-            return true;
+            return structural;
         }
 
         /// <summary>
@@ -402,6 +449,9 @@ namespace MaverickFresh.FlightDynamics
 
             if (controlSurfaceActuator == null)
                 controlSurfaceActuator = GetComponent<MavControlSurfaceActuatorBase>();
+
+            if (pilotCommandSource == null)
+                pilotCommandSource = GetComponent<MavPilotCommandSourceBase>();
 
             if (telemetry == null)
                 telemetry = GetComponent<MavFlightDynamicsTelemetry>();
@@ -493,17 +543,272 @@ namespace MaverickFresh.FlightDynamics
         /// </summary>
         private void UpdateReadinessDebug()
         {
-            string reason;
-            debugReadyForLiveFdm = EvaluateReadiness(
-                rb != null,
-                activeProfile != null && debugProfileValid,
-                aerodynamicModel != null,
-                controlSurfaceActuator != null,
-                controlLaw != null,
-                propulsionModel != null,
-                out reason
+            debugReadinessInputs = BuildReadinessInputs();
+
+            // Evaluate() composes explanatory strings, which must not happen on every physics step.
+            // The inputs are twelve booleans, so a bitmask comparison tells us for free whether the
+            // judgement can possibly have changed.
+            int mask = debugReadinessInputs.ToBitmask();
+            if (mask == lastReadinessMask && readinessEvaluatedOnce)
+                return;
+
+            lastReadinessMask = mask;
+            readinessEvaluatedOnce = true;
+            debugReadiness = MavFlightDynamicsReadiness.Evaluate(debugReadinessInputs);
+
+            // Kept for backward compatibility: this field has always meant "structurally prepared".
+            debugReadyForLiveFdm = debugReadiness.structurallyPrepared;
+            debugReadinessReason = debugReadiness.structurallyPrepared
+                ? debugReadiness.operationalReason
+                : debugReadiness.structuralReason;
+        }
+
+        /// <summary>
+        /// Gathers the observable facts about this stack for the readiness rule. Every lookup that
+        /// can fail resolves to false, so an unknown answer is treated as not-ready.
+        /// </summary>
+        public MavFlightDynamicsReadinessInputs BuildReadinessInputs()
+        {
+            MavFlightDynamicsReadinessInputs inputs = new MavFlightDynamicsReadinessInputs();
+
+            inputs.hasRigidbody = rb != null;
+            inputs.hasValidProfile = activeProfile != null && debugProfileValid;
+            inputs.hasAerodynamicModel = aerodynamicModel != null;
+            inputs.hasControlSurfaceActuator = controlSurfaceActuator != null;
+            inputs.hasControlLaw = controlLaw != null;
+            inputs.hasPropulsionModel = propulsionModel != null;
+
+            inputs.aerodynamicGeometryMatchesProfile =
+                inputs.hasAerodynamicModel
+                && inputs.hasValidProfile
+                && GeometryMatches(aerodynamicModel.referenceGeometry, activeProfile.referenceGeometry);
+
+            inputs.controlLawEnabledAndDriving =
+                controlLaw != null
+                && controlLaw.isActiveAndEnabled
+                && controlLaw.driveActuatorInFixedUpdate
+                && controlLaw.actuator != null
+                && controlLaw.actuator == controlSurfaceActuator;
+
+            inputs.actuatorEnabledAndBound =
+                controlSurfaceActuator != null
+                && controlSurfaceActuator.isActiveAndEnabled
+                && controlSurfaceActuator.BoundBody == this;
+
+            inputs.propulsionAccepted =
+                propulsionModel != null
+                && (propulsionModel.HasAuthoritativeData || acceptNonAuthoritativePropulsion);
+
+            MavPilotCommandSourceBase source = ResolveCommandSource();
+            inputs.hasValidCommandSource = source != null && source.IsOperationalCommandSource;
+
+            inputs.legacyPhysicsOwnershipClear = !HasLegacyPhysicsOwnerCached();
+            debugLegacyPhysicsOwner = cachedLegacyOwnerName;
+
+            return inputs;
+        }
+
+        /// <summary>
+        /// Legacy-ownership detection, rescanned periodically rather than every physics step.
+        /// Enumerating components is not free and ownership does not change at 50 Hz; the interval
+        /// is fixed, so the behaviour stays deterministic.
+        /// </summary>
+        private bool HasLegacyPhysicsOwnerCached()
+        {
+            legacyOwnershipScanCountdown--;
+            if (legacyOwnershipScanCountdown > 0)
+                return cachedLegacyOwnershipConflict;
+
+            legacyOwnershipScanCountdown = LegacyOwnershipScanIntervalSteps;
+            RefreshLegacyPhysicsOwner();
+            return cachedLegacyOwnershipConflict;
+        }
+
+        /// <summary>Forces an immediate legacy-ownership rescan, for example after wiring changes.</summary>
+        public void RefreshLegacyPhysicsOwner()
+        {
+            string offender;
+            cachedLegacyOwnershipConflict = TryFindLegacyPhysicsOwner(out offender);
+            cachedLegacyOwnerName = cachedLegacyOwnershipConflict ? offender : "none";
+        }
+
+        /// <summary>Full readiness judgement, refreshing component references first.</summary>
+        public MavFlightDynamicsReadinessReport EvaluateReadinessReport()
+        {
+            Resolve();
+            if (autoApplyProfileConfiguration && activeProfile == null)
+                ApplyConfiguredProfile(false);
+
+            // An explicit query must never be answered from a throttled cache: the caller is
+            // typically asking right after changing the wiring.
+            RefreshLegacyPhysicsOwner();
+            legacyOwnershipScanCountdown = LegacyOwnershipScanIntervalSteps;
+
+            debugReadinessInputs = BuildReadinessInputs();
+            debugReadiness = MavFlightDynamicsReadiness.Evaluate(debugReadinessInputs);
+
+            lastReadinessMask = debugReadinessInputs.ToBitmask();
+            readinessEvaluatedOnce = true;
+            debugReadyForLiveFdm = debugReadiness.structurallyPrepared;
+            debugReadinessReason = debugReadiness.structurallyPrepared
+                ? debugReadiness.operationalReason
+                : debugReadiness.structuralReason;
+
+            return debugReadiness;
+        }
+
+        /// <summary>
+        /// True when the new path may take physical ownership of the aircraft. Strictly stronger
+        /// than <see cref="IsReadyForLiveFdm"/>, which only asks whether the parts are present.
+        /// </summary>
+        public bool IsOperationallyLiveReady(out string reason)
+        {
+            MavFlightDynamicsReadinessReport report = EvaluateReadinessReport();
+            reason = report.operationallyLiveReady ? report.operationalReason : report.summary;
+            return report.operationallyLiveReady;
+        }
+
+        /// <summary>
+        /// Decides whether this physics step is allowed to apply loads at all, given the readiness
+        /// level. Rejections are counted and logged once so a stack that silently never flies is
+        /// diagnosable from the inspector.
+        /// </summary>
+        private bool IsLoadApplicationPermitted()
+        {
+            if (!requireOperationalReadinessForLoadApplication)
+                return true;
+
+            if (debugReadiness.operationallyLiveReady)
+                return true;
+
+            if (debugReadiness.structurallyPrepared && allowStructuralOnlyLoadApplication)
+            {
+                if (!loggedStructuralOnlyOverride)
+                {
+                    loggedStructuralOnlyOverride = true;
+                    Debug.LogWarning(
+                        "[Maverick/FDM] Applying loads at STRUCTURALLY_PREPARED because "
+                        + "allowStructuralOnlyLoadApplication is set. Operational readiness is not met: "
+                        + debugReadiness.operationalReason,
+                        this
+                    );
+                }
+                return true;
+            }
+
+            debugRejectedNotLiveReadyApplications++;
+            if (!loggedNotLiveReadyRejection)
+            {
+                loggedNotLiveReadyRejection = true;
+                Debug.LogError(
+                    "[Maverick/FDM] simulationEnabled is set but the stack is not operationally "
+                    + "live-ready, so no loads were applied. " + debugReadiness.summary,
+                    this
+                );
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Publishes the measured non-gravitational specific force in g, in aerodynamic body axes.
+        ///
+        /// The load set holds only aerodynamic and propulsive force; gravity is applied by the
+        /// Rigidbody and never enters it. That is exactly what an accelerometer does not measure,
+        /// so the total load divided by mass is already a specific force with no gravity term to
+        /// subtract.
+        /// </summary>
+        private void PublishSpecificForce()
+        {
+            if (!debugLoadSet.IsFinite())
+            {
+                debugState.specificForceAeroBodyG = Vector3.zero;
+                debugState.specificForceValid = false;
+                return;
+            }
+
+            float massKg = rb != null
+                ? rb.mass
+                : (massProperties != null ? massProperties.massKg : 0f);
+
+            debugState.specificForceAeroBodyG = ComputeSpecificForceG(
+                debugLoadSet.totalForceAeroBodyN,
+                massKg
             );
-            debugReadinessReason = reason;
+            debugState.specificForceValid = massKg > 0f;
+        }
+
+        /// <summary>
+        /// Pure specific-force conversion: N -> g. Kept static so validation can pin the load-factor
+        /// sign convention without a Rigidbody. A non-positive mass yields zero rather than an
+        /// infinity that would poison a control loop.
+        /// </summary>
+        public static Vector3 ComputeSpecificForceG(Vector3 totalForceAeroBodyN, float massKg)
+        {
+            if (massKg <= 0f)
+                return Vector3.zero;
+
+            float scale = 1f / (massKg * MavControlLawProtections.StandardGravityMps2);
+            return totalForceAeroBodyN * scale;
+        }
+
+        /// <summary>
+        /// Looks for a legacy physics owner on this GameObject. Matching is by type name so the new
+        /// core keeps no compile-time dependency on the legacy stack it is meant to replace, and so
+        /// the list stays editable without touching legacy code.
+        /// </summary>
+        public bool TryFindLegacyPhysicsOwner(out string offenderName)
+        {
+            offenderName = "none";
+            if (conflictingLegacyPhysicsComponents == null || conflictingLegacyPhysicsComponents.Length == 0)
+                return false;
+
+            // The List overload reuses its buffer, so this does not allocate on every scan.
+            behaviourScratch.Clear();
+            GetComponents(behaviourScratch);
+
+            for (int i = 0; i < behaviourScratch.Count; i++)
+            {
+                MonoBehaviour behaviour = behaviourScratch[i];
+                if (behaviour == null || !behaviour.enabled)
+                    continue;
+
+                string typeName = behaviour.GetType().Name;
+                for (int j = 0; j < conflictingLegacyPhysicsComponents.Length; j++)
+                {
+                    if (typeName == conflictingLegacyPhysicsComponents[j])
+                    {
+                        offenderName = typeName;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private MavPilotCommandSourceBase ResolveCommandSource()
+        {
+            if (pilotCommandSource == null && controlLaw != null)
+                pilotCommandSource = controlLaw.commandSource;
+
+            if (pilotCommandSource == null)
+                pilotCommandSource = GetComponent<MavPilotCommandSourceBase>();
+
+            return pilotCommandSource;
+        }
+
+        private static bool GeometryMatches(MavAeroReferenceGeometry a, MavAeroReferenceGeometry b)
+        {
+            const float relativeTolerance = 1e-4f;
+            return NearlyEqual(a.wingAreaM2, b.wingAreaM2, relativeTolerance)
+                && NearlyEqual(a.wingSpanM, b.wingSpanM, relativeTolerance)
+                && NearlyEqual(a.meanAerodynamicChordM, b.meanAerodynamicChordM, relativeTolerance);
+        }
+
+        private static bool NearlyEqual(float a, float b, float relativeTolerance)
+        {
+            float scale = Mathf.Max(1f, Mathf.Max(Mathf.Abs(a), Mathf.Abs(b)));
+            return Mathf.Abs(a - b) <= relativeTolerance * scale;
         }
 
         private void PublishTelemetry(bool loadsApplied)
@@ -519,6 +824,7 @@ namespace MaverickFresh.FlightDynamics
             sample.dynamicPressurePa = debugState.dynamicPressurePa;
             sample.alphaDeg = debugState.AlphaDeg;
             sample.betaDeg = debugState.BetaDeg;
+            sample.loadFactorNz = debugState.specificForceValid ? debugState.LoadFactorNz : 0f;
 
             sample.rollRateDegSec = debugState.aeroBodyRatesRadSec.x * Mathf.Rad2Deg;
             sample.pitchRateDegSec = debugState.aeroBodyRatesRadSec.y * Mathf.Rad2Deg;
@@ -544,6 +850,7 @@ namespace MaverickFresh.FlightDynamics
                 propulsionModel != null && propulsionModel.HasAuthoritativeData;
             sample.aerodynamicContributions = debugLoadSet.aerodynamicContributions;
             sample.propulsiveContributions = debugLoadSet.propulsiveContributions;
+            sample.readinessLevel = (int)debugReadiness.level;
 
             telemetry.Capture(sample);
         }
@@ -552,6 +859,14 @@ namespace MaverickFresh.FlightDynamics
         {
             debugCoefficients = MavAeroCoefficients.Zero;
             debugLoads = MavAerodynamicLoads.Zero;
+
+            // No load set was summed, so there is no measured specific force. Publishing zero with
+            // the valid flag cleared is important: a control law must be able to tell "no reading"
+            // apart from "a genuine 0 g reading", or a load-factor protection would silently
+            // believe the aircraft is unloaded.
+            debugState.specificForceAeroBodyG = Vector3.zero;
+            debugState.specificForceValid = false;
+
             ClearUnityLoadDebug();
         }
 

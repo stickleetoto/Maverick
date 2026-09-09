@@ -56,6 +56,11 @@ namespace MaverickFresh.FlightDynamics.F16
             get { return actual; }
         }
 
+        public override MavSixDoFBody BoundBody
+        {
+            get { return sixDoFBody; }
+        }
+
         public override void SetCommand(MavControlInput input)
         {
             command = input;
