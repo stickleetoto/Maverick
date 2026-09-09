@@ -70,6 +70,45 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             );
         }
 
+        [MenuItem("Maverick/Flight Dynamics/Run Phase 2 Trim and Control Validation")]
+        public static void RunPhase2Validation()
+        {
+            int passed;
+            int failed;
+            string report = MavFlightDynamicsPhase2Validation.RunAll(out passed, out failed);
+
+            if (failed == 0)
+                Debug.Log(report);
+            else
+                Debug.LogError(report);
+
+            EditorUtility.DisplayDialog(
+                "Phase 2 Trim / Control Validation",
+                failed == 0
+                    ? "PASS\n\n" + passed + " checks passed."
+                    : "FAIL\n\n" + failed + " checks failed. See Console for details.",
+                "OK"
+            );
+        }
+
+        /// <summary>
+        /// Prints the F-16 trim survey. This computes and reports only: no scene object is touched,
+        /// no Rigidbody is read or written, and no engine state is advanced.
+        /// </summary>
+        [MenuItem("Maverick/Flight Dynamics/Report F-16 Trim Survey")]
+        public static void ReportF16TrimSurvey()
+        {
+            Debug.Log(MaverickFresh.FlightDynamics.F16.MavF16TrimReference.BuildTrimSurvey());
+
+            EditorUtility.DisplayDialog(
+                "F-16 Trim Survey",
+                "Trim survey written to the Console.\n\n"
+                + "Powered straight-and-level is expected to report ConvergedButThrustUnavailable "
+                + "while the F-16 thrust deck is not frozen.",
+                "OK"
+            );
+        }
+
         [MenuItem("Maverick/Flight Dynamics/Run All Flight Dynamics Validation")]
         public static void RunAllValidation()
         {
@@ -94,9 +133,17 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 out propulsionFailed
             );
 
-            int passed = referencePassed + phase1Passed + propulsionPassed;
-            int failed = referenceFailed + phase1Failed + propulsionFailed;
-            string report = referenceReport + "\n\n" + phase1Report + "\n\n" + propulsionReport;
+            int phase2Passed;
+            int phase2Failed;
+            string phase2Report = MavFlightDynamicsPhase2Validation.RunAll(
+                out phase2Passed,
+                out phase2Failed
+            );
+
+            int passed = referencePassed + phase1Passed + propulsionPassed + phase2Passed;
+            int failed = referenceFailed + phase1Failed + propulsionFailed + phase2Failed;
+            string report = referenceReport + "\n\n" + phase1Report + "\n\n" + propulsionReport
+                            + "\n\n" + phase2Report;
 
             if (failed == 0)
                 Debug.Log(report);
