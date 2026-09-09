@@ -67,14 +67,7 @@ namespace MaverickFresh.FlightDynamics.F16
                 deltaTime
             );
 
-            // Deliberately zero until a sourced thrust deck is frozen.
-            MavPropulsiveLoads loads = MavPropulsiveLoads.Zero;
-            loads.forceAeroBodyN = Vector3.zero;
-            loads.momentAeroBodyNm = Vector3.zero;
-            loads.reportedThrustN = 0f;
-            loads.powerState01 = Mathf.Clamp01(actualPowerPercent * 0.01f);
-            loads.hasAuthoritativeData = false;
-            return loads;
+            return BuildZeroThrustLoads(actualPowerPercent);
         }
 
         public override void ResetEngineState(float throttle01)
@@ -171,6 +164,22 @@ namespace MaverickFresh.FlightDynamics.F16
 
             float rate = ComputePowerRatePercentPerSec(actual, commandedPowerPercent);
             return Mathf.Clamp(actual + rate * deltaTime, 0f, 100f);
+        }
+
+        /// <summary>
+        /// Current safety boundary while the Morelli thrust deck is unavailable to this repository.
+        /// Power dynamics advance, but dimensional thrust remains exactly zero and is explicitly
+        /// marked non-authoritative.
+        /// </summary>
+        public static MavPropulsiveLoads BuildZeroThrustLoads(float actualPowerPercent)
+        {
+            MavPropulsiveLoads loads = MavPropulsiveLoads.Zero;
+            loads.forceAeroBodyN = Vector3.zero;
+            loads.momentAeroBodyNm = Vector3.zero;
+            loads.reportedThrustN = 0f;
+            loads.powerState01 = Mathf.Clamp01(actualPowerPercent * 0.01f);
+            loads.hasAuthoritativeData = false;
+            return loads;
         }
     }
 }
