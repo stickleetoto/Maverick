@@ -92,6 +92,15 @@ namespace MaverickFresh
             if (instructor != null)
                 ApplyToInstructor(instructor, profile);
 
+            // Keep the duplicated legacy tuning fields on a single snapshot after
+            // aircraft identity changes. Jet is the canonical tuning source; the
+            // Instructor owns control interpretation/runtime commands.
+            if (jet != null)
+            {
+                jet.PushLegacyTuningToInstructor();
+                instructor = jet.instructor;
+            }
+
             MavWTFeelPolishController wt = GetComponent<MavWTFeelPolishController>();
             if (wt != null)
             {
@@ -276,7 +285,7 @@ private void ApplyToRadarSignature(MavRadarSignature signature, MavAircraftRunti
             Set(instructor, "targetYawRateDeg", p.targetYawRateDeg);
             Set(instructor, "targetRollRateDeg", p.targetRollRateDeg);
             Set(instructor, "maxScreenRollBankAngle", p.maxScreenRollBankAngle);
-            Set(instructor, "mouseSensitivity", p.mouseSensitivity);
+            Set(instructor, "sensitivity", p.mouseSensitivity);
         }
 
         private void ApplyToWeapons(MavCASWeaponSystem weapons, MavAircraftRuntimeProfile p)
