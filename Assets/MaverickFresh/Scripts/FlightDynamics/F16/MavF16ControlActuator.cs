@@ -3,15 +3,9 @@ using UnityEngine;
 namespace MaverickFresh.FlightDynamics.F16
 {
     /// <summary>
-    /// Physical control-surface state owner for the isolated F-16 flight-dynamics path.
-    ///
-    /// This component converts commanded deflections into bounded actual surface states,
-    /// then publishes those states to MavSixDoFBody. It deliberately does not apply any
-    /// Rigidbody torque itself.
-    ///
-    /// Morelli provides the aerodynamic-model deflection envelope. Actuator rate limits
-    /// are optional and disabled by default until a permitted source is selected; a value
-    /// <= 0 means instantaneous motion to the bounded command.
+    /// Physical control-surface state owner for the F-16 flight-dynamics path.
+    /// Commands are bounded by the active physical aircraft profile, then converted into
+    /// actual surface states. This component never applies Rigidbody torque directly.
     /// </summary>
     [DefaultExecutionOrder(-200)]
     [DisallowMultipleComponent]
@@ -32,6 +26,7 @@ namespace MaverickFresh.FlightDynamics.F16
         [Header("Debug / Actual Surface State")]
         public MavControlInput actual;
         public bool debugCommandClamped;
+        public bool debugUsingPhysicalProfileLimits;
 
         private void Awake()
         {
@@ -71,24 +66,9 @@ namespace MaverickFresh.FlightDynamics.F16
             float dt = Mathf.Max(0f, deltaTime);
 
             actual.throttle01 = bounded.throttle01;
-            actual.elevatorDeg = MoveSurface(
-                actual.elevatorDeg,
-                bounded.elevatorDeg,
-                elevatorRateLimitDegSec,
-                dt
-            );
-            actual.aileronDeg = MoveSurface(
-                actual.aileronDeg,
-                bounded.aileronDeg,
-                aileronRateLimitDegSec,
-                dt
-            );
-            actual.rudderDeg = MoveSurface(
-                actual.rudderDeg,
-                bounded.rudderDeg,
-                rudderRateLimitDegSec,
-                dt
-            );
+            actual.elevatorDeg = MoveSurface(actual.elevatorDeg, bounded.elevatorDeg, elevatorRateLimitDegSec, dt);
+            actual.aileronDeg = MoveSurface(actual.aileronDeg, bounded.aileronDeg, aileronRateLimitDegSec, dt);
+            actual.rudderDeg = MoveSurface(actual.rudderDeg, bounded.rudderDeg, rudderRateLimitDegSec, dt);
             actual.leadingEdgeFlapDeg = MoveSurface(
                 actual.leadingEdgeFlapDeg,
                 bounded.leadingEdgeFlapDeg,
@@ -97,36 +77,47 @@ namespace MaverickFresh.FlightDynamics.F16
             );
         }
 
-        private static MavControlInput BoundCommand(MavControlInput source, out bool wasClamped)
+        private MavControlInput BoundCommand(MavControlInput source, out bool wasClamped)
         {
-            MavControlInput bounded = source;
-            bounded.throttle01 = Mathf.Clamp01(source.throttle01);
-            bounded.elevatorDeg = Mathf.Clamp(
-                source.elevatorDeg,
-                MavF16MorelliReference.ElevatorMinDeg,
-                MavF16MorelliReference.ElevatorMaxDeg
-            );
-            bounded.aileronDeg = Mathf.Clamp(
-                source.aileronDeg,
-                MavF16MorelliReference.AileronMinDeg,
-                MavF16MorelliReference.AileronMaxDeg
-            );
-            bounded.rudderDeg = Mathf.Clamp(
-                source.rudderDeg,
-                MavF16MorelliReference.RudderMinDeg,
-                MavF16MorelliReference.RudderMaxDeg
-            );
+            MavControlInput bounded;
+            debugUsingPhysicalProfileLimits =
+                sixDoFBody != null
+                && sixDoFBody.activeProfile != null
+                && sixDoFBody.debugProfileValid;
 
-            // The compact Morelli model currently ignores leading-edge-flap input.
-            // Preserve the command for future model extensions but do not invent a
-            // published aerodynamic envelope here.
-            bounded.leadingEdgeFlapDeg = source.leadingEdgeFlapDeg;
+            if (debugUsingPhysicalProfileLimits)
+            {
+                bounded = sixDoFBody.activeProfile.controlSurfaceLimits.Clamp(source);
+            }
+            else
+            {
+                // Safe fallback for edit-time/component-order cases before the profile is built.
+                bounded = source;
+                bounded.throttle01 = Mathf.Clamp01(source.throttle01);
+                bounded.elevatorDeg = Mathf.Clamp(
+                    source.elevatorDeg,
+                    MavF16MorelliReference.ElevatorMinDeg,
+                    MavF16MorelliReference.ElevatorMaxDeg
+                );
+                bounded.aileronDeg = Mathf.Clamp(
+                    source.aileronDeg,
+                    MavF16MorelliReference.AileronMinDeg,
+                    MavF16MorelliReference.AileronMaxDeg
+                );
+                bounded.rudderDeg = Mathf.Clamp(
+                    source.rudderDeg,
+                    MavF16MorelliReference.RudderMinDeg,
+                    MavF16MorelliReference.RudderMaxDeg
+                );
+                bounded.leadingEdgeFlapDeg = 0f;
+            }
 
             wasClamped =
                 !Mathf.Approximately(bounded.throttle01, source.throttle01)
                 || !Mathf.Approximately(bounded.elevatorDeg, source.elevatorDeg)
                 || !Mathf.Approximately(bounded.aileronDeg, source.aileronDeg)
-                || !Mathf.Approximately(bounded.rudderDeg, source.rudderDeg);
+                || !Mathf.Approximately(bounded.rudderDeg, source.rudderDeg)
+                || !Mathf.Approximately(bounded.leadingEdgeFlapDeg, source.leadingEdgeFlapDeg);
 
             return bounded;
         }
