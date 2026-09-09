@@ -10,6 +10,11 @@ It must not be enabled on the production `Mav_Player` while the legacy flight st
 - No AeroBench source code is incorporated into Maverick.
 - JSBSim F-16 data/model is not used for this implementation.
 
+Frozen reference documents:
+
+- `F16/F16_REFERENCE_SPEC_V0.1.md`
+- `F16/F16_MORELLI_COEFFICIENT_AUDIT_V0.1.md`
+
 ## Coordinate convention
 
 Aerodynamic code uses conventional aircraft body axes:
@@ -83,17 +88,31 @@ Leading-edge-flap demand is intentionally not consumed by this compact polynomia
 
 ## F-16 nominal mass / inertia reference
 
-The isolated reference preset uses the F-16 nonlinear-simulation values published by Eugene A. Morelli in NASA work on aircraft inertia identification:
+The v0.1 reference preset uses the nominal F-16 nonlinear-simulation values frozen in `F16_REFERENCE_SPEC_V0.1.md`:
 
-- mass: 637 slug (~9296 kg)
+- mass: 637.16 slug (~9298.65 kg)
 - Ix: 9,496 slug-ft^2
 - Iy: 55,814 slug-ft^2
 - Iz: 63,100 slug-ft^2
 - Ixz: 982 slug-ft^2
+- nominal aerodynamic CG: 0.25 cbar
+- aerodynamic reference station: 0.35 cbar
 
 `MavF16MassReference` transforms the conventional aircraft body-axis tensor into Unity local axes and diagonalizes the coupled Y/Z block so `Rigidbody.inertiaTensor` and `Rigidbody.inertiaTensorRotation` represent the same tensor.
 
 The Rigidbody local center-of-mass offset is not guessed. `MavF16ReferenceConfigurator.centerOfMassLocalM` remains explicit because a Unity model/prefab origin is an asset convention and is not guaranteed to coincide with the aerodynamic reference point.
+
+Other NASA studies use different F-16 nominal masses. Those are treated as different configurations and are not silently mixed into the v0.1 baseline.
+
+## Coefficient audit status
+
+The compact Morelli polynomial constants and equation structure have been manually audited against the 1998 publication and frozen for v0.1.
+
+Important policy result:
+
+- NASA Morelli values remain authoritative.
+- AeroBench differences do not overwrite Maverick coefficients.
+- Known cross-check discrepancies are documented in `F16_MORELLI_COEFFICIENT_AUDIT_V0.1.md`.
 
 ## Control-surface ownership
 
@@ -119,10 +138,12 @@ The legacy Maverick force/torque stack remains untouched on this branch. Do not 
 
 ## Next development steps
 
-1. Add coefficient-level and inertia-transform sanity tests.
-2. Add propulsion as a separate force owner. NASA Morelli material describes the engine architecture as altitude/Mach/power-level table lookup with throttle gearing and first-order power lag; numerical engine tables must come from an explicitly permitted source before claiming reference accuracy.
-3. Build a deterministic trim solver for straight-and-level subsonic flight.
-4. Build deterministic pitch/roll/yaw step and doublet test cases.
-5. Compare trajectories against AeroBenchVVPython as an external oracle only.
-6. Correct implementation/sign/unit mistakes until the external traces agree within defined tolerances.
-7. Only after validation, begin one-for-one ownership migration from the legacy Maverick flight stack.
+1. Add coefficient-level regression vectors derived independently from the frozen NASA Morelli equations.
+2. Add inertia-transform sanity tests.
+3. Audit the NASA F-16 propulsion description and available thrust-map data before implementing reference propulsion.
+4. Add propulsion as a separate force owner only after the source/data boundary is frozen.
+5. Build a deterministic trim solver for straight-and-level subsonic flight.
+6. Build deterministic pitch/roll/yaw step and doublet test cases.
+7. Compare trajectories against AeroBenchVVPython as an external oracle only.
+8. Correct implementation/sign/unit mistakes until the external traces agree within defined tolerances.
+9. Only after validation, begin one-for-one ownership migration from the legacy Maverick flight stack.
