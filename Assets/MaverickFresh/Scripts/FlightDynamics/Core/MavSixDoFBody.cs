@@ -3,11 +3,15 @@ using UnityEngine;
 namespace MaverickFresh.FlightDynamics
 {
     /// <summary>
-    /// Isolated SI-unit six-DoF aerodynamic integration boundary.
+    /// SI-unit six-DoF flight-dynamics engine boundary.
     ///
-    /// IMPORTANT: simulationEnabled defaults to false so this component can coexist
-    /// with the legacy Maverick flight stack without double-applying forces.
-    /// Do not enable it on Mav_Player until the legacy ownership migration begins.
+    /// Aircraft-specific code supplies dimensionless aerodynamic coefficients and an optional
+    /// MavFlightDynamicsProfileProvider supplies physical geometry / mass / envelope data.
+    /// This class owns atmosphere sampling, state extraction, coefficient dimensionalization,
+    /// and final Rigidbody force/moment application.
+    ///
+    /// IMPORTANT: simulationEnabled defaults to false so the new engine can coexist with the
+    /// legacy Maverick flight stack without double-applying forces.
     /// </summary>
     [DefaultExecutionOrder(-100)]
     [DisallowMultipleComponent]
@@ -19,7 +23,12 @@ namespace MaverickFresh.FlightDynamics
         public bool applyMassPropertiesOnEnable = false;
         public bool zeroUnityDampingWhenEnabled = true;
 
-        [Header("Model")]
+        [Header("Physical Profile")]
+        public MavFlightDynamicsProfileProvider profileProvider;
+        public bool autoApplyProfileConfiguration = true;
+        public MavFlightDynamicsProfile activeProfile;
+
+        [Header("Aerodynamic Model")]
         public MavAerodynamicModelBase aerodynamicModel;
         public MavMassProperties massProperties = new MavMassProperties();
 
@@ -27,6 +36,9 @@ namespace MaverickFresh.FlightDynamics
         public MavControlInput controlInput;
 
         [Header("Debug / Telemetry")]
+        public bool debugProfileValid;
+        public bool debugInsideProfileEnvelope;
+        public string debugProfileStatus = "unconfigured";
         public MavAtmosphereSample debugAtmosphere;
         public MavFlightState debugState;
         public MavAeroCoefficients debugCoefficients;
@@ -40,11 +52,16 @@ namespace MaverickFresh.FlightDynamics
         private void Awake()
         {
             Resolve();
+            if (autoApplyProfileConfiguration)
+                ApplyConfiguredProfile(false);
         }
 
         private void OnEnable()
         {
             Resolve();
+
+            if (autoApplyProfileConfiguration)
+                ApplyConfiguredProfile(false);
 
             if (simulationEnabled)
                 InitializePhysicsOwnership();
@@ -54,6 +71,7 @@ namespace MaverickFresh.FlightDynamics
         {
             Resolve();
             UpdateStateAndAtmosphere();
+            UpdateProfileDebug();
 
             if (!simulationEnabled || rb == null || aerodynamicModel == null)
             {
@@ -64,9 +82,13 @@ namespace MaverickFresh.FlightDynamics
             if (!ownershipInitialized)
                 InitializePhysicsOwnership();
 
+            MavControlInput boundedInput = controlInput;
+            if (activeProfile != null && debugProfileValid)
+                boundedInput = activeProfile.controlSurfaceLimits.Clamp(controlInput);
+
             debugCoefficients = aerodynamicModel.Evaluate(
                 debugState,
-                controlInput,
+                boundedInput,
                 debugAtmosphere
             );
 
@@ -92,6 +114,48 @@ namespace MaverickFresh.FlightDynamics
             controlInput = input;
         }
 
+        /// <summary>
+        /// Rebuilds the aircraft's physical profile and applies its geometry/mass configuration
+        /// to the flight-dynamics engine. Rigidbody mass/inertia are only changed when applyMassNow
+        /// is true, preserving safe coexistence with the legacy flight stack.
+        /// </summary>
+        public bool ApplyConfiguredProfile(bool applyMassNow)
+        {
+            Resolve();
+
+            if (profileProvider == null)
+            {
+                activeProfile = null;
+                debugProfileValid = false;
+                debugProfileStatus = "No flight-dynamics profile provider.";
+                return false;
+            }
+
+            activeProfile = profileProvider.BuildProfile();
+            if (activeProfile == null)
+            {
+                debugProfileValid = false;
+                debugProfileStatus = "Profile provider returned null.";
+                return false;
+            }
+
+            string reason;
+            debugProfileValid = activeProfile.IsValid(out reason);
+            debugProfileStatus = activeProfile.profileId + ": " + reason;
+            if (!debugProfileValid)
+                return false;
+
+            massProperties = activeProfile.massProperties;
+
+            if (aerodynamicModel != null)
+                aerodynamicModel.referenceGeometry = activeProfile.referenceGeometry;
+
+            if (applyMassNow)
+                ApplyConfiguredMassProperties();
+
+            return true;
+        }
+
         public void ApplyConfiguredMassProperties()
         {
             Resolve();
@@ -106,6 +170,9 @@ namespace MaverickFresh.FlightDynamics
 
             if (aerodynamicModel == null)
                 aerodynamicModel = GetComponent<MavAerodynamicModelBase>();
+
+            if (profileProvider == null)
+                profileProvider = GetComponent<MavFlightDynamicsProfileProvider>();
         }
 
         private void InitializePhysicsOwnership()
@@ -113,16 +180,29 @@ namespace MaverickFresh.FlightDynamics
             if (rb == null)
                 return;
 
+            if (autoApplyProfileConfiguration)
+                ApplyConfiguredProfile(false);
+
             if (applyMassPropertiesOnEnable && massProperties != null)
                 massProperties.ApplyTo(rb);
 
-            if (zeroUnityDampingWhenEnabled)
+            bool zeroLinearDamping = zeroUnityDampingWhenEnabled;
+            bool zeroAngularDamping = zeroUnityDampingWhenEnabled;
+            bool useGravity = true;
+
+            if (activeProfile != null && debugProfileValid)
             {
-                rb.linearDamping = 0f;
-                rb.angularDamping = 0f;
+                zeroLinearDamping = activeProfile.zeroUnityLinearDamping;
+                zeroAngularDamping = activeProfile.zeroUnityAngularDamping;
+                useGravity = activeProfile.useGravity;
             }
 
-            rb.useGravity = true;
+            if (zeroLinearDamping)
+                rb.linearDamping = 0f;
+            if (zeroAngularDamping)
+                rb.angularDamping = 0f;
+
+            rb.useGravity = useGravity;
             ownershipInitialized = true;
         }
 
@@ -156,6 +236,17 @@ namespace MaverickFresh.FlightDynamics
             state.alphaRad = MavFlightDynamicsMath.ComputeAlphaRad(aeroBodyVelocity);
             state.betaRad = MavFlightDynamicsMath.ComputeBetaRad(aeroBodyVelocity);
             debugState = state;
+        }
+
+        private void UpdateProfileDebug()
+        {
+            if (activeProfile == null || !debugProfileValid)
+            {
+                debugInsideProfileEnvelope = false;
+                return;
+            }
+
+            debugInsideProfileEnvelope = activeProfile.envelope.Contains(debugState);
         }
 
         private void ClearLoadDebug()
