@@ -369,6 +369,18 @@ angle back as a powered condition converges needing ~0 N — a cross-check betwe
 An L/D near 13 from the compact Morelli `CX` fit is optimistic for a real airframe. These numbers are
 a self-consistency result for *this model*, not a claim about the aircraft.
 
+## Validation provenance
+
+Check counts quoted in this repository's flight-dynamics documents were produced by an **offline
+harness**: the validation suites are pure static C# and were compiled and run outside Unity against
+a minimal API stub. That executes the same production code the editor menu does, but it does not
+exercise Unity's own maths or physics, does not touch `Rigidbody`/`Transform`/scenes, and does not
+prove the project compiles inside the editor.
+
+`Maverick > Flight Dynamics > Run All Flight Dynamics Validation` under Unity 6000.3.16f1 is still
+the authority. Until it has been run, treat the counts as evidence about the flight-dynamics logic
+only.
+
 ## Next development steps
 
 1. Run `Maverick > Flight Dynamics > Run All Flight Dynamics Validation` and keep it green before further flight-dynamics changes.

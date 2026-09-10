@@ -335,6 +335,27 @@ handover is a later phase. Nothing on this branch flies live, so no aircraft is 
 `Maverick > Flight Dynamics > Run Phase 2 Trim and Control Validation`, or
 `Run All Flight Dynamics Validation` for every suite.
 
+### How these results were obtained
+
+**The counts below are from an OFFLINE HARNESS, not from a Unity editor run.**
+
+The validation suites are pure static C#, so they were compiled and executed outside Unity against a
+minimal API stub (`Vector3`, `Mathf`, `MonoBehaviour`, attributes and so on). That runs *exactly the
+same production code* the editor menu runs.
+
+What it does **not** do:
+
+- run under Unity 6000.3.16f1
+- exercise Unity's own `Mathf`, `Vector3` or physics implementations
+- exercise anything needing a live `Rigidbody`, `Transform`, scene or play-mode session
+- prove the project compiles inside the Unity editor with its full assembly set
+
+So these numbers are strong evidence about the flight-dynamics logic and no evidence at all about
+Unity integration. **`Maverick > Flight Dynamics > Run All Flight Dynamics Validation` still has to
+be run in Unity 6000.3.16f1 before Phase 2 can be called closed.** Until then this phase is
+CONDITIONAL, not PASS.
+
+
 | Section | Covers |
 | --- | --- |
 | `[T0]` | residual arithmetic, gravity resolution, single `qbar` application |
@@ -365,8 +386,8 @@ The scan strips line comments and string literals before matching, so the extens
 that mentions `AddForce` is not a false positive, and it verifies its own classifier before trusting
 its verdict on the tree.
 
-Result at Phase 2 closeout: **300 checks pass, 0 fail**, across all four suites, with 0 ownership
-violations over 37 files.
+Result at Phase 2 closeout: **300 checks pass, 0 fail** across all four suites, with 0 ownership
+violations over 37 files - from the offline harness described above, NOT from a Unity editor run.
 
 ## 8. Known limitations
 

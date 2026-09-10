@@ -2,13 +2,39 @@
 
 Status: IN PROGRESS
 Branch: `claude/f16-trim-control-phase2`
+Base: the Phase 2 closeout commit on this branch, NOT `feature/f16-flight-dynamics-core`
 Target Unity: 6000.3.16f1
 
 `MavSixDoFBody.simulationEnabled` remains `false` by default throughout Phase 3.
 
+## Validation provenance
+
+**All check counts in this document are from an OFFLINE HARNESS, not from a Unity editor run.** The
+suites are pure static C# and were compiled and executed outside Unity against a minimal API stub.
+That is the same production code the editor menu runs, but it does not exercise Unity's own `Mathf`
+or `Vector3`, does not touch `Rigidbody`/`Transform`/scenes, and does not prove the project compiles
+inside the editor.
+
+`Maverick > Flight Dynamics > Run All Flight Dynamics Validation` under Unity 6000.3.16f1 remains
+the authority. No phase here is marked PASS on the offline run alone.
+
+## Phase status
+
+| Phase | Status | Why |
+| --- | --- | --- |
+| 3A Propulsion | **CONDITIONAL** | The architecture is complete and tested, but there is still **no authoritative F-16 dimensional thrust data**. Runtime thrust remains 0 N. A phase whose whole purpose is dimensional thrust cannot be PASS while the deck is empty. |
+| 3B Attitude | **CONDITIONAL** | Logic complete and directionally validated offline; pending the Unity run. |
+| 3C Ownership | see section | |
+
 ---
 
-## Phase 3A — Propulsion
+## Phase 3A — Propulsion — **CONDITIONAL**
+
+Marked CONDITIONAL deliberately, not as a formality. 3A exists to deliver dimensional thrust, and
+there is no authoritative F-16 thrust deck. What ships is the *architecture* for one, validated
+against explicitly synthetic data, while the aircraft still produces 0 N. 3A becomes PASS when, and
+only when, a real deck is frozen from an approved source and the powered trim returns plain
+`Converged`.
 
 ### The problem being solved
 
