@@ -596,35 +596,57 @@ namespace MaverickFresh.FlightDynamics
                 && controlLaw.isActiveAndEnabled
                 && controlLaw.driveActuatorInFixedUpdate
                 && controlLaw.actuator != null
-                && controlLaw.actuator == controlSurfaceActuator;
+                && controlSurfaceActuator != null
+                && IdentityMatches(controlSurfaceActuator, controlLaw.actuator);
+
+            // Identity, not presence. A law wired to this actuator but reading a different body
+            // would compute every command from another aircraft's airspeed, alpha and rates, and
+            // nothing downstream would look wrong.
+            inputs.controlLawBoundToThisBody =
+                controlLaw != null
+                && controlLaw.sixDoFBody != null
+                && IdentityMatches(this, controlLaw.sixDoFBody);
 
             inputs.actuatorEnabledAndBound =
                 controlSurfaceActuator != null
                 && controlSurfaceActuator.isActiveAndEnabled
-                && controlSurfaceActuator.BoundBody == this;
+                && controlSurfaceActuator.BoundBody != null
+                && IdentityMatches(this, controlSurfaceActuator.BoundBody);
 
             inputs.propulsionAccepted =
                 propulsionModel != null
                 && (propulsionModel.HasAuthoritativeData || acceptNonAuthoritativePropulsion);
 
-            // Both halves of the command-path question. A source that declares itself operational
-            // but is producing nothing this step is NOT a valid command source: collapsing the two
-            // would let readiness stay live across a dropout.
+            // The command path, proved end to end rather than assembled from separate objects.
             //
-            // The declared availability is corroborated by what the control law actually observed.
-            // The law runs at -300 and this body at -100, so within one physics step its poll result
-            // is already fresh - which makes this the observed truth rather than a property a source
-            // could report incorrectly.
-            MavPilotCommandSourceBase source = ResolveCommandSource();
-            bool signalAvailable = source != null && source.HasCommandSignal;
-            if (signalAvailable && controlLaw != null && controlLaw.driveActuatorInFixedUpdate)
-                signalAvailable = controlLaw.debugCommandSignalAvailable;
+            // The body inspects one source; the control law reads another field. Those must be the
+            // same object, or a declaration taken from source A gets combined with availability
+            // observed on source B into a "valid" path that never existed.
+            //
+            // Availability is the control law's own observation from this step - it runs at -300
+            // and this body at -100, so the result is already fresh - which makes it the observed
+            // truth rather than a property a source could report incorrectly.
+            MavPilotCommandSourceBase bodySource = ResolveCommandSource();
+            MavPilotCommandSourceBase lawSource = controlLaw != null ? controlLaw.commandSource : null;
+
+            inputs.commandSourceIdentityMatches =
+                bodySource != null
+                && lawSource != null
+                && IdentityMatches(bodySource, lawSource);
+
+            bool observedSourceSignal =
+                controlLaw != null
+                && controlLaw.debugCommandResolution
+                    == MavFlightControlLawBase.MavCommandResolution.SourceSignal;
 
             inputs.hasValidCommandSource =
-                source != null
-                && MavPilotCommandSourceBase.EvaluatesAsLiveCommandPath(
-                    source.IsOperationalCommandSource,
-                    signalAvailable);
+                MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(
+                    bodySource != null,
+                    controlLaw != null,
+                    inputs.commandSourceIdentityMatches,
+                    bodySource != null && bodySource.isActiveAndEnabled,
+                    bodySource != null && bodySource.IsOperationalCommandSource,
+                    observedSourceSignal);
 
             inputs.legacyPhysicsOwnershipClear = !HasLegacyPhysicsOwnerConflict();
             debugLegacyPhysicsOwner = cachedLegacyOwnerName;
@@ -865,15 +887,38 @@ namespace MaverickFresh.FlightDynamics
             return false;
         }
 
+        /// <summary>
+        /// Resolves the command source THIS body inspects.
+        ///
+        /// Deliberately never adopts the control law's field. Doing so would make the identity
+        /// check vacuous: the body would silently agree with whatever the law happened to point at,
+        /// which is exactly the mismatch the check exists to catch.
+        /// </summary>
         private MavPilotCommandSourceBase ResolveCommandSource()
         {
-            if (pilotCommandSource == null && controlLaw != null)
-                pilotCommandSource = controlLaw.commandSource;
-
             if (pilotCommandSource == null)
                 pilotCommandSource = GetComponent<MavPilotCommandSourceBase>();
 
             return pilotCommandSource;
+        }
+
+        /// <summary>
+        /// Reference identity, as a pure predicate: both operands must exist and be the same
+        /// object. Two nulls are NOT a match - an unknown wiring state fails closed rather than
+        /// being read as agreement.
+        ///
+        /// Typed as object so validation can exercise the rule with plain instances instead of
+        /// needing real Unity components.
+        /// </summary>
+        public static bool IdentityMatches(object expected, object actual)
+        {
+            if (expected == null || actual == null)
+                return false;
+
+            // Unity overloads == for destroyed objects; ReferenceEquals answers the identity
+            // question directly, and the null checks above already handle the destroyed case
+            // through the overloaded operator.
+            return ReferenceEquals(expected, actual);
         }
 
         private static bool GeometryMatches(MavAeroReferenceGeometry a, MavAeroReferenceGeometry b)

@@ -45,8 +45,11 @@ namespace MaverickFresh.FlightDynamics
         [Tooltip("Aerodynamic reference geometry is non-degenerate and matches the physical profile.")]
         public bool aerodynamicGeometryMatchesProfile;
 
-        [Tooltip("The control-law component is enabled and actually driving the actuator each physics step.")]
+        [Tooltip("The control-law component is enabled and actually driving THIS body's actuator each physics step.")]
         public bool controlLawEnabledAndDriving;
+
+        [Tooltip("The control law reads THIS six-DoF body. Identity, not presence: a law that drives this actuator while reading a different body is flying on someone else's state.")]
+        public bool controlLawBoundToThisBody;
 
         [Tooltip("The actuator component is enabled and bound to this six-DoF body.")]
         public bool actuatorEnabledAndBound;
@@ -54,14 +57,17 @@ namespace MaverickFresh.FlightDynamics
         [Tooltip("Propulsion output is either authoritative, or non-authoritative and explicitly accepted by an operator.")]
         public bool propulsionAccepted;
 
-        [Tooltip("A pilot-command source exists and reports itself fit for operational use.")]
+        [Tooltip("The command source this body inspects is the SAME object the control law actually reads.")]
+        public bool commandSourceIdentityMatches;
+
+        [Tooltip("A pilot-command source exists, is enabled, declares operational capability, and the control law observed a command from it this step.")]
         public bool hasValidCommandSource;
 
         [Tooltip("No legacy physics owner is enabled on the same Rigidbody.")]
         public bool legacyPhysicsOwnershipClear;
 
         /// <summary>
-        /// Packs the twelve flags into an int so a caller can cheaply detect that nothing has
+        /// Packs the readiness flags into an int so a caller can cheaply detect that nothing has
         /// changed. <see cref="MavFlightDynamicsReadiness.Evaluate"/> builds explanatory strings,
         /// which is fine once but not fifty times a second, so the per-step path re-evaluates only
         /// when this value changes.
@@ -77,10 +83,12 @@ namespace MaverickFresh.FlightDynamics
             if (hasPropulsionModel) mask |= 1 << 5;
             if (aerodynamicGeometryMatchesProfile) mask |= 1 << 6;
             if (controlLawEnabledAndDriving) mask |= 1 << 7;
-            if (actuatorEnabledAndBound) mask |= 1 << 8;
-            if (propulsionAccepted) mask |= 1 << 9;
-            if (hasValidCommandSource) mask |= 1 << 10;
-            if (legacyPhysicsOwnershipClear) mask |= 1 << 11;
+            if (controlLawBoundToThisBody) mask |= 1 << 8;
+            if (actuatorEnabledAndBound) mask |= 1 << 9;
+            if (propulsionAccepted) mask |= 1 << 10;
+            if (commandSourceIdentityMatches) mask |= 1 << 11;
+            if (hasValidCommandSource) mask |= 1 << 12;
+            if (legacyPhysicsOwnershipClear) mask |= 1 << 13;
             return mask;
         }
 
@@ -97,8 +105,10 @@ namespace MaverickFresh.FlightDynamics
                 inputs.hasPropulsionModel = true;
                 inputs.aerodynamicGeometryMatchesProfile = true;
                 inputs.controlLawEnabledAndDriving = true;
+                inputs.controlLawBoundToThisBody = true;
                 inputs.actuatorEnabledAndBound = true;
                 inputs.propulsionAccepted = true;
+                inputs.commandSourceIdentityMatches = true;
                 inputs.hasValidCommandSource = true;
                 inputs.legacyPhysicsOwnershipClear = true;
                 return inputs;
@@ -224,7 +234,16 @@ namespace MaverickFresh.FlightDynamics
 
             if (!inputs.controlLawEnabledAndDriving)
             {
-                reason = "control law is not enabled and driving the actuator";
+                reason = "control law is not enabled and driving this body's actuator";
+                return false;
+            }
+
+            // Identity, not presence. A law that drives the right actuator while reading a
+            // different body computes its commands from someone else's airspeed, alpha and rates.
+            // The surfaces would move, the aircraft would fly, and nothing would look broken.
+            if (!inputs.controlLawBoundToThisBody)
+            {
+                reason = "control law does not read this six-DoF body";
                 return false;
             }
 
@@ -240,9 +259,18 @@ namespace MaverickFresh.FlightDynamics
                 return false;
             }
 
+            // The body and the control law must be talking about the SAME source object. Checking
+            // a declaration on one object and observed availability on another would assemble a
+            // "valid" command path out of two halves that never met.
+            if (!inputs.commandSourceIdentityMatches)
+            {
+                reason = "the command source this body inspects is not the one the control law reads";
+                return false;
+            }
+
             if (!inputs.hasValidCommandSource)
             {
-                reason = "no valid operational pilot-command source";
+                reason = "no valid operational pilot-command source producing commands this step";
                 return false;
             }
 

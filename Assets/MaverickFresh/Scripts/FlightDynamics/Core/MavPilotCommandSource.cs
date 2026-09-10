@@ -107,6 +107,34 @@ namespace MaverickFresh.FlightDynamics
         }
 
         /// <summary>
+        /// The whole command-path rule, including identity.
+        ///
+        /// Every clause is required, and the identity clause is the one that is easy to omit: the
+        /// declaration is read off one object and the observed availability off another, so without
+        /// proving they are the SAME object a "valid" path can be assembled from two halves that
+        /// never met - source A declares itself operational while the control law happily flies on
+        /// source B. Unknown or mismatched states fail closed.
+        ///
+        /// Pure, so validation can enumerate every miswiring without a scene.
+        /// </summary>
+        public static bool EvaluatesAsLiveCommandPipeline(
+            bool bodySourceExists,
+            bool controlLawExists,
+            bool sourceIdentityMatches,
+            bool sourceEnabled,
+            bool declaresOperationalCapability,
+            bool observedSourceSignalThisStep)
+        {
+            return bodySourceExists
+                && controlLawExists
+                && sourceIdentityMatches
+                && sourceEnabled
+                && EvaluatesAsLiveCommandPath(
+                    declaresOperationalCapability,
+                    observedSourceSignalThisStep);
+        }
+
+        /// <summary>
         /// The command a control law must use when an operational source drops its signal.
         /// Pure and policy-driven; note that no branch of this returns an inspector value.
         /// </summary>

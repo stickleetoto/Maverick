@@ -75,7 +75,7 @@ Aircraft-specific aerodynamic polynomial inputs are converted to the units used 
 - `MavDirectSurfaceControlLaw`: Phase C0 test law. A linear normalized-intent-to-bounded-deflection mapping and nothing else.
 - `MavControlSurfaceActuatorBase`: aircraft-independent actuator contract, so the core never references an aircraft-specific actuator type.
 - `MavPropulsionModelBase`: `(state, atmosphere, throttle, dt) -> MavPropulsiveLoads`, plus an explicit `HasAuthoritativeData` honesty flag.
-- `MavNullPropulsionModel`: zero-thrust placeholder with power-state plumbing. Used for the F-16 because no authoritative F-16 propulsion data is frozen.
+- `MavNullPropulsionModel`: zero-thrust placeholder with power-state plumbing, for any aircraft with no frozen propulsion data at all. The F-16 has since moved to `MavF16EnginePowerModel` (sourced power dynamics, dimensional thrust still unavailable) - see **Propulsion status**.
 - `MavPropulsiveLoads`: dimensional propulsive force/moment in aerodynamic body axes.
 - `MavFlightDynamicsLoadSet`: single-step load accumulator with per-source contribution counters, an applied flag, and a finiteness check.
 - `MavFlightDynamicsTelemetry`: one pushed sample per physics step, optional rate-limited console logging (off by default), and optional in-memory CSV capture (off by default, written to disk only on an explicit call).
@@ -104,7 +104,9 @@ Design document: `Docs/FlightDynamics/F16_TRIM_AND_CONTROL_PHASE2_V0.1.md`.
   yaw-rate washout, anti-windup integration, dynamic-pressure gain scheduling.
 - `MavPilotCommandSourceBase` / `MavManualPilotCommandSource`: the socket a real input path plugs
   into. A manual/test source reports itself non-operational unless an operator says otherwise.
-- `MavFlightDynamicsReadiness`: splits `STRUCTURALLY_PREPARED` from `OPERATIONALLY_LIVE_READY`.
+- `MavFlightDynamicsReadiness`: splits `STRUCTURALLY_PREPARED` from `OPERATIONALLY_LIVE_READY`, and
+  verifies pipeline **identity** - the control law must read *this* body, drive *this* actuator, and
+  read the *same* command source the body inspects. Presence is not identity.
 - `MavFlightState.specificForceAeroBodyG` / `LoadFactorNz`: measured accelerometer channel published
   by `MavSixDoFBody`, so a control law can close a load-factor loop without computing forces itself.
 - `MavFlightDynamicsPhase2Validation` and `MavFlightDynamicsOwnershipScan`.
@@ -164,7 +166,8 @@ The command-path criterion has two halves that must not be collapsed:
 - `MavPilotCommandSourceBase.IsOperationalCommandSource` — a **declaration** about the kind of path.
 - `MavPilotCommandSourceBase.HasCommandSignal` — **live state**: is a command arriving right now?
 
-Live-readiness requires both, corroborated by the control law's actual last poll. On signal loss the
+Live-readiness requires both, corroborated by the control law's actual last poll, and requires that
+the body and the control law are talking about the **same source object**. On signal loss the
 law applies the source's declared `MavCommandSignalLossPolicy` (`NeutralCommand` centres the axes and
 holds the last throttle; `HoldLastCommand` holds everything). It never falls back to the inspector
 field — that is a bench affordance for when no source is wired, or when a non-operational source has
@@ -249,7 +252,7 @@ The new path is designed around one owner per physical effect:
 - physical surface state -> `MavControlSurfaceActuatorBase` (`MavF16ControlActuator` for the F-16)
 - aircraft aerodynamic coefficients -> aircraft-specific aero model
 - coefficient dimensionalization -> `MavFlightDynamicsMath`
-- propulsive force/moment -> `MavPropulsionModelBase` (`MavNullPropulsionModel`, zero thrust, for the F-16)
+- propulsive force/moment -> `MavPropulsionModelBase` (`MavF16EnginePowerModel` for the F-16: sourced Garza/Morelli power-state dynamics, dimensional thrust unavailable and therefore zero)
 - load summation -> `MavFlightDynamicsLoadSet`
 - final Rigidbody force/moment -> `MavSixDoFBody`, and only `MavSixDoFBody`
 - atmosphere -> `MavAtmosphereModel`
@@ -292,6 +295,12 @@ frozen propulsion data at all.
 No thrust map or installed-thrust figure has been invented. The consequence is visible rather than
 worked around: a powered F-16 trim is not achievable, and the trim solver says so — see
 **Trim status** below.
+
+**Source of truth for F-16 propulsion.** The F-16 may use sourced engine power-state dynamics, but
+without an authoritative dimensional thrust deck the runtime dimensional thrust remains
+unavailable/zero, and must not be represented anywhere as validated F-16 thrust. Dimensional thrust
+obtained from a non-authoritative deck is labelled as such end to end - in `HasAuthoritativeData`, in
+readiness, in telemetry and in the trim result - and is never accepted for live flight by default.
 
 ## Axis conventions: true vectors vs axial vectors
 

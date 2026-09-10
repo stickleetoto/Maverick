@@ -28,6 +28,7 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   [R0] STRUCTURALLY_PREPARED versus OPERATIONALLY_LIVE_READY
     ///   [R2] legacy-ownership detection has no stale window
     ///   [R3] command-source dropout is fail-closed, with no implicit inspector fallback
+    ///   [R4] operational pipeline identity: every miswiring is rejected
     ///   [R1] measured specific force / load-factor sign convention
     ///   [O0] no Rigidbody motion writes outside MavSixDoFBody
     /// </summary>
@@ -59,6 +60,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateReadinessSeparation(report, ref passed, ref failed);
             ValidateLegacyOwnershipFreshness(report, ref passed, ref failed);
             ValidateCommandSourceDropout(report, ref passed, ref failed);
+            ValidatePipelineIdentity(report, ref passed, ref failed);
             ValidateSpecificForceConvention(report, ref passed, ref failed);
             ValidateOwnershipScan(report, ref passed, ref failed);
 
@@ -1605,6 +1607,250 @@ namespace MaverickFresh.FlightDynamics.Validation
                     MavCommandSignalLossPolicy.HoldLastCommand,
                     new MavPilotCommand { pitch = 5f, throttle01 = 9f }).pitch <= 1f,
                 "the signal-loss command is clamped like any other pilot command",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [R4]
+
+        /// <summary>
+        /// One wiring configuration of the operational pipeline, expressed as object references.
+        ///
+        /// Deliberately typed as <c>object</c>: the flags the production rule consumes are derived
+        /// from reference identity, and testing that derivation needs distinct instances, not Unity
+        /// components. Using the SAME predicates the body uses is what keeps this honest - the test
+        /// re-derives the flags rather than asserting hand-written ones.
+        /// </summary>
+        private struct MavWiringScenario
+        {
+            public object body;
+            public object controlLawReadsBody;
+            public object actuator;
+            public object controlLawDrivesActuator;
+            public object actuatorBoundToBody;
+            public object bodyCommandSource;
+            public object controlLawCommandSource;
+            public bool sourceEnabled;
+            public bool sourceDeclaresOperational;
+            public bool observedSourceSignalThisStep;
+        }
+
+        /// <summary>
+        /// Derives readiness inputs from a wiring configuration using exactly the predicates
+        /// <see cref="MavSixDoFBody.BuildReadinessInputs"/> uses, so a miswiring test exercises the
+        /// production rule rather than a restatement of it.
+        /// </summary>
+        private static MavFlightDynamicsReadinessInputs BuildInputsFromWiring(MavWiringScenario wiring)
+        {
+            MavFlightDynamicsReadinessInputs inputs = MavFlightDynamicsReadinessInputs.FullyReady;
+
+            inputs.controlLawBoundToThisBody =
+                MavSixDoFBody.IdentityMatches(wiring.body, wiring.controlLawReadsBody);
+
+            inputs.controlLawEnabledAndDriving =
+                MavSixDoFBody.IdentityMatches(wiring.actuator, wiring.controlLawDrivesActuator);
+
+            inputs.actuatorEnabledAndBound =
+                MavSixDoFBody.IdentityMatches(wiring.body, wiring.actuatorBoundToBody);
+
+            inputs.commandSourceIdentityMatches =
+                MavSixDoFBody.IdentityMatches(wiring.bodyCommandSource, wiring.controlLawCommandSource);
+
+            inputs.hasValidCommandSource =
+                MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(
+                    wiring.bodyCommandSource != null,
+                    true,
+                    inputs.commandSourceIdentityMatches,
+                    wiring.sourceEnabled,
+                    wiring.sourceDeclaresOperational,
+                    wiring.observedSourceSignalThisStep);
+
+            return inputs;
+        }
+
+        /// <summary>A correctly wired pipeline: one body, one actuator, one source, all agreeing.</summary>
+        private static MavWiringScenario BuildCorrectWiring()
+        {
+            object body = new object();
+            object actuator = new object();
+            object source = new object();
+
+            MavWiringScenario wiring = new MavWiringScenario();
+            wiring.body = body;
+            wiring.controlLawReadsBody = body;
+            wiring.actuator = actuator;
+            wiring.controlLawDrivesActuator = actuator;
+            wiring.actuatorBoundToBody = body;
+            wiring.bodyCommandSource = source;
+            wiring.controlLawCommandSource = source;
+            wiring.sourceEnabled = true;
+            wiring.sourceDeclaresOperational = true;
+            wiring.observedSourceSignalThisStep = true;
+            return wiring;
+        }
+
+        /// <summary>
+        /// Operational pipeline identity: every reference in the control path must point at the
+        /// object it claims to.
+        ///
+        /// Presence checks cannot catch a swap. A control law wired to the right actuator but
+        /// reading a different body computes every command from another aircraft's airspeed, alpha
+        /// and rates - the surfaces still move, the aircraft still flies, and nothing looks broken.
+        /// The same is true of a command path assembled from a declaration on one source and an
+        /// observed signal on another.
+        /// </summary>
+        private static void ValidatePipelineIdentity(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[R4] Operational pipeline identity / miswiring rejection");
+
+            // The identity predicate itself, before anything built on it means much.
+            object a = new object();
+            object b = new object();
+
+            Record(
+                MavSixDoFBody.IdentityMatches(a, a) && !MavSixDoFBody.IdentityMatches(a, b),
+                "IdentityMatches distinguishes the same object from a different one",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavSixDoFBody.IdentityMatches(null, null)
+                && !MavSixDoFBody.IdentityMatches(a, null)
+                && !MavSixDoFBody.IdentityMatches(null, a),
+                "two nulls are NOT a match: an unknown wiring state fails closed rather than "
+                + "being read as agreement",
+                report, ref passed, ref failed);
+
+            // 1. Correct wiring passes.
+            MavWiringScenario correct = BuildCorrectWiring();
+            MavFlightDynamicsReadinessReport correctReport =
+                MavFlightDynamicsReadiness.Evaluate(BuildInputsFromWiring(correct));
+
+            Record(
+                correctReport.operationallyLiveReady,
+                "1. a correctly wired body + law + actuator + source reaches OPERATIONALLY_LIVE_READY",
+                report, ref passed, ref failed);
+
+            // 2. Control law reads a different six-DoF body.
+            MavWiringScenario wrongBody = BuildCorrectWiring();
+            wrongBody.controlLawReadsBody = new object();
+            RecordRejected(
+                wrongBody,
+                "2. control law reading a DIFFERENT six-DoF body",
+                report, ref passed, ref failed);
+
+            // 3. Control law drives a different actuator.
+            MavWiringScenario wrongActuator = BuildCorrectWiring();
+            wrongActuator.controlLawDrivesActuator = new object();
+            RecordRejected(
+                wrongActuator,
+                "3. control law driving a DIFFERENT actuator",
+                report, ref passed, ref failed);
+
+            // 4. Actuator publishes into a different body.
+            MavWiringScenario wrongActuatorBinding = BuildCorrectWiring();
+            wrongActuatorBinding.actuatorBoundToBody = new object();
+            RecordRejected(
+                wrongActuatorBinding,
+                "4. actuator bound to a DIFFERENT body",
+                report, ref passed, ref failed);
+
+            // 5. Body inspects source A while the control law reads source B. This is the case a
+            //    presence check cannot see at all: both halves exist and both look healthy.
+            MavWiringScenario splitSource = BuildCorrectWiring();
+            splitSource.controlLawCommandSource = new object();
+            RecordRejected(
+                splitSource,
+                "5. body inspecting source A while the control law reads source B",
+                report, ref passed, ref failed);
+
+            MavFlightDynamicsReadinessInputs splitInputs = BuildInputsFromWiring(splitSource);
+            Record(
+                !splitInputs.commandSourceIdentityMatches && !splitInputs.hasValidCommandSource,
+                "   and the split path is rejected as a whole, not patched together from a "
+                + "declaration on one object and availability on another",
+                report, ref passed, ref failed);
+
+            // 6. Operational source present and matching, but disabled.
+            MavWiringScenario disabledSource = BuildCorrectWiring();
+            disabledSource.sourceEnabled = false;
+            RecordRejected(
+                disabledSource,
+                "6. operational command source disabled",
+                report, ref passed, ref failed);
+
+            // 7. Operational source enabled, but no signal observed this step.
+            MavWiringScenario noSignal = BuildCorrectWiring();
+            noSignal.observedSourceSignalThisStep = false;
+            RecordRejected(
+                noSignal,
+                "7. operational command source present but producing no signal",
+                report, ref passed, ref failed);
+
+            // 8. A bench source that IS producing commands still is not an operational path.
+            MavWiringScenario benchSource = BuildCorrectWiring();
+            benchSource.sourceDeclaresOperational = false;
+            RecordRejected(
+                benchSource,
+                "8. bench source producing a signal is still not operationally live-ready",
+                report, ref passed, ref failed);
+
+            // 9. Restoring every reference recovers readiness deterministically.
+            MavWiringScenario repaired = BuildCorrectWiring();
+            MavFlightDynamicsReadinessReport firstRun =
+                MavFlightDynamicsReadiness.Evaluate(BuildInputsFromWiring(repaired));
+            MavFlightDynamicsReadinessReport secondRun =
+                MavFlightDynamicsReadiness.Evaluate(BuildInputsFromWiring(repaired));
+
+            Record(
+                firstRun.operationallyLiveReady
+                && secondRun.operationallyLiveReady
+                && firstRun.level == secondRun.level
+                && firstRun.summary == secondRun.summary,
+                "9. once every reference is restored, readiness recovers and is deterministic",
+                report, ref passed, ref failed);
+
+            // Each miswiring must remain STRUCTURALLY_PREPARED: the parts are all present, which is
+            // exactly why presence is not a sufficient gate.
+            MavFlightDynamicsReadinessReport wrongBodyReport =
+                MavFlightDynamicsReadiness.Evaluate(BuildInputsFromWiring(wrongBody));
+
+            Record(
+                wrongBodyReport.structurallyPrepared
+                && wrongBodyReport.level == MavFlightDynamicsReadinessLevel.StructurallyPrepared,
+                "a miswired pipeline is still STRUCTURALLY_PREPARED, which is why presence alone "
+                + "cannot be the safety gate",
+                report, ref passed, ref failed);
+
+            // The full pipeline predicate, clause by clause.
+            Record(
+                MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(true, true, true, true, true, true),
+                "the command pipeline predicate accepts a fully satisfied path",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(false, true, true, true, true, true)
+                && !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(true, false, true, true, true, true)
+                && !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(true, true, false, true, true, true)
+                && !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(true, true, true, false, true, true)
+                && !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(true, true, true, true, false, true)
+                && !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(true, true, true, true, true, false),
+                "every clause of the command pipeline predicate is individually required",
+                report, ref passed, ref failed);
+        }
+
+        private static void RecordRejected(
+            MavWiringScenario wiring,
+            string description,
+            StringBuilder report,
+            ref int passed,
+            ref int failed)
+        {
+            MavFlightDynamicsReadinessReport result =
+                MavFlightDynamicsReadiness.Evaluate(BuildInputsFromWiring(wiring));
+
+            Record(
+                !result.operationallyLiveReady,
+                description + " is rejected (" + result.operationalReason + ")",
                 report, ref passed, ref failed);
         }
 

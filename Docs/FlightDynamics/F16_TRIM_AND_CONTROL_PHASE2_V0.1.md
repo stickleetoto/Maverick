@@ -70,6 +70,14 @@ functions, and there is no `Rigidbody`, `Transform` or component reference anywh
 graph. The F-16 propulsion delegate is a pure steady-state function, so a trim solve cannot advance
 a live engine's spool state either.
 
+### 2.4 Reported convergence, error and residuals
+
+`MavTrimResult` carries the status, the converged flag, dimensional and normalized residuals per
+channel, the driven norm, the iteration count, whether alpha or elevator was pinned at a bound, the
+required and available thrust, and a formatted report. Every non-converged outcome is a distinct
+enum value — `MaxIterationsExceeded`, `Stalled`, `SingularJacobian`, `NonFiniteResidual`,
+`UnsupportedCondition`, `InvalidPlant` — and none of them is mapped onto `Converged`.
+
 ### 2.5 The propulsion contract is checked where the answer is built
 
 v0.1 models thrust as acting along body X through the centre of gravity. A model reporting an off-axis
@@ -86,14 +94,6 @@ the initial guess and violating at the solution.
 An unpowered glide additionally requires that the engine can actually be commanded to produce nothing.
 A model with non-zero idle thrust cannot reach the condition a `T = 0` solution describes, so that case
 is refused too.
-
-### 2.4 Reported convergence, error and residuals
-
-`MavTrimResult` carries the status, the converged flag, dimensional and normalized residuals per
-channel, the driven norm, the iteration count, whether alpha or elevator was pinned at a bound, the
-required and available thrust, and a formatted report. Every non-converged outcome is a distinct
-enum value — `MaxIterationsExceeded`, `Stalled`, `SingularJacobian`, `NonFiniteResidual`,
-`UnsupportedCondition`, `InvalidPlant` — and none of them is mapped onto `Converged`.
 
 ## 3. F-16 trim: the honest result
 
@@ -237,11 +237,32 @@ Operational live-readiness additionally requires:
 
 1. aerodynamic reference geometry matching the physical profile
 2. a control law that is **enabled** and actually driving **this** actuator
-3. an actuator that is **enabled** and bound to **this** six-DoF body
-4. propulsion output that is authoritative, **or** non-authoritative and explicitly accepted by an
+3. a control law that **reads this six-DoF body** (identity, not presence)
+4. an actuator that is **enabled** and bound to **this** six-DoF body
+5. propulsion output that is authoritative, **or** non-authoritative and explicitly accepted by an
    operator (`acceptNonAuthoritativePropulsion`, default `false`)
-5. a pilot-command source that reports itself fit for operational use
-6. no legacy physics owner enabled on the same Rigidbody
+6. the command source this body inspects being the **same object** the control law reads
+7. that source being enabled, declaring operational capability, and the control law having actually
+   observed a command from it this step
+8. no legacy physics owner enabled on the same Rigidbody
+
+### Identity, not presence
+
+Criteria 3 and 6 exist because presence checks cannot catch a swap. A control law wired to the right
+actuator but reading a *different* body computes every command from another aircraft's airspeed,
+alpha and rates - the surfaces still move, the aircraft still flies, and nothing downstream looks
+wrong. Likewise, reading a declaration off source A and an observed signal off source B assembles a
+"valid" command path out of two halves that never met.
+
+`MavSixDoFBody.IdentityMatches` is the single predicate behind all of it, and two nulls are
+deliberately **not** a match: an unknown wiring state fails closed rather than being read as
+agreement. `MavSixDoFBody` also no longer adopts the control law's command source when its own field
+is empty, because doing so would make the identity check vacuous - the body would silently agree with
+whatever the law happened to point at.
+
+`[R4]` enumerates the miswirings: wrong body, wrong actuator, wrong actuator binding, split command
+source, disabled source, no live signal, and a bench source that is producing commands. Each is
+rejected while remaining `STRUCTURALLY_PREPARED`, which is precisely why presence cannot be the gate.
 
 Criterion 6 is detected by matching component type names against a serialized deny-list
 (`MavAeroBody`, `MavAtmosphericEngine`, `MavMouseFlightJet`, `MavInstructorController`,
@@ -330,6 +351,7 @@ handover is a later phase. Nothing on this branch flies live, so no aircraft is 
 | `[L4]` | integrator anti-windup and 500-step bounded-state run |
 | `[R0]` | structural versus operational readiness, each criterion blocking individually |
 | `[R2]` | legacy-ownership detection: no stale window while armed, and the deny-list rule |
+| `[R4]` | operational pipeline identity: nine miswiring configurations, each rejected |
 | `[R3]` | command-source dropout: availability gates readiness, and loss never reaches inspector input |
 | `[R1]` | measured specific force and load-factor sign convention |
 | `[O0]` | source scan: no Rigidbody motion writes outside `MavSixDoFBody` |
@@ -343,7 +365,7 @@ The scan strips line comments and string literals before matching, so the extens
 that mentions `AddForce` is not a false positive, and it verifies its own classifier before trusting
 its verdict on the tree.
 
-Result at time of writing: **285 checks pass, 0 fail**, across all four suites, with 0 ownership
+Result at Phase 2 closeout: **300 checks pass, 0 fail**, across all four suites, with 0 ownership
 violations over 37 files.
 
 ## 8. Known limitations
