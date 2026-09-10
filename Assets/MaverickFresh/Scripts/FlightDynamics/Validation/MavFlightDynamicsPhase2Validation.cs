@@ -17,6 +17,7 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   [T1] trim convergence on a synthetic plant with a known answer
     ///   [T2] non-convergent trim honesty (no thrust, no pitch authority, unreachable alpha)
     ///   [T3] F-16 trim against frozen data, powered and unpowered
+    ///   [T4] trim propulsion contract verified at the SOLVED state, not only at a precheck
     ///   [C0] pitch / roll / yaw command direction through the frozen aerodynamic model
     ///   [C1] coordinated-yaw and yaw-damper behaviour
     ///   [L0] load-factor limiter
@@ -25,6 +26,8 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   [L3] smooth-limiter mathematics
     ///   [L4] integrator anti-windup
     ///   [R0] STRUCTURALLY_PREPARED versus OPERATIONALLY_LIVE_READY
+    ///   [R2] legacy-ownership detection has no stale window
+    ///   [R3] command-source dropout is fail-closed, with no implicit inspector fallback
     ///   [R1] measured specific force / load-factor sign convention
     ///   [O0] no Rigidbody motion writes outside MavSixDoFBody
     /// </summary>
@@ -45,6 +48,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateSyntheticTrimConvergence(report, ref passed, ref failed);
             ValidateNonConvergentTrimHonesty(report, ref passed, ref failed);
             ValidateF16Trim(report, ref passed, ref failed);
+            ValidateTrimPropulsionContract(report, ref passed, ref failed);
             ValidateControlDirections(report, ref passed, ref failed);
             ValidateCoordinatedYaw(report, ref passed, ref failed);
             ValidateLoadFactorLimiter(report, ref passed, ref failed);
@@ -53,6 +57,8 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateSmoothLimiterMath(report, ref passed, ref failed);
             ValidateIntegratorAntiWindup(report, ref passed, ref failed);
             ValidateReadinessSeparation(report, ref passed, ref failed);
+            ValidateLegacyOwnershipFreshness(report, ref passed, ref failed);
+            ValidateCommandSourceDropout(report, ref passed, ref failed);
             ValidateSpecificForceConvention(report, ref passed, ref failed);
             ValidateOwnershipScan(report, ref passed, ref failed);
 
@@ -433,6 +439,112 @@ namespace MaverickFresh.FlightDynamics.Validation
                 repeatGlide.alphaDeg == glide.alphaDeg
                 && repeatGlide.flightPathAngleDeg == glide.flightPathAngleDeg,
                 "repeated F-16 trim solves are identical: no hidden state is advanced",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [T4]
+
+        /// <summary>
+        /// Regression for PR #5 review item 3.
+        ///
+        /// The propulsion contract used to be probed only once, at alpha = the initial guess,
+        /// before any iteration. A model whose thrust vector or moment depends on state could pass
+        /// that probe and then violate the v0.1 body-X / through-CG assumption at the attitude the
+        /// answer is actually built from - producing a quietly wrong trim instead of a refusal.
+        ///
+        /// Every sample the solver takes is now verified, and the solved state is re-checked.
+        /// </summary>
+        private static void ValidateTrimPropulsionContract(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[T4] Trim propulsion contract is verified at the solved state");
+
+            const float airspeedMps = 130f;
+            const float violationThresholdDeg = 3f;
+
+            // First, establish that this really is the case the old precheck would have missed:
+            // clean at the initial guess, violating at the solved attitude.
+            MavPropulsiveLoads atGuess = StateDependentMomentLoads(2f, violationThresholdDeg, 60000f, 1f);
+            MavPropulsiveLoads atSolution = StateDependentMomentLoads(4.35f, violationThresholdDeg, 60000f, 1f);
+            string guessReason;
+            string solutionReason;
+
+            Record(
+                MavSteadyFlightTrimSolver.IsAxialThroughCentreOfGravity(atGuess, out guessReason),
+                "the offending model satisfies the contract at the initial guess, so a precheck "
+                + "alone would have passed it",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavSteadyFlightTrimSolver.IsAxialThroughCentreOfGravity(atSolution, out solutionReason),
+                "and violates it at the solved attitude (" + solutionReason + ")",
+                report, ref passed, ref failed);
+
+            MavTrimResult momentAtSolution = MavSteadyFlightTrimSolver.Solve(
+                BuildStateDependentPropulsionPlant(violationThresholdDeg, false),
+                MavTrimCondition.StraightAndLevel(0f, airspeedMps));
+
+            Record(
+                momentAtSolution.status == MavTrimStatus.UnsupportedCondition
+                && !momentAtSolution.converged,
+                "a thrust-line moment appearing only at the solved attitude is refused, not "
+                + "silently trimmed (" + momentAtSolution.status + ")",
+                report, ref passed, ref failed);
+
+            MavTrimResult offAxisAtSolution = MavSteadyFlightTrimSolver.Solve(
+                BuildStateDependentPropulsionPlant(violationThresholdDeg, true),
+                MavTrimCondition.StraightAndLevel(0f, airspeedMps));
+
+            Record(
+                offAxisAtSolution.status == MavTrimStatus.UnsupportedCondition
+                && !offAxisAtSolution.converged,
+                "off-axis thrust appearing only at the solved attitude is refused too ("
+                + offAxisAtSolution.status + ")",
+                report, ref passed, ref failed);
+
+            // An unpowered glide is only meaningful if the engine can actually be commanded to
+            // produce nothing. A model with non-zero idle thrust cannot reach the solved condition.
+            MavTrimPlant alwaysThrusting = BuildSyntheticPlant(-0.8f, 5000f);
+            MavTrimSteadyPropulsionFunction constantThrust = delegate (
+                MavFlightState state, MavAtmosphereSample atmosphere, float throttle01)
+            {
+                MavPropulsiveLoads loads = MavPropulsiveLoads.Zero;
+                loads.forceAeroBodyN = new Vector3(5000f, 0f, 0f);
+                loads.reportedThrustN = 5000f;
+                loads.hasAuthoritativeData = true;
+                return loads;
+            };
+            alwaysThrusting.steadyPropulsionFunction = constantThrust;
+
+            MavTrimResult impossibleGlide = MavSteadyFlightTrimSolver.Solve(
+                alwaysThrusting, MavTrimCondition.UnpoweredGlide(0f, airspeedMps));
+
+            Record(
+                impossibleGlide.status == MavTrimStatus.UnsupportedCondition
+                && !impossibleGlide.converged,
+                "an unpowered glide is refused when the model cannot be commanded to zero thrust ("
+                + impossibleGlide.status + ")",
+                report, ref passed, ref failed);
+
+            // The well-behaved cases must be unaffected by the stricter checking.
+            MavTrimResult wellBehaved = MavSteadyFlightTrimSolver.Solve(
+                BuildSyntheticPlant(-0.8f, 60000f),
+                MavTrimCondition.StraightAndLevel(0f, airspeedMps));
+
+            Record(
+                wellBehaved.status == MavTrimStatus.Converged && wellBehaved.converged,
+                "a contract-abiding plant still trims normally (" + wellBehaved.status + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF16TrimReference.SolveUnpoweredGlide(0f, 150f).status == MavTrimStatus.Converged,
+                "the F-16 glide trim is unaffected: its propulsion is axial and zero at idle",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF16TrimReference.SolveStraightAndLevel(0f, 150f).status
+                    == MavTrimStatus.ConvergedButThrustUnavailable,
+                "and the F-16 powered trim still reports the honest thrust-unavailable result",
                 report, ref passed, ref failed);
         }
 
@@ -1224,14 +1336,9 @@ namespace MaverickFresh.FlightDynamics.Validation
 
             // A manual/test command source must not satisfy the operational criterion by default.
             Record(
-                !MavManualPilotCommandSource.EvaluatesAsOperationalSource(
+                !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPath(
                     MavManualPilotCommandSource.DefaultTreatAsOperationalSource, true),
                 "a default manual command source does not claim to be an operational input path",
-                report, ref passed, ref failed);
-
-            Record(
-                !MavManualPilotCommandSource.EvaluatesAsOperationalSource(true, false),
-                "an acknowledged manual source still fails while it is producing no commands",
                 report, ref passed, ref failed);
         }
 
@@ -1281,6 +1388,223 @@ namespace MaverickFresh.FlightDynamics.Validation
                 ok,
                 (structural ? "structural" : "operational") + " criterion '" + fieldName
                 + "' blocks as expected (" + result.summary + ")",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [R2]
+
+        /// <summary>
+        /// Regression for PR #5 review item 1.
+        ///
+        /// The legacy-ownership verdict used to be answered from a cache refreshed every 25 physics
+        /// steps. If a legacy owner was enabled while the new FDM was live, operational readiness
+        /// could stay true and loads could keep being applied for up to ~0.5 s - two systems owning
+        /// the same physical effect, which is the exact failure this gate exists to prevent.
+        ///
+        /// The rule is now: while load application is armed, always rescan. These checks pin that
+        /// there is no schedule, and no countdown value, that can produce a stale safety answer.
+        /// </summary>
+        private static void ValidateLegacyOwnershipFreshness(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[R2] Legacy-ownership detection has no stale window");
+
+            bool alwaysRescansWhenArmed = true;
+            for (int countdown = -5; countdown <= 40; countdown++)
+            {
+                if (!MavSixDoFBody.ShouldRescanLegacyOwnership(true, countdown))
+                    alwaysRescansWhenArmed = false;
+            }
+
+            Record(
+                alwaysRescansWhenArmed,
+                "while load application is armed, the legacy-ownership scan runs on EVERY step for "
+                + "every possible countdown value: no stale safety verdict is reachable",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavSixDoFBody.ShouldRescanLegacyOwnership(false, 25)
+                && !MavSixDoFBody.ShouldRescanLegacyOwnership(false, 1)
+                && MavSixDoFBody.ShouldRescanLegacyOwnership(false, 0)
+                && MavSixDoFBody.ShouldRescanLegacyOwnership(false, -3),
+                "while nothing is armed the verdict is diagnostics only, and stays throttled",
+                report, ref passed, ref failed);
+
+            // The detection rule itself.
+            string[] denyList = MavSixDoFBody.DefaultConflictingLegacyPhysicsComponents;
+
+            Record(
+                MavSixDoFBody.IsLegacyOwnershipConflict("MavAeroBody", true, denyList)
+                && MavSixDoFBody.IsLegacyOwnershipConflict("MavMouseFlightJet", true, denyList)
+                && MavSixDoFBody.IsLegacyOwnershipConflict("MavAtmosphericEngine", true, denyList)
+                && MavSixDoFBody.IsLegacyOwnershipConflict("MavInstructorController", true, denyList),
+                "every legacy physics owner named in the project constraints is detected",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavSixDoFBody.IsLegacyOwnershipConflict("MavAeroBody", false, denyList),
+                "a DISABLED legacy component owns nothing and is not a conflict",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavSixDoFBody.IsLegacyOwnershipConflict("MavF16AeroModel", true, denyList)
+                && !MavSixDoFBody.IsLegacyOwnershipConflict("MavSixDoFBody", true, denyList),
+                "new-path components are not mistaken for legacy owners",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavSixDoFBody.IsLegacyOwnershipConflict("mavaerobody", true, denyList),
+                "matching is ordinal, so a near-miss name is not silently treated as a match",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavSixDoFBody.IsLegacyOwnershipConflict("MavAeroBody", true, null)
+                && !MavSixDoFBody.IsLegacyOwnershipConflict(null, true, denyList)
+                && !MavSixDoFBody.IsLegacyOwnershipConflict("MavAeroBody", true, new string[0]),
+                "a null or empty deny-list and a null type name are handled without throwing",
+                report, ref passed, ref failed);
+
+            // And the consequence: a detected conflict must remove live-readiness immediately.
+            MavFlightDynamicsReadinessInputs conflicted = MavFlightDynamicsReadinessInputs.FullyReady;
+            conflicted.legacyPhysicsOwnershipClear = false;
+            MavFlightDynamicsReadinessReport conflictedReport =
+                MavFlightDynamicsReadiness.Evaluate(conflicted);
+
+            Record(
+                !conflictedReport.operationallyLiveReady
+                && conflictedReport.level == MavFlightDynamicsReadinessLevel.StructurallyPrepared,
+                "an activated legacy owner drops the stack out of live-ready in the same evaluation",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [R3]
+
+        /// <summary>
+        /// Regression for PR #5 review item 2.
+        ///
+        /// Readiness used to check only IsOperationalCommandSource, which is a declaration about
+        /// the kind of path and says nothing about whether a command arrived this step. A source
+        /// could therefore stay nominally operational, stop producing, and the aircraft would keep
+        /// flying on whatever was in the control law's inspector field while the readiness gate
+        /// still reported it fit to fly.
+        ///
+        /// Availability is now part of readiness, and signal loss resolves through the source's
+        /// declared policy. No branch of that path can return an inspector value.
+        /// </summary>
+        private static void ValidateCommandSourceDropout(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[R3] Command-source dropout is fail-closed");
+
+            Record(
+                MavPilotCommandSourceBase.EvaluatesAsLiveCommandPath(true, true),
+                "an operational path that is producing commands is a live command path",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPath(true, false),
+                "an operational path with NO SIGNAL is not a live command path: availability is "
+                + "part of readiness, not merely the declaration",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPath(false, true),
+                "a bench source that is producing commands is still not a live command path",
+                report, ref passed, ref failed);
+
+            // The readiness consequence of a dropout.
+            MavFlightDynamicsReadinessInputs droppedOut = MavFlightDynamicsReadinessInputs.FullyReady;
+            droppedOut.hasValidCommandSource = false;
+            MavFlightDynamicsReadinessReport droppedReport =
+                MavFlightDynamicsReadiness.Evaluate(droppedOut);
+
+            Record(
+                !droppedReport.operationallyLiveReady
+                && droppedReport.level == MavFlightDynamicsReadinessLevel.StructurallyPrepared,
+                "a dropout drops the stack out of live-ready rather than leaving the gate open",
+                report, ref passed, ref failed);
+
+            // The command-resolution decision. This is the blocker in one line.
+            Record(
+                MavFlightControlLawBase.ClassifyCommandResolution(true, true, false, true)
+                    == MavFlightControlLawBase.MavCommandResolution.SignalLossPolicy,
+                "an OPERATIONAL source with no signal resolves to its declared signal-loss policy, "
+                + "NOT to inspector input",
+                report, ref passed, ref failed);
+
+            Record(
+                MavFlightControlLawBase.ClassifyCommandResolution(true, true, false, false)
+                    == MavFlightControlLawBase.MavCommandResolution.BenchInspectorFallback,
+                "a bench source with no signal may still use inspector input: the fallback survives "
+                + "where it is legitimate",
+                report, ref passed, ref failed);
+
+            Record(
+                MavFlightControlLawBase.ClassifyCommandResolution(true, true, true, true)
+                    == MavFlightControlLawBase.MavCommandResolution.SourceSignal
+                && MavFlightControlLawBase.ClassifyCommandResolution(true, true, true, false)
+                    == MavFlightControlLawBase.MavCommandResolution.SourceSignal,
+                "a source that is producing commands is always used",
+                report, ref passed, ref failed);
+
+            Record(
+                MavFlightControlLawBase.ClassifyCommandResolution(false, false, false, false)
+                    == MavFlightControlLawBase.MavCommandResolution.NoSource
+                && MavFlightControlLawBase.ClassifyCommandResolution(true, false, false, true)
+                    == MavFlightControlLawBase.MavCommandResolution.NoSource,
+                "no source, or a disabled source, is bench mode",
+                report, ref passed, ref failed);
+
+            // The declared policies.
+            MavPilotCommand lastGood = new MavPilotCommand
+            {
+                pitch = 0.7f,
+                roll = -0.4f,
+                yaw = 0.25f,
+                throttle01 = 0.8f
+            };
+
+            MavPilotCommand neutralPolicy = MavPilotCommandSourceBase.ResolveOnSignalLoss(
+                MavCommandSignalLossPolicy.NeutralCommand, lastGood);
+
+            Record(
+                Near(neutralPolicy.pitch, 0f, 1e-6f)
+                && Near(neutralPolicy.roll, 0f, 1e-6f)
+                && Near(neutralPolicy.yaw, 0f, 1e-6f),
+                "NeutralCommand centres pitch, roll and yaw",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(neutralPolicy.throttle01, lastGood.throttle01, 1e-6f),
+                "NeutralCommand holds the last throttle: chopping to idle is a larger disturbance "
+                + "than centring the stick, and this layer does not own thrust",
+                report, ref passed, ref failed);
+
+            MavPilotCommand holdPolicy = MavPilotCommandSourceBase.ResolveOnSignalLoss(
+                MavCommandSignalLossPolicy.HoldLastCommand, lastGood);
+
+            Record(
+                Near(holdPolicy.pitch, lastGood.pitch, 1e-6f)
+                && Near(holdPolicy.roll, lastGood.roll, 1e-6f)
+                && Near(holdPolicy.yaw, lastGood.yaw, 1e-6f)
+                && Near(holdPolicy.throttle01, lastGood.throttle01, 1e-6f),
+                "HoldLastCommand holds the entire last valid command",
+                report, ref passed, ref failed);
+
+            // With no valid command ever received, the policy must produce neutral, not garbage.
+            MavPilotCommand neverReceived = MavPilotCommandSourceBase.ResolveOnSignalLoss(
+                MavCommandSignalLossPolicy.HoldLastCommand, MavPilotCommand.Neutral);
+
+            Record(
+                neverReceived.IsNeutral(1e-6f) && Near(neverReceived.throttle01, 0f, 1e-6f),
+                "a dropout before any command was ever received yields a neutral command",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPilotCommandSourceBase.ResolveOnSignalLoss(
+                    MavCommandSignalLossPolicy.HoldLastCommand,
+                    new MavPilotCommand { pitch = 5f, throttle01 = 9f }).pitch <= 1f,
+                "the signal-loss command is clamped like any other pilot command",
                 report, ref passed, ref failed);
         }
 
@@ -1477,6 +1801,63 @@ namespace MaverickFresh.FlightDynamics.Validation
             };
 
             plant.propulsionDataAuthoritative = true;
+            return plant;
+        }
+
+        /// <summary>
+        /// Propulsive loads that satisfy the v0.1 axial/through-CG contract below a threshold alpha
+        /// and violate it above one. This is the shape of model the old single-probe precheck could
+        /// not catch: well-behaved where it was sampled, misbehaving where the answer is built.
+        /// </summary>
+        private static MavPropulsiveLoads StateDependentMomentLoads(
+            float alphaDeg,
+            float violationThresholdDeg,
+            float fullThrustN,
+            float throttle01)
+        {
+            float thrust = fullThrustN * Mathf.Clamp01(throttle01);
+
+            MavPropulsiveLoads loads = MavPropulsiveLoads.Zero;
+            loads.forceAeroBodyN = new Vector3(thrust, 0f, 0f);
+            loads.reportedThrustN = thrust;
+            loads.powerState01 = Mathf.Clamp01(throttle01);
+            loads.hasAuthoritativeData = true;
+
+            if (alphaDeg > violationThresholdDeg)
+                loads.momentAeroBodyNm = new Vector3(0f, 5000f, 0f);
+
+            return loads;
+        }
+
+        private static MavTrimPlant BuildStateDependentPropulsionPlant(
+            float violationThresholdDeg,
+            bool offAxisInsteadOfMoment)
+        {
+            MavTrimPlant plant = BuildSyntheticPlant(-0.8f, 60000f);
+            float threshold = violationThresholdDeg;
+            bool offAxis = offAxisInsteadOfMoment;
+
+            plant.steadyPropulsionFunction = delegate (
+                MavFlightState state,
+                MavAtmosphereSample atmosphere,
+                float throttle01)
+            {
+                float alphaDeg = state.AlphaDeg;
+
+                if (!offAxis)
+                    return StateDependentMomentLoads(alphaDeg, threshold, 60000f, throttle01);
+
+                float thrust = 60000f * Mathf.Clamp01(throttle01);
+                MavPropulsiveLoads loads = MavPropulsiveLoads.Zero;
+                loads.forceAeroBodyN = alphaDeg > threshold
+                    ? new Vector3(thrust, 0f, 0.05f * thrust)
+                    : new Vector3(thrust, 0f, 0f);
+                loads.reportedThrustN = thrust;
+                loads.powerState01 = Mathf.Clamp01(throttle01);
+                loads.hasAuthoritativeData = true;
+                return loads;
+            };
+
             return plant;
         }
 
