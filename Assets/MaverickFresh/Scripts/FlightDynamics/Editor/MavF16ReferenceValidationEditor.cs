@@ -189,15 +189,13 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 out phase3Failed
             );
 
-            // Pure / static suites: production maths through parameterised entry points.
-            int pureePassed = referencePassed + phase1Passed + propulsionPassed
-                              + phase2Passed + phase3Passed;
+            int purePassed = referencePassed + phase1Passed + propulsionPassed
+                             + phase2Passed + phase3Passed;
             int pureFailed = referenceFailed + phase1Failed + propulsionFailed
                              + phase2Failed + phase3Failed;
 
-            // Unity component integration: real GameObjects, real wiring, real execution order.
-            // Reported SEPARATELY - the two measure different things, and adding them together
-            // would overstate both.
+            // Real Unity components and real wiring, manually stepped in the production order.
+            // This is component integration, not proof that Unity's scheduler executed the order.
             int integrationPassed;
             int integrationFailed;
             string integrationReport = MavFlightDynamicsIntegrationValidation.RunAll(
@@ -205,16 +203,28 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 out integrationFailed
             );
 
+            // Freeze-review regressions added after the first integration sweep. Keep this count
+            // separate as well so a green aggregate cannot hide which validation layer failed.
+            int hardeningPassed;
+            int hardeningFailed;
+            string hardeningReport = MavFlightDynamicsFreezeHardeningValidation.RunAll(
+                out hardeningPassed,
+                out hardeningFailed
+            );
+
             string report = referenceReport + "\n\n" + phase1Report
                             + "\n\n" + propulsionReport
                             + "\n\n" + phase2Report
                             + "\n\n" + phase3Report
                             + "\n\n" + integrationReport
+                            + "\n\n" + hardeningReport
                             + "\n\n=== SUMMARY ==="
-                            + "\npure/static        : " + pureePassed + " passed, " + pureFailed + " failed"
-                            + "\nunity integration  : " + integrationPassed + " passed, " + integrationFailed + " failed";
+                            + "\npure/static        : " + purePassed + " passed, " + pureFailed + " failed"
+                            + "\nunity integration  : " + integrationPassed + " passed, " + integrationFailed + " failed"
+                            + "\nfreeze hardening   : " + hardeningPassed + " passed, " + hardeningFailed + " failed"
+                            + "\nfixed scheduler    : NOT TESTED by this menu";
 
-            int failed = pureFailed + integrationFailed;
+            int failed = pureFailed + integrationFailed + hardeningFailed;
 
             if (failed == 0)
                 Debug.Log(report);
@@ -224,8 +234,14 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             EditorUtility.DisplayDialog(
                 "Maverick Flight Dynamics Validation",
                 failed == 0
-                    ? "PASS\n\npure/static: " + pureePassed + " passed\nunity integration: " + integrationPassed + " passed."
-                    : "FAIL\n\npure/static: " + pureFailed + " failed\nunity integration: " + integrationFailed + " failed.\n\nSee Console for details.",
+                    ? "PASS\n\npure/static: " + purePassed
+                      + " passed\nunity integration: " + integrationPassed
+                      + " passed\nfreeze hardening: " + hardeningPassed
+                      + " passed\n\nFixedUpdate scheduler proof is still a separate gate."
+                    : "FAIL\n\npure/static: " + pureFailed
+                      + " failed\nunity integration: " + integrationFailed
+                      + " failed\nfreeze hardening: " + hardeningFailed
+                      + " failed.\n\nSee Console for details.",
                 "OK"
             );
         }
