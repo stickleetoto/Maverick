@@ -72,10 +72,10 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             observation.structurallyPrepared = true;
             observation.readyExceptLegacyOwnership = true;
             observation.operationallyLiveReady = false;
-            observation.legacyOwnerActive = true;      // one owner came back
+            observation.legacyOwnerActive = true;
             observation.legacyOwnerPresent = true;
             observation.legacyRestorationWasRequired = true;
-            observation.legacyRestorationSucceeded = false; // another owner did not
+            observation.legacyRestorationSucceeded = false;
             observation.newFdmArmed = false;
 
             string reason;
@@ -100,7 +100,7 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             HardeningRig rig = HardeningRig.Build(legacyOwnerCount: 2, withOwnershipController: true);
             try
             {
-                rig.SetFlightCondition(3000f, 200f);
+                rig.SetFlightCondition(3000f);
                 rig.MakeOperationallyLiveReady();
                 rig.Step();
 
@@ -162,7 +162,7 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             HardeningRig rig = HardeningRig.Build(legacyOwnerCount: 0, withOwnershipController: true);
             try
             {
-                rig.SetFlightCondition(3000f, 200f);
+                rig.SetFlightCondition(3000f);
                 rig.MakeOperationallyLiveReady();
                 rig.ownership.RequestReturnToLegacy();
                 rig.Step();
@@ -190,7 +190,7 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             HardeningRig rig = HardeningRig.Build(legacyOwnerCount: 0, withOwnershipController: false);
             try
             {
-                rig.SetFlightCondition(1000f, 200f);
+                rig.SetFlightCondition(1000f);
                 rig.body.requireOperationalReadinessForLoadApplication = false;
                 rig.body.simulationEnabled = true;
                 rig.commandSource.command = MavPilotCommand.Neutral;
@@ -330,11 +330,12 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 body.acceptNonAuthoritativePropulsion = true;
             }
 
-            public void SetFlightCondition(float altitudeM, float trueAirspeedMps)
+            public void SetFlightCondition(float altitudeM)
             {
+                // Deliberately do not write Rigidbody velocity here. The ownership source scan must
+                // stay strict; this hardening rig needs no velocity write for the regressions it owns.
                 transform.position = new Vector3(0f, altitudeM, 0f);
                 transform.rotation = Quaternion.identity;
-                rigidbody.linearVelocity = new Vector3(0f, 0f, trueAirspeedMps);
             }
 
             public void Step()
