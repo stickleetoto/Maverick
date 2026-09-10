@@ -3,10 +3,12 @@ using UnityEngine;
 namespace MaverickFresh
 {
     /// <summary>
-    /// v0.20.3~0.20.6 experimental aerodynamic core.
+    /// Experimental single-body aerodynamic core.
     /// Keep this on Mav_Player, not on the visible aircraft mesh.
-    /// It adds blended gravity, lift, parasitic/induced drag, stall lift loss, and dynamic-pressure control authority.
-    /// Legacy arcade physics can still run beside it while the blend values are tuned upward.
+    ///
+    /// Phase 4A ownership rule: when this body owns X% of the aerodynamic turn model, the legacy
+    /// velocity-turn assist may own at most (1-X)%. Real aero is a replacement for fake centripetal
+    /// steering, not an additional layer on top of it.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
@@ -46,7 +48,7 @@ namespace MaverickFresh
         public float maxLiftG = 9.2f;
 
         [Header("v0.20.4 Velocity Assist Migration")]
-        [Tooltip("How much the legacy velocity-turn assist should be faded while aero is active. 0 = keep legacy, 1 = mostly aero.")]
+        [Tooltip("Serialized compatibility field from the old partial-fade model. Phase 4A no longer uses this value for active aero: velocity assist ownership is exactly 1-aeroBlend. Kept so old scenes/profiles deserialize without data loss.")]
         [Range(0f, 1f)] public float velocityAssistFade = 0.45f;
         [Tooltip("Additional sideslip damping from the aero body. Keep low; MavMouseFlightJet still has yaw/slip dampers.")]
         public float aeroSideSlipDamping = 0.10f;
@@ -79,6 +81,14 @@ namespace MaverickFresh
         public Vector3 debugDragForce;
         public Vector3 debugGravityForce;
 
+        [Header("Debug / Phase 4A Turn Ownership")]
+        [Tooltip("Fraction of turn ownership assigned to MavAeroBody by aeroBlend.")]
+        public float debugAeroTurnOwnership;
+        [Tooltip("Remaining fraction available to the legacy direct velocity-turn assist.")]
+        public float debugLegacyVelocityAssistScale = 1f;
+        [Tooltip("Must remain 1.0: aero ownership + legacy velocity-assist ownership.")]
+        public float debugTurnOwnershipSum = 1f;
+
         private Rigidbody rb;
 
         private void Awake()
@@ -102,6 +112,7 @@ namespace MaverickFresh
 
             ApplyRigidbodyGravityPolicy();
             ResetDebug();
+            UpdateTurnOwnershipDebug();
 
             if (useCustomGravity && gravityBlend > 0f)
             {
@@ -171,11 +182,32 @@ namespace MaverickFresh
             }
         }
 
+        /// <summary>
+        /// Remaining ownership available to MavMouseFlightJet's direct velocity-turn assist.
+        ///
+        /// Phase 4A deliberately ignores the old per-aircraft partial fade while aero is active.
+        /// If aeroBlend is 0.54, aero owns 54% and the fake velocity steering owns 46% - never
+        /// 54% real aero plus 68.7% fake steering as the old F-22 profile produced.
+        /// </summary>
         public float GetVelocityAssistScale()
         {
-            if (!useAeroBody)
+            return ComputeLegacyVelocityAssistScale(useAeroBody, aeroBlend);
+        }
+
+        /// <summary>Pure ownership migration rule used by production and validation.</summary>
+        public static float ComputeLegacyVelocityAssistScale(bool aeroEnabled, float requestedAeroBlend)
+        {
+            if (!aeroEnabled)
                 return 1f;
-            return Mathf.Clamp01(1f - velocityAssistFade * aeroBlend);
+
+            return 1f - Mathf.Clamp01(requestedAeroBlend);
+        }
+
+        private void UpdateTurnOwnershipDebug()
+        {
+            debugAeroTurnOwnership = useAeroBody ? Mathf.Clamp01(aeroBlend) : 0f;
+            debugLegacyVelocityAssistScale = ComputeLegacyVelocityAssistScale(useAeroBody, aeroBlend);
+            debugTurnOwnershipSum = debugAeroTurnOwnership + debugLegacyVelocityAssistScale;
         }
 
         private void ApplyRigidbodyGravityPolicy()
