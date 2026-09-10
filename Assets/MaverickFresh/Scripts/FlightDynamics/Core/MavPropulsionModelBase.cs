@@ -32,6 +32,26 @@ namespace MaverickFresh.FlightDynamics
         public abstract bool HasAuthoritativeData { get; }
 
         /// <summary>
+        /// Whether this model may be used to fly an aircraft for real.
+        ///
+        /// Separate from <see cref="HasAuthoritativeData"/> because having sourced data is not the
+        /// only requirement: a model may hold authoritative numbers and still be configured to
+        /// extrapolate beyond them, at which point the values it returns are no longer supported by
+        /// that data. Defaults to the data question so existing models keep their meaning; models
+        /// with an envelope policy tighten it.
+        /// </summary>
+        public virtual bool IsAcceptableForLiveFlight
+        {
+            get { return HasAuthoritativeData; }
+        }
+
+        /// <summary>Human-readable provenance of the dimensional thrust, for readiness and reports.</summary>
+        public virtual string ThrustDataStatus
+        {
+            get { return HasAuthoritativeData ? "authoritative" : "unavailable / not authoritative"; }
+        }
+
+        /// <summary>
         /// Advances internal engine state by deltaTime and returns the resulting dimensional
         /// propulsive loads in conventional aircraft body axes.
         /// </summary>

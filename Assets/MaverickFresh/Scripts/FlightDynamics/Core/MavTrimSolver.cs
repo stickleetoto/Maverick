@@ -292,6 +292,13 @@ namespace MaverickFresh.FlightDynamics
         /// <summary>Widest flight-path angle the glide solve is allowed to search, degrees.</summary>
         public const float FlightPathAngleSearchLimitDeg = 89f;
 
+        /// <summary>
+        /// Throttle samples taken to verify monotonicity before inverting thrust. Enough to catch a
+        /// deck that reverses somewhere in the middle of its range, and fixed so the check is
+        /// deterministic.
+        /// </summary>
+        public const int MonotonicitySampleCount = 17;
+
         public static MavTrimResult Solve(MavTrimPlant plant, MavTrimCondition condition)
         {
             return Solve(plant, condition, MavTrimSolverSettings.Default);
@@ -643,15 +650,36 @@ namespace MaverickFresh.FlightDynamics
                 return;
             }
 
-            float idleThrustN = SampleThrust(plant, condition, atmosphere,
-                result.alphaDeg, result.flightPathAngleDeg, 0f,
-                ref contractViolated, ref contractViolationReason);
-            float fullThrustN = SampleThrust(plant, condition, atmosphere,
-                result.alphaDeg, result.flightPathAngleDeg, 1f,
-                ref contractViolated, ref contractViolationReason);
+            // One sweep of the throttle range answers BOTH questions, and in this order.
+            //
+            // Monotonicity has to be settled first, because until it is, the endpoints tell us
+            // nothing: a curve that rises, dips and rises again has an achievable thrust range
+            // wider than its endpoints suggest, so an endpoint-derived availability test would
+            // reject conditions the engine can actually hold - and a bisection on it would converge
+            // happily on a throttle that does not produce the requested thrust.
+            float[] sweep = new float[MonotonicitySampleCount];
+            for (int i = 0; i < MonotonicitySampleCount; i++)
+            {
+                float throttle = (float)i / (MonotonicitySampleCount - 1);
+                sweep[i] = SampleThrust(plant, condition, atmosphere,
+                    result.alphaDeg, result.flightPathAngleDeg, throttle,
+                    ref contractViolated, ref contractViolationReason);
+            }
 
+            float idleThrustN = sweep[0];
+            float fullThrustN = sweep[MonotonicitySampleCount - 1];
             result.availableThrustAtFullPowerN = fullThrustN;
 
+            if (!MavThrustDeckMath.IsMonotonic(sweep, toleranceN))
+            {
+                result.throttle01 = float.NaN;
+                result.throttleDetermined = false;
+                result.converged = false;
+                result.status = MavTrimStatus.ThrustNotMonotonic;
+                return;
+            }
+
+            // Monotonicity established, so the endpoints really are the range.
             float minimumThrustN = Mathf.Min(idleThrustN, fullThrustN);
             float maximumThrustN = Mathf.Max(idleThrustN, fullThrustN);
 
@@ -673,7 +701,7 @@ namespace MaverickFresh.FlightDynamics
                 result.throttle01 = 0f;
                 result.throttleDetermined = true;
                 result.converged = true;
-                result.status = MavTrimStatus.Converged;
+                result.status = ClassifyPoweredConvergence(plant, requiredThrustN, toleranceN);
                 return;
             }
 
@@ -696,7 +724,28 @@ namespace MaverickFresh.FlightDynamics
             result.throttle01 = Mathf.Clamp01(0.5f * (low + high));
             result.throttleDetermined = true;
             result.converged = true;
-            result.status = MavTrimStatus.Converged;
+            result.status = ClassifyPoweredConvergence(plant, requiredThrustN, toleranceN);
+        }
+
+        /// <summary>
+        /// A powered trim only earns plain Converged when the thrust it relies on came from accepted
+        /// data. If real thrust was needed and the data behind it is not authoritative, the result
+        /// is downgraded so it can never be quoted as a reference trim.
+        ///
+        /// A condition needing essentially no thrust is unaffected: it required no thrust data to
+        /// begin with.
+        /// </summary>
+        private static MavTrimStatus ClassifyPoweredConvergence(
+            MavTrimPlant plant,
+            float requiredThrustN,
+            float toleranceN)
+        {
+            bool neededRealThrust = Mathf.Abs(requiredThrustN) > toleranceN;
+
+            if (neededRealThrust && !plant.propulsionDataAuthoritative)
+                return MavTrimStatus.ConvergedWithNonAuthoritativeThrust;
+
+            return MavTrimStatus.Converged;
         }
 
         /// <summary>

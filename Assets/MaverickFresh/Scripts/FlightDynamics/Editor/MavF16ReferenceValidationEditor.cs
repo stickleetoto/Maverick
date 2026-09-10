@@ -91,6 +91,27 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             );
         }
 
+        [MenuItem("Maverick/Flight Dynamics/Run Phase 3 Propulsion, Attitude and Ownership Validation")]
+        public static void RunPhase3Validation()
+        {
+            int passed;
+            int failed;
+            string report = MavFlightDynamicsPhase3Validation.RunAll(out passed, out failed);
+
+            if (failed == 0)
+                Debug.Log(report);
+            else
+                Debug.LogError(report);
+
+            EditorUtility.DisplayDialog(
+                "Phase 3 Validation",
+                failed == 0
+                    ? "PASS\n\n" + passed + " checks passed."
+                    : "FAIL\n\n" + failed + " checks failed. See Console for details.",
+                "OK"
+            );
+        }
+
         /// <summary>
         /// Prints the F-16 trim survey. This computes and reports only: no scene object is touched,
         /// no Rigidbody is read or written, and no engine state is advanced.
@@ -140,10 +161,21 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 out phase2Failed
             );
 
-            int passed = referencePassed + phase1Passed + propulsionPassed + phase2Passed;
-            int failed = referenceFailed + phase1Failed + propulsionFailed + phase2Failed;
-            string report = referenceReport + "\n\n" + phase1Report + "\n\n" + propulsionReport
-                            + "\n\n" + phase2Report;
+            int phase3Passed;
+            int phase3Failed;
+            string phase3Report = MavFlightDynamicsPhase3Validation.RunAll(
+                out phase3Passed,
+                out phase3Failed
+            );
+
+            int passed = referencePassed + phase1Passed + propulsionPassed
+                         + phase2Passed + phase3Passed;
+            int failed = referenceFailed + phase1Failed + propulsionFailed
+                         + phase2Failed + phase3Failed;
+            string report = referenceReport + "\n\n" + phase1Report
+                            + "\n\n" + propulsionReport
+                            + "\n\n" + phase2Report
+                            + "\n\n" + phase3Report;
 
             if (failed == 0)
                 Debug.Log(report);

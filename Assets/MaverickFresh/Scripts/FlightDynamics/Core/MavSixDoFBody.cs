@@ -613,9 +613,12 @@ namespace MaverickFresh.FlightDynamics
                 && controlSurfaceActuator.BoundBody != null
                 && IdentityMatches(this, controlSurfaceActuator.BoundBody);
 
+            // IsAcceptableForLiveFlight, not merely HasAuthoritativeData: a model can hold
+            // authoritative tables and still be configured to extrapolate beyond them, at which
+            // point the numbers it returns are no longer backed by that data.
             inputs.propulsionAccepted =
                 propulsionModel != null
-                && (propulsionModel.HasAuthoritativeData || acceptNonAuthoritativePropulsion);
+                && (propulsionModel.IsAcceptableForLiveFlight || acceptNonAuthoritativePropulsion);
 
             // The command path, proved end to end rather than assembled from separate objects.
             //

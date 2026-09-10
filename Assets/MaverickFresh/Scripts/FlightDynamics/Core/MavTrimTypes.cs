@@ -64,7 +64,23 @@ namespace MaverickFresh.FlightDynamics
         UnsupportedCondition = 7,
 
         /// <summary>The plant description is incomplete or invalid.</summary>
-        InvalidPlant = 8
+        InvalidPlant = 8,
+
+        /// <summary>
+        /// Thrust is not monotonic across the throttle range at this condition, so inverting it for
+        /// a throttle setting is not well posed. Reported rather than bisected anyway: a bisection
+        /// on non-monotonic data converges happily on a throttle that does not produce the
+        /// requested thrust.
+        /// </summary>
+        ThrustNotMonotonic = 9,
+
+        /// <summary>
+        /// The powered trim closed and the propulsion model can supply the required thrust, but the
+        /// dimensional thrust data is NOT authoritative (synthetic/bench, or extrapolated). The
+        /// architecture works and the numbers are self-consistent; they are not evidence about the
+        /// aircraft, and this result must never be quoted as a reference trim.
+        /// </summary>
+        ConvergedWithNonAuthoritativeThrust = 10
     }
 
     /// <summary>

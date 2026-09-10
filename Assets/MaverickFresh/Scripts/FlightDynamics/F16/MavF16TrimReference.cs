@@ -40,6 +40,18 @@ namespace MaverickFresh.FlightDynamics.F16
         /// </summary>
         public static MavTrimPlant CreatePlant()
         {
+            return CreatePlant(null);
+        }
+
+        /// <summary>
+        /// Builds the F-16 trim plant with an explicit steady propulsion function.
+        ///
+        /// The override exists so the powered-trim path can be exercised against an explicitly
+        /// SYNTHETIC deck without that deck ever being wired into the F-16 runtime. Passing null
+        /// keeps the shipped behaviour: sourced power dynamics, zero dimensional thrust.
+        /// </summary>
+        public static MavTrimPlant CreatePlant(MavTrimSteadyPropulsionFunction propulsionOverride)
+        {
             MavAeroReferenceGeometry geometry = MavF16MorelliReference.CreateReferenceGeometry();
             float chordOverSpan = geometry.meanAerodynamicChordM / geometry.wingSpanM;
 
@@ -79,10 +91,44 @@ namespace MaverickFresh.FlightDynamics.F16
                 );
             };
 
-            plant.steadyPropulsionFunction = SteadyPropulsion;
+            plant.steadyPropulsionFunction = propulsionOverride ?? SteadyPropulsion;
+
+            // Only an override could ever make this true, and only if it is backed by an
+            // authoritative deck. The shipped path has no dimensional thrust data at all.
             plant.propulsionDataAuthoritative = false;
 
             return plant;
+        }
+
+        /// <summary>
+        /// Builds a steady propulsion function from any thrust deck evaluation, applying the sourced
+        /// Garza/Morelli throttle gearing to reach the settled power state first.
+        ///
+        /// Kept separate from <see cref="CreatePlant()"/> so that attaching a deck is always a
+        /// deliberate act at the call site, never something the F-16 plant does on its own.
+        /// </summary>
+        public static MavTrimSteadyPropulsionFunction CreateSteadyPropulsionFromDeck(
+            MavThrustDeckBase deck)
+        {
+            if (deck == null)
+                return SteadyPropulsion;
+
+            return delegate (MavFlightState state, MavAtmosphereSample atmosphere, float throttle01)
+            {
+                float steadyPowerPercent =
+                    MavF16EnginePowerModel.ThrottleToCommandedPowerPercent(throttle01);
+
+                MavThrustDeckResult deckResult = deck.Evaluate(
+                    MavThrustDeckQuery.Create(state.worldPositionM.y, state.mach, steadyPowerPercent));
+
+                if (!deckResult.valid)
+                    return MavF16EnginePowerModel.BuildZeroThrustLoads(steadyPowerPercent);
+
+                return MavF16EnginePowerModel.BuildAxialThrustLoads(
+                    deckResult.thrustN,
+                    steadyPowerPercent,
+                    deckResult.authority == MavThrustDataAuthority.Authoritative);
+            };
         }
 
         /// <summary>
