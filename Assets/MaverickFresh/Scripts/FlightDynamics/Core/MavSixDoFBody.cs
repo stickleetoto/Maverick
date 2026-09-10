@@ -46,8 +46,12 @@ namespace MaverickFresh.FlightDynamics
         [Tooltip("Deliberate acknowledgement that a propulsion model reporting HasAuthoritativeData == false may still be flown. OFF by default: an aircraft with no frozen thrust data is not operationally live-ready.")]
         public bool acceptNonAuthoritativePropulsion = false;
 
-        [Tooltip("Component type names that own aircraft physics in the legacy stack. If any of these is present and enabled on this GameObject, the new path is not operationally live-ready, because two systems would own the same physical effect. Matched by type name so the new core takes no compile dependency on the stack it is replacing.")]
-        public string[] conflictingLegacyPhysicsComponents =
+        /// <summary>
+        /// Canonical legacy physics owners. Exposed so validation can assert the shipped list
+        /// without constructing a component. Cloned into each instance so an inspector edit on one
+        /// aircraft cannot mutate the default for every other.
+        /// </summary>
+        public static readonly string[] DefaultConflictingLegacyPhysicsComponents =
         {
             "MavAeroBody",
             "MavAtmosphericEngine",
@@ -55,6 +59,10 @@ namespace MaverickFresh.FlightDynamics
             "MavInstructorController",
             "MavThrustVectorControl"
         };
+
+        [Tooltip("Component type names that own aircraft physics in the legacy stack. If any of these is present and enabled on this GameObject, the new path is not operationally live-ready, because two systems would own the same physical effect. Matched by type name so the new core takes no compile dependency on the stack it is replacing.")]
+        public string[] conflictingLegacyPhysicsComponents =
+            (string[])DefaultConflictingLegacyPhysicsComponents.Clone();
 
         [Header("Physical Profile")]
         public MavFlightDynamicsProfileProvider profileProvider;
@@ -599,29 +607,82 @@ namespace MaverickFresh.FlightDynamics
                 propulsionModel != null
                 && (propulsionModel.HasAuthoritativeData || acceptNonAuthoritativePropulsion);
 
+            // Both halves of the command-path question. A source that declares itself operational
+            // but is producing nothing this step is NOT a valid command source: collapsing the two
+            // would let readiness stay live across a dropout.
+            //
+            // The declared availability is corroborated by what the control law actually observed.
+            // The law runs at -300 and this body at -100, so within one physics step its poll result
+            // is already fresh - which makes this the observed truth rather than a property a source
+            // could report incorrectly.
             MavPilotCommandSourceBase source = ResolveCommandSource();
-            inputs.hasValidCommandSource = source != null && source.IsOperationalCommandSource;
+            bool signalAvailable = source != null && source.HasCommandSignal;
+            if (signalAvailable && controlLaw != null && controlLaw.driveActuatorInFixedUpdate)
+                signalAvailable = controlLaw.debugCommandSignalAvailable;
 
-            inputs.legacyPhysicsOwnershipClear = !HasLegacyPhysicsOwnerCached();
+            inputs.hasValidCommandSource =
+                source != null
+                && MavPilotCommandSourceBase.EvaluatesAsLiveCommandPath(
+                    source.IsOperationalCommandSource,
+                    signalAvailable);
+
+            inputs.legacyPhysicsOwnershipClear = !HasLegacyPhysicsOwnerConflict();
             debugLegacyPhysicsOwner = cachedLegacyOwnerName;
 
             return inputs;
         }
 
         /// <summary>
-        /// Legacy-ownership detection, rescanned periodically rather than every physics step.
-        /// Enumerating components is not free and ownership does not change at 50 Hz; the interval
-        /// is fixed, so the behaviour stays deterministic.
+        /// Legacy-ownership detection.
+        ///
+        /// While load application is armed this rescans EVERY physics step. Caching is a
+        /// diagnostics optimization only, and a cached "no conflict" verdict is precisely the
+        /// failure this gate exists to prevent: if a legacy owner is enabled mid-flight, a stale
+        /// answer would let both systems apply forces to the same Rigidbody until the cache
+        /// expired. There is no acceptable length for that window.
+        ///
+        /// When nothing is armed, the answer is only inspector diagnostics and is throttled.
         /// </summary>
-        private bool HasLegacyPhysicsOwnerCached()
+        private bool HasLegacyPhysicsOwnerConflict()
         {
             legacyOwnershipScanCountdown--;
-            if (legacyOwnershipScanCountdown > 0)
+
+            if (!ShouldRescanLegacyOwnership(simulationEnabled, legacyOwnershipScanCountdown))
                 return cachedLegacyOwnershipConflict;
 
             legacyOwnershipScanCountdown = LegacyOwnershipScanIntervalSteps;
             RefreshLegacyPhysicsOwner();
             return cachedLegacyOwnershipConflict;
+        }
+
+        /// <summary>
+        /// Whether the legacy-ownership verdict may be answered from cache.
+        ///
+        /// Kept pure and static so the no-stale-window guarantee is directly testable: when load
+        /// application is armed this must return true for every possible countdown value, so no
+        /// schedule can ever produce a stale safety answer.
+        /// </summary>
+        public static bool ShouldRescanLegacyOwnership(bool loadApplicationArmed, int scanCountdown)
+        {
+            if (loadApplicationArmed)
+                return true;
+
+            return scanCountdown <= 0;
+        }
+
+        /// <summary>
+        /// Forces an immediate legacy-ownership rescan and drops any cached verdict. Call this from
+        /// an ownership controller, or after enabling/disabling a physics component, so readiness
+        /// reflects the change on the very next evaluation instead of waiting for a scan interval.
+        /// </summary>
+        public void NotifyOwnershipChanged()
+        {
+            RefreshLegacyPhysicsOwner();
+            legacyOwnershipScanCountdown = 0;
+
+            // Force the readiness judgement itself to be rebuilt too, not just its inputs.
+            readinessEvaluatedOnce = false;
+            lastReadinessMask = -1;
         }
 
         /// <summary>Forces an immediate legacy-ownership rescan, for example after wiring changes.</summary>
@@ -756,6 +817,27 @@ namespace MaverickFresh.FlightDynamics
         /// core keeps no compile-time dependency on the legacy stack it is meant to replace, and so
         /// the list stays editable without touching legacy code.
         /// </summary>
+        /// <summary>
+        /// The deny-list rule, as a pure function: a component conflicts when it is enabled and its
+        /// type name is on the list. A disabled component owns nothing, so it does not conflict.
+        /// </summary>
+        public static bool IsLegacyOwnershipConflict(
+            string componentTypeName,
+            bool componentEnabled,
+            string[] denyList)
+        {
+            if (!componentEnabled || denyList == null || string.IsNullOrEmpty(componentTypeName))
+                return false;
+
+            for (int i = 0; i < denyList.Length; i++)
+            {
+                if (string.Equals(componentTypeName, denyList[i], System.StringComparison.Ordinal))
+                    return true;
+            }
+
+            return false;
+        }
+
         public bool TryFindLegacyPhysicsOwner(out string offenderName)
         {
             offenderName = "none";
@@ -773,13 +855,10 @@ namespace MaverickFresh.FlightDynamics
                     continue;
 
                 string typeName = behaviour.GetType().Name;
-                for (int j = 0; j < conflictingLegacyPhysicsComponents.Length; j++)
+                if (IsLegacyOwnershipConflict(typeName, behaviour.enabled, conflictingLegacyPhysicsComponents))
                 {
-                    if (typeName == conflictingLegacyPhysicsComponents[j])
-                    {
-                        offenderName = typeName;
-                        return true;
-                    }
+                    offenderName = typeName;
+                    return true;
                 }
             }
 
