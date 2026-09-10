@@ -36,6 +36,15 @@ namespace MaverickFresh.FlightDynamics.F16
         [Tooltip("Pitch rate commanded at full stick, deg/s. Used in PitchRateDemand mode.")]
         public float commandedPitchRateAtFullStickDegSec;
 
+        [Tooltip("MAVERICK TUNING. When true, neutral stick commands the load factor needed to hold altitude at the current bank angle (n = 1/cos phi) instead of a flat 1 g. This is what makes a banked turn hold its altitude without the pilot pulling manually.")]
+        public bool turnCompensationEnabled;
+
+        [Tooltip("MAVERICK TUNING. Upper bound on the turn-compensation load factor, g. Without it a steep bank would demand an unbounded pull.")]
+        public float maxTurnCompensationG;
+
+        [Tooltip("MAVERICK TUNING. Minimum cos(bank) for turn compensation to apply. Past this the aircraft is approaching knife-edge, where holding altitude is no longer a matter of pulling harder.")]
+        public float minimumCosBankForTurnCompensation;
+
         [Tooltip("Closed-loop load-factor feedback, dimensionless. Applied as gain*(nzCommanded-nzMeasured)*g0/V so the response is the same at every airspeed. 0 disables it, leaving a pure feed-forward command. Only active when a measured load factor is available.")]
         public float loadFactorFeedbackGain;
 
@@ -105,6 +114,9 @@ namespace MaverickFresh.FlightDynamics.F16
                 gains.commandedLoadFactorAtFullAftStickG = 9f;
                 gains.commandedLoadFactorAtFullForwardStickG = -3f;
                 gains.commandedPitchRateAtFullStickDegSec = 30f;
+                gains.turnCompensationEnabled = true;
+                gains.maxTurnCompensationG = 4f;
+                gains.minimumCosBankForTurnCompensation = 0.2588f;   // cos(75 deg)
                 gains.loadFactorFeedbackGain = 2f;
 
                 gains.pitchRateGainDegPerRadSec = 5f;
@@ -166,6 +178,11 @@ namespace MaverickFresh.FlightDynamics.F16
         public bool loadFactorMeasurementValid;
 
         public float commandedLoadFactorG;
+        public float bankAngleDeg;
+        public float cosBank;
+        public bool attitudeValid;
+        public bool turnCompensationApplied;
+        public float levelTurnLoadFactorG;
         public float rawPitchRateCommandRadSec;
         public float limitedPitchRateCommandRadSec;
         public float pitchRateErrorRadSec;
@@ -338,6 +355,14 @@ namespace MaverickFresh.FlightDynamics.F16
             bool loadFactorValid = state.specificForceValid;
             float measuredLoadFactorG = loadFactorValid ? state.LoadFactorNz : 1f;
 
+            // Bank angle enters every load-factor relation below. SafeCosBank returns the
+            // wings-level value when the attitude reference is unavailable or ill-conditioned, so
+            // losing attitude degrades to the Phase 2 behaviour rather than to a meaningless number.
+            float cosBank = MavAttitudeMath.SafeCosBank(state.attitude);
+            debug.attitudeValid = state.attitude.valid;
+            debug.bankAngleDeg = state.attitude.valid ? state.attitude.BankAngleDeg : 0f;
+            debug.cosBank = cosBank;
+
             float gainScale = gains.scheduleGainsWithDynamicPressure
                 ? MavControlLawProtections.DynamicPressureGainScale(
                     state.dynamicPressurePa,
@@ -352,15 +377,22 @@ namespace MaverickFresh.FlightDynamics.F16
 
             // ---------------------------------------------------------------- pitch command
             float commandedLoadFactorG;
+            float levelTurnLoadFactorG;
+            bool turnCompensationApplied;
             float rawPitchRateCommand = ComputePitchRateCommand(
                 c.pitch,
                 gains,
                 speedMps,
+                cosBank,
                 measuredLoadFactorG,
                 loadFactorValid,
-                out commandedLoadFactorG
+                out commandedLoadFactorG,
+                out levelTurnLoadFactorG,
+                out turnCompensationApplied
             );
 
+            debug.levelTurnLoadFactorG = levelTurnLoadFactorG;
+            debug.turnCompensationApplied = turnCompensationApplied;
             debug.commandedLoadFactorG = commandedLoadFactorG;
             debug.rawPitchRateCommandRadSec = rawPitchRateCommand;
 
@@ -375,10 +407,12 @@ namespace MaverickFresh.FlightDynamics.F16
 
             if (gLimiter.enabled)
             {
-                loadFactorCeiling = MavControlLawProtections.LoadFactorPitchRateCeilingRadSec(
-                    gLimiter.maxLoadFactorG, speedMps, gains.minimumControlSpeedMps);
-                loadFactorFloor = MavControlLawProtections.LoadFactorPitchRateCeilingRadSec(
-                    gLimiter.minLoadFactorG, speedMps, gains.minimumControlSpeedMps);
+                // Bank-aware: the pitch rate corresponding to a load-factor limit depends on how
+                // much of the lift is already being spent holding the aircraft up.
+                loadFactorCeiling = MavAttitudeMath.PitchRateForLoadFactor(
+                    gLimiter.maxLoadFactorG, cosBank, speedMps, gains.minimumControlSpeedMps);
+                loadFactorFloor = MavAttitudeMath.PitchRateForLoadFactor(
+                    gLimiter.minLoadFactorG, cosBank, speedMps, gains.minimumControlSpeedMps);
 
                 if (loadFactorValid)
                 {
@@ -571,33 +605,57 @@ namespace MaverickFresh.FlightDynamics.F16
             float pitchStick,
             MavF16ControlLawGains gains,
             float speedMps,
+            float cosBank,
             float measuredLoadFactorG,
             bool loadFactorValid,
-            out float commandedLoadFactorG)
+            out float commandedLoadFactorG,
+            out float levelTurnLoadFactorG,
+            out bool turnCompensationApplied)
         {
             float stick = Mathf.Clamp(pitchStick, -1f, 1f);
 
+            // Load factor that would hold altitude at this bank angle. At wings level it is 1, so
+            // everything below reduces exactly to the Phase 2 behaviour when the wings are level.
+            levelTurnLoadFactorG = gains.turnCompensationEnabled
+                ? MavAttitudeMath.LevelTurnLoadFactor(
+                    cosBank,
+                    gains.minimumCosBankForTurnCompensation,
+                    gains.maxTurnCompensationG,
+                    out turnCompensationApplied)
+                : NoTurnCompensation(out turnCompensationApplied);
+
             if (gains.pitchCommandMode == MavPitchCommandMode.PitchRateDemand)
             {
-                commandedLoadFactorG = loadFactorValid ? measuredLoadFactorG : 1f;
+                commandedLoadFactorG = loadFactorValid ? measuredLoadFactorG : levelTurnLoadFactorG;
                 return stick * gains.commandedPitchRateAtFullStickDegSec * Mathf.Deg2Rad;
             }
 
+            // Neutral stick commands the altitude-holding load factor rather than a flat 1 g, so a
+            // banked turn holds its altitude without the pilot pulling manually.
             commandedLoadFactorG = stick >= 0f
-                ? Mathf.Lerp(1f, gains.commandedLoadFactorAtFullAftStickG, stick)
-                : Mathf.Lerp(1f, gains.commandedLoadFactorAtFullForwardStickG, -stick);
+                ? Mathf.Lerp(levelTurnLoadFactorG, gains.commandedLoadFactorAtFullAftStickG, stick)
+                : Mathf.Lerp(levelTurnLoadFactorG, gains.commandedLoadFactorAtFullForwardStickG, -stick);
 
-            float safeSpeed = Mathf.Max(Mathf.Max(1f, gains.minimumControlSpeedMps), speedMps);
-            float ratePerG = MavControlLawProtections.StandardGravityMps2 / safeSpeed;
-
-            float feedForward = ratePerG * (commandedLoadFactorG - 1f);
+            // q = g * (n - cos(phi)) / V. The Phase 2 form used (n - 1), which is the phi = 0
+            // special case and under-commands pitch rate in every turn.
+            float feedForward = MavAttitudeMath.PitchRateForLoadFactor(
+                commandedLoadFactorG, cosBank, speedMps, gains.minimumControlSpeedMps);
 
             if (!loadFactorValid || gains.loadFactorFeedbackGain == 0f)
                 return feedForward;
 
+            float safeSpeed = Mathf.Max(Mathf.Max(1f, gains.minimumControlSpeedMps), speedMps);
+            float ratePerG = MavControlLawProtections.StandardGravityMps2 / safeSpeed;
+
             return feedForward
                    + ratePerG * gains.loadFactorFeedbackGain
                      * (commandedLoadFactorG - measuredLoadFactorG);
+        }
+
+        private static float NoTurnCompensation(out bool applied)
+        {
+            applied = false;
+            return 1f;
         }
     }
 }

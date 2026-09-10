@@ -31,6 +31,9 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateF16ThrustStillUnavailable(report, ref passed, ref failed);
             ValidatePoweredTrimWithDeck(report, ref passed, ref failed);
             ValidateThrottleInversionSafety(report, ref passed, ref failed);
+            ValidateAttitudeDirections(report, ref passed, ref failed);
+            ValidateLoadFactorRelations(report, ref passed, ref failed);
+            ValidateBankedControlLaw(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -532,6 +535,397 @@ namespace MaverickFresh.FlightDynamics.Validation
                 report, ref passed, ref failed);
         }
 
+
+        // ================================================================= [B0]
+
+        /// <summary>
+        /// Physical-direction tests for the attitude derivation.
+        ///
+        /// Deliberately NOT round-trip tests. This project has already been bitten by a handedness
+        /// error that a round trip could not see, because applying the same wrong sign outbound and
+        /// inbound cancels. Every check below states where a vector points and asserts the sign of
+        /// the resulting angle, which a matching pair of sign errors cannot survive.
+        /// </summary>
+        private static void ValidateAttitudeDirections(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[B0] Attitude physical directions");
+
+            // Wings level, nose on the horizon, facing world +Z.
+            MavAttitude level = MavAttitudeMath.FromWorldBasis(
+                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                new Vector3(0f, 0f, 200f));
+
+            Record(
+                level.valid
+                && Near(level.PitchAttitudeDeg, 0f, 1e-3f)
+                && Near(level.BankAngleDeg, 0f, 1e-3f)
+                && Near(level.HeadingDeg, 0f, 1e-3f)
+                && Near(level.FlightPathAngleDeg, 0f, 1e-3f),
+                "straight and level gives zero pitch, bank, heading and flight-path angle",
+                report, ref passed, ref failed);
+
+            // Nose 30 degrees above the horizon.
+            float c30 = Mathf.Cos(30f * Mathf.Deg2Rad);
+            float s30 = Mathf.Sin(30f * Mathf.Deg2Rad);
+            MavAttitude noseUp = MavAttitudeMath.FromWorldBasis(
+                new Vector3(0f, s30, c30), new Vector3(0f, c30, -s30), new Vector3(1f, 0f, 0f),
+                new Vector3(0f, 0f, 200f));
+
+            Record(
+                Near(noseUp.PitchAttitudeDeg, 30f, 1e-2f) && noseUp.PitchAttitudeDeg > 0f,
+                "nose ABOVE the horizon gives POSITIVE pitch attitude ("
+                + noseUp.PitchAttitudeDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            MavAttitude noseDown = MavAttitudeMath.FromWorldBasis(
+                new Vector3(0f, -s30, c30), new Vector3(0f, c30, s30), new Vector3(1f, 0f, 0f),
+                new Vector3(0f, 0f, 200f));
+
+            Record(
+                Near(noseDown.PitchAttitudeDeg, -30f, 1e-2f),
+                "nose BELOW the horizon gives NEGATIVE pitch attitude ("
+                + noseDown.PitchAttitudeDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            // Right wing dropped 45 degrees.
+            float c45 = Mathf.Cos(45f * Mathf.Deg2Rad);
+            MavAttitude rightBank = MavAttitudeMath.FromWorldBasis(
+                new Vector3(0f, 0f, 1f), new Vector3(c45, c45, 0f), new Vector3(c45, -c45, 0f),
+                new Vector3(0f, 0f, 200f));
+
+            Record(
+                Near(rightBank.BankAngleDeg, 45f, 1e-2f) && rightBank.BankAngleDeg > 0f,
+                "RIGHT wing down gives POSITIVE bank angle ("
+                + rightBank.BankAngleDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            MavAttitude leftBank = MavAttitudeMath.FromWorldBasis(
+                new Vector3(0f, 0f, 1f), new Vector3(-c45, c45, 0f), new Vector3(c45, c45, 0f),
+                new Vector3(0f, 0f, 200f));
+
+            Record(
+                Near(leftBank.BankAngleDeg, -45f, 1e-2f) && leftBank.BankAngleDeg < 0f,
+                "LEFT wing down gives NEGATIVE bank angle ("
+                + leftBank.BankAngleDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(rightBank.PitchAttitudeDeg, 0f, 1e-2f)
+                && Near(leftBank.PitchAttitudeDeg, 0f, 1e-2f),
+                "a pure bank does not contaminate the pitch attitude",
+                report, ref passed, ref failed);
+
+            // Heading: nose toward world +X is a right turn from the +Z reference.
+            MavAttitude east = MavAttitudeMath.FromWorldBasis(
+                new Vector3(1f, 0f, 0f), new Vector3(0f, 1f, 0f), new Vector3(0f, 0f, -1f),
+                new Vector3(200f, 0f, 0f));
+
+            Record(
+                Near(east.HeadingDeg, 90f, 1e-2f) && east.HeadingDeg > 0f,
+                "turning the nose to the RIGHT increases heading ("
+                + east.HeadingDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            MavAttitude west = MavAttitudeMath.FromWorldBasis(
+                new Vector3(-1f, 0f, 0f), new Vector3(0f, 1f, 0f), new Vector3(0f, 0f, 1f),
+                new Vector3(-200f, 0f, 0f));
+
+            Record(
+                Near(west.HeadingDeg, -90f, 1e-2f),
+                "and to the LEFT decreases it (" + west.HeadingDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            // Flight path follows the VELOCITY vector, independently of where the nose points.
+            MavAttitude climbing = MavAttitudeMath.FromWorldBasis(
+                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                new Vector3(0f, 100f, 100f));
+
+            Record(
+                climbing.flightPathValid && Near(climbing.FlightPathAngleDeg, 45f, 1e-2f),
+                "CLIMBING velocity gives a POSITIVE flight-path angle ("
+                + climbing.FlightPathAngleDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            MavAttitude descending = MavAttitudeMath.FromWorldBasis(
+                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                new Vector3(0f, -100f, 100f));
+
+            Record(
+                Near(descending.FlightPathAngleDeg, -45f, 1e-2f),
+                "DESCENDING velocity gives a NEGATIVE one ("
+                + descending.FlightPathAngleDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(climbing.PitchAttitudeDeg, 0f, 1e-2f),
+                "flight-path angle is taken from the velocity vector, not from the nose: a level "
+                + "nose with a climbing velocity keeps pitch attitude at zero",
+                report, ref passed, ref failed);
+
+            // Degenerate and ill-conditioned cases fail closed rather than returning nonsense.
+            MavAttitude degenerate = MavAttitudeMath.FromWorldBasis(
+                Vector3.zero, new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                new Vector3(0f, 0f, 200f));
+
+            Record(!degenerate.valid,
+                "a degenerate orientation basis yields an INVALID attitude, not a zero one",
+                report, ref passed, ref failed);
+
+            MavAttitude vertical = MavAttitudeMath.FromWorldBasis(
+                new Vector3(0f, 1f, 0f), new Vector3(0f, 0f, -1f), new Vector3(1f, 0f, 0f),
+                new Vector3(0f, 200f, 0f));
+
+            Record(
+                vertical.valid && vertical.nearVerticalSingularity,
+                "vertical flight is flagged as near-singular, where bank and heading degrade",
+                report, ref passed, ref failed);
+
+            MavAttitude stationary = MavAttitudeMath.FromWorldBasis(
+                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                Vector3.zero);
+
+            Record(
+                stationary.valid && !stationary.flightPathValid,
+                "a stationary aircraft has a valid attitude but no meaningful flight-path angle",
+                report, ref passed, ref failed);
+
+            // SafeCosBank degrades to the wings-level value rather than to a meaningless number.
+            Record(
+                Near(MavAttitudeMath.SafeCosBank(MavAttitude.Invalid), 1f, 1e-6f)
+                && Near(MavAttitudeMath.SafeCosBank(vertical), 1f, 1e-6f)
+                && Near(MavAttitudeMath.SafeCosBank(rightBank), c45, 1e-3f),
+                "SafeCosBank returns the true cosine when usable and 1 when not",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [B1]
+
+        private static void ValidateLoadFactorRelations(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[B1] Bank-aware load-factor relations");
+
+            const float speed = 200f;
+            float ratePerG = StandardGravity / speed;
+
+            Record(
+                Near(MavAttitudeMath.PitchRateForLoadFactor(1f, 1f, speed, 30f), 0f, 1e-6f),
+                "wings level at 1 g requires no pitch rate",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(MavAttitudeMath.PitchRateForLoadFactor(2f, 1f, speed, 30f), ratePerG, 1e-6f),
+                "wings level at 2 g reduces EXACTLY to the Phase 2 relation g*(n-1)/V, so "
+                + "wings-level behaviour is unchanged",
+                report, ref passed, ref failed);
+
+            // A level 60 degree turn: n = 1/cos(60) = 2, and q = (g/V)(n - cos phi).
+            float cos60 = Mathf.Cos(60f * Mathf.Deg2Rad);
+            Record(
+                Near(MavAttitudeMath.PitchRateForLoadFactor(2f, cos60, speed, 30f),
+                     ratePerG * (2f - cos60), 1e-6f),
+                "a 60 degree level turn needs q = (g/V)(n - cos phi), which is 1.5 g/V not 1.0 g/V",
+                report, ref passed, ref failed);
+
+            Record(
+                MavAttitudeMath.PitchRateForLoadFactor(2f, cos60, speed, 30f)
+                > MavAttitudeMath.PitchRateForLoadFactor(2f, 1f, speed, 30f),
+                "which is MORE pitch rate than the wings-level relation would have commanded: the "
+                + "Phase 2 approximation under-commanded in every turn",
+                report, ref passed, ref failed);
+
+            // Level-turn load factor n = 1/cos(phi).
+            bool applied;
+            Record(
+                Near(MavAttitudeMath.LevelTurnLoadFactor(1f, 0.2588f, 4f, out applied), 1f, 1e-4f),
+                "holding altitude wings level needs 1 g",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(MavAttitudeMath.LevelTurnLoadFactor(cos60, 0.2588f, 4f, out applied), 2f, 1e-3f)
+                && applied,
+                "holding altitude in a 60 degree bank needs 2 g",
+                report, ref passed, ref failed);
+
+            float cos80 = Mathf.Cos(80f * Mathf.Deg2Rad);
+            Record(
+                Near(MavAttitudeMath.LevelTurnLoadFactor(cos80, 0.2588f, 4f, out applied), 1f, 1e-4f)
+                && !applied,
+                "past the knife-edge threshold compensation is withdrawn rather than demanding an "
+                + "enormous pull, and says so",
+                report, ref passed, ref failed);
+
+            float cos70 = Mathf.Cos(70f * Mathf.Deg2Rad);
+            Record(
+                MavAttitudeMath.LevelTurnLoadFactor(cos70, 0.2588f, 2.5f, out applied) <= 2.5f + 1e-4f,
+                "and is bounded by the configured maximum",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(MavAttitudeMath.LevelTurnLoadFactor(-0.5f, 0.2588f, 4f, out applied), 1f, 1e-4f)
+                && !applied,
+                "inverted flight does not produce a negative or runaway compensation demand",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [B2]
+
+        private static void ValidateBankedControlLaw(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[B2] Control law in banked flight");
+
+            const float speed = 200f;
+
+            // Wings level, trimmed: the Phase 2 result must be preserved exactly.
+            MavF16ControlLawDebug levelDebug;
+            MavControlInput levelOut = RunLaw(
+                MavPilotCommand.Neutral, BuildState(speed, 0f, 1f, true), out levelDebug);
+
+            Record(
+                Near(levelOut.elevatorDeg, 0f, 1e-3f)
+                && Near(levelDebug.commandedLoadFactorG, 1f, 1e-3f),
+                "wings level with neutral stick still commands 1 g and no elevator: the Phase 2 "
+                + "behaviour is preserved exactly",
+                report, ref passed, ref failed);
+
+            // Moderate bank, neutral stick: the law should now hold altitude by itself.
+            MavF16ControlLawDebug bank45;
+            MavControlInput out45 = RunLaw(
+                MavPilotCommand.Neutral, BuildState(speed, 45f, 1f, true), out bank45);
+
+            Record(
+                Near(bank45.commandedLoadFactorG, 1f / Mathf.Cos(45f * Mathf.Deg2Rad), 1e-2f)
+                && bank45.turnCompensationApplied,
+                "a 45 degree bank with neutral stick commands the altitude-holding load factor ("
+                + bank45.commandedLoadFactorG.ToString("F3") + " g)",
+                report, ref passed, ref failed);
+
+            Record(
+                bank45.limitedPitchRateCommandRadSec > 0f && out45.elevatorDeg < 0f,
+                "which becomes a positive pitch-rate demand and nose-up elevator, rather than the "
+                + "zero command the Phase 2 law would have produced",
+                report, ref passed, ref failed);
+
+            // Steeper bank demands more.
+            MavF16ControlLawDebug bank60;
+            RunLaw(MavPilotCommand.Neutral, BuildState(speed, 60f, 1f, true), out bank60);
+
+            Record(
+                bank60.commandedLoadFactorG > bank45.commandedLoadFactorG
+                && Near(bank60.commandedLoadFactorG, 2f, 1e-2f),
+                "a 60 degree bank demands 2 g, more than 45 degrees does ("
+                + bank60.commandedLoadFactorG.ToString("F3") + " g)",
+                report, ref passed, ref failed);
+
+            Record(
+                bank60.limitedPitchRateCommandRadSec > bank45.limitedPitchRateCommandRadSec,
+                "and correspondingly more pitch rate",
+                report, ref passed, ref failed);
+
+            // Very steep bank: compensation withdrawn rather than demanding an enormous pull.
+            MavF16ControlLawDebug bank85;
+            RunLaw(MavPilotCommand.Neutral, BuildState(speed, 85f, 1f, true), out bank85);
+
+            Record(
+                !bank85.turnCompensationApplied && Near(bank85.commandedLoadFactorG, 1f, 1e-2f),
+                "an 85 degree bank withdraws turn compensation instead of commanding a huge pull, "
+                + "and reports that it did",
+                report, ref passed, ref failed);
+
+            // Positive-g turn: aft stick in a bank commands more than neutral does.
+            MavF16ControlLawDebug pullingInBank;
+            MavControlInput pullOut = RunLaw(
+                new MavPilotCommand { pitch = 0.5f }, BuildState(speed, 45f, 1f, true),
+                out pullingInBank);
+
+            Record(
+                pullingInBank.commandedLoadFactorG > bank45.commandedLoadFactorG,
+                "aft stick in a bank commands MORE than the altitude-holding value ("
+                + pullingInBank.commandedLoadFactorG.ToString("F3") + " g)",
+                report, ref passed, ref failed);
+
+            Record(
+                pullOut.elevatorDeg < out45.elevatorDeg,
+                "and produces more nose-up elevator, so command direction is right in a turn too",
+                report, ref passed, ref failed);
+
+            // Unloading in a bank must still push.
+            MavF16ControlLawDebug unloading;
+            MavControlInput unloadOut = RunLaw(
+                new MavPilotCommand { pitch = -1f }, BuildState(speed, 45f, 1f, true), out unloading);
+
+            Record(
+                unloading.commandedLoadFactorG < 1f && unloadOut.elevatorDeg > 0f,
+                "full forward stick in a bank commands an unloaded condition and nose-down elevator",
+                report, ref passed, ref failed);
+
+            // The g limiter ceiling is bank-aware. Compared against the same law at wings level
+            // rather than against the open-loop term alone, because the reported ceiling is the
+            // smooth minimum of the open-loop bound and the measured-margin bound, and the latter
+            // is correctly bank-independent: dq/dn = g/V whatever the bank angle.
+            MavF16ControlLawDebug limitedInBank;
+            RunLaw(new MavPilotCommand { pitch = 1f }, BuildState(speed, 60f, 1f, true),
+                out limitedInBank);
+
+            MavF16ControlLawDebug limitedLevel;
+            RunLaw(new MavPilotCommand { pitch = 1f }, BuildState(speed, 0f, 1f, true),
+                out limitedLevel);
+
+            Record(
+                limitedInBank.loadFactorPitchRateCeilingRadSec
+                > limitedLevel.loadFactorPitchRateCeilingRadSec + 1e-4f,
+                "the g-limiter pitch-rate ceiling is higher in a bank than at wings level, so a "
+                + "turn is not limited as though it were level flight ("
+                + limitedInBank.loadFactorPitchRateCeilingRadSec.ToString("F4") + " vs "
+                + limitedLevel.loadFactorPitchRateCeilingRadSec.ToString("F4") + " rad/s)",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(MavControlLawProtections.MeasuredLoadFactorPitchRateCeilingRadSec(9f, 1f, 1f),
+                     8f, 1e-4f),
+                "the measured-margin ceiling converts remaining g margin into remaining rate "
+                + "authority, which is correctly independent of bank",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(limitedInBank.commandedLoadFactorG, 9f, 1e-2f),
+                "full aft stick still commands the configured maximum load factor in a bank",
+                report, ref passed, ref failed);
+
+            // Losing the attitude reference degrades to wings-level behaviour, not to nonsense.
+            MavF16ControlLawDebug noAttitude;
+            MavControlInput noAttitudeOut = RunLaw(
+                MavPilotCommand.Neutral, BuildState(speed, 45f, 1f, false), out noAttitude);
+
+            Record(
+                !noAttitude.attitudeValid
+                && Near(noAttitude.cosBank, 1f, 1e-6f)
+                && Near(noAttitudeOut.elevatorDeg, 0f, 1e-3f),
+                "without a valid attitude the law falls back to the wings-level relation rather "
+                + "than acting on a meaningless bank angle",
+                report, ref passed, ref failed);
+
+            // Turn compensation can be switched off, and the difference is observable.
+            MavF16ControlLawGains noCompensation = MavF16ControlLawGains.Default;
+            noCompensation.turnCompensationEnabled = false;
+
+            MavF16ControlLawState lawState = MavF16ControlLawState.Zero;
+            MavF16ControlLawDebug uncompensated;
+            MavF16ControlLawV01.Compute(
+                MavPilotCommand.Neutral, BuildState(speed, 45f, 1f, true),
+                BuildF16SurfaceLimits(), noCompensation,
+                MavAngleOfAttackLimiterSettings.Default, MavLoadFactorLimiterSettings.Default,
+                MavRollRateLimiterSettings.Default, ref lawState, 0.02f, out uncompensated);
+
+            Record(
+                Near(uncompensated.commandedLoadFactorG, 1f, 1e-3f)
+                && !uncompensated.turnCompensationApplied,
+                "disabling turn compensation demonstrably restores the flat 1 g demand",
+                report, ref passed, ref failed);
+        }
+
         // ================================================================= helpers
 
         /// <summary>
@@ -562,6 +956,85 @@ namespace MaverickFresh.FlightDynamics.Validation
                     powerPercent,
                     deckResult.authority == MavThrustDataAuthority.Authoritative);
             };
+        }
+
+
+        private static MavControlSurfaceLimits BuildF16SurfaceLimits()
+        {
+            return new MavControlSurfaceLimits
+            {
+                elevatorMinDeg = MavF16MorelliReference.ElevatorMinDeg,
+                elevatorMaxDeg = MavF16MorelliReference.ElevatorMaxDeg,
+                aileronMinDeg = MavF16MorelliReference.AileronMinDeg,
+                aileronMaxDeg = MavF16MorelliReference.AileronMaxDeg,
+                rudderMinDeg = MavF16MorelliReference.RudderMinDeg,
+                rudderMaxDeg = MavF16MorelliReference.RudderMaxDeg,
+                leadingEdgeFlapMinDeg = 0f,
+                leadingEdgeFlapMaxDeg = 0f
+            };
+        }
+
+        /// <summary>
+        /// Flight state at a given bank angle, with a measured load factor and an optionally
+        /// unavailable attitude reference. Attitude is built through the production
+        /// <see cref="MavAttitudeMath"/> path from real basis vectors, so these tests exercise the
+        /// derivation rather than hand-setting the angles.
+        /// </summary>
+        private static MavFlightState BuildState(
+            float trueAirspeedMps,
+            float bankAngleDeg,
+            float loadFactorNz,
+            bool attitudeAvailable)
+        {
+            MavAtmosphereSample atmosphere = MavAtmosphereModel.Sample(0f);
+
+            MavFlightState state = new MavFlightState();
+            state.trueAirspeedMps = trueAirspeedMps;
+            state.mach = trueAirspeedMps / atmosphere.speedOfSoundMps;
+            state.dynamicPressurePa = 0.5f * atmosphere.densityKgM3 * trueAirspeedMps * trueAirspeedMps;
+            state.aeroBodyVelocityMps = new Vector3(trueAirspeedMps, 0f, 0f);
+            state.aeroBodyRatesRadSec = Vector3.zero;
+            state.specificForceAeroBodyG = new Vector3(0f, 0f, -loadFactorNz);
+            state.specificForceValid = true;
+
+            if (attitudeAvailable)
+            {
+                float phi = bankAngleDeg * Mathf.Deg2Rad;
+                float cos = Mathf.Cos(phi);
+                float sin = Mathf.Sin(phi);
+
+                // Rolled about the world +Z axis: the right wing drops by sin(phi).
+                state.attitude = MavAttitudeMath.FromWorldBasis(
+                    new Vector3(0f, 0f, 1f),
+                    new Vector3(sin, cos, 0f),
+                    new Vector3(cos, -sin, 0f),
+                    new Vector3(0f, 0f, trueAirspeedMps));
+            }
+            else
+            {
+                state.attitude = MavAttitude.Invalid;
+            }
+
+            return state;
+        }
+
+        private static MavControlInput RunLaw(
+            MavPilotCommand command,
+            MavFlightState state,
+            out MavF16ControlLawDebug debug)
+        {
+            MavF16ControlLawState lawState = MavF16ControlLawState.Zero;
+            return MavF16ControlLawV01.Compute(
+                command,
+                state,
+                BuildF16SurfaceLimits(),
+                MavF16ControlLawGains.Default,
+                MavAngleOfAttackLimiterSettings.Default,
+                MavLoadFactorLimiterSettings.Default,
+                MavRollRateLimiterSettings.Default,
+                ref lawState,
+                0.02f,
+                out debug);
         }
 
         private static bool Near(float actual, float expected, float tolerance = Tolerance)
