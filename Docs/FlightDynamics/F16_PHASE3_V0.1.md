@@ -497,3 +497,106 @@ frozen from an approved source. That absence is the honest state of the project.
 | `[B3]` | attitude published by the PRODUCTION state builder, wings level and both bank directions, and the control law responding to it |
 | `[C3]` | no false `LegacyOwned`; `Unowned` versus `Fault`; destroyed/unrestorable legacy owner |
 | `[A6]` | authority cannot be escalated from the inspector under any policy; provenance hash binding |
+
+---
+
+## Freeze-review follow-up
+
+A second independent review found two further production blockers and six validation defects. All
+eight are addressed.
+
+### F1 - ownership arbitrated on a stale command result
+
+The controller ran at **-20000**, ahead of everything, and read the control law's command resolution
+from the PREVIOUS step. A source that dropped out on the current step still looked healthy to it:
+
+```text
+step N-1: SourceSignal
+step N:   source drops out
+          arbiter (-20000) sees stale SourceSignal -> releases legacy, arms new FDM
+          law (-300)       observes the dropout
+          body (-100)      refuses loads: no valid command path
+          legacy (0)       already disabled
+          -> a physics step with NO owner
+```
+
+Fixed by reordering:
+
+```text
+control law        -300
+ownership arbiter  -250   <- moved here
+actuator           -200
+six-DoF body       -100
+legacy owners         0
+```
+
+The arbiter now decides on the CURRENT step's command result while still preceding both physics
+owners. The law running before ownership is settled is harmless: it may publish a surface command on
+a step where legacy ends up owning the aircraft, and the legacy stack does not read those surfaces.
+
+`[I3]` proves it on real components, and demonstrates the failure by deliberately stepping the
+arbiter ahead of the law and showing that ordering releases legacy on a dropped signal.
+
+### F2 - a failed legacy restoration could settle as Unowned
+
+`RestoreLegacyOwners()` returned false for a destroyed owner and then cleared its tracking list.
+`Observe()` subsequently saw `legacyOwnerPresent == false`, `ResolveSettledOwnership` returned
+`Unowned`, and `SettleAfterRelease` explicitly permitted `restoreSucceeded == false` when the settled
+state was `Unowned`. The controller would report a healthy bench rig for an aircraft it had just
+taken the physics away from.
+
+Fixed: the observation now carries `legacyRestorationWasRequired` and `legacyRestorationSucceeded`,
+and `ResolveSettledOwnership` faults whenever a restoration was required and did not put an active
+owner back - whether or not the component still exists. **`Unowned` is now reachable only when no
+restoration was required at all.** `IsStateConsistent` enforces the same.
+
+`[C3]` covers the rule; `[I4]` destroys a real disabled component mid-handover and asserts the
+hand-back becomes `Fault`.
+
+### Validation defects
+
+| # | Defect | Fix |
+| --- | --- | --- |
+| 3 | `[A6]` contained an unconditional `|| true`, so one assertion could never fail | replaced with a real changed-identity test: recompute the hash AS the other source and verify it against the original declaration |
+| 4 | `[B3]` checked only attitude | expanded to the full `BuildFlightState` contract: position, world velocity, aero-body velocity, p/q/r through the axial-vector conversion, TAS, Mach, qbar, alpha, beta, attitude, and initial specific-force invalidity |
+| 5 | specific force was tested by assigning the field | now goes through `MavSixDoFBody.PublishSpecificForce`, the same path production uses, including non-finite and zero-mass rejection |
+| 6 | `[R4]` rebuilt the readiness mapping instead of running it | `MavPipelineSnapshot` + `MavFlightDynamicsReadiness.BuildInputs` is now the single mapping; the body captures a snapshot and validation feeds one in |
+| 7 | no component-level coverage at all | new Unity integration suite, below |
+| 8 | CSV validation compared header count against constants | now serializes a real row through `BuildCsvRow` and checks count **and order**, looking each column up by header name |
+
+### The Unity integration layer
+
+`MavFlightDynamicsIntegrationValidation` builds real GameObjects with real components, wires them the
+way the runtime does, and drives them in the real execution order. Nothing in it fabricates a
+`MavOwnershipObservation`, a `MavPipelineSnapshot` or a `MavFlightState`.
+
+| Section | Covers |
+| --- | --- |
+| `[I0]` | command source -> control law -> actuator -> body, and attitude published from a real transform |
+| `[I1]` | engine `Evaluate` -> thrust deck -> summed loads, with and without a deck |
+| `[I2]` | ownership handover, hand-back and rollback on real components |
+| `[I3]` | **current-step command dropout at the handover boundary**, plus the stale-ordering demonstration |
+| `[I4]` | **destroyed legacy owner** produces `Fault`, not `Unowned` |
+| `[I5]` | bench rig with no legacy owner settles as `Unowned` |
+
+To make this possible each component's per-step work is now a public method - `StepControlLaw`,
+`StepActuator`, `StepPhysics`, `StepOwnership` - with the timestep passed in rather than read from
+`Time`. `FixedUpdate` just calls it. That is a better shape independent of testing, and it is what
+lets the suite order the pipeline itself rather than depending on Unity's scheduler.
+
+The suite lives under `Editor/` and never ships. `MavIntegrationTestLegacyOwner` is a stand-in that
+applies no physics, so no real legacy component is touched; the controllers under test have their
+deny-list pointed at it. The ownership scan exempts the integration rig, narrowly and by name,
+because it assigns a Rigidbody velocity to establish an initial condition - and that exemption is
+itself pinned by a test.
+
+### Counts, reported separately
+
+| Suite | Count | Status |
+| --- | --- | --- |
+| pure / static (reference, Phase 1, propulsion, Phase 2, Phase 3) | **475 passed, 0 failed** | run offline |
+| Unity component integration | **not yet executed** | requires the Unity editor |
+
+The integration suite is written and compiles, but it has never been run: it needs real
+`GameObject`/`Component`/`Rigidbody` behaviour that the offline harness cannot provide. Its result is
+unknown, and it is deliberately **not** added to the 475.

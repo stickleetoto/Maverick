@@ -1247,10 +1247,96 @@ namespace MaverickFresh.FlightDynamics.Validation
                 "wings level through the production path gives zero bank and pitch",
                 report, ref passed, ref failed);
 
+            // Full contract of the production builder, not just the attitude field.
+            MavAtmosphereSample atSeaLevel = MavAtmosphereModel.Sample(0f);
+            float expectedQbar = 0.5f * atSeaLevel.densityKgM3 * 200f * 200f;
+
+            Record(
+                level.worldPositionM == new Vector3(0f, 1000f, 0f)
+                && level.worldVelocityMps == new Vector3(0f, 0f, 200f),
+                "position and world velocity are carried through unchanged",
+                report, ref passed, ref failed);
+
             Record(
                 Near(level.trueAirspeedMps, 200f, 1e-3f)
-                && level.dynamicPressurePa > 0f,
-                "and the rest of the state is populated as before",
+                && Near(level.mach, 200f / atmosphere.speedOfSoundMps, 1e-4f)
+                && Near(level.dynamicPressurePa, expectedQbar, 1f),
+                "TAS, Mach and dynamic pressure are computed from the supplied atmosphere",
+                report, ref passed, ref failed);
+
+            // Unity local +Z is forward, so a purely forward local velocity must appear as pure
+            // body-X. This is the true-vector conversion, exercised through the production builder.
+            Record(
+                Near(level.aeroBodyVelocityMps.x, 200f, 1e-3f)
+                && Near(level.aeroBodyVelocityMps.y, 0f, 1e-3f)
+                && Near(level.aeroBodyVelocityMps.z, 0f, 1e-3f),
+                "Unity-local velocity is converted to aerodynamic body axes",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(level.AlphaDeg, 0f, 1e-3f) && Near(level.BetaDeg, 0f, 1e-3f),
+                "alpha and beta are zero for a purely forward velocity",
+                report, ref passed, ref failed);
+
+            // Body rates: the AXIAL-vector conversion, which does not share the true-vector signs.
+            // Unity -Z angular velocity is a roll to the right, i.e. p > 0.
+            MavFlightState rolling = MavSixDoFBody.BuildFlightState(
+                Vector3.zero, new Vector3(0f, 0f, 200f), new Vector3(0f, 0f, 200f),
+                new Vector3(0f, 0f, -0.5f),
+                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                atmosphere);
+
+            Record(
+                rolling.aeroBodyRatesRadSec.x > 0f
+                && Near(rolling.aeroBodyRatesRadSec.x, 0.5f, 1e-4f),
+                "Unity -Z angular velocity becomes a POSITIVE roll rate p through the builder",
+                report, ref passed, ref failed);
+
+            MavFlightState pitching = MavSixDoFBody.BuildFlightState(
+                Vector3.zero, new Vector3(0f, 0f, 200f), new Vector3(0f, 0f, 200f),
+                new Vector3(-0.4f, 0f, 0f),
+                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                atmosphere);
+
+            Record(
+                Near(pitching.aeroBodyRatesRadSec.y, 0.4f, 1e-4f),
+                "Unity -X angular velocity becomes a POSITIVE pitch rate q",
+                report, ref passed, ref failed);
+
+            MavFlightState yawing = MavSixDoFBody.BuildFlightState(
+                Vector3.zero, new Vector3(0f, 0f, 200f), new Vector3(0f, 0f, 200f),
+                new Vector3(0f, 0.3f, 0f),
+                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                atmosphere);
+
+            Record(
+                Near(yawing.aeroBodyRatesRadSec.z, 0.3f, 1e-4f),
+                "Unity +Y angular velocity becomes a POSITIVE yaw rate r",
+                report, ref passed, ref failed);
+
+            // Alpha and beta from an angled velocity, through the builder.
+            MavFlightState angled = MavSixDoFBody.BuildFlightState(
+                Vector3.zero, new Vector3(0f, 0f, 200f),
+                new Vector3(0f, -20f, 200f), Vector3.zero,
+                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                atmosphere);
+
+            Record(
+                angled.AlphaDeg > 0f,
+                "a local velocity with a downward component gives POSITIVE alpha ("
+                + angled.AlphaDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            MavFlightState sideslipping = MavSixDoFBody.BuildFlightState(
+                Vector3.zero, new Vector3(0f, 0f, 200f),
+                new Vector3(20f, 0f, 200f), Vector3.zero,
+                new Vector3(0f, 0f, 1f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f),
+                atmosphere);
+
+            Record(
+                sideslipping.BetaDeg > 0f,
+                "a local velocity with a rightward component gives POSITIVE beta ("
+                + sideslipping.BetaDeg.ToString("F2") + " deg)",
                 report, ref passed, ref failed);
 
             // Right bank, through the production builder.
@@ -1323,6 +1409,68 @@ namespace MaverickFresh.FlightDynamics.Validation
                 !level.specificForceValid,
                 "the state builder leaves specific force unpublished: it is filled in later in the "
                 + "step, once the load set has been summed",
+                report, ref passed, ref failed);
+
+            // Specific force through the SAME publication path production uses, rather than by
+            // assigning specificForceAeroBodyG directly. A test that injects the field cannot tell
+            // whether the runtime would ever have produced it.
+            const float massKg = 9298.65f;
+            float weightN = massKg * StandardGravity;
+
+            MavFlightDynamicsLoadSet oneG = new MavFlightDynamicsLoadSet();
+            oneG.BeginStep(1);
+            oneG.AddAerodynamic(new MavAerodynamicLoads
+            {
+                forceAeroBodyN = new Vector3(0f, 0f, -weightN)
+            });
+
+            MavFlightState published = MavSixDoFBody.PublishSpecificForce(level, oneG, massKg);
+
+            Record(
+                published.specificForceValid && Near(published.LoadFactorNz, 1f, 1e-3f),
+                "the production publication path turns one weight of upward aerodynamic force into "
+                + "Nz = +1 g",
+                report, ref passed, ref failed);
+
+            MavFlightDynamicsLoadSet nineG = new MavFlightDynamicsLoadSet();
+            nineG.BeginStep(2);
+            nineG.AddAerodynamic(new MavAerodynamicLoads
+            {
+                forceAeroBodyN = new Vector3(0f, 0f, -9f * weightN)
+            });
+
+            Record(
+                Near(MavSixDoFBody.PublishSpecificForce(level, nineG, massKg).LoadFactorNz,
+                     9f, 1e-2f),
+                "and nine weights into Nz = +9 g",
+                report, ref passed, ref failed);
+
+            MavFlightDynamicsLoadSet nonFinite = new MavFlightDynamicsLoadSet();
+            nonFinite.BeginStep(3);
+            nonFinite.AddAerodynamic(new MavAerodynamicLoads
+            {
+                forceAeroBodyN = new Vector3(float.NaN, 0f, 0f)
+            });
+
+            Record(
+                !MavSixDoFBody.PublishSpecificForce(level, nonFinite, massKg).specificForceValid,
+                "a non-finite load set publishes NO measurement rather than a poisoned one",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavSixDoFBody.PublishSpecificForce(level, oneG, 0f).specificForceValid,
+                "and a non-positive mass leaves the channel invalid rather than producing infinity",
+                report, ref passed, ref failed);
+
+            // End to end: a production-published specific force drives the control law's g limiter.
+            MavFlightState atNineG = MavSixDoFBody.PublishSpecificForce(rightBank, nineG, massKg);
+            MavF16ControlLawDebug limited;
+            RunLaw(new MavPilotCommand { pitch = 1f }, atNineG, out limited);
+
+            Record(
+                limited.loadFactorMeasurementValid
+                && limited.limitedPitchRateCommandRadSec <= 1e-3f,
+                "and at 9 g from that path the g limiter exhausts the nose-up rate command",
                 report, ref passed, ref failed);
         }
 
@@ -1405,12 +1553,59 @@ namespace MaverickFresh.FlightDynamics.Validation
                 report, ref passed, ref failed);
 
             // The unrestorable case, which is what a destroyed legacy component produces.
+            // The case the review found: a destroyed legacy owner leaves legacyOwnerPresent false,
+            // which without the restoration clause would settle as Unowned - the controller
+            // reporting a healthy bench rig for an aircraft it had just taken the physics away from.
             Record(
                 MavPhysicsOwnershipRules.ResolveSettledOwnership(
-                    Settled(legacyActive: false, legacyPresent: true, newArmed: false), out reason)
+                    Restored(required: true, succeeded: false, legacyActive: false,
+                             legacyPresent: false), out reason)
                 == MavPhysicsOwnershipState.Fault
                 && reason.Contains("could not be restored"),
-                "a destroyed or unrestorable legacy owner produces a fault that says so",
+                "a DESTROYED legacy owner - required restoration, failed, nothing left to see - is "
+                + "a Fault, not Unowned (" + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(
+                    Restored(required: true, succeeded: false, legacyActive: false,
+                             legacyPresent: true), out reason)
+                == MavPhysicsOwnershipState.Fault,
+                "a failed restoration is a Fault whether or not the component still exists",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(
+                    Restored(required: true, succeeded: true, legacyActive: false,
+                             legacyPresent: true), out reason)
+                == MavPhysicsOwnershipState.Fault,
+                "a restoration that reported success but left no active owner is still a Fault ("
+                + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(
+                    Restored(required: true, succeeded: true, legacyActive: true,
+                             legacyPresent: true), out reason)
+                == MavPhysicsOwnershipState.LegacyOwned,
+                "a restoration that actually put legacy back settles as LegacyOwned",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(
+                    Restored(required: false, succeeded: true, legacyActive: false,
+                             legacyPresent: false), out reason)
+                == MavPhysicsOwnershipState.Unowned,
+                "Unowned requires that NO restoration was needed: a bench rig that never had a "
+                + "legacy owner to release (" + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.Unowned,
+                    Restored(required: true, succeeded: false, legacyActive: false,
+                             legacyPresent: false), out reason),
+                "and believing Unowned after an unrestored release is inconsistent (" + reason + ")",
                 report, ref passed, ref failed);
 
             Record(
@@ -1511,17 +1706,22 @@ namespace MaverickFresh.FlightDynamics.Validation
                 + reason + ")",
                 report, ref passed, ref failed);
 
-            Record(
-                !MavThrustDeckProvenance.Verify("OTHER-SOURCE", "v1", hash, hash, out reason)
-                || true,
-                "identity is part of the hashed content, so a different source cannot reuse a hash",
-                report, ref passed, ref failed);
-
+            // A different source cannot reuse another source's hash. Recompute the hash AS that
+            // other source and verify it against the original declaration: the declared and actual
+            // hashes must disagree, so the claim fails.
             uint otherIdentityHash = MavThrustDeckProvenance.ComputeTableHash(
                 "OTHER-SOURCE", "v1", altitudes, machs, idle, military, maximum);
+
             Record(
                 otherIdentityHash != hash,
-                "and changing the declared identity changes the hash",
+                "changing the declared identity changes the recomputed hash",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavThrustDeckProvenance.Verify(
+                    "OTHER-SOURCE", "v1", hash, otherIdentityHash, out reason)
+                && reason.Contains("hash mismatch"),
+                "so a different source cannot reuse another source's hash (" + reason + ")",
                 report, ref passed, ref failed);
 
             uint otherVersionHash = MavThrustDeckProvenance.ComputeTableHash(
@@ -1551,6 +1751,18 @@ namespace MaverickFresh.FlightDynamics.Validation
                     == MavTrimStatus.ConvergedButThrustUnavailable,
                 "and the F-16 still has no authoritative thrust deck of any kind",
                 report, ref passed, ref failed);
+        }
+
+        private static MavOwnershipObservation Restored(
+            bool required,
+            bool succeeded,
+            bool legacyActive,
+            bool legacyPresent)
+        {
+            MavOwnershipObservation observation = Settled(legacyActive, legacyPresent, false);
+            observation.legacyRestorationWasRequired = required;
+            observation.legacyRestorationSucceeded = succeeded;
+            return observation;
         }
 
         private static MavOwnershipObservation Settled(

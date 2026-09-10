@@ -615,27 +615,155 @@ namespace MaverickFresh.FlightDynamics.Validation
             report.AppendLine();
             report.AppendLine("[P6] Telemetry CSV shape");
 
-            string[] columns = MavFlightDynamicsTelemetry.CsvHeader().Split(',');
-            int expected = MavFlightDynamicsTelemetry.CsvNumericColumnCount
-                           + MavFlightDynamicsTelemetry.CsvFlagColumnCount;
+            // A real sample, with a distinct value in every field so a mis-ordered column shows up
+            // as a wrong value rather than merely a wrong count.
+            MavFlightDynamicsTelemetrySample sample = new MavFlightDynamicsTelemetrySample();
+            sample.timeSeconds = 1f;
+            sample.altitudeM = 2f;
+            sample.trueAirspeedMps = 3f;
+            sample.mach = 4f;
+            sample.dynamicPressurePa = 5f;
+            sample.alphaDeg = 6f;
+            sample.betaDeg = 7f;
+            sample.rollRateDegSec = 8f;
+            sample.pitchRateDegSec = 9f;
+            sample.yawRateDegSec = 10f;
+            sample.commandedSurfaces = new MavControlInput
+            {
+                elevatorDeg = 11f, aileronDeg = 12f, rudderDeg = 13f
+            };
+            sample.actualSurfaces = new MavControlInput
+            {
+                elevatorDeg = 14f, aileronDeg = 15f, rudderDeg = 16f, throttle01 = 17f
+            };
+            sample.coefficients = new MavAeroCoefficients
+            {
+                cx = 18f, cy = 19f, cz = 20f, cl = 21f, cm = 22f, cn = 23f
+            };
+            sample.aeroForceAeroBodyN = new Vector3(24f, 25f, 26f);
+            sample.aeroMomentAeroBodyNm = new Vector3(27f, 28f, 29f);
+            sample.propulsionForceAeroBodyN = new Vector3(30f, 0f, 0f);
+            sample.totalForceAeroBodyN = new Vector3(31f, 32f, 33f);
+            sample.loadFactorNz = 34f;
+            sample.profileValid = true;
+            sample.insideEnvelope = false;
+            sample.loadsApplied = true;
+            sample.propulsionDataAuthoritative = false;
+            sample.aerodynamicContributions = 1;
+            sample.propulsiveContributions = 1;
+            sample.readinessLevel = 2;
+
+            // Serialize through the SAME path that writes rows to disk.
+            string[] headerColumns = MavFlightDynamicsTelemetry.CsvHeader().Split(',');
+            string[] rowColumns = MavFlightDynamicsTelemetry.BuildCsvRow(sample).Split(',');
 
             Record(
-                columns.Length == expected,
-                "CSV header column count matches the emitted row width ("
-                + columns.Length + " vs " + expected + ")",
-                report, ref passed, ref failed
-            );
+                headerColumns.Length == rowColumns.Length,
+                "an ACTUAL serialized row has the same column count as the header ("
+                + rowColumns.Length + " vs " + headerColumns.Length + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                headerColumns.Length == MavFlightDynamicsTelemetry.CsvNumericColumnCount
+                                        + MavFlightDynamicsTelemetry.CsvFlagColumnCount,
+                "and both agree with the declared column constants",
+                report, ref passed, ref failed);
 
             bool allNamed = true;
-            for (int i = 0; i < columns.Length; i++)
+            for (int i = 0; i < headerColumns.Length; i++)
             {
-                if (string.IsNullOrWhiteSpace(columns[i]))
+                if (string.IsNullOrWhiteSpace(headerColumns[i]))
                 {
                     allNamed = false;
                     break;
                 }
             }
             Record(allNamed, "every CSV column has a name", report, ref passed, ref failed);
+
+            // Column ORDER, checked by name. The values above were chosen so each column's expected
+            // content is unambiguous; a swapped pair changes a value, not just a count.
+            Record(
+                ColumnValueMatches(headerColumns, rowColumns, "t_s", 1f)
+                && ColumnValueMatches(headerColumns, rowColumns, "alt_m", 2f)
+                && ColumnValueMatches(headerColumns, rowColumns, "alpha_deg", 6f)
+                && ColumnValueMatches(headerColumns, rowColumns, "beta_deg", 7f),
+                "leading state columns carry the values their headers name",
+                report, ref passed, ref failed);
+
+            Record(
+                ColumnValueMatches(headerColumns, rowColumns, "cmd_elev_deg", 11f)
+                && ColumnValueMatches(headerColumns, rowColumns, "act_elev_deg", 14f)
+                && ColumnValueMatches(headerColumns, rowColumns, "act_throttle01", 17f),
+                "commanded and actual surface columns are not transposed",
+                report, ref passed, ref failed);
+
+            Record(
+                ColumnValueMatches(headerColumns, rowColumns, "CX", 18f)
+                && ColumnValueMatches(headerColumns, rowColumns, "Cn", 23f)
+                && ColumnValueMatches(headerColumns, rowColumns, "aeroFx_n", 24f)
+                && ColumnValueMatches(headerColumns, rowColumns, "aeroN_nm", 29f),
+                "coefficient and aerodynamic-load columns are in header order",
+                report, ref passed, ref failed);
+
+            Record(
+                ColumnValueMatches(headerColumns, rowColumns, "propFx_n", 30f)
+                && ColumnValueMatches(headerColumns, rowColumns, "totFx_n", 31f)
+                && ColumnValueMatches(headerColumns, rowColumns, "totFz_n", 33f)
+                && ColumnValueMatches(headerColumns, rowColumns, "nz_g", 34f),
+                "propulsion, total-load and load-factor columns are in header order",
+                report, ref passed, ref failed);
+
+            Record(
+                ColumnValueMatches(headerColumns, rowColumns, "profileValid", 1f)
+                && ColumnValueMatches(headerColumns, rowColumns, "insideEnvelope", 0f)
+                && ColumnValueMatches(headerColumns, rowColumns, "loadsApplied", 1f)
+                && ColumnValueMatches(headerColumns, rowColumns, "propulsionSourced", 0f)
+                && ColumnValueMatches(headerColumns, rowColumns, "readinessLevel", 2f),
+                "flag columns follow the numeric ones, in header order, with the right values",
+                report, ref passed, ref failed);
+
+            Record(
+                IndexOfColumn(headerColumns, "nz_g")
+                    < IndexOfColumn(headerColumns, "profileValid"),
+                "every numeric column precedes every flag column, as the writer assumes",
+                report, ref passed, ref failed);
+        }
+
+        private static int IndexOfColumn(string[] headerColumns, string name)
+        {
+            for (int i = 0; i < headerColumns.Length; i++)
+            {
+                if (headerColumns[i] == name)
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Looks up a column by header name and compares the serialized row's value at that index.
+        /// This is what makes the check an ORDER check rather than a count check.
+        /// </summary>
+        private static bool ColumnValueMatches(
+            string[] headerColumns,
+            string[] rowColumns,
+            string columnName,
+            float expected)
+        {
+            int index = IndexOfColumn(headerColumns, columnName);
+            if (index < 0 || index >= rowColumns.Length)
+                return false;
+
+            float actual;
+            if (!float.TryParse(
+                    rowColumns[index],
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out actual))
+            {
+                return false;
+            }
+
+            return Mathf.Abs(actual - expected) <= 1e-4f;
         }
 
         // ---------------------------------------------------------------- [P7]

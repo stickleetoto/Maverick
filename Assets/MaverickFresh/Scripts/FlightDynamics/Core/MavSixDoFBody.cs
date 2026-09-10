@@ -170,6 +170,18 @@ namespace MaverickFresh.FlightDynamics
 
         private void FixedUpdate()
         {
+            StepPhysics(Time.fixedDeltaTime, Time.fixedTime);
+        }
+
+        /// <summary>
+        /// One physics step of the flight-dynamics boundary, with the timestep and step time
+        /// supplied rather than read from Time.
+        ///
+        /// Public and parameterised so an integration test can drive the real pipeline
+        /// deterministically. Returns true when loads were actually applied this step.
+        /// </summary>
+        public bool StepPhysics(float fixedDeltaTime, float fixedTime)
+        {
             Resolve();
             debugPhysicsStepIndex++;
 
@@ -183,7 +195,7 @@ namespace MaverickFresh.FlightDynamics
             {
                 ClearLoadDebug();
                 PublishTelemetry(false);
-                return;
+                return false;
             }
 
             // Readiness gate. simulationEnabled says "someone armed this"; readiness says whether
@@ -193,7 +205,7 @@ namespace MaverickFresh.FlightDynamics
             {
                 ClearLoadDebug();
                 PublishTelemetry(false);
-                return;
+                return false;
             }
 
             if (!ownershipInitialized)
@@ -227,7 +239,7 @@ namespace MaverickFresh.FlightDynamics
                     debugState,
                     debugAtmosphere,
                     boundedInput.throttle01,
-                    Time.fixedDeltaTime
+                    fixedDeltaTime
                 );
 
                 debugLoadSet.AddPropulsive(propulsive);
@@ -241,8 +253,9 @@ namespace MaverickFresh.FlightDynamics
             PublishSpecificForce();
 
             // --- single application boundary ---
-            bool applied = TryApplyLoadSet();
+            bool applied = TryApplyLoadSet(fixedTime);
             PublishTelemetry(applied);
+            return applied;
         }
 
         public void SetControlInput(MavControlInput input)
@@ -255,9 +268,9 @@ namespace MaverickFresh.FlightDynamics
         /// Refuses to apply when the set was already applied, when a source contributed more than
         /// once, or when the total is not finite.
         /// </summary>
-        private bool TryApplyLoadSet()
+        private bool TryApplyLoadSet(float fixedTime)
         {
-            if (ShouldRejectDuplicateApplication(lastAppliedFixedTime, Time.fixedTime))
+            if (ShouldRejectDuplicateApplication(lastAppliedFixedTime, fixedTime))
             {
                 debugRejectedDuplicateApplications++;
                 if (!loggedDuplicateRejection)
@@ -313,7 +326,7 @@ namespace MaverickFresh.FlightDynamics
             rb.AddRelativeForce(debugUnityLocalForceN, ForceMode.Force);
             rb.AddRelativeTorque(debugUnityLocalTorqueNm, ForceMode.Force);
 
-            lastAppliedFixedTime = Time.fixedTime;
+            lastAppliedFixedTime = fixedTime;
             debugLoadApplications++;
             return true;
         }
@@ -627,86 +640,75 @@ namespace MaverickFresh.FlightDynamics
         /// </summary>
         public MavFlightDynamicsReadinessInputs BuildReadinessInputs()
         {
-            MavFlightDynamicsReadinessInputs inputs = new MavFlightDynamicsReadinessInputs();
+            return MavFlightDynamicsReadiness.BuildInputs(CapturePipelineSnapshot());
+        }
 
-            inputs.hasRigidbody = rb != null;
-            inputs.hasValidProfile = activeProfile != null && debugProfileValid;
-            inputs.hasAerodynamicModel = aerodynamicModel != null;
-            inputs.hasControlSurfaceActuator = controlSurfaceActuator != null;
-            inputs.hasControlLaw = controlLaw != null;
-            inputs.hasPropulsionModel = propulsionModel != null;
+        /// <summary>
+        /// Captures this aircraft's observable pipeline wiring.
+        ///
+        /// This method only LOOKS; every judgement about what the wiring means lives in
+        /// <see cref="MavFlightDynamicsReadiness.BuildInputs"/>, which production and validation
+        /// share. Keeping the two apart is what stops a test from re-deriving the mapping and
+        /// agreeing with itself.
+        /// </summary>
+        public MavPipelineSnapshot CapturePipelineSnapshot()
+        {
+            MavPipelineSnapshot snapshot = new MavPipelineSnapshot();
 
-            inputs.aerodynamicGeometryMatchesProfile =
-                inputs.hasAerodynamicModel
-                && inputs.hasValidProfile
+            snapshot.body = this;
+            snapshot.hasRigidbody = rb != null;
+            snapshot.hasValidProfile = activeProfile != null && debugProfileValid;
+            snapshot.aerodynamicModel = aerodynamicModel != null ? aerodynamicModel : null;
+            snapshot.propulsionModel = propulsionModel != null ? propulsionModel : null;
+
+            snapshot.aerodynamicGeometryMatchesProfile =
+                aerodynamicModel != null
+                && activeProfile != null
+                && debugProfileValid
                 && GeometryMatches(aerodynamicModel.referenceGeometry, activeProfile.referenceGeometry);
 
-            inputs.controlLawEnabledAndDriving =
-                controlLaw != null
-                && controlLaw.isActiveAndEnabled
-                && controlLaw.driveActuatorInFixedUpdate
-                && controlLaw.actuator != null
-                && controlSurfaceActuator != null
-                && IdentityMatches(controlSurfaceActuator, controlLaw.actuator);
+            snapshot.controlLaw = controlLaw != null ? controlLaw : null;
+            snapshot.controlLawEnabled = controlLaw != null && controlLaw.isActiveAndEnabled;
+            snapshot.controlLawDrivesActuatorEachStep =
+                controlLaw != null && controlLaw.driveActuatorInFixedUpdate;
+            snapshot.controlLawActuator =
+                controlLaw != null && controlLaw.actuator != null ? controlLaw.actuator : null;
+            snapshot.controlLawBody =
+                controlLaw != null && controlLaw.sixDoFBody != null ? controlLaw.sixDoFBody : null;
+            snapshot.controlLawCommandSource =
+                controlLaw != null && controlLaw.commandSource != null ? controlLaw.commandSource : null;
 
-            // Identity, not presence. A law wired to this actuator but reading a different body
-            // would compute every command from another aircraft's airspeed, alpha and rates, and
-            // nothing downstream would look wrong.
-            inputs.controlLawBoundToThisBody =
-                controlLaw != null
-                && controlLaw.sixDoFBody != null
-                && IdentityMatches(this, controlLaw.sixDoFBody);
-
-            inputs.actuatorEnabledAndBound =
-                controlSurfaceActuator != null
-                && controlSurfaceActuator.isActiveAndEnabled
-                && controlSurfaceActuator.BoundBody != null
-                && IdentityMatches(this, controlSurfaceActuator.BoundBody);
-
-            // IsAcceptableForLiveFlight, not merely HasAuthoritativeData: a model can hold
-            // authoritative tables and still be configured to extrapolate beyond them, at which
-            // point the numbers it returns are no longer backed by that data.
-            inputs.propulsionAccepted =
-                propulsionModel != null
-                && (propulsionModel.IsAcceptableForLiveFlight || acceptNonAuthoritativePropulsion);
-
-            // The command path, proved end to end rather than assembled from separate objects.
-            //
-            // The body inspects one source; the control law reads another field. Those must be the
-            // same object, or a declaration taken from source A gets combined with availability
-            // observed on source B into a "valid" path that never existed.
-            //
-            // Availability is the control law's own observation from this step - it runs at -300
-            // and this body at -100, so the result is already fresh - which makes it the observed
-            // truth rather than a property a source could report incorrectly.
-            MavPilotCommandSourceBase bodySource = ResolveCommandSource();
-            MavPilotCommandSourceBase lawSource = controlLaw != null ? controlLaw.commandSource : null;
-
-            inputs.commandSourceIdentityMatches =
-                bodySource != null
-                && lawSource != null
-                && IdentityMatches(bodySource, lawSource);
-
-            bool observedSourceSignal =
+            // The control law's OWN observation from this step. It runs ahead of this component, so
+            // the value is current rather than a step stale.
+            snapshot.observedSourceSignalThisStep =
                 controlLaw != null
                 && controlLaw.debugCommandResolution
                     == MavFlightControlLawBase.MavCommandResolution.SourceSignal;
 
-            inputs.hasValidCommandSource =
-                MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(
-                    bodySource != null,
-                    controlLaw != null,
-                    inputs.commandSourceIdentityMatches,
-                    bodySource != null && bodySource.isActiveAndEnabled,
-                    bodySource != null && bodySource.IsOperationalCommandSource,
-                    observedSourceSignal);
+            snapshot.enabledControlLawCount = CountEnabledControlLaws();
 
-            inputs.singleControlLawEnabled = CountEnabledControlLaws() == 1;
+            snapshot.actuator = controlSurfaceActuator != null ? controlSurfaceActuator : null;
+            snapshot.actuatorEnabled =
+                controlSurfaceActuator != null && controlSurfaceActuator.isActiveAndEnabled;
+            snapshot.actuatorBoundBody =
+                controlSurfaceActuator != null && controlSurfaceActuator.BoundBody != null
+                    ? controlSurfaceActuator.BoundBody
+                    : null;
 
-            inputs.legacyPhysicsOwnershipClear = !HasLegacyPhysicsOwnerConflict();
+            MavPilotCommandSourceBase bodySource = ResolveCommandSource();
+            snapshot.bodyCommandSource = bodySource != null ? bodySource : null;
+            snapshot.commandSourceEnabled = bodySource != null && bodySource.isActiveAndEnabled;
+            snapshot.commandSourceDeclaresOperational =
+                bodySource != null && bodySource.IsOperationalCommandSource;
+
+            snapshot.propulsionAcceptableForLiveFlight =
+                propulsionModel != null
+                && (propulsionModel.IsAcceptableForLiveFlight || acceptNonAuthoritativePropulsion);
+
+            snapshot.legacyOwnerActive = HasLegacyPhysicsOwnerConflict();
             debugLegacyPhysicsOwner = cachedLegacyOwnerName;
 
-            return inputs;
+            return snapshot;
         }
 
         /// <summary>
@@ -880,22 +882,36 @@ namespace MaverickFresh.FlightDynamics
         /// </summary>
         private void PublishSpecificForce()
         {
-            if (!debugLoadSet.IsFinite())
-            {
-                debugState.specificForceAeroBodyG = Vector3.zero;
-                debugState.specificForceValid = false;
-                return;
-            }
-
             float massKg = rb != null
                 ? rb.mass
                 : (massProperties != null ? massProperties.massKg : 0f);
 
-            debugState.specificForceAeroBodyG = ComputeSpecificForceG(
-                debugLoadSet.totalForceAeroBodyN,
-                massKg
-            );
-            debugState.specificForceValid = massKg > 0f;
+            debugState = PublishSpecificForce(debugState, debugLoadSet, massKg);
+        }
+
+        /// <summary>
+        /// The specific-force publication rule, as a pure state transformation.
+        ///
+        /// Production and validation both go through this, so a test cannot pass by injecting a
+        /// specific force the runtime would never have produced. A non-finite load set publishes
+        /// nothing and clears the valid flag, and a non-positive mass leaves the channel invalid
+        /// rather than producing an infinity.
+        /// </summary>
+        public static MavFlightState PublishSpecificForce(
+            MavFlightState state,
+            MavFlightDynamicsLoadSet loadSet,
+            float massKg)
+        {
+            if (!loadSet.IsFinite() || massKg <= 0f)
+            {
+                state.specificForceAeroBodyG = Vector3.zero;
+                state.specificForceValid = false;
+                return state;
+            }
+
+            state.specificForceAeroBodyG = ComputeSpecificForceG(loadSet.totalForceAeroBodyN, massKg);
+            state.specificForceValid = true;
+            return state;
         }
 
         /// <summary>

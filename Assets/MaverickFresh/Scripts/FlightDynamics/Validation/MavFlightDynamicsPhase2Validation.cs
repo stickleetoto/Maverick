@@ -1635,37 +1635,51 @@ namespace MaverickFresh.FlightDynamics.Validation
         }
 
         /// <summary>
-        /// Derives readiness inputs from a wiring configuration using exactly the predicates
-        /// <see cref="MavSixDoFBody.BuildReadinessInputs"/> uses, so a miswiring test exercises the
-        /// production rule rather than a restatement of it.
+        /// Turns a wiring configuration into readiness inputs by running the PRODUCTION mapping,
+        /// <see cref="MavFlightDynamicsReadiness.BuildInputs"/>.
+        ///
+        /// An earlier revision re-derived the mapping here instead. That made the test agree
+        /// perfectly with itself while never executing the derivation the runtime actually uses -
+        /// so a bug in that derivation would have been invisible. Now the only thing this method
+        /// does is describe the wiring; every judgement about what it means comes from production
+        /// code.
         /// </summary>
         private static MavFlightDynamicsReadinessInputs BuildInputsFromWiring(MavWiringScenario wiring)
         {
-            MavFlightDynamicsReadinessInputs inputs = MavFlightDynamicsReadinessInputs.FullyReady;
+            MavPipelineSnapshot snapshot = new MavPipelineSnapshot();
 
-            inputs.controlLawBoundToThisBody =
-                MavSixDoFBody.IdentityMatches(wiring.body, wiring.controlLawReadsBody);
+            snapshot.body = wiring.body;
+            snapshot.hasRigidbody = true;
+            snapshot.hasValidProfile = true;
+            snapshot.aerodynamicGeometryMatchesProfile = true;
+            snapshot.aerodynamicModel = AnyPresentObject;
+            snapshot.propulsionModel = AnyPresentObject;
+            snapshot.propulsionAcceptableForLiveFlight = true;
 
-            inputs.controlLawEnabledAndDriving =
-                MavSixDoFBody.IdentityMatches(wiring.actuator, wiring.controlLawDrivesActuator);
+            snapshot.controlLaw = AnyPresentObject;
+            snapshot.controlLawEnabled = true;
+            snapshot.controlLawDrivesActuatorEachStep = true;
+            snapshot.controlLawActuator = wiring.controlLawDrivesActuator;
+            snapshot.controlLawBody = wiring.controlLawReadsBody;
+            snapshot.controlLawCommandSource = wiring.controlLawCommandSource;
+            snapshot.observedSourceSignalThisStep = wiring.observedSourceSignalThisStep;
+            snapshot.enabledControlLawCount = 1;
 
-            inputs.actuatorEnabledAndBound =
-                MavSixDoFBody.IdentityMatches(wiring.body, wiring.actuatorBoundToBody);
+            snapshot.actuator = wiring.actuator;
+            snapshot.actuatorEnabled = true;
+            snapshot.actuatorBoundBody = wiring.actuatorBoundToBody;
 
-            inputs.commandSourceIdentityMatches =
-                MavSixDoFBody.IdentityMatches(wiring.bodyCommandSource, wiring.controlLawCommandSource);
+            snapshot.bodyCommandSource = wiring.bodyCommandSource;
+            snapshot.commandSourceEnabled = wiring.sourceEnabled;
+            snapshot.commandSourceDeclaresOperational = wiring.sourceDeclaresOperational;
 
-            inputs.hasValidCommandSource =
-                MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(
-                    wiring.bodyCommandSource != null,
-                    true,
-                    inputs.commandSourceIdentityMatches,
-                    wiring.sourceEnabled,
-                    wiring.sourceDeclaresOperational,
-                    wiring.observedSourceSignalThisStep);
+            snapshot.legacyOwnerActive = false;
 
-            return inputs;
+            return MavFlightDynamicsReadiness.BuildInputs(snapshot);
         }
+
+        /// <summary>Stand-in for a component whose identity is not what a given scenario is about.</summary>
+        private static readonly object AnyPresentObject = new object();
 
         /// <summary>A correctly wired pipeline: one body, one actuator, one source, all agreeing.</summary>
         private static MavWiringScenario BuildCorrectWiring()
@@ -1703,7 +1717,9 @@ namespace MaverickFresh.FlightDynamics.Validation
             report.AppendLine();
             report.AppendLine("[R4] Operational pipeline identity / miswiring rejection");
 
-            // The identity predicate itself, before anything built on it means much.
+            // The identity predicate itself, before anything built on it means much. The wiring
+            // scenarios below no longer call it directly - they go through the production mapping -
+            // so it is pinned here on its own.
             object a = new object();
             object b = new object();
 
@@ -1827,6 +1843,41 @@ namespace MaverickFresh.FlightDynamics.Validation
                 "the command pipeline predicate accepts a fully satisfied path",
                 report, ref passed, ref failed);
 
+            // The mapping itself, exercised on facts rather than on identities: presence and flag
+            // handling that the scenarios above do not vary.
+            MavPipelineSnapshot bare = new MavPipelineSnapshot();
+            MavFlightDynamicsReadinessInputs bareInputs = MavFlightDynamicsReadiness.BuildInputs(bare);
+
+            Record(
+                !bareInputs.hasRigidbody && !bareInputs.hasAerodynamicModel
+                && !bareInputs.hasControlSurfaceActuator && !bareInputs.hasControlLaw
+                && !bareInputs.hasPropulsionModel && !bareInputs.hasValidCommandSource,
+                "the production mapping reports an empty pipeline as entirely absent",
+                report, ref passed, ref failed);
+
+            MavPipelineSnapshot twoLaws = BuildCorrectSnapshot();
+            twoLaws.enabledControlLawCount = 2;
+
+            Record(
+                !MavFlightDynamicsReadiness.BuildInputs(twoLaws).singleControlLawEnabled,
+                "the production mapping turns two enabled control laws into a failed criterion",
+                report, ref passed, ref failed);
+
+            MavPipelineSnapshot legacyActive = BuildCorrectSnapshot();
+            legacyActive.legacyOwnerActive = true;
+
+            Record(
+                !MavFlightDynamicsReadiness.BuildInputs(legacyActive).legacyPhysicsOwnershipClear,
+                "and an active legacy owner into a failed legacy-ownership criterion",
+                report, ref passed, ref failed);
+
+            Record(
+                MavFlightDynamicsReadiness.Evaluate(
+                    MavFlightDynamicsReadiness.BuildInputs(BuildCorrectSnapshot()))
+                    .operationallyLiveReady,
+                "a fully wired snapshot reaches live-ready through the production mapping",
+                report, ref passed, ref failed);
+
             Record(
                 !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(false, true, true, true, true, true)
                 && !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(true, false, true, true, true, true)
@@ -1836,6 +1887,39 @@ namespace MaverickFresh.FlightDynamics.Validation
                 && !MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(true, true, true, true, true, false),
                 "every clause of the command pipeline predicate is individually required",
                 report, ref passed, ref failed);
+        }
+
+        /// <summary>A fully satisfied snapshot, for exercising the mapping on non-identity facts.</summary>
+        private static MavPipelineSnapshot BuildCorrectSnapshot()
+        {
+            object body = new object();
+            object actuator = new object();
+            object source = new object();
+
+            MavPipelineSnapshot snapshot = new MavPipelineSnapshot();
+            snapshot.body = body;
+            snapshot.hasRigidbody = true;
+            snapshot.hasValidProfile = true;
+            snapshot.aerodynamicGeometryMatchesProfile = true;
+            snapshot.aerodynamicModel = AnyPresentObject;
+            snapshot.propulsionModel = AnyPresentObject;
+            snapshot.propulsionAcceptableForLiveFlight = true;
+            snapshot.controlLaw = AnyPresentObject;
+            snapshot.controlLawEnabled = true;
+            snapshot.controlLawDrivesActuatorEachStep = true;
+            snapshot.controlLawActuator = actuator;
+            snapshot.controlLawBody = body;
+            snapshot.controlLawCommandSource = source;
+            snapshot.observedSourceSignalThisStep = true;
+            snapshot.enabledControlLawCount = 1;
+            snapshot.actuator = actuator;
+            snapshot.actuatorEnabled = true;
+            snapshot.actuatorBoundBody = body;
+            snapshot.bodyCommandSource = source;
+            snapshot.commandSourceEnabled = true;
+            snapshot.commandSourceDeclaresOperational = true;
+            snapshot.legacyOwnerActive = false;
+            return snapshot;
         }
 
         private static void RecordRejected(
@@ -1944,6 +2028,24 @@ namespace MaverickFresh.FlightDynamics.Validation
             Record(
                 !MavFlightDynamicsOwnershipScan.IsOwnershipViolation("        Vector3 worldVelocity = rb.linearVelocity;"),
                 "reading rigid-body velocity is not an ownership violation",
+                report, ref passed, ref failed);
+
+            // The exemption list is the one thing that could quietly hollow out this check, so it
+            // is pinned. A new entry has to be a deliberate edit here as well as there.
+            Record(
+                MavFlightDynamicsOwnershipScan.ExemptFileNames.Length == 2
+                && MavFlightDynamicsOwnershipScan.IsExemptFile("MavSixDoFBody.cs")
+                && MavFlightDynamicsOwnershipScan.IsExemptFile(
+                    "MavFlightDynamicsIntegrationValidation.cs"),
+                "the ownership-scan exemption list contains only the load-application boundary and "
+                + "the editor-only integration rig",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavFlightDynamicsOwnershipScan.IsExemptFile("MavF16ControlLawV01.cs")
+                && !MavFlightDynamicsOwnershipScan.IsExemptFile("MavF16ControlActuator.cs")
+                && !MavFlightDynamicsOwnershipScan.IsExemptFile("MavPhysicsOwnershipController.cs"),
+                "no control law, actuator or ownership controller is exempt",
                 report, ref passed, ref failed);
 
             MavOwnershipScanResult scan = MavFlightDynamicsOwnershipScan.Scan();

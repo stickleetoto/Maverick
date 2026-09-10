@@ -121,6 +121,55 @@ namespace MaverickFresh.FlightDynamics
         }
     }
 
+    /// <summary>
+    /// The observable wiring of one aircraft's flight-dynamics pipeline, captured as plain data.
+    ///
+    /// This exists so that the mapping from "what is wired to what" to readiness inputs is a single
+    /// real function rather than something each caller re-derives. Validation used to rebuild that
+    /// mapping itself, which meant the production derivation was never actually executed by a test.
+    ///
+    /// References are typed as <c>object</c> because every question asked of them here is reference
+    /// identity, and that lets the mapping be exercised with plain instances as well as with real
+    /// components.
+    /// </summary>
+    [Serializable]
+    public struct MavPipelineSnapshot
+    {
+        [Header("Identity anchors")]
+        public object body;
+        public object actuator;
+        public object bodyCommandSource;
+
+        [Header("Presence")]
+        public bool hasRigidbody;
+        public bool hasValidProfile;
+        public bool aerodynamicGeometryMatchesProfile;
+        public object aerodynamicModel;
+        public object propulsionModel;
+
+        [Header("Control law")]
+        public object controlLaw;
+        public bool controlLawEnabled;
+        public bool controlLawDrivesActuatorEachStep;
+        public object controlLawActuator;
+        public object controlLawBody;
+        public object controlLawCommandSource;
+        public bool observedSourceSignalThisStep;
+        public int enabledControlLawCount;
+
+        [Header("Actuator")]
+        public bool actuatorEnabled;
+        public object actuatorBoundBody;
+
+        [Header("Command source")]
+        public bool commandSourceEnabled;
+        public bool commandSourceDeclaresOperational;
+
+        [Header("Propulsion / legacy")]
+        public bool propulsionAcceptableForLiveFlight;
+        public bool legacyOwnerActive;
+    }
+
     /// <summary>Judgement produced from <see cref="MavFlightDynamicsReadinessInputs"/>.</summary>
     [Serializable]
     public struct MavFlightDynamicsReadinessReport
@@ -149,6 +198,64 @@ namespace MaverickFresh.FlightDynamics
     /// </summary>
     public static class MavFlightDynamicsReadiness
     {
+        /// <summary>
+        /// THE mapping from observed pipeline wiring to readiness inputs.
+        ///
+        /// Production and validation both go through this. Previously each derived it separately,
+        /// so a test could agree perfectly with itself while the runtime mapping was wrong.
+        /// </summary>
+        public static MavFlightDynamicsReadinessInputs BuildInputs(MavPipelineSnapshot snapshot)
+        {
+            MavFlightDynamicsReadinessInputs inputs = new MavFlightDynamicsReadinessInputs();
+
+            inputs.hasRigidbody = snapshot.hasRigidbody;
+            inputs.hasValidProfile = snapshot.hasValidProfile;
+            inputs.hasAerodynamicModel = snapshot.aerodynamicModel != null;
+            inputs.hasControlSurfaceActuator = snapshot.actuator != null;
+            inputs.hasControlLaw = snapshot.controlLaw != null;
+            inputs.hasPropulsionModel = snapshot.propulsionModel != null;
+
+            inputs.aerodynamicGeometryMatchesProfile =
+                inputs.hasAerodynamicModel
+                && snapshot.hasValidProfile
+                && snapshot.aerodynamicGeometryMatchesProfile;
+
+            inputs.controlLawEnabledAndDriving =
+                snapshot.controlLaw != null
+                && snapshot.controlLawEnabled
+                && snapshot.controlLawDrivesActuatorEachStep
+                && MavSixDoFBody.IdentityMatches(snapshot.actuator, snapshot.controlLawActuator);
+
+            inputs.controlLawBoundToThisBody =
+                snapshot.controlLaw != null
+                && MavSixDoFBody.IdentityMatches(snapshot.body, snapshot.controlLawBody);
+
+            inputs.actuatorEnabledAndBound =
+                snapshot.actuator != null
+                && snapshot.actuatorEnabled
+                && MavSixDoFBody.IdentityMatches(snapshot.body, snapshot.actuatorBoundBody);
+
+            inputs.propulsionAccepted =
+                snapshot.propulsionModel != null && snapshot.propulsionAcceptableForLiveFlight;
+
+            inputs.commandSourceIdentityMatches = MavSixDoFBody.IdentityMatches(
+                snapshot.bodyCommandSource, snapshot.controlLawCommandSource);
+
+            inputs.hasValidCommandSource =
+                MavPilotCommandSourceBase.EvaluatesAsLiveCommandPipeline(
+                    snapshot.bodyCommandSource != null,
+                    snapshot.controlLaw != null,
+                    inputs.commandSourceIdentityMatches,
+                    snapshot.commandSourceEnabled,
+                    snapshot.commandSourceDeclaresOperational,
+                    snapshot.observedSourceSignalThisStep);
+
+            inputs.singleControlLawEnabled = snapshot.enabledControlLawCount == 1;
+            inputs.legacyPhysicsOwnershipClear = !snapshot.legacyOwnerActive;
+
+            return inputs;
+        }
+
         public static MavFlightDynamicsReadinessReport Evaluate(MavFlightDynamicsReadinessInputs inputs)
         {
             MavFlightDynamicsReadinessReport report = new MavFlightDynamicsReadinessReport();

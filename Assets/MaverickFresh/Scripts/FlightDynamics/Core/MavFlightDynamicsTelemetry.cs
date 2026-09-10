@@ -209,10 +209,26 @@ namespace MaverickFresh.FlightDynamics
             if (csvBuffer == null)
                 csvBuffer = new StringBuilder(65536);
 
-            AppendNumeric(csvBuffer, s);
-            AppendFlags(csvBuffer, s);
+            csvBuffer.Append(BuildCsvRow(s));
             csvBuffer.Append(Environment.NewLine);
             debugCsvRowCount++;
+        }
+
+        /// <summary>
+        /// Serializes one sample as a CSV row, using exactly the code that writes rows to disk.
+        ///
+        /// Public so validation can serialize a real row and compare it against
+        /// <see cref="CsvHeader"/> directly. Comparing the header's column count against a pair of
+        /// constants - which is what validation used to do - proves only that two constants agree
+        /// with a string; it cannot catch a row that emits its columns in a different order, or a
+        /// field added to one side and not the other.
+        /// </summary>
+        public static string BuildCsvRow(MavFlightDynamicsTelemetrySample sample)
+        {
+            StringBuilder row = new StringBuilder(512);
+            AppendNumeric(row, sample);
+            AppendFlags(row, sample);
+            return row.ToString();
         }
 
         private static void AppendNumeric(StringBuilder sb, MavFlightDynamicsTelemetrySample s)

@@ -99,6 +99,18 @@ namespace MaverickFresh.FlightDynamics
 
         protected virtual void FixedUpdate()
         {
+            StepControlLaw(Time.fixedDeltaTime);
+        }
+
+        /// <summary>
+        /// One control-law step, with the timestep supplied rather than read from Time.
+        ///
+        /// Public and parameterised so an integration test can drive the real pipeline
+        /// deterministically, in the real order, instead of asserting against a hand-built stand-in.
+        /// Production simply calls it from FixedUpdate.
+        /// </summary>
+        public void StepControlLaw(float deltaTime)
+        {
             ResolvePipeline();
             debugDroveActuator = false;
 
@@ -121,7 +133,7 @@ namespace MaverickFresh.FlightDynamics
                 sixDoFBody.debugAtmosphere,
                 debugLastCommand,
                 sixDoFBody.debugProfileValid ? sixDoFBody.activeProfile : null,
-                Time.fixedDeltaTime
+                deltaTime
             );
 
             if (actuator == null)

@@ -45,8 +45,17 @@ namespace MaverickFresh.FlightDynamics.F16
 
         private void FixedUpdate()
         {
+            StepActuator(Time.fixedDeltaTime);
+        }
+
+        /// <summary>
+        /// One actuator step, with the timestep supplied rather than read from Time, so an
+        /// integration test can drive the real pipeline in the real order.
+        /// </summary>
+        public void StepActuator(float deltaTime)
+        {
             Resolve();
-            Step(Time.fixedDeltaTime);
+            Step(deltaTime);
             if (sixDoFBody != null)
                 sixDoFBody.SetControlInput(actual);
         }

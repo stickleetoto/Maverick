@@ -42,12 +42,24 @@ namespace MaverickFresh.FlightDynamics.Validation
         public const string FlightDynamicsRelativePath = "MaverickFresh/Scripts/FlightDynamics";
 
         /// <summary>
-        /// The one file allowed to move a Rigidbody: the single load-application boundary.
-        /// Adding anything to this list is a deliberate change of ownership architecture.
+        /// Files allowed to write Rigidbody motion state. Adding anything here is a deliberate
+        /// architectural decision and must be justified, which is why each entry is named
+        /// individually rather than exempting a whole folder.
+        ///
+        ///   MavSixDoFBody.cs
+        ///       The single load-application boundary for the new FDM path. This is the whole
+        ///       point of the scan: exactly one file may do this.
+        ///
+        ///   MavFlightDynamicsIntegrationValidation.cs
+        ///       An editor-only test rig. It assigns a Rigidbody velocity to establish an initial
+        ///       flight condition before stepping the pipeline; it does not own or apply physics,
+        ///       and it lives under Editor/ so it is never compiled into a build. The exemption is
+        ///       narrow on purpose - the runtime path stays strictly covered.
         /// </summary>
         public static readonly string[] ExemptFileNames =
         {
-            "MavSixDoFBody.cs"
+            "MavSixDoFBody.cs",
+            "MavFlightDynamicsIntegrationValidation.cs"
         };
 
         /// <summary>
