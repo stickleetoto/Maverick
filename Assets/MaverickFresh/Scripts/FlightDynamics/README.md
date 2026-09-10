@@ -155,6 +155,20 @@ Rigidbody.
 
 Legacy ownership is detected by component **type name** against a serialized deny-list, so the new
 core takes no compile dependency on the stack it is replacing and no legacy file has to be edited.
+While load application is armed that scan runs on **every** physics step — caching is diagnostics
+only, because a stale "no conflict" verdict is exactly the failure the gate exists to prevent. Call
+`NotifyOwnershipChanged()` to invalidate the verdict and the readiness judgement immediately.
+
+The command-path criterion has two halves that must not be collapsed:
+
+- `MavPilotCommandSourceBase.IsOperationalCommandSource` — a **declaration** about the kind of path.
+- `MavPilotCommandSourceBase.HasCommandSignal` — **live state**: is a command arriving right now?
+
+Live-readiness requires both, corroborated by the control law's actual last poll. On signal loss the
+law applies the source's declared `MavCommandSignalLossPolicy` (`NeutralCommand` centres the axes and
+holds the last throttle; `HoldLastCommand` holds everything). It never falls back to the inspector
+field — that is a bench affordance for when no source is wired, or when a non-operational source has
+nothing to say. Dropouts are logged once and counted in `debugCommandSignalLossEvents`.
 
 The current F-16 configuration is honestly reported as `STRUCTURALLY_PREPARED`, not live-ready: it has
 no frozen thrust deck and no operational command source.

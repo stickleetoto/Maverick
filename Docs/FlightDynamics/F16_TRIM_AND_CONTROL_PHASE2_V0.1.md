@@ -70,6 +70,23 @@ functions, and there is no `Rigidbody`, `Transform` or component reference anywh
 graph. The F-16 propulsion delegate is a pure steady-state function, so a trim solve cannot advance
 a live engine's spool state either.
 
+### 2.5 The propulsion contract is checked where the answer is built
+
+v0.1 models thrust as acting along body X through the centre of gravity. A model reporting an off-axis
+force or a thrust-line moment is refused with `MavTrimStatus.UnsupportedCondition` rather than silently
+approximated.
+
+That contract is verified at **every point the solver actually uses**: a cheap precheck at the initial
+guess, a re-check at the solved attitude, and every throttle sampled while resolving the setting. A
+single precheck is not enough, because a model whose thrust vector or moment depends on state can
+satisfy a probe at one attitude and violate the assumption at the one the answer is built from — which
+would produce a quietly wrong trim instead of a refusal. `[T4]` pins this with a plant that is clean at
+the initial guess and violating at the solution.
+
+An unpowered glide additionally requires that the engine can actually be commanded to produce nothing.
+A model with non-zero idle thrust cannot reach the condition a `T = 0` solution describes, so that case
+is refused too.
+
 ### 2.4 Reported convergence, error and residuals
 
 `MavTrimResult` carries the status, the converged flag, dimensional and normalized residuals per
@@ -247,6 +264,51 @@ isolated bench testing.
 **The current F-16 configuration is honestly reported as STRUCTURALLY_PREPARED, not live-ready** — it
 has no frozen thrust deck and no operational command source.
 
+### 6.2 Legacy-ownership detection is never answered from cache while armed
+
+While load application is armed, the legacy-owner scan runs on **every** physics step. Caching is a
+diagnostics optimisation only.
+
+The reason is specific: a cached "no conflict" verdict is exactly the failure this gate exists to
+prevent. If a legacy owner were enabled mid-flight, a stale answer would let both systems apply forces
+to the same Rigidbody until the cache expired, and there is no acceptable length for that window.
+`ShouldRescanLegacyOwnership(armed, countdown)` is pure and returns `true` for every countdown value
+when armed, so no schedule can produce a stale safety answer. `[R2]` asserts that across the whole
+countdown range rather than at a sample point.
+
+`NotifyOwnershipChanged()` drops the cached verdict and forces the readiness judgement itself to be
+rebuilt, so a future atomic ownership controller can invalidate readiness at the instant it changes
+anything.
+
+### 6.3 Command-source loss is fail-closed, and the inspector is bench-only
+
+`IsOperationalCommandSource` and `HasCommandSignal` are deliberately separate:
+
+- `IsOperationalCommandSource` is a **declaration** about the kind of path. It does not change from
+  step to step.
+- `HasCommandSignal` is **live state**: is a command actually arriving?
+
+Operational live-readiness requires both, corroborated by what the control law actually observed on
+its last poll (the law runs at -300 and the body at -100, so within one physics step that observation
+is already fresh). Collapsing the two would let a nominally operational source stop producing while
+readiness still reported the stack fit to fly.
+
+On signal loss the control law applies the source's **declared** `MavCommandSignalLossPolicy` —
+`NeutralCommand` (centre the axes, hold the last throttle) or `HoldLastCommand`. Neither is "keep
+flying on the inspector field". Inspector input is a bench affordance: it applies when no source is
+wired, or when a source that does *not* claim to be an operational path has nothing to say. Dropouts
+are logged once and counted in `debugCommandSignalLossEvents`, so a broken input path is countable
+rather than merely survivable.
+
+`NeutralCommand` holds the last throttle rather than chopping to idle, because idling is a far larger
+disturbance than centring the stick and this layer does not own thrust management. An engine-side
+response to signal loss belongs to the propulsion path.
+
+Consequence worth stating plainly: a sustained dropout removes live-readiness, which under the load
+gate stops the new path from applying loads at all. The architecture's designed destination for a
+readiness failure is a handover back to legacy, and the ownership controller that performs that
+handover is a later phase. Nothing on this branch flies live, so no aircraft is affected today.
+
 ## 7. Validation
 
 `Maverick > Flight Dynamics > Run Phase 2 Trim and Control Validation`, or
@@ -258,6 +320,7 @@ has no frozen thrust deck and no operational command source.
 | `[T1]` | convergence on a synthetic plant with a hand-checkable answer, determinism, glide |
 | `[T2]` | non-convergent honesty: no thrust, no pitch authority, alpha outside the model envelope, unsupported and invalid requests |
 | `[T3]` | F-16 trim on frozen data, powered and unpowered, with a cross-check between the two modes |
+| `[T4]` | propulsion contract verified at the **solved** state, not only at a precheck; unreachable unpowered glide |
 | `[C0]` | pitch / roll / yaw command direction all the way to Unity-local Rigidbody torque |
 | `[C1]` | coordinated yaw, manual yaw bias sign, yaw-damper washout, aileron-rudder interconnect |
 | `[L0]` | load-factor limiter, including monotonicity and recovery beyond the limit |
@@ -266,6 +329,8 @@ has no frozen thrust deck and no operational command source.
 | `[L3]` | soft-saturation and smooth min/max properties: bounded, monotone, continuous, conservative, unbiased |
 | `[L4]` | integrator anti-windup and 500-step bounded-state run |
 | `[R0]` | structural versus operational readiness, each criterion blocking individually |
+| `[R2]` | legacy-ownership detection: no stale window while armed, and the deny-list rule |
+| `[R3]` | command-source dropout: availability gates readiness, and loss never reaches inspector input |
 | `[R1]` | measured specific force and load-factor sign convention |
 | `[O0]` | source scan: no Rigidbody motion writes outside `MavSixDoFBody` |
 
@@ -278,7 +343,7 @@ The scan strips line comments and string literals before matching, so the extens
 that mentions `AddForce` is not a false positive, and it verifies its own classifier before trusting
 its verdict on the tree.
 
-Result at time of writing: **257 checks pass, 0 fail**, across all four suites, with 0 ownership
+Result at time of writing: **285 checks pass, 0 fail**, across all four suites, with 0 ownership
 violations over 37 files.
 
 ## 8. Known limitations
@@ -289,8 +354,8 @@ violations over 37 files.
 2. **Trim is symmetric and wings-level only.** A banked or turning trim request is refused as
    `UnsupportedCondition`, not approximated.
 3. **Thrust is modelled along body X through the CG.** A propulsion model reporting off-axis thrust or
-   a thrust-line moment is refused rather than approximated. The Garza/Morelli engine
-   angular-momentum term is still not integrated.
+   a thrust-line moment is refused rather than approximated, at the solved state as well as up front.
+   The Garza/Morelli engine angular-momentum term is still not integrated.
 4. **No powered F-16 trim** until the altitude/Mach thrust deck is frozen from an approved source.
 5. **Control-law gains are unflown.** They are dimensionally reasoned and validated for direction,
    bounds, smoothness and stability of the stored state, but no closed-loop flight test or frequency
