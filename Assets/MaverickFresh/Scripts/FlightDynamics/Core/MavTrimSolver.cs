@@ -317,7 +317,8 @@ namespace MaverickFresh.FlightDynamics
             float weightN = plant.massKg * StandardGravityMps2;
 
             string propulsionReason;
-            if (!ThrustModelIsSupported(plant, condition, atmosphere, out propulsionReason))
+            if (!ThrustModelIsSupported(
+                    plant, condition, atmosphere, settings.initialAlphaDeg, out propulsionReason))
                 return MavTrimResult.Failed(MavTrimStatus.UnsupportedCondition, condition, propulsionReason);
 
             bool glideMode = condition.mode == MavTrimMode.UnpoweredGlide;
@@ -432,6 +433,22 @@ namespace MaverickFresh.FlightDynamics
             // axial residual at T=0 is  qbar*S*CX - W*sin(theta); trim needs it plus T to vanish.
             result.requiredThrustN = -residual.axialForceN;
 
+            // The propulsion contract is re-verified AT THE SOLVED ATTITUDE. A state-dependent
+            // model can satisfy the precheck at the initial guess and violate the body-X /
+            // through-CG assumption at the point the answer is actually built from, which would
+            // make the reported trim quietly wrong rather than refused.
+            string solvedPropulsionReason;
+            if (!ThrustModelIsSupportedAtSolution(
+                    plant, condition, atmosphere,
+                    solvedAlphaDeg, solvedFlightPathDeg, out solvedPropulsionReason))
+            {
+                return MavTrimResult.Failed(
+                    MavTrimStatus.UnsupportedCondition, condition, solvedPropulsionReason);
+            }
+
+            bool contractViolated = false;
+            string contractViolation = "OK";
+
             if (outcome != MavNewtonOutcome.Converged)
             {
                 result.status = MapOutcome(outcome);
@@ -439,25 +456,61 @@ namespace MaverickFresh.FlightDynamics
                 result.throttle01 = float.NaN;
                 result.throttleDetermined = false;
                 result.availableThrustAtFullPowerN = SampleThrust(plant, condition, atmosphere,
-                    solvedAlphaDeg, solvedFlightPathDeg, 1f);
+                    solvedAlphaDeg, solvedFlightPathDeg, 1f,
+                    ref contractViolated, ref contractViolation);
                 result.report = BuildReport(plant, result, weightN);
                 return result;
             }
 
             if (glideMode)
             {
+                // An unpowered glide is only achievable if the engine can actually be commanded to
+                // produce nothing. A model with non-zero idle thrust cannot, and the solution built
+                // on T = 0 would not describe any reachable flight condition.
+                float idleThrustN = SampleThrust(plant, condition, atmosphere,
+                    solvedAlphaDeg, solvedFlightPathDeg, 0f,
+                    ref contractViolated, ref contractViolation);
+
+                if (Mathf.Abs(idleThrustN) > Mathf.Max(1f, 1e-4f * weightN))
+                {
+                    return MavTrimResult.Failed(
+                        MavTrimStatus.UnsupportedCondition,
+                        condition,
+                        "propulsion model produces " + idleThrustN.ToString("F1")
+                        + " N at idle, so an unpowered glide is not achievable by closing the throttle");
+                }
+
                 result.status = MavTrimStatus.Converged;
                 result.converged = true;
                 result.throttle01 = 0f;
                 result.throttleDetermined = true;
                 result.requiredThrustN = 0f;
                 result.availableThrustAtFullPowerN = SampleThrust(plant, condition, atmosphere,
-                    solvedAlphaDeg, solvedFlightPathDeg, 1f);
+                    solvedAlphaDeg, solvedFlightPathDeg, 1f,
+                    ref contractViolated, ref contractViolation);
+
+                if (contractViolated)
+                {
+                    return MavTrimResult.Failed(
+                        MavTrimStatus.UnsupportedCondition, condition, contractViolation);
+                }
+
                 result.report = BuildReport(plant, result, weightN);
                 return result;
             }
 
-            ResolveThrottleForPoweredTrim(plant, condition, atmosphere, settings, weightN, ref result);
+            ResolveThrottleForPoweredTrim(
+                plant, condition, atmosphere, settings, weightN,
+                ref result, ref contractViolated, ref contractViolation);
+
+            // Every throttle sampled while resolving the setting is checked too, so a model that
+            // only misbehaves at, say, full power cannot slip through.
+            if (contractViolated)
+            {
+                return MavTrimResult.Failed(
+                    MavTrimStatus.UnsupportedCondition, condition, contractViolation);
+            }
+
             result.report = BuildReport(plant, result, weightN);
             return result;
         }
@@ -571,7 +624,9 @@ namespace MaverickFresh.FlightDynamics
             MavAtmosphereSample atmosphere,
             MavTrimSolverSettings settings,
             float weightN,
-            ref MavTrimResult result)
+            ref MavTrimResult result,
+            ref bool contractViolated,
+            ref string contractViolationReason)
         {
             float requiredThrustN = result.requiredThrustN;
             float toleranceN = Mathf.Max(1f, 1e-4f * weightN);
@@ -589,9 +644,11 @@ namespace MaverickFresh.FlightDynamics
             }
 
             float idleThrustN = SampleThrust(plant, condition, atmosphere,
-                result.alphaDeg, result.flightPathAngleDeg, 0f);
+                result.alphaDeg, result.flightPathAngleDeg, 0f,
+                ref contractViolated, ref contractViolationReason);
             float fullThrustN = SampleThrust(plant, condition, atmosphere,
-                result.alphaDeg, result.flightPathAngleDeg, 1f);
+                result.alphaDeg, result.flightPathAngleDeg, 1f,
+                ref contractViolated, ref contractViolationReason);
 
             result.availableThrustAtFullPowerN = fullThrustN;
 
@@ -627,7 +684,8 @@ namespace MaverickFresh.FlightDynamics
             {
                 float mid = 0.5f * (low + high);
                 float midThrustN = SampleThrust(plant, condition, atmosphere,
-                    result.alphaDeg, result.flightPathAngleDeg, mid);
+                    result.alphaDeg, result.flightPathAngleDeg, mid,
+                    ref contractViolated, ref contractViolationReason);
 
                 if ((midThrustN - requiredThrustN) * (idleThrustN - requiredThrustN) > 0f)
                     low = mid;
@@ -641,13 +699,22 @@ namespace MaverickFresh.FlightDynamics
             result.status = MavTrimStatus.Converged;
         }
 
+        /// <summary>
+        /// Samples steady axial thrust, and verifies the v0.1 propulsion contract on the way past.
+        ///
+        /// Every sample is checked, not just a precheck, because the contract is about the model's
+        /// behaviour AT THE POINTS THE SOLVER ACTUALLY USES. A model whose thrust vector or moment
+        /// depends on state can satisfy a probe at one attitude and violate it at the solved one.
+        /// </summary>
         private static float SampleThrust(
             MavTrimPlant plant,
             MavTrimCondition condition,
             MavAtmosphereSample atmosphere,
             float alphaDeg,
             float flightPathAngleDeg,
-            float throttle01)
+            float throttle01,
+            ref bool contractViolated,
+            ref string contractViolationReason)
         {
             if (plant.steadyPropulsionFunction == null)
                 return 0f;
@@ -665,50 +732,110 @@ namespace MaverickFresh.FlightDynamics
                 Mathf.Clamp01(throttle01)
             );
 
+            string violation;
+            if (!IsAxialThroughCentreOfGravity(loads, out violation))
+            {
+                contractViolated = true;
+                contractViolationReason = violation
+                    + " (at alpha " + alphaDeg.ToString("F3")
+                    + " deg, gamma " + flightPathAngleDeg.ToString("F3")
+                    + " deg, throttle " + Mathf.Clamp01(throttle01).ToString("F3") + ")";
+            }
+
             return loads.forceAeroBodyN.x;
         }
 
         /// <summary>
-        /// v0.1 assumes thrust acts along body X through the CG. Rather than approximate an
-        /// off-axis or offset thrust line, the solver refuses the problem and says why.
+        /// The v0.1 propulsion assumption, as a pure predicate: thrust acts along body X, through
+        /// the centre of gravity. Anything else is refused rather than approximated.
+        /// </summary>
+        public static bool IsAxialThroughCentreOfGravity(MavPropulsiveLoads loads, out string reason)
+        {
+            const float forceToleranceN = 1e-3f;
+            const float momentToleranceNm = 1e-3f;
+
+            if (Mathf.Abs(loads.forceAeroBodyN.y) > forceToleranceN
+                || Mathf.Abs(loads.forceAeroBodyN.z) > forceToleranceN)
+            {
+                reason = "propulsion model reports off-axis thrust; v0.1 trim models body-X thrust only";
+                return false;
+            }
+
+            if (Mathf.Abs(loads.momentAeroBodyNm.x) > momentToleranceNm
+                || Mathf.Abs(loads.momentAeroBodyNm.y) > momentToleranceNm
+                || Mathf.Abs(loads.momentAeroBodyNm.z) > momentToleranceNm)
+            {
+                reason = "propulsion model reports a thrust-line moment; v0.1 trim models thrust through the CG only";
+                return false;
+            }
+
+            reason = "OK";
+            return true;
+        }
+
+        /// <summary>
+        /// Cheap early rejection at the initial guess, so an obviously unsupported model is refused
+        /// before any iteration happens. This is NOT the whole check: every sample taken during and
+        /// after the solve is verified as well, and the solved state is re-checked explicitly.
         /// </summary>
         private static bool ThrustModelIsSupported(
             MavTrimPlant plant,
             MavTrimCondition condition,
             MavAtmosphereSample atmosphere,
+            float alphaDeg,
             out string reason)
         {
             reason = "OK";
             if (plant.steadyPropulsionFunction == null)
                 return true;
 
+            bool violated = false;
+            string violation = "OK";
             float[] probes = { 0f, 0.5f, 1f };
+
             for (int i = 0; i < probes.Length; i++)
             {
-                MavFlightState state = BuildTrimFlightState(
-                    condition.altitudeM,
-                    condition.trueAirspeedMps,
-                    0f,
-                    condition.flightPathAngleDeg
-                );
-
-                MavPropulsiveLoads loads = plant.steadyPropulsionFunction(state, atmosphere, probes[i]);
-
-                if (Mathf.Abs(loads.forceAeroBodyN.y) > 1e-3f
-                    || Mathf.Abs(loads.forceAeroBodyN.z) > 1e-3f)
-                {
-                    reason = "propulsion model reports off-axis thrust; v0.1 trim models body-X thrust only";
-                    return false;
-                }
-
-                if (loads.momentAeroBodyNm.sqrMagnitude > 1e-6f)
-                {
-                    reason = "propulsion model reports a thrust-line moment; v0.1 trim models thrust through the CG only";
-                    return false;
-                }
+                SampleThrust(
+                    plant, condition, atmosphere,
+                    alphaDeg, condition.flightPathAngleDeg, probes[i],
+                    ref violated, ref violation);
             }
 
-            return true;
+            reason = violation;
+            return !violated;
+        }
+
+        /// <summary>
+        /// Re-verifies the propulsion contract at the SOLVED attitude, across the throttle range.
+        /// The precheck runs at the initial guess; a state-dependent model can pass there and
+        /// violate the assumption at the point the answer is actually built from.
+        /// </summary>
+        private static bool ThrustModelIsSupportedAtSolution(
+            MavTrimPlant plant,
+            MavTrimCondition condition,
+            MavAtmosphereSample atmosphere,
+            float solvedAlphaDeg,
+            float solvedFlightPathDeg,
+            out string reason)
+        {
+            reason = "OK";
+            if (plant.steadyPropulsionFunction == null)
+                return true;
+
+            bool violated = false;
+            string violation = "OK";
+            float[] probes = { 0f, 0.5f, 1f };
+
+            for (int i = 0; i < probes.Length; i++)
+            {
+                SampleThrust(
+                    plant, condition, atmosphere,
+                    solvedAlphaDeg, solvedFlightPathDeg, probes[i],
+                    ref violated, ref violation);
+            }
+
+            reason = violation;
+            return !violated;
         }
 
         private static MavTrimStatus MapOutcome(MavNewtonOutcome outcome)
