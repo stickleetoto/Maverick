@@ -84,11 +84,16 @@ namespace MaverickFresh
 
             if (GameObject.Find("Mav_Lobby_RotatingAircraft") == null)
             {
+                // Lobby decoration. This is an explicit request for the F-22A as set dressing, not
+                // a fallback for a failed selection.
                 MavAircraftRuntimeProfile p = MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F22A);
-                GameObject logo = new GameObject("Mav_Lobby_RotatingAircraft");
-                logo.transform.position = new Vector3(2.7f, 1.7f, 0.7f);
-                logo.transform.localScale = Vector3.one * 0.65f;
-                MavAircraftVisualFactory.CreateDisplayVisual(p, logo.transform, null, true);
+                if (p != null)
+                {
+                    GameObject logo = new GameObject("Mav_Lobby_RotatingAircraft");
+                    logo.transform.position = new Vector3(2.7f, 1.7f, 0.7f);
+                    logo.transform.localScale = Vector3.one * 0.65f;
+                    MavAircraftVisualFactory.CreateDisplayVisual(p, logo.transform, null, true);
+                }
             }
         }
 

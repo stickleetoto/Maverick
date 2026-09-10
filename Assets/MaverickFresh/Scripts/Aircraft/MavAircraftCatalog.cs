@@ -23,27 +23,180 @@ namespace MaverickFresh
             return output;
         }
 
-        public static MavAircraftRuntimeProfile GetBuiltIn(MavAircraftKind kind)
+        /// <summary>
+        /// The canonical aircraft id for each MavAircraftKind.
+        ///
+        /// This exists so that "the enum says F16C" and "the profile really is the F-16" are two
+        /// independently checkable facts. A profile whose id does not match its kind is a mapping
+        /// bug, and the point of having the map is to catch it instead of flying it.
+        ///
+        /// Returns null for a value that is not a declared member of the enum.
+        /// </summary>
+        public static string CanonicalAircraftId(MavAircraftKind kind)
         {
-            List<MavAircraftRuntimeProfile> list = CreateBuiltInProfiles();
-            for (int i = 0; i < list.Count; i++)
+            switch (kind)
             {
-                if (list[i].aircraft == kind)
-                    return list[i];
+                case MavAircraftKind.F15E: return "f15e";
+                case MavAircraftKind.F16C: return "f16c";
+                case MavAircraftKind.FA18E: return "fa18e";
+                case MavAircraftKind.F22A: return "f22a";
+                case MavAircraftKind.F35A: return "f35a";
+                default: return null;
             }
-            return GetBuiltInFallback(list);
         }
 
-        private static MavAircraftRuntimeProfile GetBuiltInFallback(List<MavAircraftRuntimeProfile> list)
+        /// <summary>
+        /// Resolves the built-in profile for EXACTLY this aircraft kind, or fails.
+        ///
+        /// There is deliberately no substitute. An earlier revision answered an unmatched kind with
+        /// the F-22A profile, which meant a selection the catalog could not honour came back as a
+        /// different aircraft that looked like a successful answer: the caller received a valid,
+        /// fully populated profile and had no way to tell it was not the one it asked for. Selecting
+        /// the F-16 and flying F-22 mass, thrust, wing area and TVC is the failure mode that
+        /// produced. Failing closed is loud and recoverable; substituting silently is neither.
+        ///
+        /// Four independent things are checked, because each one is a different way the identity can
+        /// be wrong:
+        ///   - the requested value is a declared enum member at all
+        ///   - some built-in profile claims that kind
+        ///   - exactly ONE does (two claimants means the answer is ambiguous, not merely wrong)
+        ///   - that profile's aircraftId is the canonical id for the kind it claims
+        /// </summary>
+        public static bool TryGetBuiltIn(
+            MavAircraftKind kind,
+            out MavAircraftRuntimeProfile profile,
+            out string error)
         {
-            if (list == null || list.Count == 0)
-                return null;
+            return TryResolveFrom(CreateBuiltInProfiles(), kind, out profile, out error);
+        }
+
+        /// <summary>
+        /// The resolution rule itself, over an explicit candidate list.
+        ///
+        /// Separated from TryGetBuiltIn so the failure branches are reachable by a test. With all
+        /// five built-in profiles present, "this kind has no profile" and "two profiles claim this
+        /// kind" cannot happen - which meant a test written against the built-in list could not tell
+        /// a fail-closed resolver from one that quietly answered with the F-22A. Passing the
+        /// candidates in makes both branches testable, and they are the two that used to fall back.
+        /// </summary>
+        public static bool TryResolveFrom(
+            List<MavAircraftRuntimeProfile> candidates,
+            MavAircraftKind kind,
+            out MavAircraftRuntimeProfile profile,
+            out string error)
+        {
+            profile = null;
+
+            string canonicalId = CanonicalAircraftId(kind);
+            if (canonicalId == null || !System.Enum.IsDefined(typeof(MavAircraftKind), kind))
+            {
+                error = "MavAircraftKind value " + (int)kind
+                        + " is not a declared aircraft identity, so no profile can be resolved for it.";
+                return false;
+            }
+
+            List<MavAircraftRuntimeProfile> list = candidates;
+            if (list == null)
+            {
+                error = "No aircraft profiles were supplied, so MavAircraftKind." + kind
+                        + " cannot be resolved. The aircraft was NOT changed.";
+                return false;
+            }
+
+            MavAircraftRuntimeProfile match = null;
+            int matchCount = 0;
+
             for (int i = 0; i < list.Count; i++)
             {
-                if (list[i] != null && list[i].aircraft == MavAircraftKind.F22A)
-                    return list[i];
+                if (list[i] == null || list[i].aircraft != kind)
+                    continue;
+
+                matchCount++;
+                if (match == null)
+                    match = list[i];
             }
-            return list[0];
+
+            if (matchCount == 0)
+            {
+                error = "No built-in profile declares MavAircraftKind." + kind
+                        + ". The aircraft was NOT changed.";
+                return false;
+            }
+
+            if (matchCount > 1)
+            {
+                error = matchCount + " built-in profiles declare MavAircraftKind." + kind
+                        + ", so the identity is ambiguous. The aircraft was NOT changed.";
+                return false;
+            }
+
+            if (!IsIdentityConsistent(match, kind, out error))
+                return false;
+
+            profile = match;
+            error = string.Empty;
+            return true;
+        }
+
+        /// <summary>
+        /// Whether a profile actually IS the aircraft it is being used as. Public because the
+        /// applier re-checks it on custom profiles, which never went through TryGetBuiltIn.
+        /// </summary>
+        public static bool IsIdentityConsistent(
+            MavAircraftRuntimeProfile profile,
+            MavAircraftKind expectedKind,
+            out string error)
+        {
+            if (profile == null)
+            {
+                error = "Aircraft profile is null, so its identity cannot be confirmed as "
+                        + expectedKind + ". The aircraft was NOT changed.";
+                return false;
+            }
+
+            if (profile.aircraft != expectedKind)
+            {
+                error = "Aircraft profile identity mismatch: expected MavAircraftKind."
+                        + expectedKind + " but the profile declares MavAircraftKind."
+                        + profile.aircraft + ". The aircraft was NOT changed.";
+                return false;
+            }
+
+            string canonicalId = CanonicalAircraftId(expectedKind);
+            if (canonicalId == null)
+            {
+                error = "MavAircraftKind value " + (int)expectedKind
+                        + " has no canonical aircraft id. The aircraft was NOT changed.";
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(profile.aircraftId)
+                || profile.aircraftId.ToLowerInvariant() != canonicalId)
+            {
+                error = "Aircraft profile mapping is wrong: MavAircraftKind." + expectedKind
+                        + " must carry aircraftId '" + canonicalId + "' but this profile carries '"
+                        + (profile.aircraftId == null ? "<null>" : profile.aircraftId)
+                        + "'. The aircraft was NOT changed.";
+                return false;
+            }
+
+            error = string.Empty;
+            return true;
+        }
+
+        /// <summary>
+        /// Convenience form of TryGetBuiltIn for callers that already treat null as a hard failure.
+        /// Returns null - never a different aircraft - and reports why.
+        /// </summary>
+        public static MavAircraftRuntimeProfile GetBuiltIn(MavAircraftKind kind)
+        {
+            MavAircraftRuntimeProfile profile;
+            string error;
+            if (TryGetBuiltIn(kind, out profile, out error))
+                return profile;
+
+            Debug.LogError("[Maverick/Aircraft] " + error);
+            return null;
         }
 
         public static List<MavAircraftRuntimeProfile> CreateBuiltInProfiles()

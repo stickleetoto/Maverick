@@ -39,6 +39,8 @@ namespace MaverickFresh
         public GameObject activeVisual;
         public string activeVisualName = "none";
         public bool lastVisualWasPlaceholder;
+        [Tooltip("Why the last visual application failed, or empty. A failure leaves activeAircraft and activeVisual exactly as they were.")]
+        [TextArea(2, 4)] public string lastVisualError = string.Empty;
 
         private readonly Dictionary<MavAircraftKind, GameObject> runtimeVisuals = new Dictionary<MavAircraftKind, GameObject>();
         private readonly Dictionary<MavAircraftKind, bool> sceneClaimedVisuals = new Dictionary<MavAircraftKind, bool>();
@@ -50,19 +52,80 @@ namespace MaverickFresh
 
         public GameObject ApplyAircraft(MavAircraftRuntimeProfile profile)
         {
-            if (profile == null)
-                profile = MavAircraftCatalog.GetBuiltIn(activeAircraft);
-
             return ApplyAircraft(profile, null);
         }
 
         public GameObject ApplyAircraft(MavAircraftRuntimeProfile profile, GameObject explicitSource)
         {
+            GameObject visual;
+            string error;
+            if (TryApplyAircraft(profile, explicitSource, out visual, out error))
+                return visual;
+
+            Debug.LogError("[Maverick/Aircraft] " + error, this);
+            return null;
+        }
+
+        /// <summary>
+        /// Applies the visual for EXACTLY the aircraft this profile declares, or changes nothing.
+        ///
+        /// Both overloads above used to answer a null profile with the F-22A: one by way of
+        /// activeAircraft (which defaults to F22A), the other by naming it outright. Either way a
+        /// caller that had lost track of which aircraft it meant was handed an F-22 that looked like
+        /// a successful application.
+        ///
+        /// The other half of that bug was ordering. activeAircraft was assigned from the profile
+        /// BEFORE the visual had been resolved, so a resolution that produced nothing still left the
+        /// switcher claiming the new aircraft with the old aircraft's model on screen. Now nothing
+        /// is committed until the visual actually exists.
+        /// </summary>
+        public bool TryApplyAircraft(
+            MavAircraftRuntimeProfile profile,
+            GameObject explicitSource,
+            out GameObject visual,
+            out string error)
+        {
+            visual = null;
+
+            if (!TryPrepareVisual(profile, explicitSource, out visual, out error))
+                return false;
+
+            CommitVisual(profile.aircraft, visual);
+            return true;
+        }
+
+        /// <summary>
+        /// PHASE 1 of a two-phase application: get the visual for this profile into existence,
+        /// parented and posed, without changing which aircraft is active.
+        ///
+        /// Split out so a caller that also changes physics can find out whether the visual is
+        /// available BEFORE it touches the Rigidbody - which is what makes an aircraft change atomic
+        /// rather than "physics definitely, visual hopefully".
+        /// </summary>
+        public bool TryPrepareVisual(
+            MavAircraftRuntimeProfile profile,
+            GameObject explicitSource,
+            out GameObject visual,
+            out string error)
+        {
+            visual = null;
+
             if (profile == null)
-                profile = MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F22A);
+            {
+                error = "Visual switcher was given no aircraft profile. The visible aircraft was "
+                        + "NOT changed, and no substitute was chosen.";
+                lastVisualError = error;
+                return false;
+            }
+
+            if (!MavAircraftCatalog.IsIdentityConsistent(profile, profile.aircraft, out error))
+            {
+                error = "Visual switcher refused an inconsistent aircraft identity: " + error;
+                lastVisualError = error;
+                return false;
+            }
 
             EnsureVisualRoot();
-            activeAircraft = profile.aircraft;
 
             if (explicitSource != null)
             {
@@ -73,14 +136,60 @@ namespace MaverickFresh
             if (autoFindSceneVisuals)
                 AutoResolveAllSceneVisuals();
 
+            // PreclaimAllVisuals deactivates EVERY runtime visual, including the one currently on
+            // screen, and it runs before resolution can fail. So remember what was showing: a
+            // refusal has to put the previous aircraft back, not leave the pilot looking at nothing.
+            GameObject previouslyShown = activeVisual;
+            bool previouslyShownWasActive = previouslyShown != null && previouslyShown.activeSelf;
+
             if (preclaimAllResolvedVisuals)
                 PreclaimAllVisuals();
 
-            GameObject visual = EnsureRuntimeVisual(profile, explicitSource);
-            SetOnlyActive(profile.aircraft, visual);
+            visual = EnsureRuntimeVisual(profile, explicitSource);
+
+            if (visual == null)
+            {
+                if (previouslyShownWasActive)
+                    previouslyShown.SetActive(true);
+
+                error = "No visual could be resolved for " + profile.displayName
+                        + " (MavAircraftKind." + profile.aircraft + "). Assign its visual source, or "
+                        + "enable createPlaceholderIfMissing to fly an explicitly marked placeholder. "
+                        + "The visible aircraft was NOT changed and no other aircraft was substituted.";
+                lastVisualError = error;
+                return false;
+            }
+
+            error = string.Empty;
+            lastVisualError = string.Empty;
+            return true;
+        }
+
+        /// <summary>
+        /// Whether an aircraft visual has actually been committed on this switcher.
+        ///
+        /// activeAircraft alone cannot answer that: it is a serialized field with a default, so it
+        /// names an aircraft from the moment the component exists. This is the visual half of the
+        /// same distinction the applier draws between a requested and an applied identity.
+        /// </summary>
+        public bool HasCommittedVisual
+        {
+            get { return activeVisual != null; }
+        }
+
+        /// <summary>
+        /// PHASE 2: make the prepared visual the active one. Deliberately cannot fail - everything
+        /// that can go wrong went wrong in phase 1.
+        /// </summary>
+        public void CommitVisual(MavAircraftKind kind, GameObject visual)
+        {
+            if (visual == null)
+                return;
+
+            activeAircraft = kind;
+            SetOnlyActive(kind, visual);
             activeVisual = visual;
-            activeVisualName = visual != null ? visual.name : "none";
-            return visual;
+            activeVisualName = visual.name;
         }
 
         public void RemoveRuntimeVisual(MavAircraftKind kind)
@@ -99,17 +208,32 @@ namespace MaverickFresh
 
         public void PreclaimAllVisuals()
         {
-            EnsureRuntimeVisual(MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F15E), null);
-            EnsureRuntimeVisual(MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F16C), null);
-            EnsureRuntimeVisual(MavAircraftCatalog.GetBuiltIn(MavAircraftKind.FA18E), null);
-            EnsureRuntimeVisual(MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F22A), null);
-            EnsureRuntimeVisual(MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F35A), null);
+            PreclaimOne(MavAircraftKind.F15E);
+            PreclaimOne(MavAircraftKind.F16C);
+            PreclaimOne(MavAircraftKind.FA18E);
+            PreclaimOne(MavAircraftKind.F22A);
+            PreclaimOne(MavAircraftKind.F35A);
 
             foreach (KeyValuePair<MavAircraftKind, GameObject> kv in runtimeVisuals)
             {
                 if (kv.Value != null)
                     kv.Value.SetActive(false);
             }
+        }
+
+        /// <summary>
+        /// Reserves one aircraft's visual. A kind whose profile cannot be resolved is skipped, not
+        /// replaced: pre-claiming is an optimisation, and it must not be able to park one
+        /// aircraft's model under another aircraft's key.
+        /// </summary>
+        private void PreclaimOne(MavAircraftKind kind)
+        {
+            MavAircraftRuntimeProfile profile;
+            string error;
+            if (!MavAircraftCatalog.TryGetBuiltIn(kind, out profile, out error))
+                return;
+
+            EnsureRuntimeVisual(profile, null);
         }
 
         public GameObject GetSource(MavAircraftKind kind)
@@ -151,6 +275,9 @@ namespace MaverickFresh
 
         private GameObject EnsureRuntimeVisual(MavAircraftRuntimeProfile profile, GameObject explicitSource)
         {
+            if (profile == null)
+                return null;
+
             GameObject existing;
             if (runtimeVisuals.TryGetValue(profile.aircraft, out existing) && existing != null)
             {

@@ -35,6 +35,7 @@ namespace MaverickFresh
         [Header("Startup")]
         public bool setupOnStart = true;
         public bool useSessionSelection = true;
+        [Tooltip("Used ONLY when no aircraft has been selected at all. It is never a substitute for a selection that failed to resolve - that fails closed instead.")]
         public MavAircraftKind fallbackAircraft = MavAircraftKind.F22A;
         public MavGameMode fallbackMode = MavGameMode.FreeFlight;
         public bool createEnvironment = true;
@@ -70,10 +71,26 @@ namespace MaverickFresh
         [ContextMenu("Setup In-Game")]
         public void SetupInGame()
         {
-            MavAircraftKind aircraft = useSessionSelection && MavGameSession.HasSelection ? MavGameSession.SelectedAircraft : fallbackAircraft;
+            bool hasSelection = useSessionSelection && MavGameSession.HasSelection;
+            MavAircraftKind aircraft = hasSelection ? MavGameSession.SelectedAircraft : fallbackAircraft;
             MavGameMode mode = useSessionSelection ? MavGameSession.SelectedMode : fallbackMode;
             activeMode = mode;
-            activeProfile = MavAircraftCatalog.GetBuiltIn(aircraft);
+
+            // fallbackAircraft covers "nothing was selected". It does NOT cover "the selection could
+            // not be resolved" - substituting there is exactly how selecting the F-16 used to put an
+            // F-22 in the air. A selection that cannot be honoured stops setup.
+            string profileError;
+            MavAircraftRuntimeProfile resolved;
+            if (!MavAircraftCatalog.TryGetBuiltIn(aircraft, out resolved, out profileError))
+            {
+                activeProfile = null;
+                setupStatus = "Cannot start: " + profileError;
+                MavGameSession.LastSceneError = setupStatus;
+                Debug.LogError("MavInGameBootstrap: " + setupStatus, this);
+                return;
+            }
+
+            activeProfile = resolved;
 
             if (createEnvironment)
                 BuildEnvironment();
@@ -122,6 +139,33 @@ namespace MaverickFresh
 
             ConfigureVisualSwitcherForPlayer();
 
+            // ---- AIRCRAFT IDENTITY FIRST -----------------------------------------------------
+            // This must precede MavFreshBootstrap.SetupFreshMouseFlight, because that call reaches
+            // MavWTFeelPolishController.ApplyPreset, which is aircraft-aware. Run the other way
+            // round, nothing has been applied yet and every aircraft-aware consumer is left reading
+            // a serialized default - which is how a selected F-16 ended up as
+            // "applied F-22A RAPTOR to Mav_Player". Establishing the identity first means the
+            // consumers downstream see the real one.
+            //
+            // The applier owns the change atomically: it prepares the visual first and only then
+            // reconfigures physics, so a missing visual stops the whole thing rather than leaving
+            // one aircraft's physics under another aircraft's model.
+            profileApplier = aircraftObject.GetComponent<MavAircraftProfileApplier>();
+            if (profileApplier == null && autoInstallFlightComponentsOnManualPlayer)
+                profileApplier = aircraftObject.AddComponent<MavAircraftProfileApplier>();
+
+            string applyError;
+            if (!TryApplyAircraftAtomically(activeProfile, aircraft, out applyError))
+            {
+                setupStatus = "Cannot start " + activeProfile.displayName + ": " + applyError;
+                MavGameSession.LastSceneError = setupStatus;
+                Debug.LogError("MavInGameBootstrap: " + setupStatus, this);
+                return;
+            }
+
+            int revisionBeforeFreshSetup =
+                profileApplier != null ? profileApplier.AppliedRevision : 0;
+
             freshBootstrap = gameObject.GetComponent<MavFreshBootstrap>();
             if (freshBootstrap == null && autoInstallFlightComponentsOnManualPlayer)
                 freshBootstrap = gameObject.AddComponent<MavFreshBootstrap>();
@@ -146,18 +190,23 @@ namespace MaverickFresh
                 freshBootstrap.SetupFreshMouseFlight();
             }
 
-            if (visualSwitcher != null)
-                visualSwitcher.ApplyAircraft(activeProfile, GetVisualSource(aircraft));
-
-            profileApplier = aircraftObject.GetComponent<MavAircraftProfileApplier>();
-            if (profileApplier == null && autoInstallFlightComponentsOnManualPlayer)
-                profileApplier = aircraftObject.AddComponent<MavAircraftProfileApplier>();
-
-            if (profileApplier != null)
+            // SetupFreshMouseFlight creates the jet, rig and instructor. Anything aircraft-aware in
+            // there re-applies the identity established above onto them - WT feel does exactly that,
+            // and then layers its tuning on top. If nothing did, the newly created components never
+            // received the aircraft's configuration, so re-state it here.
+            //
+            // Guarded on the revision rather than done unconditionally: re-applying on top of WT
+            // feel's tuning pass would wipe the multipliers it had just layered on.
+            if (profileApplier != null
+                && profileApplier.AppliedRevision == revisionBeforeFreshSetup)
             {
-                profileApplier.applyOnStart = false;
-                profileApplier.renameObject = false;
-                profileApplier.ApplyProfile(activeProfile);
+                string refreshError;
+                if (!profileApplier.TryReapplyAppliedProfile(out refreshError))
+                {
+                    Debug.LogWarning(
+                        "MavInGameBootstrap: could not refresh " + activeProfile.displayName
+                        + " onto the freshly created flight components: " + refreshError, this);
+                }
             }
 
             rb = aircraftObject.GetComponent<Rigidbody>();
@@ -189,6 +238,44 @@ namespace MaverickFresh
         }
 
         /// <summary>
+        /// Applies a verified profile through whichever component owns the change, so there is one
+        /// atomic path rather than one per call site.
+        ///
+        /// With an applier present, the applier does it: visual prepared, then physics, then visual
+        /// committed. Without one there is no physics half to keep in step with, so the visual
+        /// switcher is driven directly. Either way a failure changes nothing.
+        /// </summary>
+        private bool TryApplyAircraftAtomically(
+            MavAircraftRuntimeProfile profile,
+            MavAircraftKind kind,
+            out string error)
+        {
+            GameObject visualSource = GetVisualSource(kind);
+
+            if (profileApplier != null)
+            {
+                profileApplier.applyOnStart = false;
+                profileApplier.renameObject = false;
+                return profileApplier.TryApplyProfile(profile, visualSource, out error);
+            }
+
+            if (visualSwitcher != null)
+            {
+                GameObject visual;
+                return visualSwitcher.TryApplyAircraft(profile, visualSource, out visual, out error);
+            }
+
+            // Neither component exists, so nothing can carry the aircraft. Reporting success here
+            // would claim the aircraft was applied when not one field was written - which reads, from
+            // the outside, exactly like the bug where the identity never reached the player at all.
+            error = "There is no MavAircraftProfileApplier and no MavAircraftVisualSwitcher on "
+                    + (aircraftObject != null ? aircraftObject.name : "the player")
+                    + ", so " + profile.displayName + " cannot be applied to it. Add an applier, or "
+                    + "enable autoInstallFlightComponentsOnManualPlayer.";
+            return false;
+        }
+
+        /// <summary>
         /// Development-only switching. Final flow should use Mav_Hangar -> MavGameSession -> Mav_InGame.
         /// </summary>
         public void DebugSwitchAircraft(MavAircraftKind aircraft)
@@ -200,28 +287,45 @@ namespace MaverickFresh
 
         public void ApplySelectedAircraftInPlace(MavAircraftKind aircraft, bool saveToSession)
         {
-            activeProfile = MavAircraftCatalog.GetBuiltIn(aircraft);
-            if (activeProfile == null || aircraftObject == null)
+            // Resolve and verify BEFORE anything is touched, and before the session is told this
+            // aircraft is now selected. A change that cannot be completed must not leave a record
+            // claiming it was.
+            string error;
+            MavAircraftRuntimeProfile resolved;
+            if (!MavAircraftCatalog.TryGetBuiltIn(aircraft, out resolved, out error))
+            {
+                Debug.LogError(
+                    "MavInGameBootstrap: refused to switch aircraft: " + error, this);
                 return;
+            }
 
-            if (saveToSession)
-                MavGameSession.SelectAircraft(aircraft);
+            if (aircraftObject == null)
+            {
+                Debug.LogError(
+                    "MavInGameBootstrap: refused to switch to " + resolved.displayName
+                    + ": there is no player aircraft object to apply it to.", this);
+                return;
+            }
 
             ConfigureVisualSwitcherForPlayer();
-            if (visualSwitcher != null)
-                visualSwitcher.ApplyAircraft(activeProfile, GetVisualSource(aircraft));
 
             if (profileApplier == null)
                 profileApplier = aircraftObject.GetComponent<MavAircraftProfileApplier>();
             if (profileApplier == null && autoInstallFlightComponentsOnManualPlayer)
                 profileApplier = aircraftObject.AddComponent<MavAircraftProfileApplier>();
 
-            if (profileApplier != null)
+            if (!TryApplyAircraftAtomically(resolved, aircraft, out error))
             {
-                profileApplier.applyOnStart = false;
-                profileApplier.renameObject = false;
-                profileApplier.ApplyProfile(activeProfile);
+                Debug.LogError(
+                    "MavInGameBootstrap: refused to switch to " + resolved.displayName + ": " + error
+                    + " The aircraft is unchanged.", this);
+                return;
             }
+
+            // Committed. Only now is this the active aircraft, and only now is it worth recording.
+            activeProfile = resolved;
+            if (saveToSession)
+                MavGameSession.SelectAircraft(aircraft);
 
             MavFreshHud hud = Camera.main != null ? Camera.main.GetComponent<MavFreshHud>() : null;
             if (hud != null)

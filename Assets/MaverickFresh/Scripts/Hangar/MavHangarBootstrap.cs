@@ -71,22 +71,47 @@ namespace MaverickFresh
         {
             profiles.Clear();
             profiles.AddRange(MavAircraftCatalog.CreateBuiltInProfiles());
-            selectedIndex = FindProfileIndex(MavGameSession.HasSelection ? MavGameSession.SelectedAircraft : MavGameSession.DefaultAircraft);
-            selectedIndex = Mathf.Clamp(selectedIndex, 0, profiles.Count - 1);
+
+            MavAircraftKind requested = MavGameSession.HasSelection
+                ? MavGameSession.SelectedAircraft
+                : MavGameSession.DefaultAircraft;
+
+            int requestedIndex = FindProfileIndex(requested);
+            if (requestedIndex < 0)
+            {
+                // The hangar cannot display the aircraft that is selected. It says so instead of
+                // quietly selecting a different one on the pilot's behalf.
+                Debug.LogError(
+                    "[Maverick/Aircraft] Hangar has no slot for the selected aircraft "
+                    + "MavAircraftKind." + requested + ". The selection was left unchanged and no "
+                    + "other aircraft was substituted for it.", this);
+                MavGameSession.LastSceneError =
+                    "Hangar cannot display " + requested + ".";
+            }
+            else
+            {
+                selectedIndex = requestedIndex;
+            }
+
+            selectedIndex = Mathf.Clamp(selectedIndex, 0, Mathf.Max(0, profiles.Count - 1));
 
             if (autoFindSceneAircraftVisuals)
                 AutoResolveSceneVisuals();
 
             EnsureEnvironment();
             BuildAircraftDisplays();
-            MavGameSession.SelectAircraft(CurrentProfile().aircraft);
+
+            // Only re-publish the selection when the hangar is genuinely showing that aircraft.
+            MavAircraftRuntimeProfile current = CurrentProfile();
+            if (requestedIndex >= 0 && current != null)
+                MavGameSession.SelectAircraft(current.aircraft);
         }
 
         public void Next()
         {
             if (profiles.Count == 0) return;
             selectedIndex = (selectedIndex + 1) % profiles.Count;
-            MavGameSession.SelectAircraft(CurrentProfile().aircraft);
+            PublishSelection();
         }
 
         public void Previous()
@@ -94,15 +119,38 @@ namespace MaverickFresh
             if (profiles.Count == 0) return;
             selectedIndex--;
             if (selectedIndex < 0) selectedIndex = profiles.Count - 1;
-            MavGameSession.SelectAircraft(CurrentProfile().aircraft);
+            PublishSelection();
+        }
+
+        private void PublishSelection()
+        {
+            MavAircraftRuntimeProfile p = CurrentProfile();
+            if (p != null)
+                MavGameSession.SelectAircraft(p.aircraft);
         }
 
         private void Launch(MavGameMode mode)
         {
             MavAircraftRuntimeProfile p = CurrentProfile();
+            if (p == null)
+            {
+                Debug.LogError(
+                    "[Maverick/Aircraft] Hangar has no valid aircraft selected, so nothing was "
+                    + "launched.", this);
+                return;
+            }
+
             MavGameSession.Launch(p.aircraft, mode);
         }
 
+        /// <summary>
+        /// Index of the slot for this aircraft, or -1.
+        ///
+        /// It used to answer an unknown aircraft with the F-22A slot, and index 0 if even that was
+        /// missing. That is how a session that had selected the F-16 could arrive in the hangar
+        /// showing - and then launching - an F-22: the selection was silently rewritten to whatever
+        /// the hangar could display.
+        /// </summary>
         private int FindProfileIndex(MavAircraftKind aircraft)
         {
             for (int i = 0; i < profiles.Count; i++)
@@ -110,18 +158,16 @@ namespace MaverickFresh
                 if (profiles[i] != null && profiles[i].aircraft == aircraft)
                     return i;
             }
-            for (int i = 0; i < profiles.Count; i++)
-            {
-                if (profiles[i] != null && profiles[i].aircraft == MavAircraftKind.F22A)
-                    return i;
-            }
-            return 0;
+
+            return -1;
         }
 
+        /// <summary>The selected profile, or null when there is nothing valid selected.</summary>
         private MavAircraftRuntimeProfile CurrentProfile()
         {
             if (profiles.Count == 0)
-                return MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F22A);
+                return null;
+
             return profiles[Mathf.Clamp(selectedIndex, 0, profiles.Count - 1)];
         }
 
@@ -131,6 +177,17 @@ namespace MaverickFresh
             MavAircraftRuntimeProfile p = CurrentProfile();
 
             GUI.Label(new Rect(42f, 32f, 600f, 48f), "HANGAR", titleStyle);
+
+            if (p == null)
+            {
+                // No valid aircraft to describe. Say so rather than drawing another aircraft's card.
+                GUI.Label(
+                    new Rect(44f, 84f, 900f, 28f),
+                    "No valid aircraft profile is available. Check the console for the aircraft "
+                    + "identity error.", normalStyle);
+                return;
+            }
+
             GUI.Label(new Rect(44f, 84f, 760f, 28f), "F-22A is the primary aircraft. A/D or Arrow Keys: switch aircraft   Enter: test flight   Esc: lobby", normalStyle);
 
             float panelW = 430f;
@@ -247,6 +304,9 @@ namespace MaverickFresh
 
             for (int i = 0; i < profiles.Count; i++)
             {
+                if (profiles[i] == null)
+                    continue;
+
                 GameObject slot = new GameObject("HangarSlot_" + profiles[i].shortName);
                 slot.transform.SetParent(root.transform, true);
                 slot.transform.position = aircraftRootPosition + new Vector3((i - selectedIndex) * slideSpacing, 0f, 0f);
