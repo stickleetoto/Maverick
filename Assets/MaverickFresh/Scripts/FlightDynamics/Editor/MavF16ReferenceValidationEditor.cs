@@ -70,6 +70,87 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             );
         }
 
+        [MenuItem("Maverick/Flight Dynamics/Run Phase 2 Trim and Control Validation")]
+        public static void RunPhase2Validation()
+        {
+            int passed;
+            int failed;
+            string report = MavFlightDynamicsPhase2Validation.RunAll(out passed, out failed);
+
+            if (failed == 0)
+                Debug.Log(report);
+            else
+                Debug.LogError(report);
+
+            EditorUtility.DisplayDialog(
+                "Phase 2 Trim / Control Validation",
+                failed == 0
+                    ? "PASS\n\n" + passed + " checks passed."
+                    : "FAIL\n\n" + failed + " checks failed. See Console for details.",
+                "OK"
+            );
+        }
+
+        [MenuItem("Maverick/Flight Dynamics/Run Phase 3 Propulsion, Attitude and Ownership Validation")]
+        public static void RunPhase3Validation()
+        {
+            int passed;
+            int failed;
+            string report = MavFlightDynamicsPhase3Validation.RunAll(out passed, out failed);
+
+            if (failed == 0)
+                Debug.Log(report);
+            else
+                Debug.LogError(report);
+
+            EditorUtility.DisplayDialog(
+                "Phase 3 Validation",
+                failed == 0
+                    ? "PASS\n\n" + passed + " checks passed."
+                    : "FAIL\n\n" + failed + " checks failed. See Console for details.",
+                "OK"
+            );
+        }
+
+        [MenuItem("Maverick/Flight Dynamics/Run Unity Integration Validation")]
+        public static void RunIntegrationValidation()
+        {
+            int passed;
+            int failed;
+            string report = MavFlightDynamicsIntegrationValidation.RunAll(out passed, out failed);
+
+            if (failed == 0)
+                Debug.Log(report);
+            else
+                Debug.LogError(report);
+
+            EditorUtility.DisplayDialog(
+                "Unity Integration Validation",
+                failed == 0
+                    ? "PASS\n\n" + passed + " integration checks passed."
+                    : "FAIL\n\n" + failed + " integration checks failed. See Console.",
+                "OK"
+            );
+        }
+
+        /// <summary>
+        /// Prints the F-16 trim survey. This computes and reports only: no scene object is touched,
+        /// no Rigidbody is read or written, and no engine state is advanced.
+        /// </summary>
+        [MenuItem("Maverick/Flight Dynamics/Report F-16 Trim Survey")]
+        public static void ReportF16TrimSurvey()
+        {
+            Debug.Log(MaverickFresh.FlightDynamics.F16.MavF16TrimReference.BuildTrimSurvey());
+
+            EditorUtility.DisplayDialog(
+                "F-16 Trim Survey",
+                "Trim survey written to the Console.\n\n"
+                + "Powered straight-and-level is expected to report ConvergedButThrustUnavailable "
+                + "while the F-16 thrust deck is not frozen.",
+                "OK"
+            );
+        }
+
         [MenuItem("Maverick/Flight Dynamics/Run All Flight Dynamics Validation")]
         public static void RunAllValidation()
         {
@@ -94,9 +175,56 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 out propulsionFailed
             );
 
-            int passed = referencePassed + phase1Passed + propulsionPassed;
-            int failed = referenceFailed + phase1Failed + propulsionFailed;
-            string report = referenceReport + "\n\n" + phase1Report + "\n\n" + propulsionReport;
+            int phase2Passed;
+            int phase2Failed;
+            string phase2Report = MavFlightDynamicsPhase2Validation.RunAll(
+                out phase2Passed,
+                out phase2Failed
+            );
+
+            int phase3Passed;
+            int phase3Failed;
+            string phase3Report = MavFlightDynamicsPhase3Validation.RunAll(
+                out phase3Passed,
+                out phase3Failed
+            );
+
+            int purePassed = referencePassed + phase1Passed + propulsionPassed
+                             + phase2Passed + phase3Passed;
+            int pureFailed = referenceFailed + phase1Failed + propulsionFailed
+                             + phase2Failed + phase3Failed;
+
+            // Real Unity components and real wiring, manually stepped in the production order.
+            // This is component integration, not proof that Unity's scheduler executed the order.
+            int integrationPassed;
+            int integrationFailed;
+            string integrationReport = MavFlightDynamicsIntegrationValidation.RunAll(
+                out integrationPassed,
+                out integrationFailed
+            );
+
+            // Freeze-review regressions added after the first integration sweep. Keep this count
+            // separate as well so a green aggregate cannot hide which validation layer failed.
+            int hardeningPassed;
+            int hardeningFailed;
+            string hardeningReport = MavFlightDynamicsFreezeHardeningValidation.RunAll(
+                out hardeningPassed,
+                out hardeningFailed
+            );
+
+            string report = referenceReport + "\n\n" + phase1Report
+                            + "\n\n" + propulsionReport
+                            + "\n\n" + phase2Report
+                            + "\n\n" + phase3Report
+                            + "\n\n" + integrationReport
+                            + "\n\n" + hardeningReport
+                            + "\n\n=== SUMMARY ==="
+                            + "\npure/static        : " + purePassed + " passed, " + pureFailed + " failed"
+                            + "\nunity integration  : " + integrationPassed + " passed, " + integrationFailed + " failed"
+                            + "\nfreeze hardening   : " + hardeningPassed + " passed, " + hardeningFailed + " failed"
+                            + "\nfixed scheduler    : NOT TESTED by this menu";
+
+            int failed = pureFailed + integrationFailed + hardeningFailed;
 
             if (failed == 0)
                 Debug.Log(report);
@@ -106,8 +234,14 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             EditorUtility.DisplayDialog(
                 "Maverick Flight Dynamics Validation",
                 failed == 0
-                    ? "PASS\n\n" + passed + " checks passed."
-                    : "FAIL\n\n" + failed + " checks failed. See Console for details.",
+                    ? "PASS\n\npure/static: " + purePassed
+                      + " passed\nunity integration: " + integrationPassed
+                      + " passed\nfreeze hardening: " + hardeningPassed
+                      + " passed\n\nFixedUpdate scheduler proof is still a separate gate."
+                    : "FAIL\n\npure/static: " + pureFailed
+                      + " failed\nunity integration: " + integrationFailed
+                      + " failed\nfreeze hardening: " + hardeningFailed
+                      + " failed.\n\nSee Console for details.",
                 "OK"
             );
         }

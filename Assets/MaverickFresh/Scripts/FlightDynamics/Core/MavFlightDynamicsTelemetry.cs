@@ -21,6 +21,9 @@ namespace MaverickFresh.FlightDynamics
         public float alphaDeg;
         public float betaDeg;
 
+        [Tooltip("Measured normal load factor in g, from the summed load set. 0 when no measurement was available this step.")]
+        public float loadFactorNz;
+
         public float rollRateDegSec;
         public float pitchRateDegSec;
         public float yawRateDegSec;
@@ -42,6 +45,9 @@ namespace MaverickFresh.FlightDynamics
         public bool propulsionDataAuthoritative;
         public int aerodynamicContributions;
         public int propulsiveContributions;
+
+        [Tooltip("MavFlightDynamicsReadinessLevel as an integer: 0 NotPrepared, 1 StructurallyPrepared, 2 OperationallyLiveReady.")]
+        public int readinessLevel;
     }
 
     /// <summary>
@@ -59,10 +65,10 @@ namespace MaverickFresh.FlightDynamics
     public sealed class MavFlightDynamicsTelemetry : MonoBehaviour
     {
         /// <summary>Number of numeric CSV columns emitted before the integer/flag columns.</summary>
-        public const int CsvNumericColumnCount = 33;
+        public const int CsvNumericColumnCount = 34;
 
         /// <summary>Number of integer/flag CSV columns emitted after the numeric columns.</summary>
-        public const int CsvFlagColumnCount = 6;
+        public const int CsvFlagColumnCount = 7;
 
         [Header("Console Logging")]
         [Tooltip("OFF by default. Console output at physics rate is never acceptable.")]
@@ -170,7 +176,7 @@ namespace MaverickFresh.FlightDynamics
                 + " actual=(elev {10:F2}, ail {11:F2}, rud {12:F2})deg thr={13:F2}"
                 + " totalF=({14:F0},{15:F0},{16:F0})N totalM=({17:F0},{18:F0},{19:F0})Nm"
                 + " aeroContrib={20} propContrib={21} applied={22} profileValid={23}"
-                + " insideEnvelope={24} propulsionSourced={25}",
+                + " insideEnvelope={24} propulsionSourced={25} nz={26:F2}g readiness={27}",
                 s.timeSeconds, s.altitudeM, s.trueAirspeedMps, s.mach, s.dynamicPressurePa,
                 s.alphaDeg, s.betaDeg,
                 s.rollRateDegSec, s.pitchRateDegSec, s.yawRateDegSec,
@@ -179,7 +185,8 @@ namespace MaverickFresh.FlightDynamics
                 s.totalForceAeroBodyN.x, s.totalForceAeroBodyN.y, s.totalForceAeroBodyN.z,
                 s.totalMomentAeroBodyNm.x, s.totalMomentAeroBodyNm.y, s.totalMomentAeroBodyNm.z,
                 s.aerodynamicContributions, s.propulsiveContributions,
-                s.loadsApplied, s.profileValid, s.insideEnvelope, s.propulsionDataAuthoritative
+                s.loadsApplied, s.profileValid, s.insideEnvelope, s.propulsionDataAuthoritative,
+                s.loadFactorNz, (MavFlightDynamicsReadinessLevel)s.readinessLevel
             ), this);
         }
 
@@ -202,10 +209,26 @@ namespace MaverickFresh.FlightDynamics
             if (csvBuffer == null)
                 csvBuffer = new StringBuilder(65536);
 
-            AppendNumeric(csvBuffer, s);
-            AppendFlags(csvBuffer, s);
+            csvBuffer.Append(BuildCsvRow(s));
             csvBuffer.Append(Environment.NewLine);
             debugCsvRowCount++;
+        }
+
+        /// <summary>
+        /// Serializes one sample as a CSV row, using exactly the code that writes rows to disk.
+        ///
+        /// Public so validation can serialize a real row and compare it against
+        /// <see cref="CsvHeader"/> directly. Comparing the header's column count against a pair of
+        /// constants - which is what validation used to do - proves only that two constants agree
+        /// with a string; it cannot catch a row that emits its columns in a different order, or a
+        /// field added to one side and not the other.
+        /// </summary>
+        public static string BuildCsvRow(MavFlightDynamicsTelemetrySample sample)
+        {
+            StringBuilder row = new StringBuilder(512);
+            AppendNumeric(row, sample);
+            AppendFlags(row, sample);
+            return row.ToString();
         }
 
         private static void AppendNumeric(StringBuilder sb, MavFlightDynamicsTelemetrySample s)
@@ -225,7 +248,8 @@ namespace MaverickFresh.FlightDynamics
                 s.aeroForceAeroBodyN.x, s.aeroForceAeroBodyN.y, s.aeroForceAeroBodyN.z,
                 s.aeroMomentAeroBodyNm.x, s.aeroMomentAeroBodyNm.y, s.aeroMomentAeroBodyNm.z,
                 s.propulsionForceAeroBodyN.x,
-                s.totalForceAeroBodyN.x, s.totalForceAeroBodyN.y, s.totalForceAeroBodyN.z
+                s.totalForceAeroBodyN.x, s.totalForceAeroBodyN.y, s.totalForceAeroBodyN.z,
+                s.loadFactorNz
             };
 
             for (int i = 0; i < numeric.Length; i++)
@@ -244,6 +268,7 @@ namespace MaverickFresh.FlightDynamics
             sb.Append(',').Append(s.propulsionDataAuthoritative ? 1 : 0);
             sb.Append(',').Append(s.aerodynamicContributions);
             sb.Append(',').Append(s.propulsiveContributions);
+            sb.Append(',').Append(s.readinessLevel);
         }
 
         /// <summary>
@@ -260,8 +285,9 @@ namespace MaverickFresh.FlightDynamics
                  + ",aeroFx_n,aeroFy_n,aeroFz_n,aeroL_nm,aeroM_nm,aeroN_nm"
                  + ",propFx_n"
                  + ",totFx_n,totFy_n,totFz_n"
+                 + ",nz_g"
                  + ",profileValid,insideEnvelope,loadsApplied,propulsionSourced"
-                 + ",aeroContributions,propContributions";
+                 + ",aeroContributions,propContributions,readinessLevel";
         }
     }
 }

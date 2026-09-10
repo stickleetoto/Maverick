@@ -81,9 +81,22 @@ namespace MaverickFresh.FlightDynamics.F16
         public MavF16ControlActuator controlActuator;
         public MavF16ReferenceConfigurator configurator;
 
+        [Header("Control Law Selection")]
+        [Tooltip("When true the Maverick F-16 control law v0.1 (rate/G augmentation) owns the surfaces. When false the C0 direct-surface test law does. Exactly one law is ever left enabled: two laws driving one actuator would make the surface state depend on component order.")]
+        public bool useControlLawV01 = true;
+
         [Header("Auto-wired Control / Propulsion / Telemetry")]
         [Tooltip("C0 direct-surface test law. Not an F-16 FLCS; it exists so the physical path can be flown without legacy torque.")]
-        public MavDirectSurfaceControlLaw controlLaw;
+        public MavDirectSurfaceControlLaw directSurfaceControlLaw;
+
+        [Tooltip("Maverick F-16 control law v0.1. Maverick tuning throughout; explicitly NOT the real F-16 FLCS.")]
+        public MavF16ControlLawV01 controlLawV01;
+
+        [Tooltip("The law actually driving the actuator this frame.")]
+        public MavFlightControlLawBase controlLaw;
+
+        [Tooltip("Manual/test pilot-command source. Not an operational input path and not the War-Thunder instructor; it reports itself non-operational by default.")]
+        public MavManualPilotCommandSource pilotCommandSource;
 
         [Tooltip("NASA Garza/Morelli throttle gearing + engine power-state dynamics. Dimensional thrust remains zero until the sourced altitude/Mach thrust deck is frozen.")]
         public MavF16EnginePowerModel enginePowerModel;
@@ -93,7 +106,14 @@ namespace MaverickFresh.FlightDynamics.F16
 
         [Header("Runtime Status")]
         public bool f16Selected;
+
+        [Tooltip("STRUCTURALLY_PREPARED: every part present and wired. This is not permission to fly.")]
         public bool referenceStackPrepared;
+
+        [Tooltip("OPERATIONALLY_LIVE_READY: the stack would be correct to hand the aircraft to. Expected FALSE on this branch.")]
+        public bool operationallyLiveReady;
+
+        public MavFlightDynamicsReadinessLevel readinessLevel;
         public bool liveSixDoFEnabled;
         public bool propulsionPowerDynamicsAuthoritative;
         public bool propulsionDataAuthoritative;
@@ -156,9 +176,19 @@ namespace MaverickFresh.FlightDynamics.F16
             if (configurator != null)
                 configurator.ApplyReferenceValues(false);
 
-            string bodyReadiness = "no MavSixDoFBody";
-            bool bodyReady = sixDoFBody != null && sixDoFBody.IsReadyForLiveFdm(out bodyReadiness);
-            readinessReason = bodyReadiness;
+            MavFlightDynamicsReadinessReport readiness = sixDoFBody != null
+                ? sixDoFBody.EvaluateReadinessReport()
+                : new MavFlightDynamicsReadinessReport
+                {
+                    level = MavFlightDynamicsReadinessLevel.NotPrepared,
+                    structuralReason = "no MavSixDoFBody",
+                    operationalReason = "no MavSixDoFBody",
+                    summary = "NOT_PREPARED: no MavSixDoFBody"
+                };
+
+            readinessLevel = readiness.level;
+            readinessReason = readiness.summary;
+            operationallyLiveReady = readiness.operationallyLiveReady;
 
             referenceStackPrepared =
                 physicsProfile != null
@@ -169,7 +199,7 @@ namespace MaverickFresh.FlightDynamics.F16
                 && controlLaw != null
                 && propulsionModel != null
                 && sixDoFBody.debugProfileValid
-                && bodyReady;
+                && readiness.structurallyPrepared;
 
             propulsionPowerDynamicsAuthoritative =
                 enginePowerModel != null && enginePowerModel.HasAuthoritativePowerDynamics;
@@ -183,9 +213,11 @@ namespace MaverickFresh.FlightDynamics.F16
 
             liveSixDoFEnabled = false;
             status = referenceStackPrepared
-                ? "F-16 selected: Morelli aero + sourced engine power dynamics PREPARED. "
-                  + "Dimensional thrust deck is still pending; live ownership remains OFF."
-                : "F-16 selected, but the new flight-dynamics stack is not fully prepared: " + readinessReason;
+                ? "F-16 selected: " + readinessLevel + ". Morelli aero + sourced engine power "
+                  + "dynamics + " + (controlLaw != null ? controlLaw.ControlLawName : "no control law")
+                  + ". Live ownership remains OFF. " + readiness.operationalReason
+                : "F-16 selected, but the new flight-dynamics stack is not structurally prepared: "
+                  + readiness.structuralReason;
 
             if (!loggedSelected)
             {
@@ -194,8 +226,9 @@ namespace MaverickFresh.FlightDynamics.F16
                     + (physicsProfile != null && physicsProfile.debugBuiltProfile != null
                         ? physicsProfile.debugBuiltProfile.profileId
                         : "missing")
-                    + " | stack=" + (referenceStackPrepared ? "PREPARED" : "NOT_READY")
-                    + " | readiness=" + readinessReason
+                    + " | stack=" + (referenceStackPrepared ? "STRUCTURALLY_PREPARED" : "NOT_PREPARED")
+                    + " | readiness=" + readinessLevel
+                    + " | detail=" + readinessReason
                     + " | controlLaw=" + (controlLaw != null ? controlLaw.ControlLawName : "missing")
                     + " | propulsion=" + (propulsionModel != null ? propulsionModel.PropulsionModelName : "missing")
                     + " | powerDynamicsSourced=" + propulsionPowerDynamicsAuthoritative
@@ -229,9 +262,39 @@ namespace MaverickFresh.FlightDynamics.F16
             if (configurator == null)
                 configurator = gameObject.AddComponent<MavF16ReferenceConfigurator>();
 
-            controlLaw = GetComponent<MavDirectSurfaceControlLaw>();
-            if (controlLaw == null)
-                controlLaw = gameObject.AddComponent<MavDirectSurfaceControlLaw>();
+            // Exactly one control law may be enabled. Both derive from MavFlightControlLawBase and
+            // both run at execution order -300, so leaving two enabled would let whichever ran last
+            // overwrite the actuator command - a surface state that depends on component order.
+            if (useControlLawV01)
+            {
+                controlLawV01 = GetComponent<MavF16ControlLawV01>();
+                if (controlLawV01 == null)
+                    controlLawV01 = gameObject.AddComponent<MavF16ControlLawV01>();
+                controlLawV01.enabled = true;
+
+                directSurfaceControlLaw = GetComponent<MavDirectSurfaceControlLaw>();
+                if (directSurfaceControlLaw != null)
+                    directSurfaceControlLaw.enabled = false;
+
+                controlLaw = controlLawV01;
+            }
+            else
+            {
+                directSurfaceControlLaw = GetComponent<MavDirectSurfaceControlLaw>();
+                if (directSurfaceControlLaw == null)
+                    directSurfaceControlLaw = gameObject.AddComponent<MavDirectSurfaceControlLaw>();
+                directSurfaceControlLaw.enabled = true;
+
+                controlLawV01 = GetComponent<MavF16ControlLawV01>();
+                if (controlLawV01 != null)
+                    controlLawV01.enabled = false;
+
+                controlLaw = directSurfaceControlLaw;
+            }
+
+            pilotCommandSource = GetComponent<MavManualPilotCommandSource>();
+            if (pilotCommandSource == null)
+                pilotCommandSource = gameObject.AddComponent<MavManualPilotCommandSource>();
 
             enginePowerModel = GetComponent<MavF16EnginePowerModel>();
             if (enginePowerModel == null)
@@ -254,7 +317,16 @@ namespace MaverickFresh.FlightDynamics.F16
                 sixDoFBody.propulsionModel = propulsionModel;
                 sixDoFBody.controlLaw = controlLaw;
                 sixDoFBody.controlSurfaceActuator = controlActuator;
+                sixDoFBody.pilotCommandSource = pilotCommandSource;
                 sixDoFBody.telemetry = telemetry;
+
+                // Both safety gates stay at their defaults on this branch, restated here so the
+                // auto-setup cannot silently drift into arming the aircraft:
+                //   - a propulsion model with no frozen thrust deck is NOT accepted for live flight
+                //   - loads may only be applied at OPERATIONALLY_LIVE_READY
+                sixDoFBody.acceptNonAuthoritativePropulsion = false;
+                sixDoFBody.requireOperationalReadinessForLoadApplication = true;
+                sixDoFBody.allowStructuralOnlyLoadApplication = false;
                 sixDoFBody.applyMassPropertiesOnEnable = true;
                 sixDoFBody.autoApplyProfileConfiguration = true;
                 sixDoFBody.ApplyConfiguredProfile(false);
@@ -267,7 +339,28 @@ namespace MaverickFresh.FlightDynamics.F16
             {
                 controlLaw.sixDoFBody = sixDoFBody;
                 controlLaw.actuator = controlActuator;
+                controlLaw.commandSource = pilotCommandSource;
                 controlLaw.driveActuatorInFixedUpdate = true;
+            }
+
+            // The disabled law is still wired, so switching useControlLawV01 does not leave a
+            // half-connected component behind, but it must not drive the actuator.
+            MavFlightControlLawBase idleLaw = ReferenceEquals(controlLaw, controlLawV01)
+                ? (MavFlightControlLawBase)directSurfaceControlLaw
+                : controlLawV01;
+            if (idleLaw != null)
+            {
+                idleLaw.sixDoFBody = sixDoFBody;
+                idleLaw.actuator = controlActuator;
+                idleLaw.commandSource = pilotCommandSource;
+                idleLaw.driveActuatorInFixedUpdate = false;
+            }
+
+            if (pilotCommandSource != null)
+            {
+                // Explicitly NOT an operational command source: this is a bench input, and
+                // operational live-readiness must not be satisfiable by adding a component.
+                pilotCommandSource.treatAsOperationalSource = false;
             }
 
             if (telemetry != null)

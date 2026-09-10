@@ -19,5 +19,18 @@ namespace MaverickFresh.FlightDynamics
 
         /// <summary>The current actual surface state after bounding and rate limiting.</summary>
         public abstract MavControlInput ActualSurfaceState { get; }
+
+        /// <summary>
+        /// The six-DoF body this actuator publishes its actual surface state into, or null when it
+        /// is unbound or the implementation does not report a binding.
+        ///
+        /// Defaults to null deliberately. Operational live-readiness requires a confirmed binding,
+        /// so an actuator that does not answer this question fails closed rather than being
+        /// assumed correctly wired.
+        /// </summary>
+        public virtual MavSixDoFBody BoundBody
+        {
+            get { return null; }
+        }
     }
 }

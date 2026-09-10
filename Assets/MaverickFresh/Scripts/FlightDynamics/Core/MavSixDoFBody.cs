@@ -3,28 +3,8 @@ using UnityEngine;
 namespace MaverickFresh.FlightDynamics
 {
     /// <summary>
-    /// SI-unit six-DoF flight-dynamics boundary.
-    ///
-    /// This class is deliberately a thin integrator, not an aircraft brain. Per physics step it:
-    ///
-    ///   1. samples Rigidbody state
-    ///   2. samples atmosphere
-    ///   3. builds MavFlightState
-    ///   4. evaluates the aerodynamic model
-    ///   5. evaluates the propulsion model
-    ///   6. sums the dimensional loads exactly once into a MavFlightDynamicsLoadSet
-    ///   7. applies the total force and moment exactly once
-    ///   8. publishes telemetry
-    ///
-    /// It does not read input, implement aircraft control laws, hold coefficient tables, align
-    /// velocity vectors, or know anything about weapons, sensors, or AI.
-    ///
-    /// This component is the single final load-application boundary for the new FDM path.
-    /// No control law, actuator, instructor, or player script may call Rigidbody.AddForce or
-    /// Rigidbody.AddTorque for this path.
-    ///
-    /// IMPORTANT: simulationEnabled defaults to false so the new engine can coexist with the
-    /// legacy Maverick flight stack without double-applying forces.
+    /// SI-unit six-DoF flight-dynamics boundary and the single final Rigidbody load-application
+    /// owner for the new FDM path. simulationEnabled remains OFF by default.
     /// </summary>
     [DefaultExecutionOrder(-100)]
     [DisallowMultipleComponent]
@@ -37,6 +17,28 @@ namespace MaverickFresh.FlightDynamics
         public bool applyMassPropertiesOnEnable = false;
         public bool zeroUnityDampingWhenEnabled = true;
 
+        [Tooltip("When true (default), loads are applied only at OPERATIONALLY_LIVE_READY.")]
+        public bool requireOperationalReadinessForLoadApplication = true;
+
+        [Tooltip("Explicit operator override for isolated structural bench testing.")]
+        public bool allowStructuralOnlyLoadApplication = false;
+
+        [Tooltip("Deliberate acknowledgement that non-authoritative propulsion may be used. OFF by default.")]
+        public bool acceptNonAuthoritativePropulsion = false;
+
+        public static readonly string[] DefaultConflictingLegacyPhysicsComponents =
+        {
+            "MavAeroBody",
+            "MavAtmosphericEngine",
+            "MavMouseFlightJet",
+            "MavInstructorController",
+            "MavThrustVectorControl"
+        };
+
+        [Tooltip("Legacy component type names that own aircraft physics.")]
+        public string[] conflictingLegacyPhysicsComponents =
+            (string[])DefaultConflictingLegacyPhysicsComponents.Clone();
+
         [Header("Physical Profile")]
         public MavFlightDynamicsProfileProvider profileProvider;
         public bool autoApplyProfileConfiguration = true;
@@ -44,24 +46,18 @@ namespace MaverickFresh.FlightDynamics
 
         [Header("Physics Models")]
         public MavAerodynamicModelBase aerodynamicModel;
-
-        [Tooltip("Optional. When absent no propulsive load is contributed at all, which is a valid unpowered-glide configuration.")]
         public MavPropulsionModelBase propulsionModel;
-
         public MavMassProperties massProperties = new MavMassProperties();
 
-        [Header("Control Path (references only; this component never evaluates a control law)")]
-        [Tooltip("Optional. Held for readiness reporting and telemetry. The control law drives the actuator itself, ahead of this component.")]
+        [Header("Control Path")]
         public MavFlightControlLawBase controlLaw;
-
-        [Tooltip("Optional. Held for readiness reporting. The actuator publishes actual surface state into controlInput.")]
         public MavControlSurfaceActuatorBase controlSurfaceActuator;
+        public MavPilotCommandSourceBase pilotCommandSource;
 
-        [Header("Control Input (actual physical surface state, published by the actuator)")]
+        [Header("Control Input")]
         public MavControlInput controlInput;
 
         [Header("Telemetry")]
-        [Tooltip("Optional sink. This component pushes one sample per physics step, so telemetry has no execution-order dependency.")]
         public MavFlightDynamicsTelemetry telemetry;
 
         [Header("Debug / State")]
@@ -73,7 +69,6 @@ namespace MaverickFresh.FlightDynamics
         public MavAeroCoefficients debugCoefficients;
 
         [Header("Debug / Loads")]
-        [Tooltip("Every dimensional load for the current physics step, with per-source contribution counters.")]
         public MavFlightDynamicsLoadSet debugLoadSet;
         public MavAerodynamicLoads debugLoads;
         public Vector3 debugUnityLocalForceN;
@@ -86,12 +81,28 @@ namespace MaverickFresh.FlightDynamics
         [Header("Debug / Readiness")]
         public bool debugReadyForLiveFdm;
         public string debugReadinessReason = "not evaluated";
+        public MavFlightDynamicsReadinessReport debugReadiness;
+        public MavFlightDynamicsReadinessInputs debugReadinessInputs;
+        public string debugLegacyPhysicsOwner = "none";
+        public int debugRejectedNotLiveReadyApplications;
 
         private Rigidbody rb;
         private bool ownershipInitialized;
         private float lastAppliedFixedTime = float.NegativeInfinity;
         private bool loggedDuplicateRejection;
         private bool loggedNonFiniteRejection;
+        private bool loggedNotLiveReadyRejection;
+        private bool loggedStructuralOnlyOverride;
+        private int lastReadinessMask = -1;
+        private bool readinessEvaluatedOnce;
+
+        private const int LegacyOwnershipScanIntervalSteps = 25;
+
+        private readonly System.Collections.Generic.List<MonoBehaviour> behaviourScratch =
+            new System.Collections.Generic.List<MonoBehaviour>(32);
+        private int legacyOwnershipScanCountdown;
+        private bool cachedLegacyOwnershipConflict;
+        private string cachedLegacyOwnerName = "none";
 
         private void Awake()
         {
@@ -108,10 +119,31 @@ namespace MaverickFresh.FlightDynamics
                 ApplyConfiguredProfile(false);
 
             if (simulationEnabled)
-                InitializePhysicsOwnership();
+            {
+                EvaluateReadinessReport();
+                if (IsLoadApplicationPermitted())
+                    InitializePhysicsOwnership();
+            }
         }
 
         private void FixedUpdate()
+        {
+            StepPhysicsCore(Time.fixedDeltaTime, Time.fixedTime);
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Editor-only deterministic seam for component integration validation. Player/runtime code
+        /// cannot supply its own physics-step token; production load application is owned solely by
+        /// FixedUpdate and therefore uses Unity's authoritative Time.fixedTime.
+        /// </summary>
+        public bool StepPhysicsForValidation(float fixedDeltaTime, float fixedTime)
+        {
+            return StepPhysicsCore(fixedDeltaTime, fixedTime);
+        }
+#endif
+
+        private bool StepPhysicsCore(float fixedDeltaTime, float fixedTime)
         {
             Resolve();
             debugPhysicsStepIndex++;
@@ -126,19 +158,23 @@ namespace MaverickFresh.FlightDynamics
             {
                 ClearLoadDebug();
                 PublishTelemetry(false);
-                return;
+                return false;
+            }
+
+            if (!IsLoadApplicationPermitted())
+            {
+                ClearLoadDebug();
+                PublishTelemetry(false);
+                return false;
             }
 
             if (!ownershipInitialized)
                 InitializePhysicsOwnership();
 
-            // Defence in depth. The actuator is the primary limiter, but this boundary must not
-            // hand the aerodynamic model a deflection the airframe cannot physically reach.
             MavControlInput boundedInput = controlInput;
             if (activeProfile != null && debugProfileValid)
                 boundedInput = activeProfile.controlSurfaceLimits.Clamp(controlInput);
 
-            // --- aerodynamic contribution (exactly once) ---
             debugCoefficients = aerodynamicModel.Evaluate(
                 debugState,
                 boundedInput,
@@ -153,22 +189,23 @@ namespace MaverickFresh.FlightDynamics
 
             debugLoadSet.AddAerodynamic(debugLoads);
 
-            // --- propulsive contribution (exactly once, and only if a model exists) ---
             if (propulsionModel != null)
             {
                 MavPropulsiveLoads propulsive = propulsionModel.Evaluate(
                     debugState,
                     debugAtmosphere,
                     boundedInput.throttle01,
-                    Time.fixedDeltaTime
+                    fixedDeltaTime
                 );
 
                 debugLoadSet.AddPropulsive(propulsive);
             }
 
-            // --- single application boundary ---
-            bool applied = TryApplyLoadSet();
+            PublishSpecificForce();
+
+            bool applied = TryApplyLoadSet(fixedTime);
             PublishTelemetry(applied);
+            return applied;
         }
 
         public void SetControlInput(MavControlInput input)
@@ -176,14 +213,9 @@ namespace MaverickFresh.FlightDynamics
             controlInput = input;
         }
 
-        /// <summary>
-        /// Applies the accumulated load set to the Rigidbody exactly once for this physics step.
-        /// Refuses to apply when the set was already applied, when a source contributed more than
-        /// once, or when the total is not finite.
-        /// </summary>
-        private bool TryApplyLoadSet()
+        private bool TryApplyLoadSet(float fixedTime)
         {
-            if (ShouldRejectDuplicateApplication(lastAppliedFixedTime, Time.fixedTime))
+            if (ShouldRejectDuplicateApplication(lastAppliedFixedTime, fixedTime))
             {
                 debugRejectedDuplicateApplications++;
                 if (!loggedDuplicateRejection)
@@ -205,8 +237,7 @@ namespace MaverickFresh.FlightDynamics
                 {
                     loggedNonFiniteRejection = true;
                     Debug.LogError(
-                        "[Maverick/FDM] Refused a non-finite load set (NaN/Infinity). "
-                        + "Rigidbody state was left untouched.",
+                        "[Maverick/FDM] Refused a non-finite load set (NaN/Infinity). Rigidbody state was left untouched.",
                         this
                     );
                 }
@@ -234,21 +265,14 @@ namespace MaverickFresh.FlightDynamics
                 debugLoadSet.totalMomentAeroBodyNm
             );
 
-            // ForceMode.Force / Newtons: the load set is already dimensional, so Unity must not
-            // reinterpret it as an acceleration.
             rb.AddRelativeForce(debugUnityLocalForceN, ForceMode.Force);
             rb.AddRelativeTorque(debugUnityLocalTorqueNm, ForceMode.Force);
 
-            lastAppliedFixedTime = Time.fixedTime;
+            lastAppliedFixedTime = fixedTime;
             debugLoadApplications++;
             return true;
         }
 
-        /// <summary>
-        /// Pure duplicate-application guard. A load application is refused when one already
-        /// happened at the same fixed time, which is the signature of two callers believing they
-        /// own the load-application boundary.
-        /// </summary>
         public static bool ShouldRejectDuplicateApplication(float lastAppliedFixedTime, float currentFixedTime)
         {
             if (float.IsNegativeInfinity(lastAppliedFixedTime))
@@ -257,11 +281,6 @@ namespace MaverickFresh.FlightDynamics
             return lastAppliedFixedTime == currentFixedTime;
         }
 
-        /// <summary>
-        /// Reports whether the new FDM path is wired completely enough to take physical ownership.
-        /// This is the gate described by the architecture readiness state machine; it never enables
-        /// anything by itself.
-        /// </summary>
         public bool IsReadyForLiveFdm(out string reason)
         {
             Resolve();
@@ -277,14 +296,6 @@ namespace MaverickFresh.FlightDynamics
             );
         }
 
-        /// <summary>
-        /// Pure readiness rule, kept static so validation can exercise the exact production logic
-        /// without constructing a GameObject.
-        ///
-        /// Note: readiness is about wiring completeness, not data quality. A propulsion model that
-        /// honestly reports zero thrust satisfies readiness; whether its data is authoritative is a
-        /// separate, separately reported fact.
-        /// </summary>
         public static bool EvaluateReadiness(
             bool hasRigidbody,
             bool hasValidProfile,
@@ -294,51 +305,21 @@ namespace MaverickFresh.FlightDynamics
             bool hasPropulsionModel,
             out string reason)
         {
-            if (!hasRigidbody)
-            {
-                reason = "no Rigidbody";
-                return false;
-            }
+            MavFlightDynamicsReadinessInputs inputs = new MavFlightDynamicsReadinessInputs();
+            inputs.hasRigidbody = hasRigidbody;
+            inputs.hasValidProfile = hasValidProfile;
+            inputs.hasAerodynamicModel = hasAerodynamicModel;
+            inputs.hasControlSurfaceActuator = hasControlSurfaceActuator;
+            inputs.hasControlLaw = hasControlLaw;
+            inputs.hasPropulsionModel = hasPropulsionModel;
 
-            if (!hasValidProfile)
-            {
-                reason = "no valid physical flight-dynamics profile";
-                return false;
-            }
+            bool structural = MavFlightDynamicsReadiness.EvaluateStructural(inputs, out reason);
+            if (structural)
+                reason = "READY";
 
-            if (!hasAerodynamicModel)
-            {
-                reason = "no aerodynamic model";
-                return false;
-            }
-
-            if (!hasControlSurfaceActuator)
-            {
-                reason = "no control-surface actuator";
-                return false;
-            }
-
-            if (!hasControlLaw)
-            {
-                reason = "no flight control law";
-                return false;
-            }
-
-            if (!hasPropulsionModel)
-            {
-                reason = "no propulsion model";
-                return false;
-            }
-
-            reason = "READY";
-            return true;
+            return structural;
         }
 
-        /// <summary>
-        /// Rebuilds the aircraft's physical profile and applies its geometry/mass configuration
-        /// to the flight-dynamics engine. Rigidbody mass/inertia are only changed when applyMassNow
-        /// is true, preserving safe coexistence with the legacy flight stack.
-        /// </summary>
         public bool ApplyConfiguredProfile(bool applyMassNow)
         {
             Resolve();
@@ -403,6 +384,9 @@ namespace MaverickFresh.FlightDynamics
             if (controlSurfaceActuator == null)
                 controlSurfaceActuator = GetComponent<MavControlSurfaceActuatorBase>();
 
+            if (pilotCommandSource == null)
+                pilotCommandSource = GetComponent<MavPilotCommandSourceBase>();
+
             if (telemetry == null)
                 telemetry = GetComponent<MavFlightDynamicsTelemetry>();
         }
@@ -436,8 +420,6 @@ namespace MaverickFresh.FlightDynamics
 
             rb.useGravity = useGravity;
 
-            // Give the engine a defined starting power state instead of inheriting whatever the
-            // component happened to hold from edit time.
             if (propulsionModel != null)
                 propulsionModel.ResetEngineState(controlInput.throttle01);
 
@@ -454,18 +436,42 @@ namespace MaverickFresh.FlightDynamics
 
             Vector3 worldVelocity = rb.linearVelocity;
             Vector3 unityLocalVelocity = transform.InverseTransformDirection(worldVelocity);
-            Vector3 aeroBodyVelocity = MavFlightDynamicsMath.UnityLocalVectorToAeroBody(unityLocalVelocity);
-
             Vector3 unityLocalAngularRate = transform.InverseTransformDirection(rb.angularVelocity);
-            Vector3 aeroBodyRates = MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody(unityLocalAngularRate);
 
-            float tas = worldVelocity.magnitude;
-            float speedOfSound = Mathf.Max(1f, debugAtmosphere.speedOfSoundMps);
-            float q = 0.5f * debugAtmosphere.densityKgM3 * tas * tas;
+            debugState = BuildFlightState(
+                transform.position,
+                worldVelocity,
+                unityLocalVelocity,
+                unityLocalAngularRate,
+                transform.forward,
+                transform.up,
+                transform.right,
+                debugAtmosphere
+            );
+        }
+
+        public static MavFlightState BuildFlightState(
+            Vector3 worldPositionM,
+            Vector3 worldVelocityMps,
+            Vector3 unityLocalVelocityMps,
+            Vector3 unityLocalAngularRateRadSec,
+            Vector3 forwardWorld,
+            Vector3 upWorld,
+            Vector3 rightWorld,
+            MavAtmosphereSample atmosphere)
+        {
+            Vector3 aeroBodyVelocity =
+                MavFlightDynamicsMath.UnityLocalVectorToAeroBody(unityLocalVelocityMps);
+            Vector3 aeroBodyRates =
+                MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody(unityLocalAngularRateRadSec);
+
+            float tas = worldVelocityMps.magnitude;
+            float speedOfSound = Mathf.Max(1f, atmosphere.speedOfSoundMps);
+            float q = 0.5f * atmosphere.densityKgM3 * tas * tas;
 
             MavFlightState state = new MavFlightState();
-            state.worldPositionM = transform.position;
-            state.worldVelocityMps = worldVelocity;
+            state.worldPositionM = worldPositionM;
+            state.worldVelocityMps = worldVelocityMps;
             state.aeroBodyVelocityMps = aeroBodyVelocity;
             state.aeroBodyRatesRadSec = aeroBodyRates;
             state.trueAirspeedMps = tas;
@@ -473,7 +479,11 @@ namespace MaverickFresh.FlightDynamics
             state.dynamicPressurePa = q;
             state.alphaRad = MavFlightDynamicsMath.ComputeAlphaRad(aeroBodyVelocity);
             state.betaRad = MavFlightDynamicsMath.ComputeBetaRad(aeroBodyVelocity);
-            debugState = state;
+            state.attitude = MavAttitudeMath.FromWorldBasis(
+                forwardWorld, upWorld, rightWorld, worldVelocityMps);
+            state.specificForceAeroBodyG = Vector3.zero;
+            state.specificForceValid = false;
+            return state;
         }
 
         private void UpdateProfileDebug()
@@ -487,23 +497,306 @@ namespace MaverickFresh.FlightDynamics
             debugInsideProfileEnvelope = activeProfile.envelope.Contains(debugState);
         }
 
-        /// <summary>
-        /// Refreshes the readiness debug fields using the already-resolved references, so the
-        /// per-step path does not repeat component lookups.
-        /// </summary>
         private void UpdateReadinessDebug()
         {
-            string reason;
-            debugReadyForLiveFdm = EvaluateReadiness(
-                rb != null,
-                activeProfile != null && debugProfileValid,
-                aerodynamicModel != null,
-                controlSurfaceActuator != null,
-                controlLaw != null,
-                propulsionModel != null,
-                out reason
-            );
-            debugReadinessReason = reason;
+            debugReadinessInputs = BuildReadinessInputs();
+
+            int mask = debugReadinessInputs.ToBitmask();
+            if (mask == lastReadinessMask && readinessEvaluatedOnce)
+                return;
+
+            lastReadinessMask = mask;
+            readinessEvaluatedOnce = true;
+            debugReadiness = MavFlightDynamicsReadiness.Evaluate(debugReadinessInputs);
+            debugReadyForLiveFdm = debugReadiness.structurallyPrepared;
+            debugReadinessReason = debugReadiness.structurallyPrepared
+                ? debugReadiness.operationalReason
+                : debugReadiness.structuralReason;
+        }
+
+        public MavFlightDynamicsReadinessInputs BuildReadinessInputs()
+        {
+            return MavFlightDynamicsReadiness.BuildInputs(CapturePipelineSnapshot());
+        }
+
+        public MavPipelineSnapshot CapturePipelineSnapshot()
+        {
+            MavPipelineSnapshot snapshot = new MavPipelineSnapshot();
+
+            snapshot.body = this;
+            snapshot.hasRigidbody = rb != null;
+            snapshot.hasValidProfile = activeProfile != null && debugProfileValid;
+            snapshot.aerodynamicModel = aerodynamicModel != null ? aerodynamicModel : null;
+            snapshot.propulsionModel = propulsionModel != null ? propulsionModel : null;
+
+            snapshot.aerodynamicGeometryMatchesProfile =
+                aerodynamicModel != null
+                && activeProfile != null
+                && debugProfileValid
+                && GeometryMatches(aerodynamicModel.referenceGeometry, activeProfile.referenceGeometry);
+
+            snapshot.controlLaw = controlLaw != null ? controlLaw : null;
+            snapshot.controlLawEnabled = controlLaw != null && controlLaw.isActiveAndEnabled;
+            snapshot.controlLawDrivesActuatorEachStep =
+                controlLaw != null && controlLaw.driveActuatorInFixedUpdate;
+            snapshot.controlLawActuator =
+                controlLaw != null && controlLaw.actuator != null ? controlLaw.actuator : null;
+            snapshot.controlLawBody =
+                controlLaw != null && controlLaw.sixDoFBody != null ? controlLaw.sixDoFBody : null;
+            snapshot.controlLawCommandSource =
+                controlLaw != null && controlLaw.commandSource != null ? controlLaw.commandSource : null;
+            snapshot.observedSourceSignalThisStep =
+                controlLaw != null
+                && controlLaw.debugCommandResolution
+                    == MavFlightControlLawBase.MavCommandResolution.SourceSignal;
+            snapshot.enabledControlLawCount = CountEnabledControlLaws();
+
+            snapshot.actuator = controlSurfaceActuator != null ? controlSurfaceActuator : null;
+            snapshot.actuatorEnabled =
+                controlSurfaceActuator != null && controlSurfaceActuator.isActiveAndEnabled;
+            snapshot.actuatorBoundBody =
+                controlSurfaceActuator != null && controlSurfaceActuator.BoundBody != null
+                    ? controlSurfaceActuator.BoundBody
+                    : null;
+
+            MavPilotCommandSourceBase bodySource = ResolveCommandSource();
+            snapshot.bodyCommandSource = bodySource != null ? bodySource : null;
+            snapshot.commandSourceEnabled = bodySource != null && bodySource.isActiveAndEnabled;
+            snapshot.commandSourceDeclaresOperational =
+                bodySource != null && bodySource.IsOperationalCommandSource;
+
+            snapshot.propulsionAcceptableForLiveFlight =
+                propulsionModel != null
+                && (propulsionModel.IsAcceptableForLiveFlight || acceptNonAuthoritativePropulsion);
+
+            snapshot.legacyOwnerActive = HasLegacyPhysicsOwnerConflict();
+            debugLegacyPhysicsOwner = cachedLegacyOwnerName;
+
+            return snapshot;
+        }
+
+        public int CountEnabledControlLaws()
+        {
+            behaviourScratch.Clear();
+            GetComponents(behaviourScratch);
+
+            int count = 0;
+            for (int i = 0; i < behaviourScratch.Count; i++)
+            {
+                MavFlightControlLawBase law = behaviourScratch[i] as MavFlightControlLawBase;
+                if (law != null && law.enabled)
+                    count++;
+            }
+
+            return count;
+        }
+
+        private bool HasLegacyPhysicsOwnerConflict()
+        {
+            legacyOwnershipScanCountdown--;
+
+            if (!ShouldRescanLegacyOwnership(simulationEnabled, legacyOwnershipScanCountdown))
+                return cachedLegacyOwnershipConflict;
+
+            legacyOwnershipScanCountdown = LegacyOwnershipScanIntervalSteps;
+            RefreshLegacyPhysicsOwner();
+            return cachedLegacyOwnershipConflict;
+        }
+
+        public static bool ShouldRescanLegacyOwnership(bool loadApplicationArmed, int scanCountdown)
+        {
+            if (loadApplicationArmed)
+                return true;
+
+            return scanCountdown <= 0;
+        }
+
+        public void NotifyOwnershipChanged()
+        {
+            RefreshLegacyPhysicsOwner();
+            legacyOwnershipScanCountdown = 0;
+            readinessEvaluatedOnce = false;
+            lastReadinessMask = -1;
+        }
+
+        public void RefreshLegacyPhysicsOwner()
+        {
+            string offender;
+            cachedLegacyOwnershipConflict = TryFindLegacyPhysicsOwner(out offender);
+            cachedLegacyOwnerName = cachedLegacyOwnershipConflict ? offender : "none";
+        }
+
+        public MavFlightDynamicsReadinessReport EvaluateReadinessReport()
+        {
+            Resolve();
+            if (autoApplyProfileConfiguration && activeProfile == null)
+                ApplyConfiguredProfile(false);
+
+            RefreshLegacyPhysicsOwner();
+            legacyOwnershipScanCountdown = LegacyOwnershipScanIntervalSteps;
+
+            debugReadinessInputs = BuildReadinessInputs();
+            debugReadiness = MavFlightDynamicsReadiness.Evaluate(debugReadinessInputs);
+
+            lastReadinessMask = debugReadinessInputs.ToBitmask();
+            readinessEvaluatedOnce = true;
+            debugReadyForLiveFdm = debugReadiness.structurallyPrepared;
+            debugReadinessReason = debugReadiness.structurallyPrepared
+                ? debugReadiness.operationalReason
+                : debugReadiness.structuralReason;
+
+            return debugReadiness;
+        }
+
+        public bool IsOperationallyLiveReady(out string reason)
+        {
+            MavFlightDynamicsReadinessReport report = EvaluateReadinessReport();
+            reason = report.operationallyLiveReady ? report.operationalReason : report.summary;
+            return report.operationallyLiveReady;
+        }
+
+        private bool IsLoadApplicationPermitted()
+        {
+            if (!requireOperationalReadinessForLoadApplication)
+                return true;
+
+            if (debugReadiness.operationallyLiveReady)
+                return true;
+
+            if (debugReadiness.structurallyPrepared && allowStructuralOnlyLoadApplication)
+            {
+                if (!loggedStructuralOnlyOverride)
+                {
+                    loggedStructuralOnlyOverride = true;
+                    Debug.LogWarning(
+                        "[Maverick/FDM] Applying loads at STRUCTURALLY_PREPARED because "
+                        + "allowStructuralOnlyLoadApplication is set. Operational readiness is not met: "
+                        + debugReadiness.operationalReason,
+                        this
+                    );
+                }
+                return true;
+            }
+
+            debugRejectedNotLiveReadyApplications++;
+            if (!loggedNotLiveReadyRejection)
+            {
+                loggedNotLiveReadyRejection = true;
+                Debug.LogError(
+                    "[Maverick/FDM] simulationEnabled is set but the stack is not operationally "
+                    + "live-ready, so no loads were applied. " + debugReadiness.summary,
+                    this
+                );
+            }
+            return false;
+        }
+
+        private void PublishSpecificForce()
+        {
+            float massKg = rb != null
+                ? rb.mass
+                : (massProperties != null ? massProperties.massKg : 0f);
+
+            debugState = PublishSpecificForce(debugState, debugLoadSet, massKg);
+        }
+
+        public static MavFlightState PublishSpecificForce(
+            MavFlightState state,
+            MavFlightDynamicsLoadSet loadSet,
+            float massKg)
+        {
+            if (!loadSet.IsFinite() || massKg <= 0f)
+            {
+                state.specificForceAeroBodyG = Vector3.zero;
+                state.specificForceValid = false;
+                return state;
+            }
+
+            state.specificForceAeroBodyG = ComputeSpecificForceG(loadSet.totalForceAeroBodyN, massKg);
+            state.specificForceValid = true;
+            return state;
+        }
+
+        public static Vector3 ComputeSpecificForceG(Vector3 totalForceAeroBodyN, float massKg)
+        {
+            if (massKg <= 0f)
+                return Vector3.zero;
+
+            float scale = 1f / (massKg * MavControlLawProtections.StandardGravityMps2);
+            return totalForceAeroBodyN * scale;
+        }
+
+        public static bool IsLegacyOwnershipConflict(
+            string componentTypeName,
+            bool componentEnabled,
+            string[] denyList)
+        {
+            if (!componentEnabled || denyList == null || string.IsNullOrEmpty(componentTypeName))
+                return false;
+
+            for (int i = 0; i < denyList.Length; i++)
+            {
+                if (string.Equals(componentTypeName, denyList[i], System.StringComparison.Ordinal))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public bool TryFindLegacyPhysicsOwner(out string offenderName)
+        {
+            offenderName = "none";
+            if (conflictingLegacyPhysicsComponents == null || conflictingLegacyPhysicsComponents.Length == 0)
+                return false;
+
+            behaviourScratch.Clear();
+            GetComponents(behaviourScratch);
+
+            for (int i = 0; i < behaviourScratch.Count; i++)
+            {
+                MonoBehaviour behaviour = behaviourScratch[i];
+                if (behaviour == null || !behaviour.enabled)
+                    continue;
+
+                string typeName = behaviour.GetType().Name;
+                if (IsLegacyOwnershipConflict(typeName, behaviour.enabled, conflictingLegacyPhysicsComponents))
+                {
+                    offenderName = typeName;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private MavPilotCommandSourceBase ResolveCommandSource()
+        {
+            if (pilotCommandSource == null)
+                pilotCommandSource = GetComponent<MavPilotCommandSourceBase>();
+
+            return pilotCommandSource;
+        }
+
+        public static bool IdentityMatches(object expected, object actual)
+        {
+            if (expected == null || actual == null)
+                return false;
+
+            return ReferenceEquals(expected, actual);
+        }
+
+        private static bool GeometryMatches(MavAeroReferenceGeometry a, MavAeroReferenceGeometry b)
+        {
+            const float relativeTolerance = 1e-4f;
+            return NearlyEqual(a.wingAreaM2, b.wingAreaM2, relativeTolerance)
+                && NearlyEqual(a.wingSpanM, b.wingSpanM, relativeTolerance)
+                && NearlyEqual(a.meanAerodynamicChordM, b.meanAerodynamicChordM, relativeTolerance);
+        }
+
+        private static bool NearlyEqual(float a, float b, float relativeTolerance)
+        {
+            float scale = Mathf.Max(1f, Mathf.Max(Mathf.Abs(a), Mathf.Abs(b)));
+            return Mathf.Abs(a - b) <= relativeTolerance * scale;
         }
 
         private void PublishTelemetry(bool loadsApplied)
@@ -519,6 +812,7 @@ namespace MaverickFresh.FlightDynamics
             sample.dynamicPressurePa = debugState.dynamicPressurePa;
             sample.alphaDeg = debugState.AlphaDeg;
             sample.betaDeg = debugState.BetaDeg;
+            sample.loadFactorNz = debugState.specificForceValid ? debugState.LoadFactorNz : 0f;
 
             sample.rollRateDegSec = debugState.aeroBodyRatesRadSec.x * Mathf.Rad2Deg;
             sample.pitchRateDegSec = debugState.aeroBodyRatesRadSec.y * Mathf.Rad2Deg;
@@ -544,6 +838,7 @@ namespace MaverickFresh.FlightDynamics
                 propulsionModel != null && propulsionModel.HasAuthoritativeData;
             sample.aerodynamicContributions = debugLoadSet.aerodynamicContributions;
             sample.propulsiveContributions = debugLoadSet.propulsiveContributions;
+            sample.readinessLevel = (int)debugReadiness.level;
 
             telemetry.Capture(sample);
         }
@@ -552,6 +847,8 @@ namespace MaverickFresh.FlightDynamics
         {
             debugCoefficients = MavAeroCoefficients.Zero;
             debugLoads = MavAerodynamicLoads.Zero;
+            debugState.specificForceAeroBodyG = Vector3.zero;
+            debugState.specificForceValid = false;
             ClearUnityLoadDebug();
         }
 

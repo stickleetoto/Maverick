@@ -39,13 +39,33 @@ namespace MaverickFresh.FlightDynamics
         public bool driveActuatorInFixedUpdate = true;
 
         [Header("Normalized Pilot Intent")]
-        [Tooltip("Phase 1 has no input binding. This is set by test code, the inspector, or a later instructor layer.")]
+        [Tooltip("Optional command producer. When present and reporting a command, it overrides the inspector field below. Resolved from this GameObject when empty.")]
+        public MavPilotCommandSourceBase commandSource;
+
+        [Tooltip("BENCH INPUT ONLY. Used when no command source is wired, or when a source that does not claim to be an operational path has nothing to say. It is never used to cover the loss of an operational signal - that case applies the source's declared signal-loss policy.")]
         public MavPilotCommand pilotCommand = MavPilotCommand.Neutral;
 
         [Header("Debug")]
         public MavControlInput debugLastOutput;
+        public MavPilotCommand debugLastCommand;
+        public bool debugUsingCommandSource;
+
+        [Tooltip("Whether a command source actually produced a command this step.")]
+        public bool debugCommandSignalAvailable;
+
+        [Tooltip("Where this step's command came from.")]
+        public MavCommandResolution debugCommandResolution = MavCommandResolution.NoSource;
+
+        [Tooltip("Last command an operational source actually supplied. Feeds the signal-loss policy; never sourced from the inspector field.")]
+        public MavPilotCommand debugLastValidSourceCommand = MavPilotCommand.Neutral;
+
+        [Tooltip("How many times an operational source has dropped its signal. A dropout must be countable, not merely survivable.")]
+        public int debugCommandSignalLossEvents;
+
         public bool debugDroveActuator;
         public string debugStatus = "idle";
+
+        private bool wasInSignalLoss;
 
         /// <summary>
         /// Human-readable identity of this control law. Used by readiness reporting and telemetry
@@ -68,9 +88,28 @@ namespace MaverickFresh.FlightDynamics
         protected virtual void OnEnable()
         {
             ResolvePipeline();
+
+            // A control law must not inherit a command from a previous session. In particular the
+            // signal-loss policy must not be able to "hold" a command captured before this enable.
+            debugLastValidSourceCommand = MavPilotCommand.Neutral;
+            debugCommandResolution = MavCommandResolution.NoSource;
+            debugCommandSignalAvailable = false;
+            wasInSignalLoss = false;
         }
 
         protected virtual void FixedUpdate()
+        {
+            StepControlLaw(Time.fixedDeltaTime);
+        }
+
+        /// <summary>
+        /// One control-law step, with the timestep supplied rather than read from Time.
+        ///
+        /// Public and parameterised so an integration test can drive the real pipeline
+        /// deterministically, in the real order, instead of asserting against a hand-built stand-in.
+        /// Production simply calls it from FixedUpdate.
+        /// </summary>
+        public void StepControlLaw(float deltaTime)
         {
             ResolvePipeline();
             debugDroveActuator = false;
@@ -87,12 +126,14 @@ namespace MaverickFresh.FlightDynamics
                 return;
             }
 
+            debugLastCommand = ResolveCommand();
+
             debugLastOutput = Evaluate(
                 sixDoFBody.debugState,
                 sixDoFBody.debugAtmosphere,
-                pilotCommand.Clamped(),
+                debugLastCommand,
                 sixDoFBody.debugProfileValid ? sixDoFBody.activeProfile : null,
-                Time.fixedDeltaTime
+                deltaTime
             );
 
             if (actuator == null)
@@ -103,7 +144,10 @@ namespace MaverickFresh.FlightDynamics
 
             actuator.SetCommand(debugLastOutput);
             debugDroveActuator = true;
-            debugStatus = ControlLawName + " driving actuator";
+            debugStatus = ControlLawName + " driving actuator | command=" + debugCommandResolution
+                + (debugCommandResolution == MavCommandResolution.SignalLossPolicy
+                    ? " (" + commandSource.SignalLossPolicy + ")"
+                    : string.Empty);
         }
 
         protected void ResolvePipeline()
@@ -113,6 +157,106 @@ namespace MaverickFresh.FlightDynamics
 
             if (actuator == null)
                 actuator = GetComponent<MavControlSurfaceActuatorBase>();
+
+            if (commandSource == null)
+                commandSource = GetComponent<MavPilotCommandSourceBase>();
+        }
+
+        /// <summary>
+        /// How this step's pilot intent was obtained. Reported so a dropout is visible rather than
+        /// inferred from the aircraft's behaviour.
+        /// </summary>
+        public enum MavCommandResolution
+        {
+            /// <summary>No command source is wired: bench mode, using the inspector field.</summary>
+            NoSource = 0,
+
+            /// <summary>A source supplied a command this step.</summary>
+            SourceSignal = 1,
+
+            /// <summary>An OPERATIONAL source produced nothing, so its declared signal-loss policy applied.</summary>
+            SignalLossPolicy = 2,
+
+            /// <summary>A non-operational (bench) source produced nothing, so the inspector field applied.</summary>
+            BenchInspectorFallback = 3
+        }
+
+        /// <summary>
+        /// Decides where this step's command comes from. Pure, so the rule can be exercised
+        /// exhaustively without a component.
+        ///
+        /// The case that matters is an operational path with no signal. That must resolve to the
+        /// declared signal-loss policy, NEVER to the inspector field: an inspector value silently
+        /// becoming the live command during a dropout is a control-path failure disguised as an
+        /// aircraft that still seems to fly.
+        /// </summary>
+        public static MavCommandResolution ClassifyCommandResolution(
+            bool hasSource,
+            bool sourceEnabled,
+            bool gotSignal,
+            bool sourceIsOperationalPath)
+        {
+            if (!hasSource || !sourceEnabled)
+                return MavCommandResolution.NoSource;
+
+            if (gotSignal)
+                return MavCommandResolution.SourceSignal;
+
+            return sourceIsOperationalPath
+                ? MavCommandResolution.SignalLossPolicy
+                : MavCommandResolution.BenchInspectorFallback;
+        }
+
+        /// <summary>
+        /// Picks this step's normalized pilot intent.
+        ///
+        /// Inspector input is a BENCH affordance. It is used when there is no command source at
+        /// all, or when a source that does not claim to be an operational path has nothing to say.
+        /// It is never used to paper over the loss of an operational signal - that case applies the
+        /// source's declared policy and is counted, so the dropout is observable.
+        /// </summary>
+        protected MavPilotCommand ResolveCommand()
+        {
+            bool hasSource = commandSource != null;
+            bool sourceEnabled = hasSource && commandSource.isActiveAndEnabled;
+
+            MavPilotCommand sourced = MavPilotCommand.Neutral;
+            bool gotSignal = sourceEnabled && commandSource.TryGetCommand(out sourced);
+            bool operationalPath = sourceEnabled && commandSource.IsOperationalCommandSource;
+
+            debugCommandResolution = ClassifyCommandResolution(
+                hasSource, sourceEnabled, gotSignal, operationalPath);
+
+            debugUsingCommandSource = debugCommandResolution == MavCommandResolution.SourceSignal;
+            debugCommandSignalAvailable = gotSignal;
+
+            switch (debugCommandResolution)
+            {
+                case MavCommandResolution.SourceSignal:
+                    debugLastValidSourceCommand = sourced.Clamped();
+                    wasInSignalLoss = false;
+                    return debugLastValidSourceCommand;
+
+                case MavCommandResolution.SignalLossPolicy:
+                    if (!wasInSignalLoss)
+                    {
+                        wasInSignalLoss = true;
+                        debugCommandSignalLossEvents++;
+                        Debug.LogWarning(
+                            "[Maverick/FDM] Operational command source '"
+                            + commandSource.CommandSourceName
+                            + "' stopped producing commands; applying its declared "
+                            + commandSource.SignalLossPolicy
+                            + " policy. Inspector input is NOT used as a live fallback.",
+                            this);
+                    }
+                    return MavPilotCommandSourceBase.ResolveOnSignalLoss(
+                        commandSource.SignalLossPolicy, debugLastValidSourceCommand);
+
+                default:
+                    wasInSignalLoss = false;
+                    return pilotCommand.Clamped();
+            }
         }
     }
 }

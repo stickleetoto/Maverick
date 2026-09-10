@@ -23,24 +23,57 @@ namespace MaverickFresh.FlightDynamics.F16
         [Header("NASA Garza/Morelli engine state")]
         [Range(0f, 100f)] public float actualPowerPercent;
 
+        [Header("Dimensional Thrust Data (separate from the sourced power dynamics)")]
+        [Tooltip("Optional altitude/Mach/power thrust deck. NULL or Unavailable means dimensional thrust stays exactly zero, which is the current F-16 condition. Attaching a deck does not make its numbers authoritative - the deck declares that itself.")]
+        public MavThrustDeckBase thrustDeck;
+
         [Header("Debug")]
         [Range(0f, 1f)] public float debugThrottle01;
         [Range(0f, 100f)] public float debugCommandedPowerPercent;
         public float debugPowerRatePercentPerSec;
         public bool debugThrustDeckAvailable = false;
+        public MavThrustDeckResult debugLastThrustResult;
+        public string debugThrustDataStatus = "no thrust deck: dimensional thrust unavailable";
 
         public override string PropulsionModelName
         {
-            get { return "F-16 Garza/Morelli power dynamics (thrust deck pending)"; }
+            get
+            {
+                return thrustDeck != null
+                    ? "F-16 Garza/Morelli power dynamics + " + thrustDeck.DeckName
+                    : "F-16 Garza/Morelli power dynamics (thrust deck pending)";
+            }
         }
 
         /// <summary>
-        /// False until the altitude/Mach idle-military-maximum thrust tables are frozen.
-        /// The power-state dynamics themselves are sourced; the dimensional thrust output is not.
+        /// Reflects the DIMENSIONAL THRUST data only. The power-state dynamics are sourced
+        /// independently and are reported by <see cref="HasAuthoritativePowerDynamics"/>.
+        ///
+        /// With no deck attached, or a deck that declares its data unavailable, this stays false and
+        /// thrust stays exactly zero - the current F-16 condition on this branch.
         /// </summary>
         public override bool HasAuthoritativeData
         {
-            get { return false; }
+            get
+            {
+                return thrustDeck != null
+                    && thrustDeck.Authority == MavThrustDataAuthority.Authoritative;
+            }
+        }
+
+        /// <summary>
+        /// Stricter than <see cref="HasAuthoritativeData"/>: also requires an envelope policy that
+        /// keeps every returned number backed by the data. A deck configured to extrapolate is not
+        /// acceptable for live flight even when its tables are authoritative.
+        /// </summary>
+        public override bool IsAcceptableForLiveFlight
+        {
+            get { return thrustDeck != null && thrustDeck.IsAcceptableForLiveFlight; }
+        }
+
+        public override string ThrustDataStatus
+        {
+            get { return debugThrustDataStatus; }
         }
 
         public bool HasAuthoritativePowerDynamics
@@ -67,7 +100,65 @@ namespace MaverickFresh.FlightDynamics.F16
                 deltaTime
             );
 
-            return BuildZeroThrustLoads(actualPowerPercent);
+            return EvaluateDimensionalThrust(state, atmosphere, actualPowerPercent);
+        }
+
+        /// <summary>
+        /// Turns the current power state into dimensional loads via the thrust deck.
+        ///
+        /// The split is deliberate: the power state above is sourced Garza/Morelli, the thrust below
+        /// is whatever the deck can honestly supply. With no deck, or an unusable one, the result is
+        /// exactly zero thrust reported as non-authoritative - never a plausible-looking guess.
+        /// </summary>
+        public MavPropulsiveLoads EvaluateDimensionalThrust(
+            MavFlightState state,
+            MavAtmosphereSample atmosphere,
+            float powerPercent)
+        {
+            debugThrustDeckAvailable = thrustDeck != null
+                                       && thrustDeck.Authority != MavThrustDataAuthority.Unavailable;
+
+            if (!debugThrustDeckAvailable)
+            {
+                debugLastThrustResult = MavThrustDeckResult.Unavailable(
+                    "no dimensional thrust deck: F-16 thrust remains unavailable");
+                debugThrustDataStatus = debugLastThrustResult.statusReason;
+                return BuildZeroThrustLoads(powerPercent);
+            }
+
+            debugLastThrustResult = thrustDeck.Evaluate(
+                MavThrustDeckQuery.Create(state.worldPositionM.y, state.mach, powerPercent));
+
+            debugThrustDataStatus = thrustDeck.Authority + " / " + debugLastThrustResult.statusReason;
+
+            if (!debugLastThrustResult.valid)
+                return BuildZeroThrustLoads(powerPercent);
+
+            return BuildAxialThrustLoads(
+                debugLastThrustResult.thrustN,
+                powerPercent,
+                debugLastThrustResult.authority == MavThrustDataAuthority.Authoritative);
+        }
+
+        /// <summary>
+        /// Dimensional propulsive loads for a thrust acting along body X through the CG.
+        ///
+        /// v0.1 models no thrust-line offset, so the moment is exactly zero rather than an
+        /// approximation. The authority flag rides along with the loads so downstream layers cannot
+        /// lose track of where the number came from.
+        /// </summary>
+        public static MavPropulsiveLoads BuildAxialThrustLoads(
+            float thrustN,
+            float actualPowerPercent,
+            bool authoritative)
+        {
+            MavPropulsiveLoads loads = MavPropulsiveLoads.Zero;
+            loads.forceAeroBodyN = new Vector3(thrustN, 0f, 0f);
+            loads.momentAeroBodyNm = Vector3.zero;
+            loads.reportedThrustN = thrustN;
+            loads.powerState01 = Mathf.Clamp01(actualPowerPercent * 0.01f);
+            loads.hasAuthoritativeData = authoritative;
+            return loads;
         }
 
         public override void ResetEngineState(float throttle01)
