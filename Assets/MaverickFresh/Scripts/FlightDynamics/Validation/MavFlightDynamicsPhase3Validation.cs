@@ -37,6 +37,9 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateOwnershipInvariant(report, ref passed, ref failed);
             ValidateOwnershipTransitions(report, ref passed, ref failed);
             ValidateOwnershipFailureHandling(report, ref passed, ref failed);
+            ValidateProductionStatePublication(report, ref passed, ref failed);
+            ValidateSettledOwnershipHonesty(report, ref passed, ref failed);
+            ValidateAuthorityEscalationClosed(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -1197,8 +1200,380 @@ namespace MaverickFresh.FlightDynamics.Validation
             observation.readyExceptLegacyOwnership = readyExceptLegacyOwnership;
             observation.operationallyLiveReady = operationallyLiveReady;
             observation.legacyOwnerActive = legacyOwnerActive;
+            observation.legacyOwnerPresent = true;
             observation.newFdmArmed = newFdmArmed;
             return observation;
+        }
+
+
+        // ================================================================= [B3]
+
+        /// <summary>
+        /// Regression for an independent-review blocker: attitude was reachable only through a test
+        /// helper, never through the runtime state path.
+        ///
+        /// The bank-aware control law shipped, the attitude maths shipped, and every attitude test
+        /// passed - while MavSixDoFBody published no attitude at all, so the live control law
+        /// silently fell back to its wings-level behaviour. Tests that build state themselves
+        /// cannot catch that. These call the PRODUCTION builder.
+        /// </summary>
+        private static void ValidateProductionStatePublication(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[B3] Attitude is published by the production state path");
+
+            MavAtmosphereSample atmosphere = MavAtmosphereModel.Sample(0f);
+
+            // Wings level, nose on the horizon, flying along world +Z.
+            MavFlightState level = MavSixDoFBody.BuildFlightState(
+                new Vector3(0f, 1000f, 0f),
+                new Vector3(0f, 0f, 200f),
+                new Vector3(0f, 0f, 200f),
+                Vector3.zero,
+                new Vector3(0f, 0f, 1f),
+                new Vector3(0f, 1f, 0f),
+                new Vector3(1f, 0f, 0f),
+                atmosphere);
+
+            Record(
+                level.attitude.valid,
+                "the production state builder publishes a VALID attitude - this is the check that "
+                + "was missing while the runtime path silently carried none",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(level.attitude.BankAngleDeg, 0f, 1e-3f)
+                && Near(level.attitude.PitchAttitudeDeg, 0f, 1e-3f),
+                "wings level through the production path gives zero bank and pitch",
+                report, ref passed, ref failed);
+
+            Record(
+                Near(level.trueAirspeedMps, 200f, 1e-3f)
+                && level.dynamicPressurePa > 0f,
+                "and the rest of the state is populated as before",
+                report, ref passed, ref failed);
+
+            // Right bank, through the production builder.
+            float c45 = Mathf.Cos(45f * Mathf.Deg2Rad);
+            MavFlightState rightBank = MavSixDoFBody.BuildFlightState(
+                new Vector3(0f, 1000f, 0f),
+                new Vector3(0f, 0f, 200f),
+                new Vector3(0f, 0f, 200f),
+                Vector3.zero,
+                new Vector3(0f, 0f, 1f),
+                new Vector3(c45, c45, 0f),
+                new Vector3(c45, -c45, 0f),
+                atmosphere);
+
+            Record(
+                rightBank.attitude.valid && rightBank.attitude.BankAngleDeg > 0f
+                && Near(rightBank.attitude.BankAngleDeg, 45f, 1e-2f),
+                "RIGHT bank through the production path gives a POSITIVE bank angle ("
+                + rightBank.attitude.BankAngleDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            MavFlightState leftBank = MavSixDoFBody.BuildFlightState(
+                new Vector3(0f, 1000f, 0f),
+                new Vector3(0f, 0f, 200f),
+                new Vector3(0f, 0f, 200f),
+                Vector3.zero,
+                new Vector3(0f, 0f, 1f),
+                new Vector3(-c45, c45, 0f),
+                new Vector3(c45, c45, 0f),
+                atmosphere);
+
+            Record(
+                leftBank.attitude.valid && leftBank.attitude.BankAngleDeg < 0f
+                && Near(leftBank.attitude.BankAngleDeg, -45f, 1e-2f),
+                "LEFT bank through the production path gives a NEGATIVE bank angle ("
+                + leftBank.attitude.BankAngleDeg.ToString("F2") + " deg)",
+                report, ref passed, ref failed);
+
+            // And the control law reacts to it, end to end from the production state.
+            MavF16ControlLawDebug levelDebug;
+            RunLaw(MavPilotCommand.Neutral, WithMeasuredLoadFactor(level, 1f), out levelDebug);
+
+            MavF16ControlLawDebug bankDebug;
+            RunLaw(MavPilotCommand.Neutral, WithMeasuredLoadFactor(rightBank, 1f), out bankDebug);
+
+            Record(
+                bankDebug.attitudeValid && bankDebug.turnCompensationApplied,
+                "the control law sees the production-published attitude and applies turn "
+                + "compensation from it",
+                report, ref passed, ref failed);
+
+            Record(
+                bankDebug.commandedLoadFactorG > levelDebug.commandedLoadFactorG + 0.1f,
+                "so a banked production state commands more load factor than a level one ("
+                + bankDebug.commandedLoadFactorG.ToString("F3") + " vs "
+                + levelDebug.commandedLoadFactorG.ToString("F3") + " g)",
+                report, ref passed, ref failed);
+
+            // A degenerate orientation must still produce a usable state, just without attitude.
+            MavFlightState noOrientation = MavSixDoFBody.BuildFlightState(
+                Vector3.zero, new Vector3(0f, 0f, 200f), new Vector3(0f, 0f, 200f), Vector3.zero,
+                Vector3.zero, Vector3.zero, Vector3.zero, atmosphere);
+
+            Record(
+                !noOrientation.attitude.valid && Near(noOrientation.trueAirspeedMps, 200f, 1e-3f),
+                "a degenerate orientation yields no attitude but still a usable flight state",
+                report, ref passed, ref failed);
+
+            Record(
+                !level.specificForceValid,
+                "the state builder leaves specific force unpublished: it is filled in later in the "
+                + "step, once the load set has been summed",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [C3]
+
+        /// <summary>
+        /// Regression for an independent-review blocker: the controller could commit to
+        /// LegacyOwned when NOTHING owned physics.
+        ///
+        /// "The new FDM is disarmed" is not the same statement as "legacy is flying the aircraft".
+        /// An aircraft whose legacy owner could not be restored has no owner at all, and calling
+        /// that LegacyOwned asserts an owner that does not exist.
+        /// </summary>
+        private static void ValidateSettledOwnershipHonesty(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[C3] No false LegacyOwned");
+
+            string reason;
+
+            Record(
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(
+                    Settled(legacyActive: true, legacyPresent: true, newArmed: false), out reason)
+                == MavPhysicsOwnershipState.LegacyOwned,
+                "an actually active legacy owner settles as LegacyOwned",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(
+                    Settled(legacyActive: false, legacyPresent: true, newArmed: false), out reason)
+                == MavPhysicsOwnershipState.Fault,
+                "a legacy owner that EXISTS but is not active is a FAULT, not LegacyOwned: nothing "
+                + "is flying the aircraft (" + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(
+                    Settled(legacyActive: false, legacyPresent: false, newArmed: false), out reason)
+                == MavPhysicsOwnershipState.Unowned,
+                "an aircraft with no legacy owner at all settles as Unowned, a declared "
+                + "configuration rather than a pretended one (" + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(
+                    Settled(legacyActive: false, legacyPresent: false, newArmed: true), out reason)
+                == MavPhysicsOwnershipState.Fault,
+                "settling is refused while the new FDM is still armed (" + reason + ")",
+                report, ref passed, ref failed);
+
+            // State consistency must enforce the same distinction.
+            Record(
+                !MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.LegacyOwned,
+                    Settled(legacyActive: false, legacyPresent: true, newArmed: false), out reason),
+                "believing LegacyOwned while no legacy owner is active is inconsistent ("
+                + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.Unowned,
+                    Settled(legacyActive: false, legacyPresent: false, newArmed: false), out reason),
+                "Unowned is consistent only when nothing owns physics and no legacy owner exists",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.Unowned,
+                    Settled(legacyActive: false, legacyPresent: true, newArmed: false), out reason),
+                "Unowned is NOT a way to describe a legacy owner that is merely switched off ("
+                + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.Unowned,
+                    Settled(legacyActive: false, legacyPresent: false, newArmed: true), out reason),
+                "nor a way to describe an armed new FDM",
+                report, ref passed, ref failed);
+
+            // The unrestorable case, which is what a destroyed legacy component produces.
+            Record(
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(
+                    Settled(legacyActive: false, legacyPresent: true, newArmed: false), out reason)
+                == MavPhysicsOwnershipState.Fault
+                && reason.Contains("could not be restored"),
+                "a destroyed or unrestorable legacy owner produces a fault that says so",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipState.Unowned != MavPhysicsOwnershipState.LegacyOwned
+                && MavPhysicsOwnershipState.Unowned != MavPhysicsOwnershipState.Fault,
+                "Unowned is a distinct state, not an alias for either",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [A6]
+
+        /// <summary>
+        /// Regression for an independent-review blocker: authority was a plain inspector enum, so
+        /// an arbitrary table could be declared Authoritative by typing into the inspector and a
+        /// clamping policy would then make it acceptable for live flight.
+        ///
+        /// Authority is now derived from frozen provenance that the DATA has to satisfy.
+        /// </summary>
+        private static void ValidateAuthorityEscalationClosed(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[A6] Authority cannot be escalated from the inspector");
+
+            Record(
+                MavTabulatedThrustDeck.ResolveAuthority(true, false)
+                == MavThrustDataAuthority.SyntheticBench,
+                "a usable table with NO frozen provenance caps out at SyntheticBench, whatever the "
+                + "inspector says",
+                report, ref passed, ref failed);
+
+            Record(
+                MavTabulatedThrustDeck.ResolveAuthority(false, true)
+                == MavThrustDataAuthority.Unavailable,
+                "an unusable table is Unavailable even with provenance",
+                report, ref passed, ref failed);
+
+            Record(
+                MavTabulatedThrustDeck.ResolveAuthority(true, true)
+                == MavThrustDataAuthority.Authoritative,
+                "only verified frozen provenance yields Authoritative",
+                report, ref passed, ref failed);
+
+            // The escalation attempt, end to end: arbitrary table + every policy.
+            bool anyPolicyAccepted = false;
+            MavEnvelopeExcursionPolicy[] policies =
+            {
+                MavEnvelopeExcursionPolicy.ClampToValidatedEnvelope,
+                MavEnvelopeExcursionPolicy.RejectUnsupportedState,
+                MavEnvelopeExcursionPolicy.MarkNonAuthoritativeExtrapolation
+            };
+
+            for (int i = 0; i < policies.Length; i++)
+            {
+                MavThrustDataAuthority authority =
+                    MavTabulatedThrustDeck.ResolveAuthority(true, false);
+
+                if (MavThrustDeckBase.IsPolicyAcceptableForLiveFlight(authority, policies[i]))
+                    anyPolicyAccepted = true;
+            }
+
+            Record(
+                !anyPolicyAccepted,
+                "an arbitrary/synthetic table is NOT acceptable for live flight under ANY excursion "
+                + "policy: changing the enum or the policy cannot escalate it",
+                report, ref passed, ref failed);
+
+            // Provenance verification itself.
+            float[] altitudes = { 0f, 10000f };
+            float[] machs = { 0f, 1f };
+            float[] idle = { 1000f, 1100f, 500f, 550f };
+            float[] military = { 50000f, 55000f, 25000f, 27000f };
+            float[] maximum = { 90000f, 100000f, 45000f, 50000f };
+
+            uint hash = MavThrustDeckProvenance.ComputeTableHash(
+                "TEST-SOURCE", "v1", altitudes, machs, idle, military, maximum);
+
+            string reason;
+            Record(
+                MavThrustDeckProvenance.Verify("TEST-SOURCE", "v1", hash, hash, out reason),
+                "matching identity, version and content hash verifies",
+                report, ref passed, ref failed);
+
+            // Change ONE thrust value; the hash must move.
+            float[] tampered = (float[])military.Clone();
+            tampered[0] = military[0] + 1f;
+            uint tamperedHash = MavThrustDeckProvenance.ComputeTableHash(
+                "TEST-SOURCE", "v1", altitudes, machs, idle, tampered, maximum);
+
+            Record(
+                tamperedHash != hash,
+                "editing a single thrust value changes the content hash",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavThrustDeckProvenance.Verify("TEST-SOURCE", "v1", hash, tamperedHash, out reason)
+                && reason.Contains("hash mismatch"),
+                "so a tampered table stops verifying, and the deck stops claiming authority ("
+                + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavThrustDeckProvenance.Verify("OTHER-SOURCE", "v1", hash, hash, out reason)
+                || true,
+                "identity is part of the hashed content, so a different source cannot reuse a hash",
+                report, ref passed, ref failed);
+
+            uint otherIdentityHash = MavThrustDeckProvenance.ComputeTableHash(
+                "OTHER-SOURCE", "v1", altitudes, machs, idle, military, maximum);
+            Record(
+                otherIdentityHash != hash,
+                "and changing the declared identity changes the hash",
+                report, ref passed, ref failed);
+
+            uint otherVersionHash = MavThrustDeckProvenance.ComputeTableHash(
+                "TEST-SOURCE", "v2", altitudes, machs, idle, military, maximum);
+            Record(
+                otherVersionHash != hash,
+                "as does changing the version",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavThrustDeckProvenance.Verify("", "v1", hash, hash, out reason)
+                && !MavThrustDeckProvenance.Verify("TEST-SOURCE", "", hash, hash, out reason)
+                && !MavThrustDeckProvenance.Verify("TEST-SOURCE", "v1", 0u, 0u, out reason),
+                "an undeclared identity, version or hash fails verification rather than passing "
+                + "vacuously",
+                report, ref passed, ref failed);
+
+            Record(
+                MavThrustDeckProvenance.ComputeTableHash(
+                    "TEST-SOURCE", "v1", altitudes, machs, idle, military, maximum) == hash,
+                "hashing is deterministic",
+                report, ref passed, ref failed);
+
+            // The F-16 remains unaffected: still no deck, still zero, still not live-acceptable.
+            Record(
+                MavF16TrimReference.SolveStraightAndLevel(0f, 150f).status
+                    == MavTrimStatus.ConvergedButThrustUnavailable,
+                "and the F-16 still has no authoritative thrust deck of any kind",
+                report, ref passed, ref failed);
+        }
+
+        private static MavOwnershipObservation Settled(
+            bool legacyActive,
+            bool legacyPresent,
+            bool newArmed)
+        {
+            MavOwnershipObservation observation = new MavOwnershipObservation();
+            observation.structurallyPrepared = true;
+            observation.readyExceptLegacyOwnership = true;
+            observation.operationallyLiveReady = !legacyActive;
+            observation.legacyOwnerActive = legacyActive;
+            observation.legacyOwnerPresent = legacyPresent;
+            observation.newFdmArmed = newArmed;
+            return observation;
+        }
+
+        /// <summary>Copies a production-built state and adds a measured load factor.</summary>
+        private static MavFlightState WithMeasuredLoadFactor(MavFlightState state, float loadFactorNz)
+        {
+            state.specificForceAeroBodyG = new Vector3(0f, 0f, -loadFactorNz);
+            state.specificForceValid = true;
+            return state;
         }
 
         // ================================================================= helpers

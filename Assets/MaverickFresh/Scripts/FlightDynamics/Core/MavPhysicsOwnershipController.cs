@@ -26,6 +26,16 @@ namespace MaverickFresh.FlightDynamics
         TransitionToLegacy = 3,
 
         /// <summary>
+        /// NOBODY owns physics, and that is a known, declared configuration - an aircraft with no
+        /// legacy physics owner components at all, such as a bench rig.
+        ///
+        /// This state exists because calling that situation "LegacyOwned" would be a lie: it would
+        /// claim a legacy owner is flying the aircraft when none exists. An aircraft that is
+        /// supposed to have a legacy owner and does not is a FAULT, not this.
+        /// </summary>
+        Unowned = 5,
+
+        /// <summary>
         /// Ownership could not be established or restored. The new FDM is disarmed and the
         /// controller stops acting until an operator clears the fault.
         /// </summary>
@@ -46,6 +56,9 @@ namespace MaverickFresh.FlightDynamics
 
         [Tooltip("A legacy physics owner is currently enabled on the aircraft.")]
         public bool legacyOwnerActive;
+
+        [Tooltip("A legacy physics owner component EXISTS on the aircraft, enabled or not. Distinguishes 'legacy is switched off' from 'there is no legacy stack here at all'.")]
+        public bool legacyOwnerPresent;
 
         [Tooltip("The new FDM is armed to apply loads.")]
         public bool newFdmArmed;
@@ -129,6 +142,44 @@ namespace MaverickFresh.FlightDynamics
         }
 
         /// <summary>
+        /// The state to settle in after legacy ownership has been released or restored.
+        ///
+        /// This is the rule that stops a false LegacyOwned. Committing to LegacyOwned requires an
+        /// actually active legacy owner - not merely "the new FDM is off". The three outcomes are
+        /// distinct facts:
+        ///
+        ///   a legacy owner is active            -> LegacyOwned
+        ///   none active, and none exists at all -> Unowned    (a declared bench configuration)
+        ///   none active, but one EXISTS         -> Fault      (restore failed; nothing is flying it)
+        /// </summary>
+        public static MavPhysicsOwnershipState ResolveSettledOwnership(
+            MavOwnershipObservation observation,
+            out string reason)
+        {
+            if (observation.newFdmArmed)
+            {
+                reason = "the new FDM is still armed; ownership is not settled on legacy";
+                return MavPhysicsOwnershipState.Fault;
+            }
+
+            if (observation.legacyOwnerActive)
+            {
+                reason = "a legacy physics owner is active";
+                return MavPhysicsOwnershipState.LegacyOwned;
+            }
+
+            if (observation.legacyOwnerPresent)
+            {
+                reason = "a legacy physics owner exists on this aircraft but could not be "
+                         + "restored, so nothing owns its physics";
+                return MavPhysicsOwnershipState.Fault;
+            }
+
+            reason = "this aircraft has no legacy physics owner; nothing owns its physics by design";
+            return MavPhysicsOwnershipState.Unowned;
+        }
+
+        /// <summary>
         /// Whether ownership must be handed back. Any of these means the new path can no longer be
         /// trusted with the aircraft.
         /// </summary>
@@ -177,6 +228,28 @@ namespace MaverickFresh.FlightDynamics
                     if (observation.newFdmArmed)
                     {
                         reason = "state says legacy owns physics but the new FDM is armed";
+                        return false;
+                    }
+                    // The claim is that LEGACY OWNS PHYSICS. Nothing being active is a different
+                    // situation entirely, and calling it LegacyOwned would assert an owner that
+                    // does not exist.
+                    if (!observation.legacyOwnerActive)
+                    {
+                        reason = "state says legacy owns physics but no legacy owner is active";
+                        return false;
+                    }
+                    break;
+
+                case MavPhysicsOwnershipState.Unowned:
+                    if (observation.newFdmArmed || observation.legacyOwnerActive)
+                    {
+                        reason = "state says nothing owns physics but an owner is active";
+                        return false;
+                    }
+                    if (observation.legacyOwnerPresent)
+                    {
+                        reason = "state says nothing owns physics, but a legacy owner exists on "
+                                 + "this aircraft and is merely disabled";
                         return false;
                     }
                     break;
@@ -242,7 +315,7 @@ namespace MaverickFresh.FlightDynamics
         [Tooltip("OFF by default. When false the controller never initiates a handover by itself; ownership only moves when RequestTransitionToNewFdm is called.")]
         public bool autoTransitionToNewFdm = false;
 
-        [Tooltip("Component type names treated as legacy physics owners. Defaults to the same list MavSixDoFBody uses for conflict detection.")]
+        [Tooltip("Component type names treated as legacy physics owners. Defaults to the same list MavSixDoFBody uses for conflict detection. Names that do not exist in the project are harmless: matching is by type name, so listing a type defensively costs nothing.")]
         public string[] legacyPhysicsOwners =
             (string[])MavSixDoFBody.DefaultConflictingLegacyPhysicsComponents.Clone();
 
@@ -300,6 +373,7 @@ namespace MaverickFresh.FlightDynamics
             switch (state)
             {
                 case MavPhysicsOwnershipState.LegacyOwned:
+                case MavPhysicsOwnershipState.Unowned:
                     if (transitionRequested || autoTransitionToNewFdm)
                     {
                         transitionRequested = false;
@@ -349,9 +423,12 @@ namespace MaverickFresh.FlightDynamics
             if (state != MavPhysicsOwnershipState.Fault)
                 return;
 
-            RestoreLegacyOwners();
             DisarmNewFdm();
-            SetState(MavPhysicsOwnershipState.LegacyOwned, "fault cleared by operator");
+            bool restored = RestoreLegacyOwners();
+
+            // Clearing a fault does not assert an owner into existence. The settled state is
+            // whatever is actually true afterwards, and it can legitimately remain Fault.
+            SettleAfterRelease("fault cleared by operator", restored);
         }
 
         /// <summary>
@@ -415,18 +492,49 @@ namespace MaverickFresh.FlightDynamics
             debugRolledBackTransitions++;
 
             DisarmNewFdm();
-            RestoreLegacyOwners();
+            bool restored = RestoreLegacyOwners();
 
+            if (!SettleAfterRelease("rolled back to legacy: " + reason, restored))
+                return;
+
+            Debug.LogWarning("[Maverick/FDM/Ownership] Handover rolled back: " + reason, this);
+        }
+
+        /// <summary>
+        /// Commits to a settled non-new ownership state, having actually VERIFIED what owns
+        /// physics rather than inferring it from the new FDM being off.
+        ///
+        /// Returns false when the outcome was a fault, so callers can stop.
+        /// </summary>
+        private bool SettleAfterRelease(string context, bool restoreSucceeded)
+        {
             debugObservation = Observe();
+
             if (MavPhysicsOwnershipRules.ViolatesExclusiveOwnership(
                     debugObservation.legacyOwnerActive, debugObservation.newFdmArmed))
             {
-                EnterFault("rollback left both owners active: " + reason);
-                return;
+                EnterFault("both owners active after " + context);
+                return false;
             }
 
-            SetState(MavPhysicsOwnershipState.LegacyOwned, "rolled back to legacy: " + reason);
-            Debug.LogWarning("[Maverick/FDM/Ownership] Handover rolled back: " + reason, this);
+            string settleReason;
+            MavPhysicsOwnershipState settled =
+                MavPhysicsOwnershipRules.ResolveSettledOwnership(debugObservation, out settleReason);
+
+            if (settled == MavPhysicsOwnershipState.Fault)
+            {
+                EnterFault(settleReason + " (" + context + ")");
+                return false;
+            }
+
+            if (!restoreSucceeded && settled != MavPhysicsOwnershipState.Unowned)
+            {
+                EnterFault("legacy owners could not all be restored (" + context + ")");
+                return false;
+            }
+
+            SetState(settled, context + " | " + settleReason);
+            return true;
         }
 
         private void ReturnToLegacy(string reason)
@@ -437,18 +545,12 @@ namespace MaverickFresh.FlightDynamics
             // statement that ends the double-ownership condition, and it runs before any physics
             // owner executes this step.
             DisarmNewFdm();
-            RestoreLegacyOwners();
-
-            debugObservation = Observe();
-            if (MavPhysicsOwnershipRules.ViolatesExclusiveOwnership(
-                    debugObservation.legacyOwnerActive, debugObservation.newFdmArmed))
-            {
-                EnterFault("could not end double ownership while returning to legacy");
-                return;
-            }
+            bool restored = RestoreLegacyOwners();
 
             debugReturnsToLegacy++;
-            SetState(MavPhysicsOwnershipState.LegacyOwned, "returned to legacy: " + reason);
+            if (!SettleAfterRelease("returned from new FDM: " + reason, restored))
+                return;
+
             Debug.LogWarning("[Maverick/FDM/Ownership] Returned to legacy ownership: " + reason, this);
         }
 
@@ -463,17 +565,11 @@ namespace MaverickFresh.FlightDynamics
             // The safe direction is always to disarm the new path: legacy flying alone is a
             // supported configuration, both flying together is not.
             DisarmNewFdm();
-            RestoreLegacyOwners();
+            bool restored = RestoreLegacyOwners();
 
-            debugObservation = Observe();
-            if (MavPhysicsOwnershipRules.ViolatesExclusiveOwnership(
-                    debugObservation.legacyOwnerActive, debugObservation.newFdmArmed))
-            {
-                EnterFault("ownership inconsistency could not be resolved: " + reason);
+            if (!SettleAfterRelease("ownership inconsistency: " + reason, restored))
                 return;
-            }
 
-            SetState(MavPhysicsOwnershipState.LegacyOwned, "ownership inconsistency resolved: " + reason);
             Debug.LogError("[Maverick/FDM/Ownership] " + reason + " - forced back to legacy.", this);
         }
 
@@ -507,9 +603,39 @@ namespace MaverickFresh.FlightDynamics
             observation.operationallyLiveReady = full.operationallyLiveReady;
             observation.readyExceptLegacyOwnership = withoutLegacy.operationallyLiveReady;
             observation.legacyOwnerActive = !inputs.legacyPhysicsOwnershipClear;
+            observation.legacyOwnerPresent = AnyLegacyOwnerPresent();
             observation.newFdmArmed = sixDoFBody.simulationEnabled;
 
             return observation;
+        }
+
+        /// <summary>
+        /// Whether a legacy physics owner component EXISTS on this aircraft, enabled or not.
+        ///
+        /// This is what separates "legacy is switched off" from "this aircraft has no legacy stack
+        /// at all". The first, with nothing else flying it, is a fault; the second is a declared
+        /// bench configuration.
+        /// </summary>
+        private bool AnyLegacyOwnerPresent()
+        {
+            behaviourScratch.Clear();
+            GetComponents(behaviourScratch);
+
+            for (int i = 0; i < behaviourScratch.Count; i++)
+            {
+                MonoBehaviour behaviour = behaviourScratch[i];
+                if (behaviour == null)
+                    continue;
+
+                // enabled:true so presence is judged regardless of the current enabled flag.
+                if (MavSixDoFBody.IsLegacyOwnershipConflict(
+                        behaviour.GetType().Name, true, legacyPhysicsOwners))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void DisarmNewFdm()
@@ -549,17 +675,34 @@ namespace MaverickFresh.FlightDynamics
         /// before the handover stays off: restoring it would be this controller inventing a
         /// configuration nobody asked for.
         /// </summary>
-        private void RestoreLegacyOwners()
+        private bool RestoreLegacyOwners()
         {
+            bool allRestored = true;
+
             for (int i = 0; i < disabledByThisController.Count; i++)
             {
                 MonoBehaviour behaviour = disabledByThisController[i];
-                if (behaviour != null)
-                    behaviour.enabled = true;
+
+                // A destroyed component reads as null through Unity's overloaded operator. It
+                // cannot be restored, and pretending otherwise would leave the aircraft with no
+                // owner while the controller claimed legacy had it back.
+                if (behaviour == null)
+                {
+                    allRestored = false;
+                    continue;
+                }
+
+                behaviour.enabled = true;
+
+                // Verify rather than assume: another component may re-disable it in its own
+                // OnEnable, or the object may be inactive.
+                if (!behaviour.enabled)
+                    allRestored = false;
             }
 
             disabledByThisController.Clear();
             UpdateDisabledOwnerDebug();
+            return allRestored;
         }
 
         private void UpdateDisabledOwnerDebug()

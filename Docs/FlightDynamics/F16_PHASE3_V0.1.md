@@ -23,8 +23,11 @@ the authority. No phase here is marked PASS on the offline run alone.
 | Phase | Status | Why |
 | --- | --- | --- |
 | 3A Propulsion | **CONDITIONAL** | The architecture is complete and tested, but there is still **no authoritative F-16 dimensional thrust data**. Runtime thrust remains 0 N. A phase whose whole purpose is dimensional thrust cannot be PASS while the deck is empty. |
+| | | *Independent review found an authority-escalation loophole here; fixed, see 3A.7.* |
 | 3B Attitude | **CONDITIONAL** | Logic complete and directionally validated offline; pending the Unity run. |
+| | | *Independent review found attitude was never published by the runtime path; fixed, see 3B.6.* |
 | 3C Ownership | **CONDITIONAL** | Mechanism complete and validated offline; pending the Unity run, and it has never performed a handover on a real aircraft because no aircraft is live-ready yet. |
+| | | *Independent review found a false `LegacyOwned` state; fixed, see 3C.5.* |
 
 ---
 
@@ -361,3 +364,136 @@ genuinely reaches `OPERATIONALLY_LIVE_READY`.
 | `[C0]` | the exclusive-ownership invariant, and that it outranks any believed state |
 | `[C1]` | handover preconditions, completion confirmation, and the readiness-assuming-release resolution of the chicken-and-egg |
 | `[C2]` | every hand-back cause, fault semantics, and that the controller applies no physics |
+
+---
+
+## Independent review fixes
+
+Three blockers were found by independent review after the initial Phase 3 commits. All three were
+real, and all three are fixed with regressions that were verified to fail without the fix.
+
+### 3B.6 — attitude was never published by the runtime path
+
+`MavFlightState.attitude` and the bank-aware control law shipped, and every attitude test passed,
+while `MavSixDoFBody` published **no attitude at all**. The live control law therefore always saw
+`attitude.valid == false` and fell back to its wings-level behaviour: the entire 3B improvement was
+dead in the runtime path.
+
+Cause: the patch that was supposed to add the publication used a text replacement whose anchor did
+not match, and it was applied without asserting. It silently did nothing.
+
+Why the tests did not catch it: the Phase 3B helper **built its own flight state** and called
+`MavAttitudeMath` directly. It exercised the attitude maths and never touched the runtime wiring.
+
+Fix:
+
+- `MavSixDoFBody.BuildFlightState(...)` is now a public static that builds the whole per-step state,
+  attitude included. `UpdateStateAndAtmosphere` calls it, and so does validation.
+- `[B3]` drives that production builder and asserts `attitude.valid`, wings-level zero, positive
+  bank for right wing down, negative for left, and that the control law's turn compensation actually
+  responds to the production-published attitude.
+
+Verified to bite: with the publication removed again, `[B3]` fails 5 checks — while `[B0]` and
+`[B2]` still pass, which is precisely the blind spot that existed.
+
+### 3C.5 — false `LegacyOwned`
+
+`ReturnToLegacy`, `ClearFault` and `IsStateConsistent(LegacyOwned, ...)` all treated "the new FDM is
+disarmed" as sufficient to declare legacy ownership. An aircraft whose legacy owner was destroyed,
+missing, or could not be re-enabled would be committed to `LegacyOwned` with **nothing flying it**.
+
+Fix:
+
+- New state `Unowned`: nobody owns physics, and that is a *declared* configuration - an aircraft
+  with no legacy physics owner components at all, such as a bench rig. It is deliberately not called
+  `LegacyOwned`, because that would assert an owner that does not exist.
+- New observation `legacyOwnerPresent`, separating "legacy is switched off" from "there is no legacy
+  stack here".
+- `MavPhysicsOwnershipRules.ResolveSettledOwnership` decides between three distinct facts:
+
+  | observation | settles as |
+  | --- | --- |
+  | a legacy owner is active | `LegacyOwned` |
+  | none active, none exists | `Unowned` |
+  | none active, but one **exists** | `Fault` |
+
+- `RestoreLegacyOwners` now returns success and **verifies** it: a destroyed component reads as null
+  through Unity's overloaded operator and cannot be restored; a component that fails to become
+  enabled is detected by re-reading the flag rather than assuming the write took.
+- `IsStateConsistent(LegacyOwned, ...)` now requires an actually active legacy owner.
+- `ClearFault` no longer asserts an owner into existence: it settles into whatever is actually true,
+  which can legitimately remain `Fault`.
+
+`[C3]` covers all of it, including the destroyed/unrestorable case.
+
+### 3C.6 — execution-order audit
+
+Audited against the project as it actually is, not as assumed.
+
+| Component | Exists? | Execution order | Writes Rigidbody motion |
+| --- | --- | --- | --- |
+| `MavAeroBody` | yes | default (0) | yes |
+| `MavAtmosphericEngine` | yes | default (0) | yes |
+| `MavMouseFlightJet` | yes | default (0) | yes |
+| `MavThrustVectorControl` | yes | default (0) | yes |
+| `MavInstructorController` | yes | default (0) | no |
+| `MavAeroTorqueAssist` | **absent** | - | - |
+| `MavSimpleJetEngine` | **absent** | - | - |
+| `MavFlightAssist` | **absent** | - | - |
+| `MavPlayerPhysicsConfig` | **absent** | - | - |
+
+`ProjectSettings` contains **no `MonoManager.asset`**, so there are no custom script execution order
+overrides in the project at all. No legacy physics owner carries a `DefaultExecutionOrder`
+attribute either.
+
+Conclusion: every legacy physics owner runs at order 0. The ownership controller at **-20000** runs
+ahead of all of them, ahead of the control law (-300), the actuator (-200) and `MavSixDoFBody`
+(-100). **The atomicity guarantee holds.**
+
+The four absent names are kept in the deny-list defensively. Matching is by type name, so listing a
+type that does not exist costs nothing and covers it if it is added later.
+
+One open question for Phase 4, recorded rather than acted on: `MavLandingGearSystem` also applies
+forces to the aircraft Rigidbody. It is ground-reaction rather than flight aerodynamics, so it is
+deliberately **not** on the deny-list - but an aircraft on the ground with the new FDM live would
+have two systems applying forces to one body. That needs a decision before any live takeover on the
+ground.
+
+### 3A.7 — authority escalation loophole
+
+`MavTabulatedThrustDeck` exposed `declaredAuthority` as a plain inspector enum. Any arbitrary table
+could be set to `Authoritative`, and with a clamping policy it would then pass
+`IsAcceptableForLiveFlight`. A citation string sat next to it, but nothing verified the words
+matched the numbers.
+
+Fix: **authority is derived, never declared.**
+
+- The `declaredAuthority` field is gone. `dataSourceCitation` remains but is documented as
+  documentation only - it does not affect authority.
+- `MavTabulatedThrustDeck.Authority` is computed by `ResolveAuthority(hasUsableTables,
+  frozenProvenanceVerified)`, and the base class's `VerifyFrozenProvenance` **always returns false**.
+  An arbitrary table therefore caps out at `SyntheticBench` no matter how it is configured.
+- `MavFrozenThrustDeckBase` is the only route to `Authoritative`. A subclass must declare a source
+  identity, a version, and a content hash; `MavThrustDeckProvenance` recomputes that hash from the
+  live table arrays and requires a match. Editing one thrust value changes the hash and the deck
+  immediately stops claiming authority, so the numbers and the claim cannot drift apart.
+- There is no inspector field anywhere in the hierarchy that raises authority.
+
+`[A6]` proves the escalation is closed: an arbitrary table is not acceptable for live flight under
+**any** of the three excursion policies, a single-value edit moves the hash, and identity and version
+are part of the hashed content so a hash cannot be reused across sources.
+
+The hash is FNV-1a over exact float bit patterns. It is not cryptographic and is not meant to resist
+an attacker - it is meant to make the careless case impossible: "I tweaked a number and it is still
+labelled as reference data".
+
+No `MavFrozenThrustDeckBase` subclass exists for the F-16, because no F-16 thrust deck has been
+frozen from an approved source. That absence is the honest state of the project.
+
+### Phase 3 validation after the fixes
+
+| Section | Covers |
+| --- | --- |
+| `[B3]` | attitude published by the PRODUCTION state builder, wings level and both bank directions, and the control law responding to it |
+| `[C3]` | no false `LegacyOwned`; `Unowned` versus `Fault`; destroyed/unrestorable legacy owner |
+| `[A6]` | authority cannot be escalated from the inspector under any policy; provenance hash binding |

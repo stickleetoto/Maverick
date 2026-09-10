@@ -1,4 +1,6 @@
 using System;
+using System.Runtime.InteropServices;
+using System.Text;
 using UnityEngine;
 
 namespace MaverickFresh.FlightDynamics
@@ -375,6 +377,147 @@ namespace MaverickFresh.FlightDynamics
     }
 
     /// <summary>
+    /// Frozen-provenance verification for thrust data.
+    ///
+    /// The problem this solves: authority used to be a plain inspector enum, so any arbitrary table
+    /// could be declared Authoritative by typing into the inspector, and a citation string is not a
+    /// check - nothing verifies that the words match the numbers.
+    ///
+    /// Here the authority claim is bound to the DATA. A frozen deck declares a source identity, a
+    /// version, and a content hash; the hash is recomputed from the actual tables and must match.
+    /// Editing a single thrust value changes the hash and the deck stops being authoritative, so
+    /// the numbers and the claim about them cannot drift apart.
+    ///
+    /// This is not cryptographic and is not meant to resist an attacker. It is meant to make the
+    /// accidental and the careless case - "I tweaked a number and it is still labelled NASA data" -
+    /// impossible.
+    /// </summary>
+    public static class MavThrustDeckProvenance
+    {
+        /// <summary>FNV-1a offset basis and prime, 32-bit.</summary>
+        private const uint HashOffsetBasis = 2166136261u;
+        private const uint HashPrime = 16777619u;
+
+        /// <summary>Reinterprets a float as its bit pattern without allocating.</summary>
+        [StructLayout(LayoutKind.Explicit)]
+        private struct FloatBits
+        {
+            [FieldOffset(0)] public float FloatValue;
+            [FieldOffset(0)] public int IntValue;
+        }
+
+        /// <summary>
+        /// Deterministic content hash over a deck's axes and tables.
+        ///
+        /// Hashes the exact bit patterns, so a change of one least-significant bit in one thrust
+        /// value produces a different hash. Order and length are folded in as well, so re-ordering
+        /// or truncating a table cannot preserve the hash.
+        /// </summary>
+        public static uint ComputeTableHash(
+            string sourceIdentity,
+            string sourceVersion,
+            float[] altitudeAxisM,
+            float[] machAxis,
+            float[] idleThrustN,
+            float[] militaryThrustN,
+            float[] maximumThrustN)
+        {
+            uint hash = HashOffsetBasis;
+            hash = HashString(hash, sourceIdentity);
+            hash = HashString(hash, sourceVersion);
+            hash = HashFloats(hash, altitudeAxisM);
+            hash = HashFloats(hash, machAxis);
+            hash = HashFloats(hash, idleThrustN);
+            hash = HashFloats(hash, militaryThrustN);
+            hash = HashFloats(hash, maximumThrustN);
+            return hash;
+        }
+
+        private static uint HashString(uint hash, string value)
+        {
+            if (value == null)
+                return HashByte(hash, 0xFF);
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                hash = HashByte(hash, (byte)(value[i] & 0xFF));
+                hash = HashByte(hash, (byte)((value[i] >> 8) & 0xFF));
+            }
+
+            return HashByte(hash, 0x00);
+        }
+
+        private static uint HashFloats(uint hash, float[] values)
+        {
+            int count = values != null ? values.Length : 0;
+            hash = HashInt(hash, count);
+
+            for (int i = 0; i < count; i++)
+            {
+                FloatBits bits = new FloatBits();
+                bits.FloatValue = values[i];
+                hash = HashInt(hash, bits.IntValue);
+            }
+
+            return hash;
+        }
+
+        private static uint HashInt(uint hash, int value)
+        {
+            hash = HashByte(hash, (byte)(value & 0xFF));
+            hash = HashByte(hash, (byte)((value >> 8) & 0xFF));
+            hash = HashByte(hash, (byte)((value >> 16) & 0xFF));
+            return HashByte(hash, (byte)((value >> 24) & 0xFF));
+        }
+
+        private static uint HashByte(uint hash, byte value)
+        {
+            hash ^= value;
+            return hash * HashPrime;
+        }
+
+        /// <summary>
+        /// The verification rule, as a pure function: identity and version must be declared, and
+        /// the recomputed hash must equal the declared one.
+        /// </summary>
+        public static bool Verify(
+            string sourceIdentity,
+            string sourceVersion,
+            uint declaredHash,
+            uint actualHash,
+            out string reason)
+        {
+            if (string.IsNullOrEmpty(sourceIdentity))
+            {
+                reason = "no source identity declared";
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(sourceVersion))
+            {
+                reason = "no source version declared";
+                return false;
+            }
+
+            if (declaredHash == 0u)
+            {
+                reason = "no content hash declared";
+                return false;
+            }
+
+            if (declaredHash != actualHash)
+            {
+                reason = "content hash mismatch: the tables are not the frozen data this deck claims "
+                         + "(declared " + declaredHash + ", actual " + actualHash + ")";
+                return false;
+            }
+
+            reason = "frozen provenance verified: " + sourceIdentity + " " + sourceVersion;
+            return true;
+        }
+    }
+
+    /// <summary>
     /// Tabulated altitude/Mach thrust deck with the sourced power blend on top.
     ///
     /// The three tables (idle, military, maximum) are supplied by a concrete subclass or by the
@@ -386,11 +529,8 @@ namespace MaverickFresh.FlightDynamics
     [DisallowMultipleComponent]
     public class MavTabulatedThrustDeck : MavThrustDeckBase
     {
-        [Header("Provenance (must be set deliberately)")]
-        [Tooltip("Where these numbers came from. Unavailable until a real source is frozen. NEVER set Authoritative for invented data.")]
-        public MavThrustDataAuthority declaredAuthority = MavThrustDataAuthority.Unavailable;
-
-        [Tooltip("Human-readable citation for the data. Required for anything claiming Authoritative.")]
+        [Header("Provenance")]
+        [Tooltip("Human-readable citation. DOCUMENTATION ONLY - it is not a check, and it does not affect authority. Authority comes from frozen provenance verification, not from what this string says.")]
         public string dataSourceCitation = "none";
 
         [Tooltip("Behaviour outside the tabulated envelope. Extrapolation is never acceptable for live flight.")]
@@ -407,15 +547,69 @@ namespace MaverickFresh.FlightDynamics
 
         [Header("Debug")]
         public MavThrustDeckResult debugLastResult;
+        public string debugProvenanceStatus = "not evaluated";
 
         public override string DeckName
         {
             get { return "Tabulated thrust deck (" + dataSourceCitation + ")"; }
         }
 
+        /// <summary>
+        /// Authority is DERIVED, never declared in the inspector.
+        ///
+        /// This class can never be authoritative: <see cref="VerifyFrozenProvenance"/> returns false
+        /// here, so an arbitrary table caps out at SyntheticBench however it is configured. Only a
+        /// subclass that binds its numbers to a verified frozen source can be authoritative, and it
+        /// does so by proving the hash, not by setting a field.
+        /// </summary>
         public override MavThrustDataAuthority Authority
         {
-            get { return HasUsableTables() ? declaredAuthority : MavThrustDataAuthority.Unavailable; }
+            get
+            {
+                string reason;
+                return ResolveAuthority(HasUsableTables(), VerifyFrozenProvenance(out reason));
+            }
+        }
+
+        /// <summary>
+        /// The authority rule, as a pure function. Pinned by validation because it is the thing
+        /// standing between an invented table and a live-flight claim.
+        /// </summary>
+        public static MavThrustDataAuthority ResolveAuthority(
+            bool hasUsableTables,
+            bool frozenProvenanceVerified)
+        {
+            if (!hasUsableTables)
+                return MavThrustDataAuthority.Unavailable;
+
+            return frozenProvenanceVerified
+                ? MavThrustDataAuthority.Authoritative
+                : MavThrustDataAuthority.SyntheticBench;
+        }
+
+        /// <summary>
+        /// Whether these numbers are bound to a verified frozen source.
+        ///
+        /// The base implementation always says no, and that is the security property: a deck whose
+        /// tables were typed in cannot become authoritative by any inspector action. A subclass
+        /// overrides this only by declaring a source identity, version and content hash that the
+        /// actual table data reproduces.
+        /// </summary>
+        protected virtual bool VerifyFrozenProvenance(out string reason)
+        {
+            reason = "this deck declares no frozen provenance, so its data is not authoritative";
+            return false;
+        }
+
+        /// <summary>Human-readable provenance status, for reports and the inspector.</summary>
+        public string ProvenanceStatus
+        {
+            get
+            {
+                string reason;
+                VerifyFrozenProvenance(out reason);
+                return reason;
+            }
         }
 
         public override MavEnvelopeExcursionPolicy ExcursionPolicy
@@ -442,6 +636,7 @@ namespace MaverickFresh.FlightDynamics
                 altitudeAxisM, machAxis,
                 idleThrustN, militaryThrustN, maximumThrustN,
                 Authority, excursionPolicy, query);
+            debugProvenanceStatus = ProvenanceStatus;
 
             return debugLastResult;
         }
@@ -526,6 +721,47 @@ namespace MaverickFresh.FlightDynamics
             }
 
             return result;
+        }
+    }
+
+    /// <summary>
+    /// A tabulated thrust deck whose numbers are bound to a frozen, identified source.
+    ///
+    /// This is the ONLY way a deck becomes authoritative. A subclass supplies the source identity,
+    /// its version, and the content hash of the exact table data that was frozen from it. The hash
+    /// is recomputed from the live arrays on every verification, so editing a thrust value - in the
+    /// inspector, in a prefab, anywhere - breaks the match and the deck immediately stops claiming
+    /// authority.
+    ///
+    /// There is deliberately no inspector field anywhere in this hierarchy that raises authority.
+    /// The claim is made by the data agreeing with itself, not by a designer asserting it.
+    ///
+    /// No such subclass exists for the F-16 yet, because no F-16 thrust deck has been frozen from
+    /// an approved source. That absence is the honest state of the project, not an oversight.
+    /// </summary>
+    public abstract class MavFrozenThrustDeckBase : MavTabulatedThrustDeck
+    {
+        /// <summary>Identity of the frozen source, e.g. a publication or dataset name.</summary>
+        public abstract string SourceIdentity { get; }
+
+        /// <summary>Version or revision of that source.</summary>
+        public abstract string SourceVersion { get; }
+
+        /// <summary>
+        /// Content hash of the exact frozen table data, computed by
+        /// <see cref="MavThrustDeckProvenance.ComputeTableHash"/> when the data was frozen.
+        /// </summary>
+        public abstract uint ExpectedTableHash { get; }
+
+        protected override bool VerifyFrozenProvenance(out string reason)
+        {
+            uint actual = MavThrustDeckProvenance.ComputeTableHash(
+                SourceIdentity, SourceVersion,
+                altitudeAxisM, machAxis,
+                idleThrustN, militaryThrustN, maximumThrustN);
+
+            return MavThrustDeckProvenance.Verify(
+                SourceIdentity, SourceVersion, ExpectedTableHash, actual, out reason);
         }
     }
 }

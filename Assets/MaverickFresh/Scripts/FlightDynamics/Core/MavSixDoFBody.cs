@@ -517,13 +517,53 @@ namespace MaverickFresh.FlightDynamics
             Vector3 unityLocalAngularRate = transform.InverseTransformDirection(rb.angularVelocity);
             Vector3 aeroBodyRates = MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody(unityLocalAngularRate);
 
-            float tas = worldVelocity.magnitude;
-            float speedOfSound = Mathf.Max(1f, debugAtmosphere.speedOfSoundMps);
-            float q = 0.5f * debugAtmosphere.densityKgM3 * tas * tas;
+            debugState = BuildFlightState(
+                transform.position,
+                worldVelocity,
+                unityLocalVelocity,
+                unityLocalAngularRate,
+                transform.forward,
+                transform.up,
+                transform.right,
+                debugAtmosphere
+            );
+        }
+
+        /// <summary>
+        /// Builds the per-step flight state from raw Unity quantities.
+        ///
+        /// Static and parameterised so that validation exercises THE PRODUCTION PATH rather than a
+        /// reimplementation of it. That distinction is not academic: an earlier revision published
+        /// attitude only inside a test helper, so every attitude-dependent check passed while the
+        /// runtime state carried no attitude at all and the control law silently fell back to its
+        /// wings-level behaviour. Tests that build state themselves cannot catch that; tests that
+        /// call this can.
+        ///
+        /// The orientation vectors are Unity world-space transform directions: forward is local +Z,
+        /// up is +Y, right is +X.
+        /// </summary>
+        public static MavFlightState BuildFlightState(
+            Vector3 worldPositionM,
+            Vector3 worldVelocityMps,
+            Vector3 unityLocalVelocityMps,
+            Vector3 unityLocalAngularRateRadSec,
+            Vector3 forwardWorld,
+            Vector3 upWorld,
+            Vector3 rightWorld,
+            MavAtmosphereSample atmosphere)
+        {
+            Vector3 aeroBodyVelocity =
+                MavFlightDynamicsMath.UnityLocalVectorToAeroBody(unityLocalVelocityMps);
+            Vector3 aeroBodyRates =
+                MavFlightDynamicsMath.UnityLocalAngularRateToAeroBody(unityLocalAngularRateRadSec);
+
+            float tas = worldVelocityMps.magnitude;
+            float speedOfSound = Mathf.Max(1f, atmosphere.speedOfSoundMps);
+            float q = 0.5f * atmosphere.densityKgM3 * tas * tas;
 
             MavFlightState state = new MavFlightState();
-            state.worldPositionM = transform.position;
-            state.worldVelocityMps = worldVelocity;
+            state.worldPositionM = worldPositionM;
+            state.worldVelocityMps = worldVelocityMps;
             state.aeroBodyVelocityMps = aeroBodyVelocity;
             state.aeroBodyRatesRadSec = aeroBodyRates;
             state.trueAirspeedMps = tas;
@@ -531,7 +571,17 @@ namespace MaverickFresh.FlightDynamics
             state.dynamicPressurePa = q;
             state.alphaRad = MavFlightDynamicsMath.ComputeAlphaRad(aeroBodyVelocity);
             state.betaRad = MavFlightDynamicsMath.ComputeBetaRad(aeroBodyVelocity);
-            debugState = state;
+
+            // Attitude is derived from world-space direction vectors, NOT from an axis conversion,
+            // so it stays clear of the true-vector / axial-vector handedness distinction entirely.
+            state.attitude = MavAttitudeMath.FromWorldBasis(
+                forwardWorld, upWorld, rightWorld, worldVelocityMps);
+
+            // Specific force is published later in the step, once the load set has been summed.
+            state.specificForceAeroBodyG = Vector3.zero;
+            state.specificForceValid = false;
+
+            return state;
         }
 
         private void UpdateProfileDebug()
