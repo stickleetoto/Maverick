@@ -34,6 +34,9 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateAttitudeDirections(report, ref passed, ref failed);
             ValidateLoadFactorRelations(report, ref passed, ref failed);
             ValidateBankedControlLaw(report, ref passed, ref failed);
+            ValidateOwnershipInvariant(report, ref passed, ref failed);
+            ValidateOwnershipTransitions(report, ref passed, ref failed);
+            ValidateOwnershipFailureHandling(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -924,6 +927,278 @@ namespace MaverickFresh.FlightDynamics.Validation
                 && !uncompensated.turnCompensationApplied,
                 "disabling turn compensation demonstrably restores the flat 1 g demand",
                 report, ref passed, ref failed);
+        }
+
+
+        // ================================================================= [C0]
+
+        /// <summary>
+        /// The exclusive-ownership invariant, which is the whole reason the ownership controller
+        /// exists: two systems applying the same physical effect to one Rigidbody is never
+        /// acceptable, not for a frame and not "briefly" during a handover.
+        /// </summary>
+        private static void ValidateOwnershipInvariant(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[C0] Exclusive physics ownership invariant");
+
+            Record(
+                MavPhysicsOwnershipRules.ViolatesExclusiveOwnership(true, true),
+                "legacy active AND new FDM armed is recognised as a violation",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.ViolatesExclusiveOwnership(true, false)
+                && !MavPhysicsOwnershipRules.ViolatesExclusiveOwnership(false, true)
+                && !MavPhysicsOwnershipRules.ViolatesExclusiveOwnership(false, false),
+                "exactly one owner, or a momentary neither, is not a violation",
+                report, ref passed, ref failed);
+
+            // State consistency: the invariant outranks whatever the controller believes.
+            string reason;
+            MavOwnershipObservation both = BuildObservation(true, true, true, true, true);
+
+            Record(
+                !MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.NewOwned, both, out reason)
+                && reason.Contains("EXCLUSIVE OWNERSHIP VIOLATED"),
+                "a double-ownership observation is inconsistent with ANY believed state ("
+                + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.LegacyOwned,
+                    BuildObservation(true, true, true, false, true), out reason),
+                "believing legacy owns physics while the new FDM is armed is inconsistent",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.NewOwned,
+                    BuildObservation(true, true, true, false, false), out reason),
+                "believing the new FDM owns physics while it is disarmed is inconsistent",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.LegacyOwned,
+                    BuildObservation(true, true, false, true, false), out reason)
+                && MavPhysicsOwnershipRules.IsStateConsistent(
+                    MavPhysicsOwnershipState.NewOwned,
+                    BuildObservation(true, true, true, false, true), out reason),
+                "the two settled configurations are consistent",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [C1]
+
+        private static void ValidateOwnershipTransitions(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[C1] Ownership handover preconditions and completion");
+
+            string reason;
+
+            // Legacy is still active at this point, and that must NOT block the handover starting -
+            // it is precisely what the handover is about to release.
+            MavOwnershipObservation readyToHandOver = BuildObservation(true, true, false, true, false);
+
+            Record(
+                MavPhysicsOwnershipRules.CanBeginTransitionToNew(readyToHandOver, out reason),
+                "a fully prepared stack may begin the handover even though legacy still owns "
+                + "physics: that criterion cannot hold until after the release",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.CanBeginTransitionToNew(
+                    BuildObservation(false, true, false, true, false), out reason),
+                "an unprepared stack may not begin a handover (" + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.CanBeginTransitionToNew(
+                    BuildObservation(true, false, false, true, false), out reason),
+                "failing any other operational precondition blocks the handover, so legacy physics "
+                + "is never disabled on an aircraft unfit to take over (" + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.CanBeginTransitionToNew(
+                    BuildObservation(true, true, false, true, true), out reason),
+                "a handover is refused if the new FDM is somehow already armed while legacy owns "
+                + "physics (" + reason + ")",
+                report, ref passed, ref failed);
+
+            // Completion must be confirmed, not assumed.
+            Record(
+                MavPhysicsOwnershipRules.IsTransitionToNewComplete(
+                    BuildObservation(true, true, true, false, true), out reason),
+                "a handover completes when legacy is released, readiness holds and the new FDM is armed",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.IsTransitionToNewComplete(
+                    BuildObservation(true, true, true, true, true), out reason),
+                "it does NOT complete while a legacy owner is still active (" + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.IsTransitionToNewComplete(
+                    BuildObservation(true, true, false, false, true), out reason),
+                "nor when the stack is not operationally live-ready after the release ("
+                + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavPhysicsOwnershipRules.IsTransitionToNewComplete(
+                    BuildObservation(true, true, true, false, false), out reason),
+                "nor when the new FDM failed to arm (" + reason + ")",
+                report, ref passed, ref failed);
+
+            // Readiness evaluated as it WOULD be once legacy is released. Without this the
+            // handover would deadlock: full readiness can never hold while legacy still owns.
+            MavFlightDynamicsReadinessInputs stillLegacy = MavFlightDynamicsReadinessInputs.FullyReady;
+            stillLegacy.legacyPhysicsOwnershipClear = false;
+
+            Record(
+                !MavFlightDynamicsReadiness.Evaluate(stillLegacy).operationallyLiveReady
+                && MavFlightDynamicsReadiness
+                    .EvaluateAssumingLegacyOwnershipCleared(stillLegacy).operationallyLiveReady,
+                "readiness-assuming-release resolves the chicken-and-egg: full readiness fails "
+                + "while legacy owns, but every other condition already holds",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavFlightDynamicsReadiness
+                    .EvaluateAssumingLegacyOwnershipCleared(
+                        WithoutCommandSource(stillLegacy)).operationallyLiveReady,
+                "and it relaxes ONLY the legacy criterion: any other failure still blocks",
+                report, ref passed, ref failed);
+        }
+
+        // ================================================================= [C2]
+
+        private static void ValidateOwnershipFailureHandling(StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[C2] Ownership failure detection and hand-back");
+
+            string reason;
+
+            Record(
+                !MavPhysicsOwnershipRules.ShouldReturnToLegacy(
+                    BuildObservation(true, true, true, false, true), out reason),
+                "a healthy new-owned aircraft is left alone",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ShouldReturnToLegacy(
+                    BuildObservation(true, true, true, true, true), out reason)
+                && reason.Contains("re-enabled"),
+                "a legacy owner re-enabled behind the controller forces a hand-back ("
+                + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ShouldReturnToLegacy(
+                    BuildObservation(true, true, false, false, true), out reason),
+                "losing operational live-readiness forces a hand-back (" + reason + ")",
+                report, ref passed, ref failed);
+
+            Record(
+                MavPhysicsOwnershipRules.ShouldReturnToLegacy(
+                    BuildObservation(false, false, false, false, true), out reason),
+                "losing structural preparation forces a hand-back (" + reason + ")",
+                report, ref passed, ref failed);
+
+            // Each individual cause of a readiness loss must reach the hand-back decision.
+            Record(
+                CausesHandBack(WithoutCommandSource(MavFlightDynamicsReadinessInputs.FullyReady)),
+                "an operational input disappearing hands ownership back",
+                report, ref passed, ref failed);
+
+            MavFlightDynamicsReadinessInputs badPropulsion = MavFlightDynamicsReadinessInputs.FullyReady;
+            badPropulsion.propulsionAccepted = false;
+            Record(
+                CausesHandBack(badPropulsion),
+                "propulsion becoming unacceptable hands ownership back",
+                report, ref passed, ref failed);
+
+            MavFlightDynamicsReadinessInputs twoLaws = MavFlightDynamicsReadinessInputs.FullyReady;
+            twoLaws.singleControlLawEnabled = false;
+            Record(
+                CausesHandBack(twoLaws),
+                "a second control law being enabled hands ownership back",
+                report, ref passed, ref failed);
+
+            MavFlightDynamicsReadinessInputs mismatched = MavFlightDynamicsReadinessInputs.FullyReady;
+            mismatched.controlLawBoundToThisBody = false;
+            Record(
+                CausesHandBack(mismatched),
+                "a mismatched pipeline reference hands ownership back",
+                report, ref passed, ref failed);
+
+            // The multiple-control-law criterion, checked directly.
+            Record(
+                !MavFlightDynamicsReadiness.Evaluate(twoLaws).operationallyLiveReady,
+                "two enabled control laws block live-readiness: both run at order -300 and the "
+                + "surface command would depend on component order",
+                report, ref passed, ref failed);
+
+            // Fault is a terminal, fail-closed state rather than something time heals.
+            Record(
+                MavPhysicsOwnershipState.Fault != MavPhysicsOwnershipState.LegacyOwned
+                && MavPhysicsOwnershipState.Fault != MavPhysicsOwnershipState.NewOwned,
+                "Fault is a distinct state, not a flavour of either ownership",
+                report, ref passed, ref failed);
+
+            // The controller must never become a physics engine of its own. The ownership source
+            // is included in the same scan that guards the rest of the flight-dynamics tree.
+            Record(
+                !MavFlightDynamicsOwnershipScan.IsOwnershipViolation(
+                    "                behaviour.enabled = false;"),
+                "disabling a component is not a Rigidbody write: the ownership controller changes "
+                + "WHO owns physics, it does not apply physics",
+                report, ref passed, ref failed);
+        }
+
+        private static bool CausesHandBack(MavFlightDynamicsReadinessInputs inputs)
+        {
+            MavFlightDynamicsReadinessReport readiness = MavFlightDynamicsReadiness.Evaluate(inputs);
+
+            MavOwnershipObservation observation = BuildObservation(
+                readiness.structurallyPrepared,
+                true,
+                readiness.operationallyLiveReady,
+                false,
+                true);
+
+            string reason;
+            return MavPhysicsOwnershipRules.ShouldReturnToLegacy(observation, out reason);
+        }
+
+        private static MavFlightDynamicsReadinessInputs WithoutCommandSource(
+            MavFlightDynamicsReadinessInputs inputs)
+        {
+            inputs.hasValidCommandSource = false;
+            return inputs;
+        }
+
+        private static MavOwnershipObservation BuildObservation(
+            bool structurallyPrepared,
+            bool readyExceptLegacyOwnership,
+            bool operationallyLiveReady,
+            bool legacyOwnerActive,
+            bool newFdmArmed)
+        {
+            MavOwnershipObservation observation = new MavOwnershipObservation();
+            observation.structurallyPrepared = structurallyPrepared;
+            observation.readyExceptLegacyOwnership = readyExceptLegacyOwnership;
+            observation.operationallyLiveReady = operationallyLiveReady;
+            observation.legacyOwnerActive = legacyOwnerActive;
+            observation.newFdmArmed = newFdmArmed;
+            return observation;
         }
 
         // ================================================================= helpers

@@ -651,10 +651,35 @@ namespace MaverickFresh.FlightDynamics
                     bodySource != null && bodySource.IsOperationalCommandSource,
                     observedSourceSignal);
 
+            inputs.singleControlLawEnabled = CountEnabledControlLaws() == 1;
+
             inputs.legacyPhysicsOwnershipClear = !HasLegacyPhysicsOwnerConflict();
             debugLegacyPhysicsOwner = cachedLegacyOwnerName;
 
             return inputs;
+        }
+
+        /// <summary>
+        /// Counts enabled flight control laws on this aircraft.
+        ///
+        /// Two enabled laws both run at execution order -300 and both write the actuator command,
+        /// so the surface state would depend on component order - which is not a property anyone
+        /// should be relying on.
+        /// </summary>
+        public int CountEnabledControlLaws()
+        {
+            behaviourScratch.Clear();
+            GetComponents(behaviourScratch);
+
+            int count = 0;
+            for (int i = 0; i < behaviourScratch.Count; i++)
+            {
+                MavFlightControlLawBase law = behaviourScratch[i] as MavFlightControlLawBase;
+                if (law != null && law.enabled)
+                    count++;
+            }
+
+            return count;
         }
 
         /// <summary>

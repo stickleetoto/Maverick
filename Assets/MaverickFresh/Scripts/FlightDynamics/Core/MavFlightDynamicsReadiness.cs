@@ -63,6 +63,9 @@ namespace MaverickFresh.FlightDynamics
         [Tooltip("A pilot-command source exists, is enabled, declares operational capability, and the control law observed a command from it this step.")]
         public bool hasValidCommandSource;
 
+        [Tooltip("Exactly one flight control law is enabled on this aircraft. Two enabled laws both run at execution order -300, so the surface command would depend on component order.")]
+        public bool singleControlLawEnabled;
+
         [Tooltip("No legacy physics owner is enabled on the same Rigidbody.")]
         public bool legacyPhysicsOwnershipClear;
 
@@ -88,7 +91,8 @@ namespace MaverickFresh.FlightDynamics
             if (propulsionAccepted) mask |= 1 << 10;
             if (commandSourceIdentityMatches) mask |= 1 << 11;
             if (hasValidCommandSource) mask |= 1 << 12;
-            if (legacyPhysicsOwnershipClear) mask |= 1 << 13;
+            if (singleControlLawEnabled) mask |= 1 << 13;
+            if (legacyPhysicsOwnershipClear) mask |= 1 << 14;
             return mask;
         }
 
@@ -110,6 +114,7 @@ namespace MaverickFresh.FlightDynamics
                 inputs.propulsionAccepted = true;
                 inputs.commandSourceIdentityMatches = true;
                 inputs.hasValidCommandSource = true;
+                inputs.singleControlLawEnabled = true;
                 inputs.legacyPhysicsOwnershipClear = true;
                 return inputs;
             }
@@ -221,6 +226,21 @@ namespace MaverickFresh.FlightDynamics
         }
 
         /// <summary>
+        /// Readiness as it WOULD be once legacy ownership has been released.
+        ///
+        /// The ownership handover needs this: every other operational condition has to hold before
+        /// legacy owners are disabled, but the legacy-ownership criterion itself cannot hold until
+        /// after. Checking full readiness first would deadlock the transition; skipping the check
+        /// would disable legacy physics on an aircraft that was never fit to take over.
+        /// </summary>
+        public static MavFlightDynamicsReadinessReport EvaluateAssumingLegacyOwnershipCleared(
+            MavFlightDynamicsReadinessInputs inputs)
+        {
+            inputs.legacyPhysicsOwnershipClear = true;
+            return Evaluate(inputs);
+        }
+
+        /// <summary>
         /// Everything beyond presence. Assumes structural preparation has already passed; callers
         /// must not use this on its own, which is why <see cref="Evaluate"/> is the entry point.
         /// </summary>
@@ -271,6 +291,14 @@ namespace MaverickFresh.FlightDynamics
             if (!inputs.hasValidCommandSource)
             {
                 reason = "no valid operational pilot-command source producing commands this step";
+                return false;
+            }
+
+            // Two enabled control laws both run at execution order -300 and both write the
+            // actuator, so which one the aircraft actually flies on depends on component order.
+            if (!inputs.singleControlLawEnabled)
+            {
+                reason = "more than one flight control law is enabled on this aircraft";
                 return false;
             }
 

@@ -24,7 +24,7 @@ the authority. No phase here is marked PASS on the offline run alone.
 | --- | --- | --- |
 | 3A Propulsion | **CONDITIONAL** | The architecture is complete and tested, but there is still **no authoritative F-16 dimensional thrust data**. Runtime thrust remains 0 N. A phase whose whole purpose is dimensional thrust cannot be PASS while the deck is empty. |
 | 3B Attitude | **CONDITIONAL** | Logic complete and directionally validated offline; pending the Unity run. |
-| 3C Ownership | see section | |
+| 3C Ownership | **CONDITIONAL** | Mechanism complete and validated offline; pending the Unity run, and it has never performed a handover on a real aircraft because no aircraft is live-ready yet. |
 
 ---
 
@@ -240,3 +240,124 @@ This remains the **Maverick F-16 Control Law**. Nothing here is derived from the
 | `[B0]` | attitude physical directions, degenerate basis, vertical singularity, low-speed flight path, safe degradation |
 | `[B1]` | the corrected q relation, its exact reduction to Phase 2 at wings level, and bounded turn-compensation load factor |
 | `[B2]` | wings level, moderate bank, steep bank, positive-g turn, unloaded, command direction, bank-aware g limiting, and loss of attitude |
+
+---
+
+## Phase 3C — Atomic physics ownership — **CONDITIONAL**
+
+### The problem being solved
+
+Phase 2 could only *detect* a conflicting legacy physics owner and refuse to fly. That is safe but
+inert: it can never produce a flying aircraft on the new path, because the legacy owner is always
+there until something turns it off, and nothing was allowed to.
+
+Phase 3C adds the something.
+
+### What it is not
+
+`MavPhysicsOwnershipController` is **not a third physics engine**. It applies no force, no torque
+and no corrective anything. It decides *who* owns physics and flips exactly the flags that express
+that. `[O0]`'s source scan covers it like every other file, and `[C2]` asserts explicitly that
+disabling a component is not a Rigidbody write.
+
+### States
+
+```text
+LegacyOwned          the legacy stack owns physics, new FDM disarmed
+TransitionToNew      mid-handover
+NewOwned             new FDM owns physics, legacy owners disabled
+TransitionToLegacy   mid-hand-back
+Fault                ownership could not be established or restored; fail closed
+```
+
+### The invariant
+
+```text
+legacy owner active AND new FDM armed  ->  NEVER
+```
+
+Not for a frame, not during a handover, not "briefly". `MavPhysicsOwnershipRules.ViolatesExclusiveOwnership`
+is the single predicate, and it outranks whatever state the controller believes it is in: a
+double-ownership observation is inconsistent with *any* state, and forces an immediate disarm.
+
+### How atomicity is achieved
+
+The controller runs at execution order **-20000**, ahead of the control law (-300), the actuator
+(-200), `MavSixDoFBody` (-100) and any legacy owner (default 0). The entire sequence completes
+inside one `FixedUpdate`, before any physics owner has run that step.
+
+There *is* a window inside the sequence where neither owner is armed. It exists between statements,
+not between physics steps, so no physics step ever executes with both owners and none ever executes
+with neither.
+
+### The sequence
+
+```text
+1. verify structurally prepared
+2. verify every operational condition EXCEPT legacy ownership
+3. disable legacy physical owners
+4. re-observe: confirm they are actually inactive
+5. invalidate the cached readiness
+6. re-evaluate: full OPERATIONALLY_LIVE_READY must now hold
+7. arm the new FDM
+8. re-observe: confirm exclusive new ownership
+```
+
+Step 2 is the interesting one. Full readiness *requires* legacy ownership to be clear, which cannot
+be true while legacy is still flying the aircraft — checking it first would deadlock the handover,
+and skipping it would disable legacy physics on an aircraft that was never fit to take over.
+`MavFlightDynamicsReadiness.EvaluateAssumingLegacyOwnershipCleared` relaxes that one criterion and
+nothing else; `[C1]` asserts both halves of that.
+
+Every step that changes something is followed by a step that confirms it changed, by re-observing
+rather than by assuming.
+
+### Rollback
+
+Any failure restores the previous safe owner: the new FDM is disarmed and the legacy components are
+re-enabled. **Only components this controller disabled are ever re-enabled** — a legacy component a
+designer had deliberately switched off stays off, because restoring it would be the controller
+inventing a configuration nobody asked for.
+
+If a rollback cannot end a double-ownership condition, the controller enters `Fault` and holds the
+new FDM disarmed until an operator calls `ClearFault()`. A fault is not healed by time passing or by
+the condition happening to go away.
+
+### Failure detection
+
+While the new FDM owns physics, any of these hands ownership back:
+
+| Condition | Detected via |
+| --- | --- |
+| legacy owner re-enabled | per-step legacy scan (no stale window, from the Phase 2 fix) |
+| operational readiness lost | full readiness re-evaluation |
+| operational input disappeared | command-path criterion |
+| propulsion no longer acceptable | propulsion acceptance criterion |
+| more than one control law enabled | **new** `singleControlLawEnabled` criterion |
+| mismatched pipeline references | identity criteria from the Phase 2 closeout |
+| ownership state inconsistent | `IsStateConsistent`, checked before any decision |
+
+The hand-back disarms the new FDM *first*, because that is the statement that ends a double-ownership
+condition, and it runs before any physics owner executes that step.
+
+### Defaults
+
+`autoTransitionToNewFdm` is **OFF** and `simulationEnabled` stays **OFF**. Ownership only moves when
+something explicitly calls `RequestTransitionToNewFdm()`. The controller is **not** attached by the
+F-16 auto-setup; it must be added deliberately.
+
+### Why CONDITIONAL
+
+The mechanism is complete and its rules are exhaustively validated, but it has never actually
+performed a handover on a real aircraft — because no aircraft on this branch is operationally
+live-ready, and none can be until the F-16 has an accepted propulsion model and a real command
+source. 3C becomes PASS after a handover has been demonstrated in Unity on an aircraft that
+genuinely reaches `OPERATIONALLY_LIVE_READY`.
+
+### Phase 3C validation
+
+| Section | Covers |
+| --- | --- |
+| `[C0]` | the exclusive-ownership invariant, and that it outranks any believed state |
+| `[C1]` | handover preconditions, completion confirmation, and the readiness-assuming-release resolution of the chicken-and-egg |
+| `[C2]` | every hand-back cause, fault semantics, and that the controller applies no physics |
