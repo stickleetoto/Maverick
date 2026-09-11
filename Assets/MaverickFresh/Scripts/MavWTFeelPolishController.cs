@@ -37,6 +37,12 @@ namespace MaverickFresh
         [Header("Runtime")]
         public string lastApplied = "none";
 
+        /// <summary>
+        /// Latches the one-time "no aircraft yet" warning. The hotkeys re-apply presets freely, and a
+        /// warning on every F5 press would bury the one that matters.
+        /// </summary>
+        private bool loggedMissingAircraftAuthority;
+
         private void Awake() { Resolve(); }
 
         private void Start()
@@ -370,6 +376,27 @@ namespace MaverickFresh
             lastApplied = p.ToString();
         }
 
+        /// <summary>
+        /// Layers WT feel tuning on top of whichever aircraft is ALREADY in force.
+        ///
+        /// This controller is a tuning layer and nothing else. It must never decide which aircraft
+        /// the player is flying, and it used to do exactly that:
+        ///
+        ///     MavAircraftRuntimeProfile profile = MavAircraftCatalog.GetBuiltIn(applier.aircraft);
+        ///     applier.ApplyProfile(profile);
+        ///
+        /// `applier.aircraft` is a SERIALIZED inspector field whose default is F22A. During bootstrap
+        /// - MavFreshBootstrap.Awake -> SetupFreshMouseFlight -> ApplyPreset -> here - no selection
+        /// has been applied yet, so that read returned F22A and this line applied the entire F-22
+        /// profile to Mav_Player. A player who had selected the F-16 got "applied F-22A RAPTOR to
+        /// Mav_Player" in the log, and F-22 mass, thrust, wing area and TVC on the aircraft. The
+        /// catalog was answering correctly; the caller was asking the wrong question.
+        ///
+        /// So identity now comes only from the applier's authoritative state. With no aircraft yet
+        /// applied, the aircraft-aware pass is SKIPPED - returning false, which falls through to the
+        /// plain feel preset that touches the jet's handling and no aircraft identity at all. Waiting
+        /// is correct; guessing is not.
+        /// </summary>
         private bool TryApplyAircraftAwarePreset(MavWTFeelPreset p)
         {
             if (p == MavWTFeelPreset.DirectDebug)
@@ -379,13 +406,44 @@ namespace MaverickFresh
             if (applier == null)
                 return false;
 
-            MavAircraftRuntimeProfile profile = MavAircraftCatalog.GetBuiltIn(applier.aircraft);
-            if (profile == null)
+            // The one question this controller is allowed to ask about identity: has one been
+            // established? Never "which one should it be?".
+            if (!applier.HasAuthoritativeAircraft)
+            {
+                lastApplied = "no aircraft applied yet: WT feel skipped its aircraft-aware pass "
+                              + "rather than defaulting to one";
+
+                // Waiting is correct, but a silent wait is hard to diagnose. Said once, because the
+                // preset hotkeys can re-enter this freely.
+                if (!loggedMissingAircraftAuthority)
+                {
+                    loggedMissingAircraftAuthority = true;
+                    Debug.LogWarning(
+                        "[Maverick/Aircraft] WT feel ran before any aircraft was applied to "
+                        + applier.name + ", so it tuned handling only and left aircraft identity "
+                        + "alone. If the aircraft is never applied, check that the in-game bootstrap "
+                        + "applies the session selection.", this);
+                }
+
                 return false;
+            }
 
             applier.applyOnStart = false;
             applier.renameObject = false;
-            applier.ApplyProfile(profile);
+
+            // Re-state the identity already in force so the tuning below lands on a clean baseline.
+            // This cannot change which aircraft this is.
+            string reapplyError;
+            if (!applier.TryReapplyAppliedProfile(out reapplyError))
+            {
+                lastApplied = "WT feel could not refresh the applied aircraft: " + reapplyError;
+                return false;
+            }
+
+            MavAircraftRuntimeProfile profile = applier.AppliedProfile;
+            if (profile == null)
+                return false;
+
             Resolve();
 
             float response = 1f;
