@@ -9,7 +9,7 @@ namespace MaverickFresh.FlightDynamics
     [DefaultExecutionOrder(-100)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
-    public class MavSixDoFBody : MonoBehaviour
+    public class MavSixDoFBody : MonoBehaviour, IMavArmableFlightBody
     {
         [Header("Safety")]
         [Tooltip("Master gate for new-FDM load application. OFF by default; legacy flight keeps ownership until this is deliberately armed.")]
@@ -85,6 +85,37 @@ namespace MaverickFresh.FlightDynamics
         public MavFlightDynamicsReadinessInputs debugReadinessInputs;
         public string debugLegacyPhysicsOwner = "none";
         public int debugRejectedNotLiveReadyApplications;
+
+        /// <summary>
+        /// Name for the ownership authority's diagnostics.
+        /// </summary>
+        public string ArmableBodyName { get { return "MavSixDoFBody"; } }
+
+        /// <summary>
+        /// Arming, expressed as the ownership authority's contract.
+        ///
+        /// simulationEnabled remains the underlying flag - existing scenes, the Phase 2/3 suites and the
+        /// readiness gate all still read it - but the SETTER is how the single arming authority moves it.
+        /// Nothing else in the runtime sets it true.
+        /// </summary>
+        public bool ArmedForLiveFlight
+        {
+            get { return simulationEnabled; }
+            set { simulationEnabled = value; }
+        }
+
+        [Header("Phase 5A Ownership / Shadow")]
+        [Tooltip("The Phase 5 ownership gate. When present it decides whether this body may apply loads. Absent gate falls back to simulationEnabled alone, which is the pre-Phase-5 behaviour.")]
+        public MavFlightPhysicsOwnership physicsOwnership;
+
+        [Tooltip("Physics steps this body has computed in shadow mode without applying anything.")]
+        public int debugShadowComputeSteps;
+
+        [Tooltip("Load applications refused because the ownership gate did not grant the replacement stack physics ownership.")]
+        public int debugRejectedNotOwnerApplications;
+
+        [Tooltip("Whether the most recent shadow computation produced a finite load set. Readiness reads this rather than trusting that the pipeline is merely wired.")]
+        public bool debugShadowLoadSetFinite;
 
         private Rigidbody rb;
         private bool ownershipInitialized;
@@ -203,9 +234,58 @@ namespace MaverickFresh.FlightDynamics
 
             PublishSpecificForce();
 
+            // ---- SHADOW: compute everything, apply nothing -------------------------------------
+            //
+            // Everything above this line is pure computation - state extraction, atmosphere, aero
+            // coefficients, dimensionalisation, propulsion, specific force - and touches no Rigidbody.
+            // The single write is TryApplyLoadSet below, so shadow mode is implemented by returning
+            // before it rather than by disabling parts of the pipeline. That matters: a shadow path
+            // that skipped stages would be validating something other than what replacement mode will
+            // eventually run.
+            //
+            // InitializePhysicsOwnership, which writes Rigidbody damping and gravity flags, is also
+            // already behind the readiness gate above and is not reached in shadow mode.
+            if (IsShadowComputeOnly())
+            {
+                debugShadowComputeSteps++;
+                debugShadowLoadSetFinite = debugLoadSet.IsFinite();
+                PublishTelemetry(false);
+                return false;
+            }
+
             bool applied = TryApplyLoadSet(fixedTime);
             PublishTelemetry(applied);
             return applied;
+        }
+
+        /// <summary>
+        /// Whether this step must compute without applying anything.
+        ///
+        /// Answered from the ownership gate, not from a local flag, so there is one authority for the
+        /// question. With no gate present the answer is false and the body behaves exactly as it did
+        /// before Phase 5A.
+        /// </summary>
+        public bool IsShadowComputeOnly()
+        {
+            ResolvePhysicsOwnership();
+            return physicsOwnership != null && physicsOwnership.ReplacementShadowComputeRequested;
+        }
+
+        /// <summary>
+        /// Whether the ownership gate grants the replacement stack permission to write physics.
+        /// An absent gate means the pre-Phase-5 behaviour: simulationEnabled and the readiness report
+        /// are the only authorities.
+        /// </summary>
+        public bool ReplacementOwnershipGranted()
+        {
+            ResolvePhysicsOwnership();
+            return physicsOwnership == null || physicsOwnership.ReplacementPhysicsAllowed;
+        }
+
+        private void ResolvePhysicsOwnership()
+        {
+            if (physicsOwnership == null)
+                physicsOwnership = GetComponent<MavFlightPhysicsOwnership>();
         }
 
         public void SetControlInput(MavControlInput input)
@@ -215,6 +295,15 @@ namespace MaverickFresh.FlightDynamics
 
         private bool TryApplyLoadSet(float fixedTime)
         {
+            // The gate has the final word on whether this stack owns physics. Checked here, at the one
+            // place that actually writes, so no future caller can reach the Rigidbody around it.
+            if (!ReplacementOwnershipGranted())
+            {
+                debugRejectedNotOwnerApplications++;
+                ClearUnityLoadDebug();
+                return false;
+            }
+
             if (ShouldRejectDuplicateApplication(lastAppliedFixedTime, fixedTime))
             {
                 debugRejectedDuplicateApplications++;

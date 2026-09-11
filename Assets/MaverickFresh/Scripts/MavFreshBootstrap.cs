@@ -29,6 +29,24 @@ namespace MaverickFresh
         public bool installTurnDynamicsDiagnostics = true;
         public MavTurnDynamicsDiagnostics turnDiagnostics;
 
+        [Header("Phase 5B Maneuver Diagnostics")]
+        [Tooltip("Install the high-maneuver diagnostic recorder. It applies no force and records "
+                 + "nothing until a case is selected and runRequested is ticked, so installing it "
+                 + "changes flight behaviour in no way at all.")]
+        public bool installManeuverDiagnostics = true;
+
+        [Tooltip("Read-only mirror for inspection.")]
+        public MavManeuverDiagnostics maneuverDiagnostics;
+
+        [Header("Phase 5A Flight Physics Ownership")]
+        [Tooltip("Ensure exactly one flight-physics ownership authority exists on the player. Default mode is Legacy, which permits every legacy writer and reproduces current behaviour exactly. Turning this off leaves the legacy writers ungoverned, which is the pre-Phase-5 state.")]
+        public bool installFlightPhysicsOwnership = true;
+
+        [Tooltip("The single arming authority on the player. Read-only mirror for inspection.")]
+        public MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership flightPhysicsOwnership;
+
+        [TextArea(2, 5)] public string flightPhysicsOwnershipStatus = "not run";
+
         [Header("Fresh Mode")]
         public bool setupOnAwake = true;
         public bool disableOldMaverickComponents = true;
@@ -265,6 +283,17 @@ namespace MaverickFresh
             // higher-level bootstrap that has already done so rather than competing with it.
             EnsureAuthoritativeAircraftApplied();
 
+            // ---- PHASE 5A: install the single flight-physics ownership authority ----------------
+            //
+            // After identity, because the authority's readiness contract asks which aircraft this is
+            // and an unresolved identity makes that question meaningless. Before the WT polish block
+            // and before any physics step, so the legacy writers find it the first time they look.
+            //
+            // Default mode is Legacy, in which the authority permits every legacy writer. Installing it
+            // therefore changes no flight behaviour - it makes ownership OBSERVABLE and GOVERNED, not
+            // different.
+            EnsureFlightPhysicsOwnership();
+
             // Read-only observer. Installed after the aircraft is applied so it samples the real
             // configuration, and it writes nothing back to the jet or the aero body.
             if (installTurnDynamicsDiagnostics && aircraftObject != null)
@@ -272,6 +301,16 @@ namespace MaverickFresh
                 turnDiagnostics = aircraftObject.GetComponent<MavTurnDynamicsDiagnostics>();
                 if (turnDiagnostics == null)
                     turnDiagnostics = aircraftObject.AddComponent<MavTurnDynamicsDiagnostics>();
+            }
+
+            // Phase 5B. Also read-only, and also installed after the aircraft is applied so the
+            // maneuver it records is flown with the real F-16 configuration rather than the generic
+            // startup one. Idle until a case is explicitly selected.
+            if (installManeuverDiagnostics && aircraftObject != null)
+            {
+                maneuverDiagnostics = aircraftObject.GetComponent<MavManeuverDiagnostics>();
+                if (maneuverDiagnostics == null)
+                    maneuverDiagnostics = aircraftObject.AddComponent<MavManeuverDiagnostics>();
             }
 
             if (installWTPolish)
@@ -444,6 +483,88 @@ namespace MaverickFresh
                     + profile.displayName + " was applied. Enter through the hangar to choose one.",
                     this);
             }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Ensures the player carries EXACTLY ONE flight-physics ownership authority.
+        ///
+        /// Phase 5A's whole claim is that ownership is mechanically trustworthy, and an authority that
+        /// has to be added by hand is not part of the runtime - it is a thing somebody might remember.
+        /// This puts it on the real startup path, so the legacy writers register with a real authority
+        /// on their first physics step.
+        ///
+        /// Exactly one: MavFlightPhysicsOwnership carries DisallowMultipleComponent, but a count is
+        /// taken and reported anyway rather than trusted, because "the attribute prevents it" is an
+        /// assumption and the diagnostic costs nothing.
+        ///
+        /// The mode is NOT set here. A fresh component defaults to Legacy, and an existing one keeps
+        /// whatever it was left on - so re-running setup cannot silently pull an aircraft out of a mode
+        /// an operator deliberately selected.
+        /// </summary>
+        public bool EnsureFlightPhysicsOwnership()
+        {
+            if (!installFlightPhysicsOwnership)
+            {
+                flightPhysicsOwnershipStatus =
+                    "disabled: installFlightPhysicsOwnership is off, so legacy writers are ungoverned "
+                    + "(pre-Phase-5 behaviour)";
+                return false;
+            }
+
+            if (aircraftObject == null)
+            {
+                flightPhysicsOwnershipStatus = "no player object to install an ownership authority on";
+                return false;
+            }
+
+            MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership[] existing =
+                aircraftObject.GetComponents<MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership>();
+
+            if (existing.Length > 1)
+            {
+                // Two authorities is the condition this whole phase exists to make impossible. Say so
+                // loudly rather than picking one and hoping.
+                flightPhysicsOwnershipStatus =
+                    "FAULT: " + existing.Length + " ownership authorities found on "
+                    + aircraftObject.name + ". Exactly one is permitted.";
+                Debug.LogError("MavFreshBootstrap: " + flightPhysicsOwnershipStatus, this);
+
+                if (existing[0] != null)
+                    existing[0].EnterFault("more than one ownership authority is present on the player");
+
+                flightPhysicsOwnership = existing[0];
+                return false;
+            }
+
+            flightPhysicsOwnership = existing.Length == 1 ? existing[0] : null;
+
+            bool created = false;
+            if (flightPhysicsOwnership == null)
+            {
+                flightPhysicsOwnership = aircraftObject
+                    .AddComponent<MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership>();
+                created = true;
+            }
+
+            // Give the authority the body it governs, if one exists. Absent body is the normal case
+            // today: the replacement stack is not in Mav_InGame, and the authority governs nothing
+            // rather than inventing something to govern.
+            //
+            // Attached at runtime rather than serialized, so a stale scene reference cannot leave the
+            // authority pointed at an object that is no longer there.
+            MaverickFresh.FlightDynamics.MavSixDoFBody body =
+                aircraftObject.GetComponent<MaverickFresh.FlightDynamics.MavSixDoFBody>();
+            flightPhysicsOwnership.AttachGovernedBody(body);
+
+            flightPhysicsOwnershipStatus =
+                (created ? "installed" : "found existing")
+                + " ownership authority on " + aircraftObject.name
+                + "; owner=" + flightPhysicsOwnership.owner
+                + "; governedBody=" + flightPhysicsOwnership.debugGovernedBody
+                + "; replacementActivation="
+                + (flightPhysicsOwnership.allowReplacementActivation ? "ALLOWED" : "safety-held");
 
             return true;
         }

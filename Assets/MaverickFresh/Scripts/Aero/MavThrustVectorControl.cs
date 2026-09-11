@@ -11,8 +11,73 @@ namespace MaverickFresh
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
-    public class MavThrustVectorControl : MonoBehaviour
+    public class MavThrustVectorControl : MonoBehaviour,
+        MaverickFresh.FlightDynamics.IMavLegacyPhysicsWriter
     {
+        // ================= Phase 5A legacy physics ownership gate =========================
+        //
+        // This component can write force or torque to the live player Rigidbody, so it asks the
+        // ownership gate before every such write and reports afterwards what it actually did.
+        //
+        // The gate is CONSULTED rather than the component being switched off from outside. Disabling
+        // the component would also stop its command generation and telemetry, which must survive into
+        // replacement mode; and a disabled component proves nothing about what it contributed, which is
+        // exactly the claim replacement activation has to be able to make. In Legacy mode the gate
+        // allows everything, so this costs one boolean read per step and changes no behaviour.
+
+        [Header("Phase 5A Ownership")]
+        [Tooltip("Gate deciding whether this component may write physics. Resolved from this GameObject; an absent gate means legacy is allowed, which is the pre-Phase-5 behaviour.")]
+        public MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership physicsOwnership;
+
+        [Tooltip("Whether this component applied force or torque to the live Rigidbody on its most recent physics step. OBSERVED, not configured.")]
+        public bool debugWroteLiveForceLastStep;
+        public int debugWriterLastStepIndex;
+
+        public string LegacyWriterName { get { return "MavThrustVectorControl"; } }
+
+        public MaverickFresh.FlightDynamics.MavLegacyWriterKind LegacyWriterKind
+        {
+            get { return MaverickFresh.FlightDynamics.MavLegacyWriterKind.ControlTorque; }
+        }
+
+        public bool WroteLiveForceLastStep { get { return debugWroteLiveForceLastStep; } }
+        public int LegacyWriterLastStepIndex { get { return debugWriterLastStepIndex; } }
+
+        /// <summary>
+        /// Whether this component may write physics this step. An absent gate means legacy ownership,
+        /// which is the pre-Phase-5 behaviour and the safe default.
+        /// </summary>
+        private bool LegacyPhysicsAllowed()
+        {
+            ResolvePhysicsOwnership();
+            return physicsOwnership == null || physicsOwnership.LegacyPhysicsAllowed;
+        }
+
+        /// <summary>Records that a live write happened, for the gate's writer enumeration.</summary>
+        private void MarkLiveForceWritten()
+        {
+            debugWroteLiveForceLastStep = true;
+            if (physicsOwnership != null)
+                debugWriterLastStepIndex = physicsOwnership.CurrentStepIndex;
+        }
+
+        /// <summary>Called at the top of each physics step, before any write decision.</summary>
+        private void BeginLegacyWriterStep()
+        {
+            ResolvePhysicsOwnership();
+            debugWroteLiveForceLastStep = false;
+        }
+
+        private void ResolvePhysicsOwnership()
+        {
+            if (physicsOwnership != null)
+                return;
+
+            physicsOwnership = GetComponent<MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership>();
+            if (physicsOwnership != null)
+                physicsOwnership.RegisterLegacyWriter(this);
+        }
+
         [Header("v0.20.8 Thrust Vector Control") ]
         public bool useThrustVectorControl = false;
         public float pitchAuthority = 0f;
@@ -82,9 +147,10 @@ namespace MaverickFresh
             float k = 1f - Mathf.Exp(-Mathf.Max(0.01f, response) * Time.fixedDeltaTime);
             smoothedTorque = Vector3.Lerp(smoothedTorque, commanded, k);
 
-            if (smoothedTorque.sqrMagnitude > 0.000001f)
+            if (smoothedTorque.sqrMagnitude > 0.000001f && LegacyPhysicsAllowed())
             {
                 rb.AddRelativeTorque(smoothedTorque, ForceMode.Acceleration);
+                MarkLiveForceWritten();
                 debugActive = true;
                 debugTorque = smoothedTorque;
             }

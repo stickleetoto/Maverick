@@ -290,6 +290,21 @@ namespace MaverickFresh
         public float rollAuthorityFactor = 1f;
         public string instructorState = "ready";
 
+        [Header("AoA Limiter Telemetry (read-only)")]
+        [Tooltip("The authoritative base reduction this component is using, i.e. the value the "
+                 + "aircraft profile resolved. F-16C expects 0.05.")]
+        public float debugAoAPitchReductionBase = 1f;
+        [Tooltip("How much of the limiter is being bypassed because the pilot is commanding pitch. "
+                 + "0 = no bypass, 1 = limiter fully removed.")]
+        public float debugManualBypassFactor;
+        [Tooltip("The reduction actually multiplied into the pitch command this step, AFTER the manual "
+                 + "bypass. 1 = no limiting at all. This is the number that decides whether the "
+                 + "limiter is doing anything, and it is reported separately from the base so the "
+                 + "bypass can be judged on its own.")]
+        public float debugEffectiveLimiterReduction = 1f;
+        [Tooltip("True while the AoA limiter branch is the thing shaping the pitch command.")]
+        public bool debugAoALimiterEngaged;
+
         [Header("Compatibility Debug")]
         public float aggressiveRoll;
         public float wingsLevelRoll;
@@ -511,16 +526,28 @@ namespace MaverickFresh
             highSpeedRollAuthority = source.highSpeedRollAuthority;
 
             useGLimiter = source.useGLimiter;
-            softGLimit = source.softGLimit;
-            hardGLimit = source.hardGLimit;
+            // softGLimit and hardGLimit are deliberately NOT copied from the jet: this direction is
+            // the back-channel that let generic startup values outlive the aircraft profile. The
+            // profile writes this component directly; the jet copy is a mirror written outward only.
+            //
+            // These two happen to be identical to the instructor defaults today, so removing the
+            // back-channel changes no behaviour - it removes the latent defect, nothing more.
             gPitchReduction = source.gPitchReduction;
             useLowSpeedNoseDownAssist = source.useLowSpeedNoseDownAssist;
             stallAssistSpeed = source.stallAssistSpeed;
             stallNoseDownAssist = source.stallNoseDownAssist;
             stallAssistMaxPitchClamp = source.stallAssistMaxPitchClamp;
-            aoaSoftLimitDeg = source.aoaSoftLimitDeg;
-            aoaHardLimitDeg = source.aoaHardLimitDeg;
-            aoaPitchReduction = source.aoaPitchReduction;
+            // Same for the AoA breakpoints. Unlike the G limits these DO differ per aircraft - the
+            // F-16C wants 22/30 against a generic 24/34 - so this direction was actively discarding
+            // the aircraft's configured protection envelope.
+            // aoaPitchReduction is deliberately NOT copied from the jet.
+            //
+            // This direction is the back-channel that defeated the F-16's configured limiter. The jet
+            // field is a mirror that this component writes; copying it back in would let a stale
+            // mirror overwrite the authority, which is exactly what used to happen - bootstrap pushed
+            // the generic jet defaults in here before the aircraft profile had been applied, and the
+            // aircraft value never arrived. The profile now writes this component directly, and
+            // nothing copies it back out of the mirror.
             highGShortTermAllowance = source.highGShortTermAllowance;
             sustainedGLimit = source.sustainedGLimit;
 
@@ -715,6 +742,8 @@ namespace MaverickFresh
             target.highSpeedRollAuthority = highSpeedRollAuthority;
 
             target.useGLimiter = useGLimiter;
+            // Authority -> mirror, the only permitted direction. hardGLimit in particular must keep
+            // flowing: MavPhysicalAIRewardLogger reads jet.hardGLimit.
             target.softGLimit = softGLimit;
             target.hardGLimit = hardGLimit;
             target.gPitchReduction = gPitchReduction;
@@ -724,6 +753,8 @@ namespace MaverickFresh
             target.stallAssistMaxPitchClamp = stallAssistMaxPitchClamp;
             target.aoaSoftLimitDeg = aoaSoftLimitDeg;
             target.aoaHardLimitDeg = aoaHardLimitDeg;
+            // Authority -> mirror. This is the only direction this setting is allowed to travel, so
+            // the value on the jet always reflects what the limiter is really using.
             target.aoaPitchReduction = aoaPitchReduction;
             target.highGShortTermAllowance = highGShortTermAllowance;
             target.sustainedGLimit = sustainedGLimit;
@@ -1281,6 +1312,15 @@ namespace MaverickFresh
                 instructorState = "stall_assist";
             }
 
+            // Telemetry, published every step whether the limiter engages or not, so "the limiter is
+            // not doing anything" and "the limiter is not running" are distinguishable.
+            debugAoAPitchReductionBase = aoaPitchReduction;
+            debugManualBypassFactor = (useManualControlAuthorityBoost && pitchOverride)
+                ? Mathf.Clamp01(Mathf.Max(manualLimiterBypassFactor, manualEnvelopeBypassFactor))
+                : 0f;
+            debugEffectiveLimiterReduction = 1f;
+            debugAoALimiterEngaged = false;
+
             float aoaAbs = Mathf.Abs(aoaEstimateDeg);
             if (targetPitch < 0f && aoaAbs > aoaSoftLimitDeg)
             {
@@ -1288,6 +1328,8 @@ namespace MaverickFresh
                 float reduction = Mathf.Lerp(1f, aoaPitchReduction, Mathf.Clamp01(aoaT));
                 reduction = ApplyManualLimiterBypass(reduction, pitchOverride);
                 targetPitch *= reduction;
+                debugEffectiveLimiterReduction = reduction;
+                debugAoALimiterEngaged = true;
                 instructorState = "aoa_limiter";
             }
 
