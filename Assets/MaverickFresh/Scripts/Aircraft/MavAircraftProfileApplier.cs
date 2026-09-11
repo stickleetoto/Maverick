@@ -337,6 +337,10 @@ namespace MaverickFresh
             Set(jet, "rateControlD", p.rateControlD);
             Set(jet, "maxRateControlTorque", p.maxRateControlTorque);
 
+            Set(jet, "usePhase4BTurnDynamics", p.usePhase4BTurnDynamics);
+            Set(jet, "thrustBoostSuppressionG", p.thrustBoostSuppressionG);
+            Set(jet, "releaseRateNullingScale", p.releaseRateNullingScale);
+            Set(jet, "alignmentAssistFloorAtFullAero", p.alignmentAssistFloorAtFullAero);
             Set(jet, "autoSpeedAssist", true);
             Set(jet, "targetCruiseSpeed", p.targetCruiseSpeed);
             Set(jet, "minCombatSpeed", p.minCombatSpeed);
@@ -378,6 +382,10 @@ namespace MaverickFresh
         private void ApplyToAeroBody(MavAeroBody aero, MavAircraftRuntimeProfile p)
         {
             aero.useAeroBody = p.useAeroBody;
+            aero.usePhase4BTurnAuthority = p.usePhase4BTurnDynamics;
+            aero.useAeroStaticStability = p.useAeroStaticStability;
+            aero.pitchStabilityStrength = p.pitchStabilityStrength;
+            aero.yawStabilityStrength = p.yawStabilityStrength;
             aero.aeroBlend = p.aeroBlend;
             aero.liftBlend = p.liftBlend;
             aero.dragBlend = p.dragBlend;

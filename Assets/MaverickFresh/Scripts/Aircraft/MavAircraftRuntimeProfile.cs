@@ -106,6 +106,23 @@ public float maxWaveDragAccel = 22f;
 
         [Header("v0.20.3~0.20.6 Experimental Aero")]
         public bool useAeroBody = true;
+        [Tooltip("Phase 4B: aerodynamics owns turn curvature and weight support, and the legacy velocity/alignment assists are migrated down by the same amount. Per-aircraft, so an aircraft that has not been re-tuned and re-flown keeps Phase 4A behaviour exactly.")]
+        public bool usePhase4BTurnDynamics = false;
+
+        [Tooltip("Phase 4B: load factor at which the low-speed thrust boost is fully suppressed, so a sustained hard turn bleeds energy instead of being quietly paid for by thrust.")]
+        public float thrustBoostSuppressionG = 3.0f;
+
+        [Tooltip("Phase 4B: fraction of the rate controller's proportional rate-nulling that remains when no rate is commanded. Lower = more rotational inertia on release.")]
+        [Range(0.05f, 1f)] public float releaseRateNullingScale = 0.35f;
+
+        [Tooltip("Phase 4B: how much of the nose-onto-velocity alignment assist survives at full aero ownership. It erases angle of attack, so it must be migrated - but not to zero, or the nose wanders at low speed.")]
+        [Range(0f, 1f)] public float alignmentAssistFloorAtFullAero = 0.15f;
+
+        [Tooltip("Phase 4B: aerodynamic static stability replaces the legacy forward-alignment assist's job of holding the nose near the velocity vector. Required whenever the alignment assist is migrated down, or angle of attack has nothing restoring it.")]
+        public bool useAeroStaticStability = false;
+        public float pitchStabilityStrength = 0.055f;
+        public float yawStabilityStrength = 0.030f;
+
         [Range(0f, 1f)] public float aeroBlend = 0.45f;
         [Range(0f, 1f)] public float liftBlend = 0.55f;
         [Range(0f, 1f)] public float dragBlend = 0.75f;

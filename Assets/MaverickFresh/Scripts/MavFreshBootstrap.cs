@@ -25,6 +25,10 @@ namespace MaverickFresh
         [Tooltip("What happened on the last aircraft identity pass.")]
         [TextArea(2, 4)] public string aircraftIdentityStatus = "not run";
 
+        [Tooltip("Install the Phase 4B turn-dynamics diagnostic on the player. It is read-only - it applies no force, torque or correction - and exists so turn curvature produced by aerodynamics can be told apart from curvature produced by a legacy assist.")]
+        public bool installTurnDynamicsDiagnostics = true;
+        public MavTurnDynamicsDiagnostics turnDiagnostics;
+
         [Header("Fresh Mode")]
         public bool setupOnAwake = true;
         public bool disableOldMaverickComponents = true;
@@ -260,6 +264,15 @@ namespace MaverickFresh
             // So the startup component that actually runs establishes identity. It defers to a
             // higher-level bootstrap that has already done so rather than competing with it.
             EnsureAuthoritativeAircraftApplied();
+
+            // Read-only observer. Installed after the aircraft is applied so it samples the real
+            // configuration, and it writes nothing back to the jet or the aero body.
+            if (installTurnDynamicsDiagnostics && aircraftObject != null)
+            {
+                turnDiagnostics = aircraftObject.GetComponent<MavTurnDynamicsDiagnostics>();
+                if (turnDiagnostics == null)
+                    turnDiagnostics = aircraftObject.AddComponent<MavTurnDynamicsDiagnostics>();
+            }
 
             if (installWTPolish)
             {

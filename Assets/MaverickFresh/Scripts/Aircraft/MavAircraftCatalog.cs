@@ -315,9 +315,55 @@ namespace MaverickFresh
             p.highSpeedPitchAuthority = 0.65f;
             p.aoaSoftLimitDeg = 22f;
             p.aoaHardLimitDeg = 30f;
+
+            // Phase 4B: the AoA limiter has to be able to actually STOP angle of attack growing.
+            // At the Phase 4A default of 0.45 it only cut the pitch command to 45%, which still
+            // commands more nose rotation than the velocity vector is turning at - so AoA crept past
+            // stall on a held pull. Phase 4A never exposed that, because the velocity-turn assist was
+            // dragging the velocity vector onto the nose and keeping AoA small artificially. With
+            // aerodynamics actually producing the turn, a limiter that only reduces the command is not
+            // a limiter.
+            p.aoaPitchReduction = 0.05f;
             p.gunAmmo = 510; p.missileAmmo = 4; p.precisionAmmo = 2; p.bombAmmo = 4; p.rocketAmmo = 18;
             p.useAeroBody = true;
-            p.aeroBlend = 0.47f; p.liftBlend = 0.60f; p.dragBlend = 0.74f; p.gravityBlend = 0.45f;
+
+            // ---- PHASE 4B TURN ENTRY & INERTIA ---------------------------------------------------
+            // The F-16 is the first aircraft migrated. Phase 4A left it turning on 28% real lift
+            // (aeroBlend 0.47 * liftBlend 0.60) and 53% direct velocity steering, which is what the
+            // rail-like feel was: the assist redirected the velocity vector straight onto the nose,
+            // so angle of attack collapsed and lift never got the chance to build the turn.
+            //
+            // Aerodynamics now owns 0.95 * 0.92 = 0.874 of turn curvature, and the velocity-turn
+            // assist is left 0.126 by the conservation rule - down from 0.53. The alignment assist,
+            // which erases AoA directly, is migrated by the same split to 0.257.
+            //
+            // gravityBlend goes to full with it, and that pairing is not optional: lift is now ~3.1x
+            // what it was at a given AoA, so leaving gravity at 45% of weight would make the aircraft
+            // balloon out of every turn. Trim works out at about 1.4 deg AoA at 245 m/s sea level,
+            // and a 7g turn needs about 9.6 deg - inside the 17 deg stall.
+            p.usePhase4BTurnDynamics = true;
+
+            // The alignment assist is migrated down to 25.7%, so something has to hold the nose near
+            // the velocity vector. Without this the aircraft has NO pitching moment at all - the
+            // legacy aero core applies forces only - and angle of attack integrates without bound
+            // under a held pitch command. This is the mechanism that replaces the assist, and unlike
+            // the assist it scales with dynamic pressure.
+            p.useAeroStaticStability = true;
+            p.pitchStabilityStrength = 0.055f;
+            p.yawStabilityStrength = 0.030f;
+            p.aeroBlend = 0.95f; p.liftBlend = 0.92f; p.dragBlend = 0.95f; p.gravityBlend = 1.0f;
+
+            // Induced drag at 7g works out near 90 kN against 123 kN of installed thrust, so a
+            // sustained hard turn costs real energy instead of being free.
+            p.thrustBoostSuppressionG = 3.0f;
+
+            // Releasing the stick previously had three mechanisms driving angular velocity to zero:
+            // the rate controller's proportional term, Rigidbody angular damping, and the semi-aero
+            // rate dampers. The proportional term is scaled back on release so the rate decays
+            // through damping instead of being braked flat.
+            p.releaseRateNullingScale = 0.35f;
+            p.alignmentAssistFloorAtFullAero = 0.15f;
+
             p.wingArea = 27.9f; p.clSlopePerDeg = 0.078f; p.stallAoADeg = 17f; p.fullStallAoADeg = 29f; p.postStallLiftFactor = 0.28f;
             p.cd0 = 0.026f; p.aspectRatio = 3.2f; p.oswaldEfficiency = 0.78f; p.postStallDrag = 0.22f;
             p.maxLiftG = 9.4f; p.maxDragG = 3.0f; p.referenceControlSpeed = 235f; p.minControlAuthority = 0.30f; p.maxControlAuthority = 1.10f; p.velocityAssistFade = 0.50f;
