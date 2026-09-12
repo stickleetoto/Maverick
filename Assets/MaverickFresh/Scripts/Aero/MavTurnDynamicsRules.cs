@@ -76,6 +76,120 @@ namespace MaverickFresh
         /// Same shape as production: reduce toward the configured factor as the measured value crosses
         /// from the soft limit to the hard limit.
         /// </summary>
+        /// <summary>
+        /// Would this pitch command push the aircraft FURTHER outside the envelope, or is it recovery?
+        ///
+        /// SIGN CONVENTIONS, traced not assumed:
+        ///   pitch command  - NEGATIVE is nose up. A positive Unity local torque about +X pitches the
+        ///                    nose DOWN (see MavFlightDynamicsMath), and the jet applies the pitch
+        ///                    command directly as that torque.
+        ///   angle of attack - POSITIVE when the velocity vector lies below the nose
+        ///                    (alpha = atan2(-localVelocity.y, forwardSpeed)).
+        ///   normal accel    - POSITIVE toward the canopy (Dot(dv/dt, transform.up)).
+        ///
+        /// So a nose-up command (negative) increases POSITIVE alpha and POSITIVE g, and a nose-down
+        /// command (positive) drives alpha and g NEGATIVE. The command worsens an excursion exactly
+        /// when its sign is opposite to the sign of the state:
+        ///
+        ///     worsens  =  command * state &lt; 0
+        ///
+        /// WHY NOT Mathf.Abs EVERYWHERE. Taking absolute values would limit the RECOVERY command too:
+        /// at +30 deg alpha a nose-down push is the way out, and a limiter that attenuated it would
+        /// trap the aircraft at the edge of the envelope it was meant to protect. The whole point is
+        /// that protection has to be directional, and "symmetric" means symmetric about zero - not
+        /// indifferent to direction.
+        /// </summary>
+        public static bool CommandWorsensExcursion(float pitchCommand, float signedState)
+        {
+            return pitchCommand * signedState < 0f;
+        }
+
+        /// <summary>
+        /// The AoA-limiter reduction factor, valid on BOTH sides of zero.
+        ///
+        /// Returns 1 (no limiting) unless the state is outside the relevant soft limit AND the command
+        /// would worsen it. The negative side uses its own breakpoints because the aircraft's negative
+        /// envelope is not the mirror of its positive one - neither structurally nor aerodynamically.
+        ///
+        /// The positive branch reproduces ComputePitchCommandReduction's AoA term exactly, so enabling
+        /// the negative side cannot alter positive-side behaviour.
+        /// </summary>
+        public static float ComputeSymmetricAoAReduction(
+            float pitchCommand,
+            float aoaDeg,
+            float positiveSoftLimitDeg,
+            float positiveHardLimitDeg,
+            float negativeSoftLimitDeg,
+            float negativeHardLimitDeg,
+            float reductionAtHardLimit)
+        {
+            if (!CommandWorsensExcursion(pitchCommand, aoaDeg))
+                return 1f;
+
+            float t;
+            if (aoaDeg > 0f)
+            {
+                if (aoaDeg <= positiveSoftLimitDeg)
+                    return 1f;
+
+                t = Mathf.InverseLerp(
+                    positiveSoftLimitDeg,
+                    Mathf.Max(positiveSoftLimitDeg + 0.1f, positiveHardLimitDeg),
+                    aoaDeg);
+            }
+            else
+            {
+                // Negative limits are negative numbers; compare on magnitude so the ramp reads the
+                // same way round as the positive branch.
+                float soft = Mathf.Abs(negativeSoftLimitDeg);
+                float hard = Mathf.Abs(negativeHardLimitDeg);
+                float mag = Mathf.Abs(aoaDeg);
+                if (mag <= soft)
+                    return 1f;
+
+                t = Mathf.InverseLerp(soft, Mathf.Max(soft + 0.1f, hard), mag);
+            }
+
+            return Mathf.Lerp(1f, Mathf.Clamp01(reductionAtHardLimit), Mathf.Clamp01(t));
+        }
+
+        /// <summary>
+        /// The G-limiter reduction factor, valid on BOTH sides of zero. Same directional rule.
+        /// </summary>
+        public static float ComputeSymmetricGReduction(
+            float pitchCommand,
+            float loadFactorG,
+            float positiveLimitG,
+            float positiveHardLimitG,
+            float negativeLimitG,
+            float reductionAtLimit)
+        {
+            if (!CommandWorsensExcursion(pitchCommand, loadFactorG))
+                return 1f;
+
+            if (loadFactorG > 0f)
+            {
+                if (loadFactorG <= positiveLimitG)
+                    return 1f;
+
+                float t = Mathf.InverseLerp(
+                    positiveLimitG, Mathf.Max(positiveLimitG + 0.1f, positiveHardLimitG), loadFactorG);
+                return Mathf.Lerp(1f, Mathf.Clamp01(reductionAtLimit), Mathf.Clamp01(t));
+            }
+
+            float negLimit = Mathf.Abs(negativeLimitG);
+            float mag = Mathf.Abs(loadFactorG);
+            if (mag <= negLimit)
+                return 1f;
+
+            // Beyond the negative limit the ramp is completed over the same span the positive side
+            // uses between its soft and hard limits, so the two sides share a shape without sharing
+            // a number.
+            float span = Mathf.Max(0.1f, positiveHardLimitG - positiveLimitG);
+            float tn = Mathf.InverseLerp(negLimit, negLimit + span, mag);
+            return Mathf.Lerp(1f, Mathf.Clamp01(reductionAtLimit), Mathf.Clamp01(tn));
+        }
+
         public static float ComputePitchCommandReduction(
             float aoaDeg,
             float loadFactorG,

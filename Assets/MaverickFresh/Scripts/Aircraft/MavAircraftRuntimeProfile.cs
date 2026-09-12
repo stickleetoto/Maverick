@@ -104,6 +104,21 @@ public float maxWaveDragAccel = 22f;
         public float aoaHardLimitDeg = 34f;
         public float aoaPitchReduction = 0.45f;
 
+        // Negative envelope protection (Phase 5B.5 defect D5, reclassified 5B.6).
+        //
+        // PROVENANCE: GAMEPLAY_SAFETY / MAVERICK_TUNING. None of these is an F-16 value. The Morelli
+        // alpha domain (-10 .. +45 deg) is a MODEL VALIDITY range enforced separately by
+        // MavF16ReferenceEnvelope; it is not a flight-control limit and is not the justification for
+        // the numbers here. See the block comment in MavInstructorController.
+        //
+        // They reach the CONSUMER (MavInstructorController) directly through ApplyToInstructor - there
+        // is deliberately no jet mirror, because a second home for a setting is what caused defects D4
+        // and the 5B.0b family.
+        public bool useNegativeEnvelopeProtection = true;
+        public float aoaNegativeSoftLimitDeg = -7f;
+        public float aoaNegativeHardLimitDeg = -10f;
+        public float negativeGLimit = -3f;
+
         [Header("v0.20.3~0.20.6 Experimental Aero")]
         public bool useAeroBody = true;
         [Tooltip("Phase 4B: aerodynamics owns turn curvature and weight support, and the legacy velocity/alignment assists are migrated down by the same amount. Per-aircraft, so an aircraft that has not been re-tuned and re-flown keeps Phase 4A behaviour exactly.")]

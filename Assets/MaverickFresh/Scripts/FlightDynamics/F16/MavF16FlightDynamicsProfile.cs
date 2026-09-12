@@ -19,6 +19,19 @@ namespace MaverickFresh.FlightDynamics.F16
         [Tooltip("Unity-local CG position. Keep zero until the visual/model origin to aerodynamic datum mapping is measured.")]
         public Vector3 centerOfMassLocalM = Vector3.zero;
 
+        [Tooltip("Has the Unity model origin -> aerodynamic datum (0.25 cbar) mapping actually been "
+                 + "MEASURED and declared? This must be ticked by a human who measured it, and the "
+                 + "Phase 5C-R reference-envelope gate refuses while it is false. "
+                 + "It exists because the moment arms in every coefficient equation are referenced to "
+                 + "0.25 cbar, and nothing in code can discover where an art asset's origin sits. An "
+                 + "honest comment saying 'keep zero until measured' was already here; this makes that "
+                 + "comment enforceable instead of advisory.")]
+        public bool cgMappingMeasuredAndDeclared;
+
+        [Tooltip("Free text: how the mapping above was measured, by whom, against what. Required "
+                 + "reading before anyone trusts cgMappingMeasuredAndDeclared.")]
+        [TextArea(2, 4)] public string cgMappingProvenance = "NOT MEASURED";
+
         [Header("Debug")]
         public MavFlightDynamicsProfile debugBuiltProfile;
 
