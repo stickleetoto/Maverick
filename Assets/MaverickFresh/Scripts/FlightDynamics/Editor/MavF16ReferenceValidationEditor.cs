@@ -70,6 +70,27 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             );
         }
 
+        [MenuItem("Maverick/Flight Dynamics/Run Shared Propulsion Architecture Validation")]
+        public static void RunSharedPropulsionValidation()
+        {
+            int passed;
+            int failed;
+            string report = MavSharedPropulsionValidation.RunAll(out passed, out failed);
+
+            if (failed == 0)
+                Debug.Log(report);
+            else
+                Debug.LogError(report);
+
+            EditorUtility.DisplayDialog(
+                "Shared Propulsion Architecture Validation",
+                failed == 0
+                    ? "PASS\n\n" + passed + " checks passed."
+                    : "FAIL\n\n" + failed + " checks failed. See Console for details.",
+                "OK"
+            );
+        }
+
         [MenuItem("Maverick/Flight Dynamics/Run Phase 2 Trim and Control Validation")]
         public static void RunPhase2Validation()
         {

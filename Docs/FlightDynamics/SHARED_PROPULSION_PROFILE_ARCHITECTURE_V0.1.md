@@ -1,6 +1,12 @@
 # Maverick Shared Propulsion — Profile + Engine Architecture v0.1
 
-Status: **ARCHITECTURE ROADMAP — NOT YET IMPLEMENTED**
+Status: **SUPERSEDED by `SHARED_PROPULSION_PROFILE_ARCHITECTURE_V0.2.md`.**
+
+Retained as the original decision record. The architecture described below was implemented in
+phase P0; see v0.2 for what was actually built, the updated ENG gap status, and the one new gap
+(ENG-013) found during implementation.
+
+Original status: ARCHITECTURE ROADMAP — NOT YET IMPLEMENTED
 
 ## 1. Decision
 
