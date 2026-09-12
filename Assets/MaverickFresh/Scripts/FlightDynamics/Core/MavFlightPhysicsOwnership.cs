@@ -140,6 +140,32 @@ namespace MaverickFresh.FlightDynamics
     /// visibility into whether the replacement pipeline has ever run and correctly reports the
     /// shadow-readiness fields as false.
     /// </summary>
+    /// <summary>
+    /// Where the aircraft's gravitational acceleration comes from. Exactly one of these is active at
+    /// a time, by construction rather than by convention.
+    ///
+    /// WHY AN ENUM AND NOT A BOOL. Gravity was previously decided by two independent conditions in
+    /// two components: MavAeroBody forced Rigidbody.useGravity = false unconditionally every physics
+    /// step, while its own custom gravity force was gated on legacy physics being permitted. Those
+    /// two conditions disagree in F16Replacement mode, and the aircraft ends up with NO gravity at
+    /// all. Naming the provider makes "who supplies gravity" a single answer that can be asserted,
+    /// instead of an emergent property of two unrelated if-statements.
+    /// </summary>
+    public enum MavGravityProvider
+    {
+        /// <summary>Nobody. Never a valid steady state for an aircraft in flight.</summary>
+        None = 0,
+
+        /// <summary>Unity's own Rigidbody gravity integration, i.e. Rigidbody.useGravity = true.</summary>
+        UnityRigidbody = 1,
+
+        /// <summary>MavAeroBody's explicit gravity force, scaled by its gravityBlend.</summary>
+        LegacyAeroCustomGravity = 2,
+
+        /// <summary>The replacement stack's summed load set carries gravity itself.</summary>
+        ReplacementLoadSet = 3
+    }
+
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-400)]
     public class MavFlightPhysicsOwnership : MonoBehaviour
@@ -289,6 +315,11 @@ namespace MaverickFresh.FlightDynamics
         private void FixedUpdate()
         {
             debugPhysicsStepIndex++;
+
+            // Gravity first, and before any writer runs. This component has DefaultExecutionOrder
+            // -400, so the flag is settled for the step before MavAeroBody or the jet touch anything.
+            EnforceGravityOwnership();
+
             EnforceArmingForCurrentOwner();
             RefreshWriterDiagnostics();
         }
@@ -304,6 +335,174 @@ namespace MaverickFresh.FlightDynamics
         /// Only governs a body it was explicitly given. A validation rig that constructs its own body
         /// without wiring it here is untouched, which keeps the existing Phase 2/3 suites valid.
         /// </summary>
+        // ==================================================================== gravity ownership
+
+        [Header("Gravity Ownership")]
+        [Tooltip("Which component is allowed to supply gravity right now. Resolved from the owner every step; not settable by hand.")]
+        public MavGravityProvider debugGravityProvider = MavGravityProvider.LegacyAeroCustomGravity;
+
+        [Tooltip("How many times this authority has had to correct Rigidbody.useGravity away from what some other component left it at. A steadily rising number means something is still fighting over the flag.")]
+        public int debugGravityFlagCorrections;
+
+        [TextArea(2, 4)] public string debugGravityOwnershipStatus = "not evaluated";
+
+        /// <summary>
+        /// Which single component supplies gravity for a given owner.
+        ///
+        /// Legacy, Shadow and Fault all answer LegacyAeroCustomGravity. Shadow must match Legacy
+        /// exactly - that is what makes it shadow - and Fault deliberately leaves the stack that was
+        /// already flying the aircraft in charge, because the safe resting place for an aircraft in
+        /// the air is the physics that was holding it up a moment ago.
+        ///
+        /// F16Replacement answers UnityRigidbody, NOT ReplacementLoadSet. That is a statement about
+        /// the code as it exists: MavSixDoFBody does not put a gravity term in its load set today, it
+        /// sets Rigidbody.useGravity from its profile and lets Unity integrate weight. Returning
+        /// ReplacementLoadSet here would describe an intention rather than the implementation, and
+        /// the aircraft would fall through the floor of the abstraction. When the replacement stack
+        /// grows its own gravity term, this is the one line that changes.
+        /// </summary>
+        public static MavGravityProvider ResolveGravityProvider(MavFlightPhysicsOwner owner)
+        {
+            switch (owner)
+            {
+                case MavFlightPhysicsOwner.F16Replacement:
+                    return MavGravityProvider.UnityRigidbody;
+
+                case MavFlightPhysicsOwner.Legacy:
+                case MavFlightPhysicsOwner.Shadow:
+                case MavFlightPhysicsOwner.Fault:
+                default:
+                    return MavGravityProvider.LegacyAeroCustomGravity;
+            }
+        }
+
+        /// <summary>Should Rigidbody.useGravity be on, for a given owner?</summary>
+        public static bool ShouldRigidbodyUseUnityGravity(MavFlightPhysicsOwner owner)
+        {
+            return ResolveGravityProvider(owner) == MavGravityProvider.UnityRigidbody;
+        }
+
+        /// <summary>May MavAeroBody add its own gravity force, for a given owner?</summary>
+        public static bool IsLegacyCustomGravityAllowed(MavFlightPhysicsOwner owner)
+        {
+            return ResolveGravityProvider(owner) == MavGravityProvider.LegacyAeroCustomGravity;
+        }
+
+        /// <summary>
+        /// Exactly one gravity source in every mode - no mode with none, no mode with two.
+        ///
+        /// This is the invariant the previous arrangement violated, and it is checkable as a pure
+        /// function of the enum, so it is checkable without a Rigidbody, a scene, or a play session.
+        /// </summary>
+        public static bool HasExactlyOneGravitySource(MavFlightPhysicsOwner owner)
+        {
+            MavGravityProvider provider = ResolveGravityProvider(owner);
+            if (provider == MavGravityProvider.None)
+                return false;
+
+            bool unity = provider == MavGravityProvider.UnityRigidbody;
+            bool legacyCustom = provider == MavGravityProvider.LegacyAeroCustomGravity;
+            bool replacement = provider == MavGravityProvider.ReplacementLoadSet;
+
+            int sources = (unity ? 1 : 0) + (legacyCustom ? 1 : 0) + (replacement ? 1 : 0);
+            return sources == 1;
+        }
+
+        [Tooltip("Scale the legacy gravity provider is actually applying, reported by it each step. "
+                 + "The F-16 uses 1.0, but other aircraft profiles use 0.45, and specific force is only "
+                 + "correct if it subtracts the gravity that is REALLY acting.")]
+        public float debugLegacyGravityScale = 1f;
+
+        /// <summary>
+        /// The legacy gravity provider reports how much gravity it is applying.
+        ///
+        /// Pushed rather than pulled: this authority does not need to know MavAeroBody's type, and the
+        /// number is whatever the provider actually used this step rather than what a configuration
+        /// field says it should have used.
+        /// </summary>
+        public void ReportLegacyGravityScale(float scale)
+        {
+            debugLegacyGravityScale = scale;
+        }
+
+        /// <summary>
+        /// The gravitational acceleration ACTUALLY acting on the aircraft, world axes, m/s^2.
+        ///
+        /// WHY THIS IS NOT JUST Physics.gravity. The legacy stack applies gravity as an explicit force
+        /// scaled by MavAeroBody.gravityBlend, which is 1.0 for the F-16 but 0.45 for several other
+        /// aircraft profiles. Load factor is specific force, i.e. acceleration MINUS gravity, so
+        /// subtracting a full g from an aircraft that is only being pulled down by 0.45 g would put a
+        /// 0.55 g error straight into the G limiter.
+        ///
+        /// The gravity owner is the only component that knows the answer, which is why it lives here.
+        /// </summary>
+        public Vector3 EffectiveGravityAccelerationWorld
+        {
+            get
+            {
+                switch (ResolveGravityProvider(owner))
+                {
+                    case MavGravityProvider.LegacyAeroCustomGravity:
+                        return Physics.gravity * debugLegacyGravityScale;
+
+                    case MavGravityProvider.UnityRigidbody:
+                    case MavGravityProvider.ReplacementLoadSet:
+                        return Physics.gravity;
+
+                    default:
+                        return Vector3.zero;
+                }
+            }
+        }
+
+        /// <summary>May MavAeroBody add its own gravity force right now?</summary>
+        public bool LegacyCustomGravityAllowed
+        {
+            get { return IsLegacyCustomGravityAllowed(owner); }
+        }
+
+        /// <summary>
+        /// This authority owns Rigidbody.useGravity, and asserts it every step.
+        ///
+        /// Setup-time writers - the bootstrap, the profile applier, the jet's rigidbody setup, and
+        /// MavSixDoFBody's own initialisation - all still write the flag when they run. They are
+        /// seeds, not owners: whatever they leave behind, the value at the moment physics integrates
+        /// is the one this method wrote. That is the difference between "I set it once" and "nothing
+        /// else can leave it wrong", and only the second is ownership.
+        /// </summary>
+        public void EnforceGravityOwnership()
+        {
+            debugGravityProvider = ResolveGravityProvider(owner);
+
+            if (gravityRigidbody == null)
+                gravityRigidbody = GetComponent<Rigidbody>();
+
+            if (gravityRigidbody == null)
+            {
+                debugGravityOwnershipStatus =
+                    "no Rigidbody on this object, so gravity ownership is not enforced here";
+                return;
+            }
+
+            bool shouldUseUnityGravity = debugGravityProvider == MavGravityProvider.UnityRigidbody;
+            if (gravityRigidbody.useGravity != shouldUseUnityGravity)
+            {
+                gravityRigidbody.useGravity = shouldUseUnityGravity;
+                debugGravityFlagCorrections++;
+            }
+
+            debugGravityOwnershipStatus =
+                "owner=" + owner
+                + "; gravityProvider=" + debugGravityProvider
+                + "; Rigidbody.useGravity=" + (shouldUseUnityGravity ? "ON" : "OFF")
+                + "; legacyCustomGravity="
+                + (debugGravityProvider == MavGravityProvider.LegacyAeroCustomGravity
+                    ? "PERMITTED" : "blocked")
+                + "; corrections=" + debugGravityFlagCorrections;
+        }
+
+        private Rigidbody gravityRigidbody;
+
         public void EnforceArmingForCurrentOwner()
         {
             if (governedBody == null)

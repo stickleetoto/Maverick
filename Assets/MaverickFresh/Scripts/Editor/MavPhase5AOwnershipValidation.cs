@@ -37,6 +37,7 @@ namespace MaverickFresh.EditorTools
             ValidateWriterCoverage(report, ref passed, ref failed);
             ValidateWriterCategories(report, ref passed, ref failed);
             ValidateSingleArmingAuthority(report, ref passed, ref failed);
+            ValidateGravityGateIsAskedSeparately(report, ref passed, ref failed);
             ValidateRuntimeWiring(report, ref passed, ref failed);
             ValidateDiagnosticText(report, ref passed, ref failed);
             ValidateRegressionSafety(report, ref passed, ref failed);
@@ -335,9 +336,10 @@ namespace MaverickFresh.EditorTools
                 "and every one of them consults the ownership authority",
                 report, ref passed, ref failed);
 
-            Record(scan.CountInCategory(MavWriterCategory.TransitionOrSetupPose) == 2,
-                "2 transition/setup-only pose writers, reported separately and NOT claimed as gated - "
-                + "Phase 5C must convert these into an explicit state handover",
+            Record(scan.CountInCategory(MavWriterCategory.TransitionOrSetupPose) == 3,
+                "3 transition/setup-only pose writers, reported separately and NOT claimed as gated - "
+                + "the two bootstraps, plus MavRuntimeHandoverTarget, which writes pose and mass "
+                + "properties only while a handover executes or rolls back",
                 report, ref passed, ref failed);
             Record(scan.CountInCategory(MavWriterCategory.ScopedExemption) == 2,
                 "2 scoped exemptions: weapon recoil and landing-gear drag, both out of scope and both "
@@ -352,6 +354,41 @@ namespace MaverickFresh.EditorTools
                 "3 writers that only touch non-player Rigidbodies",
                 report, ref passed, ref failed);
 
+            // Classification is keyed by file NAME, so a duplicate name makes a verdict ambiguous.
+            // This is not a style rule: it already produced a wrong conclusion about landing-gear
+            // drag, where two different types share one file name and the scan spoke for both.
+            report.Append("        duplicate file names: ").AppendLine(
+                scan.duplicateBaseNames.Count == 0
+                    ? "none"
+                    : string.Join(", ", scan.duplicateBaseNames.ToArray()));
+
+            int unpinnedDuplicates = 0;
+            for (int i = 0; i < scan.duplicateBaseNames.Count; i++)
+            {
+                // Entries are formatted "Name.cs xN"; compare on the name part.
+                string entry = scan.duplicateBaseNames[i];
+                int space = entry.IndexOf(' ');
+                string bare = space > 0 ? entry.Substring(0, space) : entry;
+                if (!MavPhase5WriterScan.IsKnownDuplicateBaseName(bare))
+                    unpinnedDuplicates++;
+            }
+
+            Record(unpinnedDuplicates == 0,
+                "no UNTRACKED duplicate file name exists - classification in this scan is keyed by "
+                + "name, so a new duplicate would silently make one verdict speak for two types ("
+                + unpinnedDuplicates + " untracked)",
+                report, ref passed, ref failed);
+
+            if (scan.duplicateBaseNames.Count > 0)
+            {
+                report.AppendLine("        OPEN DEFECT P5B5-D3: MavLandingGearSystem.cs is declared");
+                report.AppendLine("        twice - Aircraft/ inside namespace MaverickFresh with a");
+                report.AppendLine("        gear-drag AddForce, Aero/ at global scope with none. The");
+                report.AppendLine("        scene references the Aero/ one. Tracked, not fixed: the");
+                report.AppendLine("        correction is to delete or rename a type, and that is a");
+                report.AppendLine("        call for the maintainer, not for an audit pass.");
+            }
+
             string why;
             Record(MavPhase5WriterScan.ClassifyFile("MavSomethingBrandNew.cs", out why)
                    == MavWriterCategory.PerStepPhysical,
@@ -361,6 +398,59 @@ namespace MaverickFresh.EditorTools
         }
 
         // ================================================================== [S] single authority
+
+        /// <summary>
+        /// The gravity force site must ask the GRAVITY-specific gate.
+        ///
+        /// This check is structural on purpose. With today's four owner modes
+        /// IsLegacyCustomGravityAllowed and IsLegacyPhysicsAllowed agree everywhere, so reverting the
+        /// call site to the general gate changes no current behaviour and no behavioural test can see
+        /// it (p5b5check GRAVITY-005b records that openly). The separation still matters: the day a
+        /// mode wants legacy aerodynamics with gravity from somewhere else, a conflated gate is how the
+        /// zero-gravity hole comes back. So the claim is pinned where it is actually made - at the call
+        /// site - rather than left as an unfalsifiable assertion.
+        /// </summary>
+        private static void ValidateGravityGateIsAskedSeparately(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[G] The gravity force site asks the gravity gate, not the general one");
+
+            string path = global::System.IO.Path.Combine(
+                Application.dataPath, "MaverickFresh/Scripts/Aero/MavAeroBody.cs");
+            if (!global::System.IO.File.Exists(path))
+            {
+                Record(false, "MavAeroBody.cs readable", report, ref passed, ref failed);
+                return;
+            }
+
+            string[] lines = global::System.IO.File.ReadAllLines(path);
+            int gravitySites = 0;
+            int gravitySitesUsingGravityGate = 0;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string code = MavPhase5WriterScan.StripCommentsAndStringLiterals(lines[i]);
+
+                // The decision to add the custom gravity force, wherever it is written.
+                if (!code.Contains("useCustomGravity") || !code.Contains("gravityBlend"))
+                    continue;
+
+                gravitySites++;
+                if (code.Contains("LegacyCustomGravityAllowed()"))
+                    gravitySitesUsingGravityGate++;
+            }
+
+            Record(gravitySites >= 1,
+                "found the custom-gravity decision site in MavAeroBody (" + gravitySites + ") - a zero "
+                + "here would mean this check had gone vacuous",
+                report, ref passed, ref failed);
+            Record(gravitySites >= 1 && gravitySitesUsingGravityGate == gravitySites,
+                "and EVERY such site asks LegacyCustomGravityAllowed(), never the general "
+                + "LegacyPhysicsAllowed() gate (" + gravitySitesUsingGravityGate + "/" + gravitySites
+                + ")",
+                report, ref passed, ref failed);
+        }
 
         /// <summary>
         /// Exactly one component may arm MavSixDoFBody.
@@ -407,7 +497,7 @@ namespace MaverickFresh.EditorTools
                     string code = MavPhase5WriterScan.StripCommentsAndStringLiterals(lines[i]);
                     for (int k = 0; k < armingForms.Length; k++)
                     {
-                        if (code.Contains(armingForms[k]) && !granters.Contains(name))
+                        if (GrantsArming(code, armingForms[k]) && !granters.Contains(name))
                             granters.Add(name);
                     }
                 }
@@ -439,6 +529,30 @@ namespace MaverickFresh.EditorTools
                     + "satisfy the gate on its own",
                     report, ref passed, ref failed);
             }
+        }
+
+        /// <summary>
+        /// Whether a line can GRANT arming, as opposed to taking it away.
+        ///
+        /// The broad form "ArmedForLiveFlight = " is deliberate: an assignment from a variable could
+        /// grant, so it has to count. But an explicit assignment of false provably cannot, and treating
+        /// a fail-safe disarm as a rival authority would push code the wrong way - towards leaving an
+        /// armed replacement body behind a legacy-owned aircraft rather than disarming it. So the one
+        /// exception, and only when the literal is visible on the line.
+        /// </summary>
+        private static bool GrantsArming(string code, string form)
+        {
+            int at = code.IndexOf(form);
+            while (at >= 0)
+            {
+                string rhs = code.Substring(at + form.Length).TrimStart();
+                if (!rhs.StartsWith("false"))
+                    return true;
+
+                at = code.IndexOf(form, at + form.Length);
+            }
+
+            return false;
         }
 
         // ================================================================== [T] runtime wiring

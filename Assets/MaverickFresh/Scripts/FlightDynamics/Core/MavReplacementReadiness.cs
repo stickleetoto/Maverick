@@ -160,5 +160,29 @@ namespace MaverickFresh.FlightDynamics
         {
             return new MavReplacementReadiness();
         }
+
+        /// <summary>
+        /// Every precondition satisfied.
+        ///
+        /// Exists so validation can knock out one field at a time and confirm each is load bearing -
+        /// the same reason MavF16ReferenceEnvelope.FullySatisfied exists. It asserts nothing about the
+        /// real aircraft: a caller that wants a ready struct has to say so explicitly here, which is
+        /// visible in a diff, rather than getting one by forgetting to set something.
+        /// </summary>
+        public static MavReplacementReadiness FullyReady()
+        {
+            MavReplacementReadiness r = new MavReplacementReadiness();
+            r.aircraftIdentityAuthoritative = true;
+            r.aircraftIsF16C = true;
+            r.sixDoFBodyPresent = true;
+            r.aeroModelReady = true;
+            r.controlLawReady = true;
+            r.actuatorReady = true;
+            r.propulsionAcceptable = true;
+            r.gravityOwnedExactlyOnce = true;
+            r.shadowTelemetryFinite = true;
+            r.shadowRunLongEnough = true;
+            return r;
+        }
     }
 }

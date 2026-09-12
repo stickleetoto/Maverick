@@ -39,6 +39,9 @@ namespace MaverickFresh.EditorTools
     public struct MavPhysicsWriterFile
     {
         public string fileName;
+        /// <summary>Path relative to the scripts root. Recorded because classification is keyed
+        /// by file NAME, and two files can share one - see duplicateBaseNames.</summary>
+        public string relativePath;
         public int writeSites;
         public int gateChecks;
         public bool gated;
@@ -54,6 +57,20 @@ namespace MaverickFresh.EditorTools
         public int filesScanned;
         public List<MavPhysicsWriterFile> writerFiles;
         public List<string> ungatedPlayerWriters;
+
+        /// <summary>
+        /// File names that appear more than once under the scripts root.
+        ///
+        /// WHY THIS IS TRACKED. Every classification in this scan is keyed by file NAME, so two files
+        /// sharing a name are classified as if they were one component. That is not hypothetical:
+        /// MavLandingGearSystem.cs exists twice - once in Aircraft/ inside namespace MaverickFresh
+        /// with a gear-drag AddForce, and once in Aero/ at global scope with no Rigidbody writes at
+        /// all. C# treats them as two different types, so it compiles, and the scan silently reported
+        /// one verdict for two components. The one the scene actually references is the one WITHOUT
+        /// the force, which means a Phase 5A conclusion about gear drag needing to be gated was drawn
+        /// from a file that nothing instantiates.
+        /// </summary>
+        public List<string> duplicateBaseNames;
 
         /// <summary>Files in one category.</summary>
         public List<MavPhysicsWriterFile> InCategory(MavWriterCategory category)
@@ -188,6 +205,14 @@ namespace MaverickFresh.EditorTools
                              + "ownership authority rather than by the legacy gate";
                     return MavWriterCategory.ReplacementBoundary;
 
+                case "MavRuntimeHandoverTarget.cs":
+                    reason = "writes Rigidbody pose, velocities and mass properties ONLY while an "
+                             + "ownership handover is executing or rolling back - never per step. It "
+                             + "is also a plain class that nothing constructs, so no gameplay path "
+                             + "reaches it. Phase 5C-R must confirm the transition write is the only "
+                             + "one, the same requirement the bootstraps carry";
+                    return MavWriterCategory.TransitionOrSetupPose;
+
                 case "MavFreshBootstrap.cs":
                 case "MavInGameBootstrap.cs":
                     reason = "one-shot air-start pose and velocity during setup, not a per-step "
@@ -229,6 +254,35 @@ namespace MaverickFresh.EditorTools
         }
 
         /// <summary>Components that mutate another component's physical parameters without writing Rigidbody state.</summary>
+        /// <summary>
+        /// Duplicate file names that are KNOWN, TRACKED defects rather than surprises.
+        ///
+        /// Pinning one does not make it acceptable - defect P5B5-D3 is open, and the entry says so.
+        /// It only separates "a duplicate we have written down and understand" from "a duplicate that
+        /// appeared since anyone last looked", which is the distinction that lets this scan stay
+        /// useful as a gate instead of being permanently red and therefore ignored.
+        /// </summary>
+        public static readonly string[] KnownDuplicateBaseNames =
+        {
+            // P5B5-D3. Two different TYPES share this name: Aircraft/ declares it inside namespace
+            // MaverickFresh and applies a gear-drag AddForce; Aero/ declares it at global scope and
+            // writes no Rigidbody state. C# keeps them distinct, so it compiles. The scene references
+            // the Aero/ one, i.e. the one with no force - so the Phase 5A note that gear drag must be
+            // gated before replacement mode was drawn from a file nothing instantiates.
+            "MavLandingGearSystem.cs"
+        };
+
+        public static bool IsKnownDuplicateBaseName(string fileName)
+        {
+            for (int i = 0; i < KnownDuplicateBaseNames.Length; i++)
+            {
+                if (KnownDuplicateBaseNames[i] == fileName)
+                    return true;
+            }
+
+            return false;
+        }
+
         public static readonly string[] IndirectMutatorFileNames =
         {
             "MavCombatFlapSystem.cs",
@@ -331,6 +385,7 @@ namespace MaverickFresh.EditorTools
             MavPhysicsWriterScanResult result = new MavPhysicsWriterScanResult();
             result.writerFiles = new List<MavPhysicsWriterFile>();
             result.ungatedPlayerWriters = new List<string>();
+            result.duplicateBaseNames = new List<string>();
 
             string root = Path.Combine(assetsRoot, "MaverickFresh/Scripts");
             if (!Directory.Exists(root))
@@ -344,6 +399,20 @@ namespace MaverickFresh.EditorTools
             reason = root;
 
             string[] files = Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories);
+
+            // Duplicate base names first, because everything below is keyed by name and a duplicate
+            // makes those keys ambiguous. Reported rather than silently tolerated.
+            Dictionary<string, int> nameCounts = new Dictionary<string, int>();
+            for (int i = 0; i < files.Length; i++)
+            {
+                string n = Path.GetFileName(files[i]);
+                nameCounts[n] = nameCounts.ContainsKey(n) ? nameCounts[n] + 1 : 1;
+            }
+            foreach (KeyValuePair<string, int> kv in nameCounts)
+            {
+                if (kv.Value > 1)
+                    result.duplicateBaseNames.Add(kv.Key + " x" + kv.Value);
+            }
 
 
             for (int f = 0; f < files.Length; f++)
@@ -374,6 +443,9 @@ namespace MaverickFresh.EditorTools
 
                 MavPhysicsWriterFile entry = new MavPhysicsWriterFile();
                 entry.fileName = fileName;
+                entry.relativePath = files[f].Length > root.Length
+                    ? files[f].Substring(root.Length).Replace('\\', '/').TrimStart('/')
+                    : files[f];
                 entry.writeSites = writes;
                 entry.gateChecks = gates;
                 entry.exempt = IsExemptFile(fileName);

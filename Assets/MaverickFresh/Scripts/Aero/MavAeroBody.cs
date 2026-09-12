@@ -216,7 +216,16 @@ namespace MaverickFresh
             ResetDebug();
             UpdateTurnOwnershipDebug();
 
-            if (useCustomGravity && gravityBlend > 0f && LegacyPhysicsAllowed())
+            // Tell the gravity owner what scale is actually being applied, so specific force - and
+            // therefore the G limiter - subtracts the gravity that is really acting rather than a
+            // full g the aircraft may not be feeling.
+            if (physicsOwnership != null)
+            {
+                physicsOwnership.ReportLegacyGravityScale(
+                    (useCustomGravity && LegacyCustomGravityAllowed()) ? gravityBlend : 0f);
+            }
+
+            if (useCustomGravity && gravityBlend > 0f && LegacyCustomGravityAllowed())
             {
                 debugGravityForce = Physics.gravity * rb.mass * gravityBlend;
                 rb.AddForce(debugGravityForce, ForceMode.Force);
@@ -436,10 +445,46 @@ namespace MaverickFresh
             debugTurnOwnershipSum = debugAeroTurnOwnership + debugLegacyVelocityAssistScale;
         }
 
+        /// <summary>
+        /// Legacy gravity policy, retained only for the case where no ownership authority exists.
+        ///
+        /// WHAT CHANGED AND WHY. This used to force Rigidbody.useGravity = false unconditionally,
+        /// every physics step, with no reference to who owned physics. Combined with the custom
+        /// gravity force below - which IS ownership-gated - that produced an aircraft with no gravity
+        /// at all in F16Replacement mode: the flag was still being held off by this component while
+        /// the custom force had stopped being applied. Two conditions, two components, one physical
+        /// effect, and a mode where the answer was "nobody".
+        ///
+        /// Rigidbody.useGravity now belongs to MavFlightPhysicsOwnership, which asserts it every step
+        /// from a single resolved provider. When that authority is present this method does nothing.
+        /// When it is absent - a bare test rig, or a scene predating Phase 5A - the original
+        /// behaviour is preserved exactly, so nothing that used to work stops working.
+        /// </summary>
         private void ApplyRigidbodyGravityPolicy()
         {
-            if (rb != null && manageRigidbodyGravity)
+            if (rb == null)
+                return;
+
+            ResolvePhysicsOwnership();
+            if (physicsOwnership != null)
+                return;
+
+            if (manageRigidbodyGravity)
                 rb.useGravity = false;
+        }
+
+        /// <summary>
+        /// May this component supply gravity this step?
+        ///
+        /// Asks the gravity question specifically rather than reusing the general "may legacy write
+        /// forces" gate. They are not the same question: a mode could reasonably permit legacy
+        /// aerodynamics while gravity came from somewhere else, and conflating them is what made the
+        /// zero-gravity mode possible in the first place.
+        /// </summary>
+        private bool LegacyCustomGravityAllowed()
+        {
+            ResolvePhysicsOwnership();
+            return physicsOwnership == null || physicsOwnership.LegacyCustomGravityAllowed;
         }
 
         private void ResetDebug()

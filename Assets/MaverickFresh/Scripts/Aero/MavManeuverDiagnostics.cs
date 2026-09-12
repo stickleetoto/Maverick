@@ -348,7 +348,10 @@ namespace MaverickFresh
 
             s.bankDeg = MavTurnDynamicsRules.ComputeBankAngleDeg(transform.right, transform.up);
             s.pitchAttitudeDeg = Mathf.Asin(Mathf.Clamp(transform.forward.y, -1f, 1f)) * Mathf.Rad2Deg;
-            s.nzG = jet.CurrentLoadFactorG();
+            // NOTE this is the AERO LIFT magnitude, not true Nz. Kept as the Phase 4B channel it has
+            // always been so the 4B/5B comparisons stay comparable; MavForceAccountingDiagnostics
+            // publishes true Nz separately.
+            s.nzG = jet.CurrentAeroLiftG();
 
             if (aeroBody != null)
             {

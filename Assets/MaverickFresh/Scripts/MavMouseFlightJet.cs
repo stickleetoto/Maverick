@@ -1005,7 +1005,7 @@ public float debugEngineThrustScale = 1f;
                     // the bill quietly paid by extra thrust.
                     if (usePhase4BTurnDynamics)
                         debugThrustBoostAllowance = MavTurnDynamicsRules.ComputeThrustBoostAllowance(
-                            CurrentLoadFactorG(), thrustBoostSuppressionG);
+                            CurrentAeroLiftG(), thrustBoostSuppressionG);
 
                     targetThrottle01 += lowSpeedThrustBoost * debugThrustBoostAllowance;
                 }
@@ -1286,7 +1286,16 @@ public float debugEngineThrustScale = 1f;
         /// not read as manoeuvring load - the question being asked is "how hard is this aircraft
         /// turning aerodynamically", not "how fast is it accelerating".
         /// </summary>
-        public float CurrentLoadFactorG()
+        /// <summary>
+        /// Magnitude of the AERODYNAMIC LIFT contribution, in g. NOT a load factor.
+        ///
+        /// Renamed in Phase 5B.7. It was called CurrentLoadFactorG, which made it the third distinct
+        /// quantity in this project called some variant of "G" - the other two being the legacy HUD
+        /// projection and true Nz. This one is |lift| / mg: unsigned, and lift only, with no gravity,
+        /// drag or thrust term. It feeds the Phase 4B thrust-boost suppression, which is what it was
+        /// always for; the behaviour is unchanged and only the name now says what it is.
+        /// </summary>
+        public float CurrentAeroLiftG()
         {
             if (aeroBody != null && aeroBody.useAeroBody)
                 return Mathf.Abs(aeroBody.debugAeroCurvatureG);

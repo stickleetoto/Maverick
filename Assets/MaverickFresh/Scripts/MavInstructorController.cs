@@ -276,7 +276,22 @@ namespace MaverickFresh
         public float bankHoldRollCommand;
         public float signedPitchAngle;
         public float speed;
+        [Tooltip("LEGACY HUD QUANTITY - not a load factor. Dot(worldAcceleration, bodyUp)/g0, gravity "
+                 + "INCLUSIVE, so it reads 0 in steady level flight and -1 in free fall. Retained "
+                 + "because the HUD, the flight-data recorder and the AI reward logger all read it and "
+                 + "changing it would change what they report. It is NO LONGER used by any protection "
+                 + "or control path - see nzEstimate.")]
         public float gEstimate;
+
+        [Tooltip("TRUE NORMAL LOAD FACTOR, g. Body-normal SPECIFIC force, i.e. gravity excluded, per "
+                 + "the TP-1538 definition of an: positive along the negative Z body axis, toward the "
+                 + "canopy. Reads +1 in steady level flight and 0 in free fall. THIS is what the G "
+                 + "limiter consumes (defect D4).")]
+        public float nzEstimate;
+
+        [Tooltip("The gravitational acceleration actually acting, as the gravity owner reports it. "
+                 + "Published so the specific-force subtraction is inspectable rather than assumed.")]
+        public Vector3 debugEffectiveGravity;
         public float aoaEstimateDeg;
         public float aosEstimateDeg;
         public float verticalSpeed;
@@ -289,6 +304,57 @@ namespace MaverickFresh
         public float pitchAuthorityFactor = 1f;
         public float rollAuthorityFactor = 1f;
         public string instructorState = "ready";
+
+        // =====================================================================================
+        // NEGATIVE ENVELOPE PROTECTION - Phase 5B.5 defect D5, reclassified in Phase 5B.6.
+        //
+        // PROVENANCE CLASS: GAMEPLAY_SAFETY / MAVERICK_TUNING. Every number below is one of those.
+        // NONE of them is a real F-16 limit, and none may be presented as one.
+        //
+        // THE CORRECTION THIS BLOCK CARRIES. Phase 5B.5 justified the -10 deg hard limit as "the lower
+        // bound of the Morelli validated alpha domain". That reasoning conflated two different things:
+        //
+        //   A. MODEL VALIDITY DOMAIN - where the Morelli aerodynamic fit has wind-tunnel data.
+        //      alpha -10 .. +45 deg, beta +/-30 deg, Mach < 0.6. AUTHORITATIVE, and enforced by
+        //      MavF16ReferenceEnvelope, which is a gate on the REPLACEMENT stack.
+        //
+        //   B. LEGACY / GAMEPLAY ENVELOPE PROTECTION - this block. It limits what the LEGACY
+        //      instructor will command on the aircraft flying today. It is a game-feel safety net.
+        //
+        //   C. FUTURE REFERENCE FLCS PROTECTION - what a sourced F-16 control law would limit to.
+        //      NOT IMPLEMENTED and NOT sourced. TP-1538 describes an AoA limiter system qualitatively
+        //      for a 1979 relaxed-static-stability research aircraft and publishes no gains at all.
+        //
+        // "The aerodynamic model has no data past -10 deg" is a statement about A. It is not evidence
+        // for a value in B, and it is certainly not evidence about C. Using a model-validity bound as
+        // a control-law limit happens to produce a defensible number here, but the reasoning was
+        // wrong, and a wrong reason that lands on a plausible number is worse than an honest guess
+        // because it looks sourced.
+        // =====================================================================================
+        [Header("Negative Envelope Protection - GAMEPLAY_SAFETY, not F-16 data")]
+        [Tooltip("Protect the NEGATIVE side of the envelope. Before this existed, every AoA and G "
+                 + "limiter branch was gated on a nose-up command, so a held push-over had no "
+                 + "protection at all and could reach the lift clamp at large negative AoA. That bug "
+                 + "is real and this logic stays; only the JUSTIFICATION of the numbers changed.")]
+        public bool useNegativeEnvelopeProtection = true;
+
+        [Tooltip("PROVENANCE: MAVERICK_TUNING / GAMEPLAY_SAFETY. Onset of negative-AoA limiting, deg "
+                 + "(a NEGATIVE number). Not an F-16 value. No primary source consulted in Phase 5B.5 "
+                 + "or 5B.6 publishes a negative AoA limit for this aircraft.")]
+        public float aoaNegativeSoftLimitDeg = -7f;
+
+        [Tooltip("PROVENANCE: MAVERICK_TUNING / GAMEPLAY_SAFETY. Hard negative-AoA limit, deg (a "
+                 + "NEGATIVE number). It coincides with the Morelli model-validity floor of -10 deg, "
+                 + "and that coincidence is CONVENIENT but is NOT the justification: a model validity "
+                 + "domain is not a flight-control limit. If a primary source for an F-16 negative "
+                 + "AoA limit is ever found, this value should be revisited against it rather than "
+                 + "assumed already correct.")]
+        public float aoaNegativeHardLimitDeg = -10f;
+
+        [Tooltip("PROVENANCE: MAVERICK_TUNING / GAMEPLAY_SAFETY. Negative load-factor limit, g (a "
+                 + "NEGATIVE number). No negative structural limit was sourced. Conservative by "
+                 + "intent. Not an F-16 value.")]
+        public float negativeGLimit = -3f;
 
         [Header("AoA Limiter Telemetry (read-only)")]
         [Tooltip("The authoritative base reduction this component is using, i.e. the value the "
@@ -304,6 +370,12 @@ namespace MaverickFresh
         public float debugEffectiveLimiterReduction = 1f;
         [Tooltip("True while the AoA limiter branch is the thing shaping the pitch command.")]
         public bool debugAoALimiterEngaged;
+        [Tooltip("Which side of the envelope the limiter is acting on this step.")]
+        public string debugEnvelopeSide = "none";
+        [Tooltip("Reduction applied by the negative-side AoA limiter. 1 = not limiting.")]
+        public float debugNegativeAoAReduction = 1f;
+        [Tooltip("Reduction applied by the negative-side G limiter. 1 = not limiting.")]
+        public float debugNegativeGReduction = 1f;
 
         [Header("Compatibility Debug")]
         public float aggressiveRoll;
@@ -459,12 +531,38 @@ namespace MaverickFresh
                 hasVelocitySample = true;
             }
 
-            Vector3 acceleration = (rb.linearVelocity - lastVelocity) / Mathf.Max(fixedDeltaTime, 0.0001f);
-            gEstimate = Vector3.Dot(acceleration, transform.up) / 9.80665f;
+            Vector3 acceleration = MaverickFresh.FlightDynamics.MavLoadFactorMath.WorldAcceleration(
+                rb.linearVelocity, lastVelocity, Mathf.Max(fixedDeltaTime, 0.0001f));
+
+            // The legacy HUD quantity, unchanged, for the HUD / recorder / reward logger.
+            gEstimate = MaverickFresh.FlightDynamics.MavLoadFactorMath.LegacyHudG(acceleration, transform.up);
+
+            // TRUE Nz for the protection paths. Subtracts the gravity that is ACTUALLY acting, which
+            // the gravity owner reports - not a blanket Physics.gravity, because several aircraft
+            // profiles apply only 0.45 g through MavAeroBody.gravityBlend.
+            ResolveGravityOwner();
+            debugEffectiveGravity = gravityOwner != null
+                ? gravityOwner.EffectiveGravityAccelerationWorld
+                : Physics.gravity;
+
+            nzEstimate = MaverickFresh.FlightDynamics.MavLoadFactorMath.Nz(
+                MaverickFresh.FlightDynamics.MavLoadFactorMath.SpecificForce(acceleration, debugEffectiveGravity),
+                transform.up);
+
             lastVelocity = rb.linearVelocity;
 
             RefreshAttitudeTelemetry();
             ComputeTurnBandFactors();
+        }
+
+        private MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership gravityOwner;
+
+        private void ResolveGravityOwner()
+        {
+            if (gravityOwner != null)
+                return;
+
+            gravityOwner = GetComponent<MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership>();
         }
 
         public void CopyTuningFromJet(MavMouseFlightJet source)
@@ -1320,6 +1418,52 @@ namespace MaverickFresh
                 : 0f;
             debugEffectiveLimiterReduction = 1f;
             debugAoALimiterEngaged = false;
+            debugEnvelopeSide = "none";
+            debugNegativeAoAReduction = 1f;
+            debugNegativeGReduction = 1f;
+
+            // NEGATIVE SIDE FIRST, and deliberately as a separate block from the positive branch
+            // below rather than as a rewrite of it. The positive path is unchanged byte for byte, so
+            // enabling negative protection cannot move positive-side behaviour - which is the one
+            // thing this task was told not to do.
+            //
+            // Only a command that would WORSEN the excursion is attenuated; a recovery command is
+            // left alone. See MavTurnDynamicsRules.CommandWorsensExcursion for the sign derivation.
+            if (useNegativeEnvelopeProtection)
+            {
+                float negAoAReduction = MavTurnDynamicsRules.ComputeSymmetricAoAReduction(
+                    targetPitch, aoaEstimateDeg,
+                    aoaSoftLimitDeg, aoaHardLimitDeg,
+                    aoaNegativeSoftLimitDeg, aoaNegativeHardLimitDeg,
+                    aoaPitchReduction);
+
+                // Only apply the NEGATIVE side here; the positive side is the existing branch.
+                if (aoaEstimateDeg < 0f && negAoAReduction < 1f)
+                {
+                    negAoAReduction = ApplyManualLimiterBypass(negAoAReduction, pitchOverride);
+                    targetPitch *= negAoAReduction;
+                    debugNegativeAoAReduction = negAoAReduction;
+                    debugEffectiveLimiterReduction = negAoAReduction;
+                    debugAoALimiterEngaged = true;
+                    debugEnvelopeSide = "negative_aoa";
+                    instructorState = "aoa_limiter_negative";
+                }
+
+                float negGReduction = MavTurnDynamicsRules.ComputeSymmetricGReduction(
+                    targetPitch, nzEstimate,
+                    sustainedGLimit, hardGLimit,
+                    negativeGLimit, gPitchReduction);
+
+                if (useGLimiter && nzEstimate < 0f && negGReduction < 1f)
+                {
+                    negGReduction = ApplyManualLimiterBypass(negGReduction, pitchOverride);
+                    targetPitch *= negGReduction;
+                    debugNegativeGReduction = negGReduction;
+                    debugEnvelopeSide = debugEnvelopeSide == "negative_aoa"
+                        ? "negative_aoa+g" : "negative_g";
+                    instructorState = "g_limiter_negative";
+                }
+            }
 
             float aoaAbs = Mathf.Abs(aoaEstimateDeg);
             if (targetPitch < 0f && aoaAbs > aoaSoftLimitDeg)
@@ -1330,26 +1474,27 @@ namespace MaverickFresh
                 targetPitch *= reduction;
                 debugEffectiveLimiterReduction = reduction;
                 debugAoALimiterEngaged = true;
+                debugEnvelopeSide = "positive_aoa";
                 instructorState = "aoa_limiter";
             }
 
-            if (useGLimiter && gEstimate > sustainedGLimit && targetPitch < 0f)
+            if (useGLimiter && nzEstimate > sustainedGLimit && targetPitch < 0f)
             {
-                float gT = Mathf.InverseLerp(sustainedGLimit, hardGLimit, gEstimate);
+                float gT = Mathf.InverseLerp(sustainedGLimit, hardGLimit, nzEstimate);
                 float reduction = ApplyManualLimiterBypass(gPitchReduction, pitchOverride);
                 targetPitch = Mathf.Lerp(targetPitch, targetPitch * reduction, gT);
                 instructorState = "g_limiter";
             }
 
-            if (useGLimiter && gEstimate > softGLimit && gEstimate <= sustainedGLimit && targetPitch < 0f)
+            if (useGLimiter && nzEstimate > softGLimit && nzEstimate <= sustainedGLimit && targetPitch < 0f)
             {
-                float gT = Mathf.InverseLerp(softGLimit, hardGLimit, gEstimate);
+                float gT = Mathf.InverseLerp(softGLimit, hardGLimit, nzEstimate);
                 float reduction = ApplyManualLimiterBypass(gPitchReduction, pitchOverride);
                 targetPitch = Mathf.Lerp(targetPitch, targetPitch * reduction, gT);
                 instructorState = "g_limiter";
             }
 
-            if (keyboardElevatorUsesGLimit && pitchOverride && gEstimate > hardGLimit && targetPitch < 0f)
+            if (keyboardElevatorUsesGLimit && pitchOverride && nzEstimate > hardGLimit && targetPitch < 0f)
             {
                 float reduction = ApplyManualLimiterBypass(0.45f, true);
                 targetPitch = Mathf.Min(targetPitch * reduction, -0.05f);
@@ -1398,8 +1543,16 @@ namespace MaverickFresh
             float slipT = Mathf.InverseLerp(highSlipGuardStart, Mathf.Max(highSlipGuardStart + 0.1f, highSlipGuardHard), slipAbs);
             float lateralGuardT = Mathf.Clamp01(Mathf.Max(aosT, slipT));
 
+            // The guard layer carried the same one-sided gate as the limiter above. It now applies
+            // whenever the command would worsen the AoA excursion, on either side of zero. aoaT is
+            // already built from |alpha|, so the guard's own ramp needed no change - only the
+            // question of WHEN it is allowed to act.
             float pitchGuard = 1f;
-            if (targetPitch < 0f)
+            bool guardWorsens = useNegativeEnvelopeProtection
+                ? MavTurnDynamicsRules.CommandWorsensExcursion(targetPitch, aoaEstimateDeg)
+                : targetPitch < 0f;
+
+            if (guardWorsens)
             {
                 pitchGuard = Mathf.Lerp(1f, Mathf.Clamp01(guardPitchReduction), Mathf.Clamp01(aoaT));
                 pitchGuard = ApplyManualLimiterBypass(pitchGuard, pitchOverride);

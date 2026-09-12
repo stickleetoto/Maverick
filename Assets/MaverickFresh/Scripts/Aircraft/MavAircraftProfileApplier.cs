@@ -479,6 +479,12 @@ private void ApplyToRadarSignature(MavRadarSignature signature, MavAircraftRunti
             Set(instructor, "aoaSoftLimitDeg", p.aoaSoftLimitDeg);
             Set(instructor, "softGLimit", p.softGLimit);
             Set(instructor, "hardGLimit", p.hardGLimit);
+
+            // Negative envelope: consumer only, no mirror anywhere.
+            Set(instructor, "useNegativeEnvelopeProtection", p.useNegativeEnvelopeProtection);
+            Set(instructor, "aoaNegativeSoftLimitDeg", p.aoaNegativeSoftLimitDeg);
+            Set(instructor, "aoaNegativeHardLimitDeg", p.aoaNegativeHardLimitDeg);
+            Set(instructor, "negativeGLimit", p.negativeGLimit);
             Set(instructor, "targetPitchRateDeg", p.targetPitchRateDeg);
             Set(instructor, "targetYawRateDeg", p.targetYawRateDeg);
             Set(instructor, "targetRollRateDeg", p.targetRollRateDeg);
