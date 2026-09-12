@@ -52,6 +52,11 @@ Tier 3 is useful for regression, trim, trajectory, and architecture comparisons.
 - [`F16_SOURCE_PACK_V0.1.md`](./F16_SOURCE_PACK_V0.1.md) — current F-16 reference chain, supporting F-16/AFTI/F-16XL/MATV research, and validation implementations.
 - [`F15_SOURCE_PACK_V0.1.md`](./F15_SOURCE_PACK_V0.1.md) — baseline/high-alpha/spin/transonic/propulsion F-15 research sources and configuration-separation rules.
 
+## Architecture and roadmaps
+
+- [`../FlightDynamics/SHARED_PROPULSION_PROFILE_ARCHITECTURE_V0.1.md`](../FlightDynamics/SHARED_PROPULSION_PROFILE_ARCHITECTURE_V0.1.md) — Profile + Engine decision, common propulsion runtime target, current engine gaps, and F-16/F-15 migration sequence.
+- [`../FlightDynamics/F15_DEVELOPMENT_ROADMAP_V0.1.md`](../FlightDynamics/F15_DEVELOPMENT_ROADMAP_V0.1.md) — staged F-15 reference-aircraft roadmap from configuration freeze through subsonic aero, twin-engine propulsion, high-alpha/spin, transonic extension, and gameplay variants.
+
 ## Current development interpretation
 
 ### F-16
@@ -63,6 +68,10 @@ Best current candidate for the first deeply validated reference aircraft because
 ### F-15
 
 The public record is exceptionally rich, especially at high angle of attack and spin, but is distributed across multiple models and flight/research configurations. The F-15 reference model should therefore be assembled from a **configuration-tagged source graph**, not by treating all NASA F-15 reports as one interchangeable database.
+
+## Propulsion development rule
+
+Maverick uses a **Profile + Engine** architecture. Flight-dynamics profiles select aircraft geometry/mass/aero and a propulsion installation. Installed engine slots reference exact, provenance-tagged engine profiles and create independent runtime states. F-16 and F-15 share the engine/runtime/aggregation infrastructure, but they do not share numeric engine data unless exact engine/configuration compatibility is established.
 
 ## Provenance labels used in these packs
 
