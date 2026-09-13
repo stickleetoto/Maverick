@@ -22,6 +22,39 @@ namespace MaverickFresh.FlightDynamics
 
         private const float TwentyKmPressurePa = 5474.889f;
 
+        /// <summary>
+        /// The constant the LEGACY stack divides by to estimate Mach (MavMouseFlightJet:865).
+        ///
+        /// Named here so it can be referred to and compared against, never so it can be used. It is
+        /// sea-level speed of sound, which is wrong everywhere else: real a falls to about 295 m/s in
+        /// the stratosphere, so a legacy Mach estimate understates true Mach by roughly 16% up high.
+        /// The reference envelope gate must never be evaluated with it.
+        /// </summary>
+        public const float LegacyConstantSpeedOfSoundMps = 343f;
+
+        /// <summary>
+        /// Mach from true airspeed and altitude, using THIS atmosphere.
+        ///
+        /// The single definition of reference Mach. It exists because the Morelli validity gate is a
+        /// Mach bound, so the Mach fed to that gate has to come from the same atmosphere the
+        /// replacement stack uses - otherwise the gate is protecting the model with a number the model
+        /// does not recognise.
+        /// </summary>
+        public static float ReferenceMach(float trueAirspeedMps, float geometricAltitudeM)
+        {
+            MavAtmosphereSample sample = Sample(geometricAltitudeM);
+            if (sample.speedOfSoundMps < 1f)
+                return 0f;
+
+            return Mathf.Abs(trueAirspeedMps) / sample.speedOfSoundMps;
+        }
+
+        /// <summary>The legacy estimate, reproduced exactly, for comparison and never for gating.</summary>
+        public static float LegacyMachEstimate(float trueAirspeedMps)
+        {
+            return Mathf.Abs(trueAirspeedMps) / LegacyConstantSpeedOfSoundMps;
+        }
+
         public static MavAtmosphereSample Sample(float geometricAltitudeM)
         {
             float altitudeM = Mathf.Clamp(geometricAltitudeM, -1000f, 32000f);

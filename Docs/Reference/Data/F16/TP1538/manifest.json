@@ -1,0 +1,140 @@
+{
+  "authority": {
+    "appendixContext": "Appendix B, Engine Simulation",
+    "authors": [
+      "Luat T. Nguyen",
+      "Marilyn E. Ogburn",
+      "William P. Gilbert",
+      "Kemper S. Kibler",
+      "Phillip W. Brown",
+      "Perry L. Deal"
+    ],
+    "ntrsRecordId": "19800005879",
+    "organization": "NASA",
+    "pdfPage": 99,
+    "pdfPageCount": 233,
+    "publication": "December 1979",
+    "reportNumber": "NASA-TP-1538",
+    "reportPage": 93,
+    "reportPageNote": "Logical report pagination: the following PDF page 100 is visibly report page 94; the page-99 footer is clipped in the scan.",
+    "table": "TABLE VI.- THRUST VALUES USED IN SIMULATION",
+    "title": "Simulator Study of Stall/Post-Stall Characteristics of a Fighter Airplane With Relaxed Longitudinal Static Stability"
+  },
+  "conversion": {
+    "altitudeCrossCheck": "All six 10,000-ft grid steps map exactly to the printed SI altitude grid using 0.3048 m/ft.",
+    "crossCheckCells": 90,
+    "crossCheckMismatches": 0,
+    "feetToMeters": "0.3048",
+    "maxAbsolutePreRoundingResidualN": "0.480",
+    "poundsForceToNewtonsForSourceTableCrossCheck": "4.448",
+    "rationale": "The report states measurements/calculations were made in U.S. Customary Units. Multiplying every printed U.S. customary thrust cell by 4.448 and rounding to the nearest integer reproduces all 90 printed SI thrust cells. The exact modern lbf definition is not used to overwrite the source's published SI integers.",
+    "roundingForPrintedSiCrossCheck": "nearest integer N, ROUND_HALF_UP"
+  },
+  "files": {
+    "rawSourceCsv": {
+      "path": "Docs/Reference/Data/F16/TP1538/table_vi_raw_source.csv",
+      "serialization": "UTF-8 CSV, LF line endings, fixed column/order",
+      "sha256": "9e0d9906daec75797560e37c6ae490ec10630495658ad9a93216ddacdc940972"
+    },
+    "siConvertedCsv": {
+      "path": "Docs/Reference/Data/F16/TP1538/table_vi_si_converted.csv",
+      "serialization": "UTF-8 CSV, LF line endings, fixed column/order thrust values to 0.001 N",
+      "sha256": "f32592f99eb30de58c1fc42c02ad984ce3b371bbea3db8e369775b05becb8b47"
+    }
+  },
+  "integration": {
+    "connectedToProductionEngine": false,
+    "note": "This freeze is data/provenance only. No MavEngineProfile, MavPropulsionSystem, MavSixDoFBody, gameplay aircraft, scene, prefab, or shared FDM core wiring is changed.",
+    "productionF16PhysicalThrustExpectedN": 0
+  },
+  "schema": "maverick.f16.tp1538.thrust-deck-manifest.v0.1",
+  "sourceTableSchema": {
+    "machGrid": [
+      "0.2",
+      "0.4",
+      "0.6",
+      "0.8",
+      "1.0"
+    ],
+    "printedMachColumnLabel": "m",
+    "semanticIndependentVariable": "Mach number",
+    "si": {
+      "altitudeGrid": [
+        0,
+        3048,
+        6096,
+        9144,
+        12192,
+        15240
+      ],
+      "altitudeUnit": "m",
+      "forceUnit": "N",
+      "powerStates": [
+        "Tidle",
+        "Tmil",
+        "Tmax"
+      ],
+      "sectionTitle": "(a) SI Units"
+    },
+    "usCustomary": {
+      "altitudeGrid": [
+        0,
+        10000,
+        20000,
+        30000,
+        40000,
+        50000
+      ],
+      "altitudeUnit": "ft",
+      "forceUnitInterpretation": "pound-force (lbf), because the quantity is thrust",
+      "forceUnitPrinted": "lb",
+      "powerStates": [
+        "Tidle",
+        "Tmil",
+        "Tmax"
+      ],
+      "sectionTitle": "(b) U.S. Customary Units"
+    }
+  },
+  "status": "FROZEN_DATA_ONLY_NOT_INTEGRATED",
+  "transcription": {
+    "ambiguousOrUnavailableThrustCells": 0,
+    "date": "2026-09-13",
+    "method": "Manual visual transcription from original-page renders",
+    "negativeCellNote": "All negative source values occur in Tidle and are visibly printed in both source-unit sections; they are retained exactly.",
+    "negativeThrustCellsPerSourceSection": 12,
+    "passA": "400 dpi PDFium render, PDF page 99/233",
+    "passB": "500 dpi Poppler/pdftoppm render, PDF page 99/233",
+    "physicalGridCoordinateCount": 30,
+    "physicalThrustCellCount": 90,
+    "rawCoordinateRows": 60,
+    "rawThrustCells": 180
+  },
+  "validation": {
+    "canonicalSerializationsFailed": 0,
+    "canonicalSerializationsPassed": 3,
+    "dataHashesFailed": 0,
+    "dataHashesPassed": 2,
+    "derivedSiCoordinateRows": 30,
+    "derivedSiThrustCells": 90,
+    "lastRun": "2026-09-13",
+    "rawCoordinateRows": 60,
+    "rawPrintedThrustCells": 180,
+    "result": "PASS",
+    "sourceUnitCrossChecksFailed": 0,
+    "sourceUnitCrossChecksPassed": 90,
+    "unavailableCells": 0,
+    "validatorPath": "Tools/validate_f16_tp1538_thrust_deck.py",
+    "validatorSha256": "e5aeb4120638f3919535d838680a45e809e17f1860feb3dbf091a97278033c86",
+    "visualHandAnchorsFailed": 0,
+    "visualHandAnchorsPassed": 5
+  },
+  "visualSourceAccess": {
+    "acquiredFileName": "19800005879(1).pdf",
+    "byteCount": 10034073,
+    "identityCheck": "Front matter visually identifies NASA Technical Paper 1538 with the same title, authors, and 1979 publication identity as NTRS 19800005879.",
+    "numericSourceRule": "Accepted numeric cells were manually transcribed from the rendered page image. Parsed/OCR/search-index text was not used as numeric authority.",
+    "pageCount": 233,
+    "sha256": "aae0ece64474291368c0b4c816d3ab327c6100329e6eb030c2f4545d0913feb3"
+  }
+}

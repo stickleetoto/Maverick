@@ -176,8 +176,8 @@ namespace MaverickFresh
                 jet.highSpeedManualPitchAuthorityMin = 0.78f;
 
                 jet.useGLimiter = true;
-                jet.softGLimit = 8.8f;
-                jet.hardGLimit = 11.2f;
+                jet.SetSoftGLimitAuthority(8.8f);
+                jet.SetHardGLimitAuthority(11.2f);
                 jet.useLowSpeedNoseDownAssist = true;
 
                 jet.attitudeStabilizer = true;
@@ -207,9 +207,9 @@ namespace MaverickFresh
                 jet.velocityTurnAssistFullSpeed = 230f;
                 jet.velocityTurnAssistInputFactor = 0.58f;
                 jet.velocityTurnAssistAoSLimit = 45f;
-                jet.aoaSoftLimitDeg = 24f;
-                jet.aoaHardLimitDeg = 34f;
-                jet.aoaPitchReduction = 0.45f;
+                jet.SetAoASoftLimitAuthority(24f);
+                jet.SetAoAHardLimitAuthority(34f);
+                jet.SetAoAPitchReductionAuthority(0.45f);
                 jet.highGShortTermAllowance = 10.8f;
                 jet.sustainedGLimit = 8.8f;
                 jet.finalTorqueSmoothing = 10.5f;

@@ -57,6 +57,9 @@ namespace MaverickFresh.FlightDynamics
         [Tooltip("Propulsion output is either authoritative, or non-authoritative and explicitly accepted by an operator.")]
         public bool propulsionAccepted;
 
+        [Tooltip("The rigid-body angular dynamics are complete - the w x (I w) coupling is supplied - or running without it has been explicitly acknowledged for testing.")]
+        public bool angularDynamicsAccepted;
+
         [Tooltip("The command source this body inspects is the SAME object the control law actually reads.")]
         public bool commandSourceIdentityMatches;
 
@@ -112,6 +115,7 @@ namespace MaverickFresh.FlightDynamics
                 inputs.controlLawBoundToThisBody = true;
                 inputs.actuatorEnabledAndBound = true;
                 inputs.propulsionAccepted = true;
+                inputs.angularDynamicsAccepted = true;
                 inputs.commandSourceIdentityMatches = true;
                 inputs.hasValidCommandSource = true;
                 inputs.singleControlLawEnabled = true;
@@ -167,6 +171,7 @@ namespace MaverickFresh.FlightDynamics
 
         [Header("Propulsion / legacy")]
         public bool propulsionAcceptableForLiveFlight;
+        public bool angularDynamicsAcceptable;
         public bool legacyOwnerActive;
     }
 
@@ -237,6 +242,8 @@ namespace MaverickFresh.FlightDynamics
 
             inputs.propulsionAccepted =
                 snapshot.propulsionModel != null && snapshot.propulsionAcceptableForLiveFlight;
+
+            inputs.angularDynamicsAccepted = snapshot.angularDynamicsAcceptable;
 
             inputs.commandSourceIdentityMatches = MavSixDoFBody.IdentityMatches(
                 snapshot.bodyCommandSource, snapshot.controlLawCommandSource);
@@ -383,6 +390,18 @@ namespace MaverickFresh.FlightDynamics
             if (!inputs.propulsionAccepted)
             {
                 reason = "propulsion model output is not authoritative and has not been explicitly accepted";
+                return false;
+            }
+
+            // The Euler correction is not optional. Phase 5C-R measured that the backend integrates
+            // I w_dot = M, omitting w x (I w), so a body with the compensation switched off is flying
+            // known-incomplete rotational dynamics. Refusing here means that state cannot be reached
+            // by leaving a checkbox unticked - only by also acknowledging it on purpose.
+            if (!inputs.angularDynamicsAccepted)
+            {
+                reason = "the rigid-body angular dynamics are incomplete: the gyroscopic coupling "
+                         + "compensation is disabled and running without it has not been explicitly "
+                         + "acknowledged. The replacement FDM requires I w_dot + w x (I w) = M";
                 return false;
             }
 

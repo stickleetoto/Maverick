@@ -5,10 +5,28 @@ namespace MaverickFresh.FlightDynamics.F16
     /// <summary>
     /// Nominal F-16 mass and inertia reference used by the isolated flight-dynamics branch.
     ///
-    /// Authoritative reference for this preset:
-    /// Eugene A. Morelli, NASA Langley Research Center,
-    /// F-16 nonlinear simulation geometry / nominal mass-properties table
-    /// (NASA NTRS 20200003104, 2020):
+    /// Authoritative reference for this preset, VERIFIED against the primary source in Phase 5B.5:
+    ///
+    ///   L. T. Nguyen, M. E. Ogburn, W. P. Gilbert, K. S. Kibler, P. W. Brown, P. L. Deal,
+    ///   "Simulator Study of Stall/Post-Stall Characteristics of a Fighter Airplane With Relaxed
+    ///   Longitudinal Static Stability", NASA Technical Paper 1538, December 1979,
+    ///   TABLE I - MASS AND DIMENSIONAL CHARACTERISTICS USED IN SIMULATION.
+    ///
+    /// Reproduced as Table 1 of F. R. Garza and E. A. Morelli, "A Collection of Nonlinear Aircraft
+    /// Simulations in MATLAB", NASA TM-2003-212145, 2003.
+    ///
+    /// This citation was corrected in Phase 5B.5 (defect P5B5-D6). It previously named
+    /// NASA NTRS 20200003104, which is a 2020 paper on real-time aerodynamic modelling and is not
+    /// where this table comes from. The NUMBERS were and are correct - TP-1538 Table I gives
+    /// weight 91 188 N (20 500 lb), IX 12 875 (9 496), Iy 75 674 (55 814), IZ 85 552 (63 100),
+    /// IXz 1 331 (982) kg-m^2 (slug-ft^2), reference c.g. 0.35 cbar - so this was a provenance
+    /// defect rather than a physics defect. It still mattered: a citation that cannot be checked is
+    /// the one part of a reference model nobody can audit.
+    ///
+    /// NOTE (defect P5B5-D2, OPEN): the mass below is 9 298.65 kg, while MavAircraftCatalog's F-16C
+    /// legacy profile flies 9 800 kg. Those are two different aircraft masses for one aircraft.
+    ///
+    /// Values as published:
     ///   m   = 637.16 slug
     ///   Ix  = 9,496 slug-ft^2
     ///   Iy  = 55,814 slug-ft^2

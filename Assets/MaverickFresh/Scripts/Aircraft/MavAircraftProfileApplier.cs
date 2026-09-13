@@ -363,6 +363,9 @@ namespace MaverickFresh
             Set(jet, "hardGLimit", p.hardGLimit);
             Set(jet, "aoaSoftLimitDeg", p.aoaSoftLimitDeg);
             Set(jet, "aoaHardLimitDeg", p.aoaHardLimitDeg);
+            // Mirror only. The authority is MavInstructorController.aoaPitchReduction, set in
+            // ApplyToInstructor; this keeps the jet's inspector field honest before the first physics
+            // step refreshes it, and is not what makes the limiter work.
             Set(jet, "aoaPitchReduction", p.aoaPitchReduction);
 
             Set(jet, "manualPitchBoost", p.manualPitchBoost);
@@ -467,6 +470,21 @@ private void ApplyToRadarSignature(MavRadarSignature signature, MavAircraftRunti
 
         private void ApplyToInstructor(MavInstructorController instructor, MavAircraftRuntimeProfile p)
         {
+            // The AoA and G limiters run HERE, against this component's own copies, so this is
+            // where the resolved aircraft values have to land. Writing them only onto the jet - which
+            // is what used to happen - configured nothing at all, because the jet does not read them.
+            Set(instructor, "aoaPitchReduction", p.aoaPitchReduction);
+
+            Set(instructor, "aoaHardLimitDeg", p.aoaHardLimitDeg);
+            Set(instructor, "aoaSoftLimitDeg", p.aoaSoftLimitDeg);
+            Set(instructor, "softGLimit", p.softGLimit);
+            Set(instructor, "hardGLimit", p.hardGLimit);
+
+            // Negative envelope: consumer only, no mirror anywhere.
+            Set(instructor, "useNegativeEnvelopeProtection", p.useNegativeEnvelopeProtection);
+            Set(instructor, "aoaNegativeSoftLimitDeg", p.aoaNegativeSoftLimitDeg);
+            Set(instructor, "aoaNegativeHardLimitDeg", p.aoaNegativeHardLimitDeg);
+            Set(instructor, "negativeGLimit", p.negativeGLimit);
             Set(instructor, "targetPitchRateDeg", p.targetPitchRateDeg);
             Set(instructor, "targetYawRateDeg", p.targetYawRateDeg);
             Set(instructor, "targetRollRateDeg", p.targetRollRateDeg);

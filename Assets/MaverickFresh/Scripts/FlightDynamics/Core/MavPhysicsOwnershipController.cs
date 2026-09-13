@@ -253,6 +253,13 @@ namespace MaverickFresh.FlightDynamics
     [DisallowMultipleComponent]
     public sealed class MavPhysicsOwnershipController : MonoBehaviour
     {
+        [Header("Ownership authority (Phase 5A)")]
+        [Tooltip("The single arming authority. This controller may REQUEST that the replacement body be armed; only MavFlightPhysicsOwnership may grant it. Resolved from this GameObject when left empty.")]
+        public MavFlightPhysicsOwnership armingAuthority;
+
+        [Tooltip("Arming requests this controller made that the authority refused.")]
+        public int debugArmingRequestsRefused;
+
         [Header("Target")]
         public MavSixDoFBody sixDoFBody;
 
@@ -399,7 +406,24 @@ namespace MaverickFresh.FlightDynamics
                 return;
             }
 
-            sixDoFBody.simulationEnabled = true;
+            // ---- ARMING IS DELEGATED (Phase 5A) ------------------------------------------------
+            //
+            // This line used to be `sixDoFBody.simulationEnabled = true;`, which made this component a
+            // SECOND independent ownership authority: two components could each decide the replacement
+            // body was armed, and neither knew about the other. Two owners of one fact is the bug class
+            // that produced the F-22-instead-of-F-16 failure, and an ownership-foundation phase is
+            // exactly the wrong place to leave one standing.
+            //
+            // MavFlightPhysicsOwnership is now the single arming authority. This component keeps its
+            // state machine, its restoration-debt tracking and its rollback - all of which are useful
+            // and covered by the Phase 2/3 suites - but it can only REQUEST arming. It cannot grant it.
+            //
+            // Fails closed: with no authority present, arming does not happen.
+            if (!TryDelegateArming(out reason))
+            {
+                RollBackTransition("arming was not granted by the ownership authority: " + reason);
+                return;
+            }
 
             debugObservation = Observe();
             if (!MavPhysicsOwnershipRules.IsTransitionToNewComplete(debugObservation, out reason))
@@ -497,6 +521,86 @@ namespace MaverickFresh.FlightDynamics
         {
             state = next;
             stateReason = reason;
+        }
+
+        /// <summary>
+        /// Asks the single arming authority to arm the replacement body.
+        ///
+        /// This controller supplies what it has verified - the aircraft is structurally prepared, the
+        /// legacy owners it knows about have been released, and the body reports operational
+        /// live-readiness - and the authority applies the rest of the gate: its own safety hold, the
+        /// full readiness contract, and whether every registered legacy writer has actually gone quiet.
+        ///
+        /// Returns false when there is no authority. That is deliberate: an ownership-foundation phase
+        /// must not have a path where arming happens because nobody was there to say no.
+        /// </summary>
+        private bool TryDelegateArming(out string reason)
+        {
+            ResolveArmingAuthority();
+
+            if (armingAuthority == null)
+            {
+                debugArmingRequestsRefused++;
+                reason = "no MavFlightPhysicsOwnership authority is present on this aircraft, and this "
+                         + "controller is no longer permitted to arm the replacement body by itself";
+                return false;
+            }
+
+            // The authority governs the body, so make sure it has been handed the one this controller
+            // is talking about. Cheap, idempotent, and it removes a way for the two to disagree about
+            // which body is being armed.
+            armingAuthority.AttachGovernedBody(sixDoFBody);
+
+            MavReplacementReadiness readiness = BuildReadinessForAuthority();
+
+            if (!armingAuthority.TryRequestReplacementArming(
+                    "MavPhysicsOwnershipController", readiness, out reason))
+            {
+                debugArmingRequestsRefused++;
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// What this controller can honestly vouch for, translated into the authority's contract.
+        ///
+        /// The shadow-related fields are left FALSE. This controller has no visibility into whether the
+        /// replacement pipeline has ever run, and asserting it had would be exactly the kind of
+        /// convenient lie the readiness contract exists to prevent. In practice that means a Phase 3
+        /// controller cannot on its own satisfy the Phase 5 gate - which is correct, and is why Phase 5A
+        /// does not arm anything.
+        /// </summary>
+        private MavReplacementReadiness BuildReadinessForAuthority()
+        {
+            MavReplacementReadiness r = MavReplacementReadiness.NotReady();
+
+            if (sixDoFBody == null)
+                return r;
+
+            MavAircraftProfileApplier applier = GetComponent<MavAircraftProfileApplier>();
+            r.aircraftIdentityAuthoritative = applier != null && applier.HasAuthoritativeAircraft;
+            r.aircraftIsF16C = applier != null
+                               && applier.HasAuthoritativeAircraft
+                               && applier.AppliedAircraft == MavAircraftKind.F16C;
+
+            r.sixDoFBodyPresent = true;
+            r.aeroModelReady = sixDoFBody.aerodynamicModel != null;
+            r.controlLawReady = sixDoFBody.controlLaw != null;
+            r.actuatorReady = sixDoFBody.controlSurfaceActuator != null;
+            r.propulsionAcceptable = sixDoFBody.propulsionModel != null
+                                     && sixDoFBody.propulsionModel.IsAcceptableForLiveFlight;
+            r.gravityOwnedExactlyOnce = false;
+            r.shadowTelemetryFinite = false;
+            r.shadowRunLongEnough = false;
+            return r;
+        }
+
+        private void ResolveArmingAuthority()
+        {
+            if (armingAuthority == null)
+                armingAuthority = GetComponent<MavFlightPhysicsOwnership>();
         }
 
         private MavOwnershipObservation Observe()
