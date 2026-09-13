@@ -6,22 +6,21 @@ namespace MaverickFresh.FlightDynamics.F16
     /// The F-16's propulsion system: the shared <see cref="MavPropulsionSystem"/> configured with the
     /// F-16's single-engine installation.
     ///
-    /// This is the entire aircraft-specific part of F-16 propulsion under the new architecture. There
-    /// is no F-16 engine core here, no F-16 aggregation code, and no F-16 load composition - only the
-    /// selection of an installation and an engine profile. That is the shape the architecture is
-    /// supposed to produce, and it is why the F-15 will not need a second propulsion stack.
+    /// Default behaviour is intentionally unchanged from the pre-Phase-5D path: when
+    /// <see cref="thrustDeck"/> is null, the installation carries no dimensional thrust deck and the
+    /// shared runtime therefore produces exactly zero physical thrust. TP-1538 is NOT a production
+    /// default and is never attached merely because this component exists.
     ///
-    /// Because <see cref="MavPropulsionSystem"/> is a <see cref="MavPropulsionModelBase"/>, this drops
-    /// into <see cref="MavSixDoFBody.propulsionModel"/> exactly where
-    /// <see cref="MavF16EnginePowerModel"/> did, and the load-application boundary is untouched.
-    ///
-    /// Thrust is exactly zero unless a deck is attached, which is the current and correct F-16 state.
+    /// The frozen TP-1538 runtime is an explicit opt-in used by the isolated powered-reference path:
+    /// callers must invoke <see cref="ConfigureTp1538SourcedInstallation"/> (or explicitly serialize
+    /// a deck reference). Garza/Morelli remains the F-16-specific power-state law; this component
+    /// only selects the installation and never applies physics loads itself.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MavF16PropulsionSystem : MavPropulsionSystem
     {
         [Header("F-16 Engine Data")]
-        [Tooltip("Optional dimensional thrust deck. NULL means thrust stays exactly zero, which is the current F-16 condition: the TP-1538 Table VI transcription is not frozen. Attaching a deck does not make it authoritative - the deck declares that itself.")]
+        [Tooltip("Optional dimensional thrust deck. NULL preserves the historical/default F-16 behaviour: dimensional physical thrust is exactly 0 N. TP-1538 is attached only by an explicit powered-reference opt-in.")]
         public MavThrustDeckBase thrustDeck;
 
         [Tooltip("Rebuilds the installation from MavF16PropulsionInstallation on Awake. Off only if a caller wants to supply an installation by hand.")]
@@ -33,21 +32,48 @@ namespace MaverickFresh.FlightDynamics.F16
             {
                 return thrustDeck != null
                     ? "F-16 propulsion: Garza/Morelli power dynamics + " + thrustDeck.DeckName
-                    : "F-16 propulsion: Garza/Morelli power dynamics (thrust deck pending)";
+                    : "F-16 propulsion: Garza/Morelli power dynamics (dimensional thrust unavailable)";
             }
         }
 
         private void Awake()
         {
+            // IMPORTANT: do not auto-attach TP-1538 here. The null-deck path is the production/default
+            // safety state and must remain exactly the same as before Phase 5D.
             if (buildInstallationOnAwake)
                 ConfigureF16Installation();
+        }
+
+        /// <summary>
+        /// Explicit Phase-5D powered-reference entry point.
+        ///
+        /// This is the only convenience path in this component that manufactures the frozen TP-1538
+        /// deck. It is intended for isolated validation/reference rigs; calling ordinary
+        /// <see cref="ConfigureF16Installation"/> never manufactures a deck.
+        /// </summary>
+        public bool ConfigureTp1538SourcedInstallation()
+        {
+            EnsureTp1538DeckAttached();
+            return ConfigureF16Installation();
+        }
+
+        private MavF16Tp1538ThrustDeck EnsureTp1538DeckAttached()
+        {
+            MavF16Tp1538ThrustDeck deck = GetComponent<MavF16Tp1538ThrustDeck>();
+            if (deck == null)
+                deck = gameObject.AddComponent<MavF16Tp1538ThrustDeck>();
+
+            deck.EnsureFrozenDataInstalled();
+            thrustDeck = deck;
+            return deck;
         }
 
         /// <summary>
         /// Installs the F-16 reference engine in slot 0 and builds its runtime.
         ///
         /// Public and idempotent so editor tooling and validation can configure the component without
-        /// relying on Unity having called Awake.
+        /// relying on Unity having called Awake. Deliberately preserves a null deck: this method does
+        /// not attach TP-1538 and therefore retains the historical/default exactly-zero-thrust path.
         /// </summary>
         public bool ConfigureF16Installation()
         {
