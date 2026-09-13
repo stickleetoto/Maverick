@@ -172,13 +172,19 @@ namespace MaverickFresh.FlightDynamics
         public Vector3 forceAeroBodyN;
         public Vector3 momentAeroBodyNm;
 
-        [Tooltip("Reported net axial thrust in Newtons. Debug/telemetry only; the force vector is authoritative.")]
+        [Tooltip("SUM over all contributing engines of each engine's scalar thrust along its own thrust direction, in Newtons. Not a per-engine value, not a maximum. Debug/telemetry only; the force vector is authoritative.")]
         public float reportedThrustN;
 
-        [Tooltip("Engine power state 0..1 as tracked by the propulsion model's spool dynamics.")]
+        [Tooltip("MEAN engine power state 0..1 over contributing engines. COMPATIBILITY / DEBUG ONLY. Exact for one engine. DO NOT use for engine failure, cutoff, imbalance, or individual-engine control logic - a mean cannot express 90/40 and will read as a healthy 65. Use the per-engine MavEngineLoadResult array for any of that; check powerStateSpread01 to tell whether this scalar is hiding an asymmetry.")]
         public float powerState01;
 
-        [Tooltip("False when the producing model has no frozen source data and is therefore returning zero loads.")]
+        [Tooltip("max minus min power state across contributing engines, 0..1. Zero means symmetric; NON-ZERO means powerState01 above is a mean that is hiding an asymmetry. 0 for a single engine, always.")]
+        public float powerStateSpread01;
+
+        [Tooltip("How many engines contributed to these loads. 0 for an unpowered aircraft or one with everything shut down; 1 for the F-16.")]
+        public int contributingEngineCount;
+
+        [Tooltip("Whether every number in these loads is backed by authoritative DATA. A question about provenance, not about operation: an intentionally shut-down engine with a sourced model keeps this true, because its zero thrust is known rather than missing.")]
         public bool hasAuthoritativeData;
 
         public static MavPropulsiveLoads Zero

@@ -104,8 +104,40 @@ public float maxWaveDragAccel = 22f;
         public float aoaHardLimitDeg = 34f;
         public float aoaPitchReduction = 0.45f;
 
+        // Negative envelope protection (Phase 5B.5 defect D5, reclassified 5B.6).
+        //
+        // PROVENANCE: GAMEPLAY_SAFETY / MAVERICK_TUNING. None of these is an F-16 value. The Morelli
+        // alpha domain (-10 .. +45 deg) is a MODEL VALIDITY range enforced separately by
+        // MavF16ReferenceEnvelope; it is not a flight-control limit and is not the justification for
+        // the numbers here. See the block comment in MavInstructorController.
+        //
+        // They reach the CONSUMER (MavInstructorController) directly through ApplyToInstructor - there
+        // is deliberately no jet mirror, because a second home for a setting is what caused defects D4
+        // and the 5B.0b family.
+        public bool useNegativeEnvelopeProtection = true;
+        public float aoaNegativeSoftLimitDeg = -7f;
+        public float aoaNegativeHardLimitDeg = -10f;
+        public float negativeGLimit = -3f;
+
         [Header("v0.20.3~0.20.6 Experimental Aero")]
         public bool useAeroBody = true;
+        [Tooltip("Phase 4B: aerodynamics owns turn curvature and weight support, and the legacy velocity/alignment assists are migrated down by the same amount. Per-aircraft, so an aircraft that has not been re-tuned and re-flown keeps Phase 4A behaviour exactly.")]
+        public bool usePhase4BTurnDynamics = false;
+
+        [Tooltip("Phase 4B: load factor at which the low-speed thrust boost is fully suppressed, so a sustained hard turn bleeds energy instead of being quietly paid for by thrust.")]
+        public float thrustBoostSuppressionG = 3.0f;
+
+        [Tooltip("Phase 4B: fraction of the rate controller's proportional rate-nulling that remains when no rate is commanded. Lower = more rotational inertia on release.")]
+        [Range(0.05f, 1f)] public float releaseRateNullingScale = 0.35f;
+
+        [Tooltip("Phase 4B: how much of the nose-onto-velocity alignment assist survives at full aero ownership. It erases angle of attack, so it must be migrated - but not to zero, or the nose wanders at low speed.")]
+        [Range(0f, 1f)] public float alignmentAssistFloorAtFullAero = 0.15f;
+
+        [Tooltip("Phase 4B: aerodynamic static stability replaces the legacy forward-alignment assist's job of holding the nose near the velocity vector. Required whenever the alignment assist is migrated down, or angle of attack has nothing restoring it.")]
+        public bool useAeroStaticStability = false;
+        public float pitchStabilityStrength = 0.055f;
+        public float yawStabilityStrength = 0.030f;
+
         [Range(0f, 1f)] public float aeroBlend = 0.45f;
         [Range(0f, 1f)] public float liftBlend = 0.55f;
         [Range(0f, 1f)] public float dragBlend = 0.75f;

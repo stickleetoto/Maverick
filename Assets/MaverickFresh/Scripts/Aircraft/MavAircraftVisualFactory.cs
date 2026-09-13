@@ -2,12 +2,25 @@ using UnityEngine;
 
 namespace MaverickFresh
 {
+    /// <summary>
+    /// Builds aircraft visuals from a profile.
+    ///
+    /// Every entry point here refuses a null profile rather than choosing an aircraft on the
+    /// caller's behalf. Both of these used to substitute the F-22A profile, which turned "I do not
+    /// know which aircraft you meant" into a confident F-22 - in the hangar slot, in the flight
+    /// visual, and in the placeholder geometry, which branches on profile.aircraft.
+    /// </summary>
     public static class MavAircraftVisualFactory
     {
         public static GameObject CreateDisplayVisual(MavAircraftRuntimeProfile profile, Transform parent, GameObject overridePrefab, bool hangarDisplay)
         {
             if (profile == null)
-                profile = MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F22A);
+            {
+                Debug.LogError(
+                    "[Maverick/Aircraft] CreateDisplayVisual was given no profile. No visual was "
+                    + "created. Nothing is substituted for a missing aircraft identity.");
+                return null;
+            }
 
             GameObject root = new GameObject(profile.aircraftId + "_visual");
             root.transform.SetParent(parent, false);
@@ -34,13 +47,24 @@ namespace MaverickFresh
         public static GameObject CreateFlightAircraftRoot(MavAircraftRuntimeProfile profile, GameObject overridePrefab)
         {
             if (profile == null)
-                profile = MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F22A);
+            {
+                Debug.LogError(
+                    "[Maverick/Aircraft] CreateFlightAircraftRoot was given no profile. No aircraft "
+                    + "was created.");
+                return null;
+            }
 
             GameObject aircraft = new GameObject(profile.aircraftId.ToUpperInvariant() + "_Player");
             aircraft.transform.position = new Vector3(0f, profile.startAltitude, 0f);
             aircraft.transform.rotation = Quaternion.identity;
 
             GameObject visual = CreateDisplayVisual(profile, aircraft.transform, overridePrefab, false);
+            if (visual == null)
+            {
+                Object.Destroy(aircraft);
+                return null;
+            }
+
             visual.name = "Visual_" + profile.shortName;
             visual.transform.localPosition = Vector3.zero;
             visual.transform.localRotation = Quaternion.identity;

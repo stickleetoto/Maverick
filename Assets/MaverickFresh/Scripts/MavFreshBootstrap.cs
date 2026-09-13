@@ -18,6 +18,35 @@ namespace MaverickFresh
         public bool createGenericPlayerIfMissing = false;
         public bool applyLegacyF15Profile = false;
 
+        [Header("Aircraft Identity")]
+        [Tooltip("Applies the aircraft the player actually selected (MavGameSession) to the player object before anything aircraft-aware runs. Turn this off only if a higher-level bootstrap owns aircraft application - it already skips when one has.")]
+        public bool applySelectedAircraft = true;
+
+        [Tooltip("What happened on the last aircraft identity pass.")]
+        [TextArea(2, 4)] public string aircraftIdentityStatus = "not run";
+
+        [Tooltip("Install the Phase 4B turn-dynamics diagnostic on the player. It is read-only - it applies no force, torque or correction - and exists so turn curvature produced by aerodynamics can be told apart from curvature produced by a legacy assist.")]
+        public bool installTurnDynamicsDiagnostics = true;
+        public MavTurnDynamicsDiagnostics turnDiagnostics;
+
+        [Header("Phase 5B Maneuver Diagnostics")]
+        [Tooltip("Install the high-maneuver diagnostic recorder. It applies no force and records "
+                 + "nothing until a case is selected and runRequested is ticked, so installing it "
+                 + "changes flight behaviour in no way at all.")]
+        public bool installManeuverDiagnostics = true;
+
+        [Tooltip("Read-only mirror for inspection.")]
+        public MavManeuverDiagnostics maneuverDiagnostics;
+
+        [Header("Phase 5A Flight Physics Ownership")]
+        [Tooltip("Ensure exactly one flight-physics ownership authority exists on the player. Default mode is Legacy, which permits every legacy writer and reproduces current behaviour exactly. Turning this off leaves the legacy writers ungoverned, which is the pre-Phase-5 state.")]
+        public bool installFlightPhysicsOwnership = true;
+
+        [Tooltip("The single arming authority on the player. Read-only mirror for inspection.")]
+        public MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership flightPhysicsOwnership;
+
+        [TextArea(2, 5)] public string flightPhysicsOwnershipStatus = "not run";
+
         [Header("Fresh Mode")]
         public bool setupOnAwake = true;
         public bool disableOldMaverickComponents = true;
@@ -239,6 +268,51 @@ namespace MaverickFresh
                 physicalAIStarter.Setup();
             }
 
+            // ---- AUTHORITATIVE AIRCRAFT IDENTITY ---------------------------------------------
+            // This must run before the WT polish block below, because that block is aircraft-aware.
+            //
+            // MavInGameBootstrap also applies the selection, and does so before calling this method -
+            // but it is not present in every scene. Mav_InGame contains only this bootstrap, the
+            // applier, the visual switcher and WT polish, so with the application living solely in
+            // MavInGameBootstrap the selection reached the player in that scene through nothing at
+            // all. What used to hide that was WT polish reading the applier's serialized default and
+            // applying the F-22; once that stopped, the aircraft was simply never applied, and
+            // Debug Applied Aircraft stayed "none".
+            //
+            // So the startup component that actually runs establishes identity. It defers to a
+            // higher-level bootstrap that has already done so rather than competing with it.
+            EnsureAuthoritativeAircraftApplied();
+
+            // ---- PHASE 5A: install the single flight-physics ownership authority ----------------
+            //
+            // After identity, because the authority's readiness contract asks which aircraft this is
+            // and an unresolved identity makes that question meaningless. Before the WT polish block
+            // and before any physics step, so the legacy writers find it the first time they look.
+            //
+            // Default mode is Legacy, in which the authority permits every legacy writer. Installing it
+            // therefore changes no flight behaviour - it makes ownership OBSERVABLE and GOVERNED, not
+            // different.
+            EnsureFlightPhysicsOwnership();
+
+            // Read-only observer. Installed after the aircraft is applied so it samples the real
+            // configuration, and it writes nothing back to the jet or the aero body.
+            if (installTurnDynamicsDiagnostics && aircraftObject != null)
+            {
+                turnDiagnostics = aircraftObject.GetComponent<MavTurnDynamicsDiagnostics>();
+                if (turnDiagnostics == null)
+                    turnDiagnostics = aircraftObject.AddComponent<MavTurnDynamicsDiagnostics>();
+            }
+
+            // Phase 5B. Also read-only, and also installed after the aircraft is applied so the
+            // maneuver it records is flown with the real F-16 configuration rather than the generic
+            // startup one. Idle until a case is explicitly selected.
+            if (installManeuverDiagnostics && aircraftObject != null)
+            {
+                maneuverDiagnostics = aircraftObject.GetComponent<MavManeuverDiagnostics>();
+                if (maneuverDiagnostics == null)
+                    maneuverDiagnostics = aircraftObject.AddComponent<MavManeuverDiagnostics>();
+            }
+
             if (installWTPolish)
             {
                 wtPolish = aircraftObject.GetComponent<MavWTFeelPolishController>();
@@ -314,6 +388,185 @@ namespace MaverickFresh
 
             rb.linearVelocity = aircraftObject.transform.forward * startSpeed;
             rb.angularVelocity = Vector3.zero;
+        }
+
+        /// <summary>
+        /// Makes the player's aircraft identity authoritative from the SESSION SELECTION, if nothing
+        /// else has already done it.
+        ///
+        /// The identity source is MavGameSession - what the player chose in the hangar. It is never
+        /// the applier's serialized `aircraft` field: that field is a request with an F-22A default,
+        /// and reading it during startup is the exact bug this replaces.
+        ///
+        /// Returns true when an aircraft is authoritative afterwards, whether this call established
+        /// it or found it already established.
+        /// </summary>
+        public bool EnsureAuthoritativeAircraftApplied()
+        {
+            if (!applySelectedAircraft)
+            {
+                aircraftIdentityStatus = "disabled: applySelectedAircraft is off, so this bootstrap "
+                                         + "did not apply an aircraft";
+                return false;
+            }
+
+            if (aircraftObject == null)
+            {
+                aircraftIdentityStatus = "no player object to apply an aircraft to";
+                return false;
+            }
+
+            MavAircraftProfileApplier applier =
+                aircraftObject.GetComponent<MavAircraftProfileApplier>();
+            if (applier == null)
+                applier = aircraftObject.AddComponent<MavAircraftProfileApplier>();
+
+            // Somebody with more context - MavInGameBootstrap, or a mode-specific bootstrap - has
+            // already decided. That decision stands: this method re-states it, and never re-decides.
+            //
+            // Re-stating is not busywork here. SetupFreshMouseFlight has just written its own
+            // generic startup values over the aircraft - rb.mass = 12000f, and a page of jet
+            // defaults - which would otherwise silently outrank the aircraft that was applied before
+            // it ran. Restoring the applied profile puts the aircraft's own numbers back on top.
+            if (applier.HasAuthoritativeAircraft)
+            {
+                string refreshError;
+                if (!applier.TryReapplyAppliedProfile(out refreshError))
+                {
+                    aircraftIdentityStatus = "could not restate the already-applied "
+                                             + applier.AppliedAircraft + ": " + refreshError;
+                    Debug.LogError("MavFreshBootstrap: " + aircraftIdentityStatus, this);
+                    return false;
+                }
+
+                aircraftIdentityStatus = "restated " + applier.AppliedAircraft
+                                         + ", which was applied elsewhere, over this bootstrap's "
+                                         + "generic startup values";
+                return true;
+            }
+
+            // The session is the authority. With no selection at all, the session's own declared
+            // default applies - a deliberate, logged decision, and still not the applier's field.
+            bool hasSelection = MavGameSession.HasSelection;
+            MavAircraftKind selected = hasSelection
+                ? MavGameSession.SelectedAircraft
+                : MavGameSession.DefaultAircraft;
+
+            MavAircraftRuntimeProfile profile;
+            string error;
+            if (!MavAircraftCatalog.TryGetBuiltIn(selected, out profile, out error))
+            {
+                aircraftIdentityStatus = "cannot resolve the selected aircraft: " + error;
+                Debug.LogError("MavFreshBootstrap: " + aircraftIdentityStatus, this);
+                return false;
+            }
+
+            applier.applyOnStart = false;
+            applier.renameObject = false;
+
+            if (!applier.TryApplyProfile(profile, out error))
+            {
+                aircraftIdentityStatus = "could not apply " + profile.displayName + ": " + error;
+                Debug.LogError("MavFreshBootstrap: " + aircraftIdentityStatus, this);
+                return false;
+            }
+
+            aircraftIdentityStatus = "applied " + profile.displayName + " from "
+                                     + (hasSelection
+                                        ? "the player's session selection"
+                                        : "the session default, because nothing was selected");
+
+            if (!hasSelection)
+            {
+                Debug.LogWarning(
+                    "MavFreshBootstrap: no aircraft had been selected, so the session default "
+                    + profile.displayName + " was applied. Enter through the hangar to choose one.",
+                    this);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Ensures the player carries EXACTLY ONE flight-physics ownership authority.
+        ///
+        /// Phase 5A's whole claim is that ownership is mechanically trustworthy, and an authority that
+        /// has to be added by hand is not part of the runtime - it is a thing somebody might remember.
+        /// This puts it on the real startup path, so the legacy writers register with a real authority
+        /// on their first physics step.
+        ///
+        /// Exactly one: MavFlightPhysicsOwnership carries DisallowMultipleComponent, but a count is
+        /// taken and reported anyway rather than trusted, because "the attribute prevents it" is an
+        /// assumption and the diagnostic costs nothing.
+        ///
+        /// The mode is NOT set here. A fresh component defaults to Legacy, and an existing one keeps
+        /// whatever it was left on - so re-running setup cannot silently pull an aircraft out of a mode
+        /// an operator deliberately selected.
+        /// </summary>
+        public bool EnsureFlightPhysicsOwnership()
+        {
+            if (!installFlightPhysicsOwnership)
+            {
+                flightPhysicsOwnershipStatus =
+                    "disabled: installFlightPhysicsOwnership is off, so legacy writers are ungoverned "
+                    + "(pre-Phase-5 behaviour)";
+                return false;
+            }
+
+            if (aircraftObject == null)
+            {
+                flightPhysicsOwnershipStatus = "no player object to install an ownership authority on";
+                return false;
+            }
+
+            MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership[] existing =
+                aircraftObject.GetComponents<MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership>();
+
+            if (existing.Length > 1)
+            {
+                // Two authorities is the condition this whole phase exists to make impossible. Say so
+                // loudly rather than picking one and hoping.
+                flightPhysicsOwnershipStatus =
+                    "FAULT: " + existing.Length + " ownership authorities found on "
+                    + aircraftObject.name + ". Exactly one is permitted.";
+                Debug.LogError("MavFreshBootstrap: " + flightPhysicsOwnershipStatus, this);
+
+                if (existing[0] != null)
+                    existing[0].EnterFault("more than one ownership authority is present on the player");
+
+                flightPhysicsOwnership = existing[0];
+                return false;
+            }
+
+            flightPhysicsOwnership = existing.Length == 1 ? existing[0] : null;
+
+            bool created = false;
+            if (flightPhysicsOwnership == null)
+            {
+                flightPhysicsOwnership = aircraftObject
+                    .AddComponent<MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership>();
+                created = true;
+            }
+
+            // Give the authority the body it governs, if one exists. Absent body is the normal case
+            // today: the replacement stack is not in Mav_InGame, and the authority governs nothing
+            // rather than inventing something to govern.
+            //
+            // Attached at runtime rather than serialized, so a stale scene reference cannot leave the
+            // authority pointed at an object that is no longer there.
+            MaverickFresh.FlightDynamics.MavSixDoFBody body =
+                aircraftObject.GetComponent<MaverickFresh.FlightDynamics.MavSixDoFBody>();
+            flightPhysicsOwnership.AttachGovernedBody(body);
+
+            flightPhysicsOwnershipStatus =
+                (created ? "installed" : "found existing")
+                + " ownership authority on " + aircraftObject.name
+                + "; owner=" + flightPhysicsOwnership.owner
+                + "; governedBody=" + flightPhysicsOwnership.debugGovernedBody
+                + "; replacementActivation="
+                + (flightPhysicsOwnership.allowReplacementActivation ? "ALLOWED" : "safety-held");
+
+            return true;
         }
 
         private void DisableOldComponents()

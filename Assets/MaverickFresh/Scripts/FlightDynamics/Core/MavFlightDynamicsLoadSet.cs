@@ -21,6 +21,9 @@ namespace MaverickFresh.FlightDynamics
         public MavAerodynamicLoads aerodynamic;
         public MavPropulsiveLoads propulsive;
 
+        [Tooltip("Rigid-body inertial coupling, -w x (I w), in aero body axes. NOT an aerodynamic or propulsive load: it compensates for the angular integration the measured Unity Rigidbody path performs. See MavGyroscopicMoment.")]
+        public Vector3 inertialCorrectionMomentAeroBodyNm;
+
         public Vector3 totalForceAeroBodyN;
         public Vector3 totalMomentAeroBodyNm;
 
@@ -29,6 +32,9 @@ namespace MaverickFresh.FlightDynamics
 
         [Tooltip("How many times a propulsive contribution was added this step. Must be 0 or 1.")]
         public int propulsiveContributions;
+
+        [Tooltip("How many times the inertial coupling correction was added this step. Must be 0 or 1.")]
+        public int inertialContributions;
 
         [Tooltip("Set once the accumulated total has been handed to the load-application boundary.")]
         public bool applied;
@@ -46,13 +52,37 @@ namespace MaverickFresh.FlightDynamics
             get { return propulsiveContributions > 0; }
         }
 
+        public bool HasInertialCorrection
+        {
+            get { return inertialContributions > 0; }
+        }
+
+        /// <summary>
+        /// The moment from EXTERNAL sources only - aerodynamics and propulsion - with the inertial
+        /// coupling correction excluded.
+        ///
+        /// Kept separable because the correction is not a load acting on the aircraft; it is the term
+        /// the backend's integrator omits. Reporting one number would make it impossible to tell a
+        /// large aerodynamic moment from a large coupling term, and those two call for opposite
+        /// responses.
+        /// </summary>
+        public Vector3 ExternalMomentAeroBodyNm
+        {
+            get { return totalMomentAeroBodyNm - inertialCorrectionMomentAeroBodyNm; }
+        }
+
         /// <summary>
         /// True when no physical source contributed more than once. A false result means an
         /// ownership bug: two components believe they own the same physical effect.
         /// </summary>
         public bool HasSingleOwnerPerSource
         {
-            get { return aerodynamicContributions <= 1 && propulsiveContributions <= 1; }
+            get
+            {
+                return aerodynamicContributions <= 1
+                       && propulsiveContributions <= 1
+                       && inertialContributions <= 1;
+            }
         }
 
         /// <summary>
@@ -63,10 +93,12 @@ namespace MaverickFresh.FlightDynamics
         {
             aerodynamic = MavAerodynamicLoads.Zero;
             propulsive = MavPropulsiveLoads.Zero;
+            inertialCorrectionMomentAeroBodyNm = Vector3.zero;
             totalForceAeroBodyN = Vector3.zero;
             totalMomentAeroBodyNm = Vector3.zero;
             aerodynamicContributions = 0;
             propulsiveContributions = 0;
+            inertialContributions = 0;
             applied = false;
             stepIndex = physicsStepIndex;
         }
@@ -110,6 +142,27 @@ namespace MaverickFresh.FlightDynamics
         }
 
         /// <summary>
+        /// Adds the rigid-body inertial coupling correction. Returns false (and adds nothing) if it
+        /// was already contributed this step or the set was already applied.
+        ///
+        /// A MOMENT ONLY. The coupling term produces no force, so nothing is added to the force total
+        /// and the specific-force channel is unaffected - an accelerometer does not feel it.
+        /// </summary>
+        public bool AddInertialCorrection(Vector3 momentAeroBodyNm)
+        {
+            if (applied || inertialContributions > 0)
+            {
+                inertialContributions++;
+                return false;
+            }
+
+            inertialCorrectionMomentAeroBodyNm = momentAeroBodyNm;
+            inertialContributions = 1;
+            totalMomentAeroBodyNm += momentAeroBodyNm;
+            return true;
+        }
+
+        /// <summary>
         /// Marks the accumulated total as handed to the Rigidbody boundary.
         /// Returns false when application must be refused: already applied, or a source
         /// contributed more than once.
@@ -126,7 +179,8 @@ namespace MaverickFresh.FlightDynamics
             {
                 reason = "duplicate load contribution detected (aero="
                          + aerodynamicContributions
-                         + ", propulsion=" + propulsiveContributions + ")";
+                         + ", propulsion=" + propulsiveContributions
+                         + ", inertial=" + inertialContributions + ")";
                 return false;
             }
 

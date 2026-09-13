@@ -8,8 +8,73 @@ namespace MaverickFresh
     /// This class owns Rigidbody setup, thrust, side-slip damping, and final torque.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
-    public class MavMouseFlightJet : MonoBehaviour
+    public class MavMouseFlightJet : MonoBehaviour,
+        MaverickFresh.FlightDynamics.IMavLegacyPhysicsWriter
     {
+        // ================= Phase 5A legacy physics ownership gate =========================
+        //
+        // This component can write force or torque to the live player Rigidbody, so it asks the
+        // ownership gate before every such write and reports afterwards what it actually did.
+        //
+        // The gate is CONSULTED rather than the component being switched off from outside. Disabling
+        // the component would also stop its command generation and telemetry, which must survive into
+        // replacement mode; and a disabled component proves nothing about what it contributed, which is
+        // exactly the claim replacement activation has to be able to make. In Legacy mode the gate
+        // allows everything, so this costs one boolean read per step and changes no behaviour.
+
+        [Header("Phase 5A Ownership")]
+        [Tooltip("Gate deciding whether this component may write physics. Resolved from this GameObject; an absent gate means legacy is allowed, which is the pre-Phase-5 behaviour.")]
+        public MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership physicsOwnership;
+
+        [Tooltip("Whether this component applied force or torque to the live Rigidbody on its most recent physics step. OBSERVED, not configured.")]
+        public bool debugWroteLiveForceLastStep;
+        public int debugWriterLastStepIndex;
+
+        public string LegacyWriterName { get { return "MavMouseFlightJet"; } }
+
+        public MaverickFresh.FlightDynamics.MavLegacyWriterKind LegacyWriterKind
+        {
+            get { return MaverickFresh.FlightDynamics.MavLegacyWriterKind.Other; }
+        }
+
+        public bool WroteLiveForceLastStep { get { return debugWroteLiveForceLastStep; } }
+        public int LegacyWriterLastStepIndex { get { return debugWriterLastStepIndex; } }
+
+        /// <summary>
+        /// Whether this component may write physics this step. An absent gate means legacy ownership,
+        /// which is the pre-Phase-5 behaviour and the safe default.
+        /// </summary>
+        private bool LegacyPhysicsAllowed()
+        {
+            ResolvePhysicsOwnership();
+            return physicsOwnership == null || physicsOwnership.LegacyPhysicsAllowed;
+        }
+
+        /// <summary>Records that a live write happened, for the gate's writer enumeration.</summary>
+        private void MarkLiveForceWritten()
+        {
+            debugWroteLiveForceLastStep = true;
+            if (physicsOwnership != null)
+                debugWriterLastStepIndex = physicsOwnership.CurrentStepIndex;
+        }
+
+        /// <summary>Called at the top of each physics step, before any write decision.</summary>
+        private void BeginLegacyWriterStep()
+        {
+            ResolvePhysicsOwnership();
+            debugWroteLiveForceLastStep = false;
+        }
+
+        private void ResolvePhysicsOwnership()
+        {
+            if (physicsOwnership != null)
+                return;
+
+            physicsOwnership = GetComponent<MaverickFresh.FlightDynamics.MavFlightPhysicsOwnership>();
+            if (physicsOwnership != null)
+                physicsOwnership.RegisterLegacyWriter(this);
+        }
+
         [Header("Components")]
         public MavMouseFlightRig controller;
         public MavInstructorController instructor;
@@ -118,7 +183,12 @@ namespace MaverickFresh
 
         [Header("G / Stall Assist")]
         public bool useGLimiter = true;
+        [Tooltip("MIRROR, NOT THE AUTHORITY. The G limiter lives in MavInstructorController and reads "
+                 + "the instructor's copy. Write it with SetSoftGLimitAuthority.")]
         public float softGLimit = 8.8f;
+        [Tooltip("MIRROR, NOT THE AUTHORITY for the limiter - but unlike the others this mirror IS "
+                 + "read by MavPhysicalAIRewardLogger, so it has to stay correct. It is refreshed from "
+                 + "the instructor every physics step. Write it with SetHardGLimitAuthority.")]
         public float hardGLimit = 11.2f;
         public float gPitchReduction = 0.30f;
         public bool useLowSpeedNoseDownAssist = true;
@@ -126,8 +196,18 @@ namespace MaverickFresh
         public float stallNoseDownAssist = 0.34f;
         public float stallAssistMaxPitchClamp = 0.22f;
         [Header("AoA / High-G Protection")]
+        [Tooltip("MIRROR, NOT THE AUTHORITY. The AoA limiter lives in MavInstructorController and "
+                 + "reads the instructor's copy; this jet never reads this field. Write it with "
+                 + "SetAoASoftLimitAuthority.")]
         public float aoaSoftLimitDeg = 24f;
+        [Tooltip("MIRROR, NOT THE AUTHORITY. See aoaSoftLimitDeg. Write it with "
+                 + "SetAoAHardLimitAuthority.")]
         public float aoaHardLimitDeg = 34f;
+        [Tooltip("MIRROR, NOT THE AUTHORITY. The AoA limiter lives in MavInstructorController and "
+                 + "reads the instructor's own copy of this value; this jet never reads this field. "
+                 + "It is kept public so the effective setting is visible in the inspector, and it is "
+                 + "refreshed from the instructor every physics step. To CHANGE the setting, call "
+                 + "SetAoAPitchReductionAuthority - assigning this field alone changes nothing.")]
         public float aoaPitchReduction = 0.45f;
         public float highGShortTermAllowance = 10.8f;
         public float sustainedGLimit = 8.8f;
@@ -188,6 +268,22 @@ namespace MaverickFresh
         public float angularRateDampingRoll = 0.075f;
         public float highAoADragStart = 18f;
         public float highAoDampingStart = 12f;
+
+        [Header("Phase 4B Turn Entry & Inertia")]
+        [Tooltip("Migrate the forward-alignment assist and the low-speed thrust boost by the same aero/legacy ownership split that governs the velocity-turn assist. OFF reproduces Phase 4A.")]
+        public bool usePhase4BTurnDynamics = false;
+
+        [Tooltip("How much of the alignment assist survives at FULL aero ownership. The assist rotates the nose back onto the velocity vector, which destroys the angle of attack that lift needs, so it cannot be migrated to zero without the nose drifting at low speed - but it must not be free to erase AoA either.")]
+        [Range(0f, 1f)] public float alignmentAssistFloorAtFullAero = 0.15f;
+
+        [Tooltip("Fraction of the rate controller's proportional rate-nulling that remains when the pilot is not commanding a rate. 1 = Phase 4A, which actively brakes angular motion to zero the instant input stops. Lower values let the rate decay through damping instead, which is what rotational inertia feels like.")]
+        [Range(0.05f, 1f)] public float releaseRateNullingScale = 0.35f;
+
+        [Tooltip("Command magnitude below which the aircraft is treated as released and releaseRateNullingScale applies. Small, so the pilot holding a shallow input still gets a commanded rate.")]
+        [Range(0.001f, 0.5f)] public float releaseCommandThreshold = 0.06f;
+
+        [Tooltip("Load factor at which the low-speed thrust boost is fully suppressed. A sustained hard turn must be allowed to bleed energy; the boost exists to rescue slow level flight, not to pay for a 7g turn.")]
+        public float thrustBoostSuppressionG = 3.0f;
 
         [Header("v0.18.6 Velocity Turn Assist")]
         public bool useVelocityTurnAssist = true;
@@ -375,6 +471,30 @@ public float debugEngineThrustScale = 1f;
         public float aoaAosGuardFactor = 1f;
         public bool debugFinalTorqueClampActive;
         public float velocityTurnAssistCurrentFactor = 1f;
+
+        [Header("Debug / Phase 4B Curvature Ownership")]
+        [Tooltip("Acceleration perpendicular to velocity that the legacy velocity-turn assist applied this step, m/s^2. Measured from the force actually added.")]
+        public float debugLegacyCurvatureAccel;
+        [Tooltip("Magnitude of the alignment-assist torque actually applied this step, rad/s^2.")]
+        public float debugAlignmentAssistTorque;
+        [Tooltip("Ownership split actually exercised this step: aero curvature / (aero + legacy curvature). 1 = aerodynamics produced all of the turn.")]
+        public float debugMeasuredAeroCurvatureShare;
+        [Tooltip("Alignment-assist scale after Phase 4B migration.")]
+        public float debugAlignmentAssistScale = 1f;
+        [Tooltip("Low-speed thrust boost suppression from load factor: 1 = fully allowed, 0 = fully suppressed.")]
+        public float debugThrustBoostAllowance = 1f;
+        [Tooltip("Rate-nulling scale in force this step. Below 1 means the aircraft is coasting on inertia rather than being braked to zero.")]
+        public float debugRateNullingScale = 1f;
+
+        [Header("Phase 5B Scripted Maneuver Diagnostics")]
+        [Tooltip("Diagnostics only. When true, MavManeuverDiagnostics supplies the pilot command for "
+                 + "this step instead of the instructor, so a maneuver can be repeated exactly. "
+                 + "Applies NO force of its own - it only replaces the command the existing control "
+                 + "path was going to use. Default OFF; never set by any profile or preset.")]
+        public bool scriptedCommandActive;
+        public Vector3 scriptedCommandPitchYawRoll;
+        public float scriptedCommandThrottle = 0.85f;
+        public bool scriptedCommandCountsAsManual;
         public float envelopeDragAmount;
         public Vector3 debugControlTorqueBeforeClamp;
         public Vector3 debugControlTorqueAfterClamp;
@@ -462,6 +582,7 @@ public float debugEngineThrustScale = 1f;
             if (rigid == null)
                 return;
 
+            BeginLegacyWriterStep();
             ResolveComponents(false);
             UpdatePhysicsTelemetry();
             debugAppliedTorque = Vector3.zero;
@@ -490,22 +611,52 @@ public float debugEngineThrustScale = 1f;
                 MirrorRuntimeFromInstructor();
             }
 
-            effectiveThrottle = ComputeEffectiveThrottle();
-            debugEngineThrustScale = GetAtmosphericEngineScale();
-            rigid.AddRelativeForce(Vector3.forward * thrust * effectiveThrottle * debugEngineThrustScale * forceMult, ForceMode.Force);
-
-            if (negativeThrottleActive && useNegativeThrottleBrakeDrag && speed > 1f)
-                rigid.AddForce(-rigid.linearVelocity.normalized * negativeThrottleBrakeDrag * forceMult * speed, ForceMode.Force);
-
-            if (autoSpeedAssist && speed > maxCombatSpeed)
+            // Phase 5B scripted maneuver override.
+            //
+            // This has to sit HERE rather than in the diagnostic component. MirrorRuntimeFromInstructor
+            // rewrites pitch/yaw/roll every step, so a command written from outside the jet would be
+            // discarded before anything read it. Applying the override immediately after the mirror is
+            // the only point where a repeatable input survives to reach the control path.
+            //
+            // It substitutes a COMMAND. It applies no force, bypasses no limiter, and changes no gain,
+            // so a maneuver recorded through it is the same maneuver the pilot would have flown.
+            if (scriptedCommandActive)
             {
-                Vector3 antiVelocity = -rigid.linearVelocity.normalized * overspeedDrag * forceMult * (speed - maxCombatSpeed);
-                rigid.AddForce(antiVelocity, ForceMode.Force);
+                SetControlCommand(
+                    scriptedCommandPitchYawRoll.x,
+                    scriptedCommandPitchYawRoll.y,
+                    scriptedCommandPitchYawRoll.z,
+                    scriptedCommandThrottle,
+                    scriptedCommandCountsAsManual,
+                    scriptedCommandCountsAsManual,
+                    scriptedCommandCountsAsManual);
             }
 
-            ApplySideSlipDamping();
-            ApplySemiAeroStabilizer();
-            ApplyControlTorque();
+            effectiveThrottle = ComputeEffectiveThrottle();
+            debugEngineThrustScale = GetAtmosphericEngineScale();
+            // ---- legacy physical writes, all behind the ownership gate ------------------------
+            // Thrust, brake drag, overspeed drag, sideslip damping, the semi-aero stabiliser and every
+            // control torque are all legacy physical contributions. In replacement mode the gate
+            // refuses them and the replacement stack supplies the equivalents; the command and
+            // telemetry work above this point still runs, because mouse aim has to survive.
+            if (LegacyPhysicsAllowed())
+            {
+                rigid.AddRelativeForce(Vector3.forward * thrust * effectiveThrottle * debugEngineThrustScale * forceMult, ForceMode.Force);
+                MarkLiveForceWritten();
+
+                if (negativeThrottleActive && useNegativeThrottleBrakeDrag && speed > 1f)
+                    rigid.AddForce(-rigid.linearVelocity.normalized * negativeThrottleBrakeDrag * forceMult * speed, ForceMode.Force);
+
+                if (autoSpeedAssist && speed > maxCombatSpeed)
+                {
+                    Vector3 antiVelocity = -rigid.linearVelocity.normalized * overspeedDrag * forceMult * (speed - maxCombatSpeed);
+                    rigid.AddForce(antiVelocity, ForceMode.Force);
+                }
+
+                ApplySideSlipDamping();
+                ApplySemiAeroStabilizer();
+                ApplyControlTorque();
+            }
         }
 
         public void SetupPublicRigidbody()
@@ -595,6 +746,74 @@ public float debugEngineThrustScale = 1f;
             debugReceivedPitchCommand = pitch;
             debugReceivedYawCommand = yaw;
             debugReceivedRollCommand = roll;
+        }
+
+        /// <summary>
+        /// Set the AoA-limiter pitch-command reduction, writing the component that actually uses it.
+        ///
+        /// WHY THIS EXISTS. The limiter is applied by MavInstructorController.ApplyProtectionAssists
+        /// against the INSTRUCTOR's copy of the value. This jet declares a field of the same name but
+        /// never reads it, so an aircraft profile that wrote only the jet configured nothing: the
+        /// instructor kept whatever generic value it had cached at startup, and then copied that stale
+        /// value back over the jet every physics step. One setting with two homes, and the wrong home
+        /// winning - the same failure shape as the F-22-instead-of-F-16 identity bug.
+        ///
+        /// So there is now exactly one authority, the instructor, and one way to write it. The jet
+        /// field is updated too, purely so the inspector does not show a value that means nothing.
+        /// </summary>
+        public void SetAoAPitchReductionAuthority(float value)
+        {
+            aoaPitchReduction = value;
+            MavInstructorController target = ResolveInstructorForAuthority();
+            if (target != null)
+                target.aoaPitchReduction = value;
+        }
+
+        /// <summary>
+        /// The envelope-protection breakpoints, written to the component that enforces them.
+        ///
+        /// Same shape as SetAoAPitchReductionAuthority and for the same reason: every one of these is
+        /// consumed by MavInstructorController.ApplyProtectionAssists against the INSTRUCTOR's copy,
+        /// and this jet declares same-named fields it does not read. Assigning the jet field alone
+        /// configured nothing, so aircraft that intended tighter protection did not get it.
+        /// </summary>
+        public void SetAoASoftLimitAuthority(float degrees)
+        {
+            aoaSoftLimitDeg = degrees;
+            MavInstructorController target = ResolveInstructorForAuthority();
+            if (target != null)
+                target.aoaSoftLimitDeg = degrees;
+        }
+
+        public void SetAoAHardLimitAuthority(float degrees)
+        {
+            aoaHardLimitDeg = degrees;
+            MavInstructorController target = ResolveInstructorForAuthority();
+            if (target != null)
+                target.aoaHardLimitDeg = degrees;
+        }
+
+        public void SetSoftGLimitAuthority(float g)
+        {
+            softGLimit = g;
+            MavInstructorController target = ResolveInstructorForAuthority();
+            if (target != null)
+                target.softGLimit = g;
+        }
+
+        public void SetHardGLimitAuthority(float g)
+        {
+            hardGLimit = g;
+            MavInstructorController target = ResolveInstructorForAuthority();
+            if (target != null)
+                target.hardGLimit = g;
+        }
+
+        private MavInstructorController ResolveInstructorForAuthority()
+        {
+            if (instructor == null)
+                instructor = GetComponent<MavInstructorController>();
+            return instructor;
         }
 
         public void PushLegacyTuningToInstructor()
@@ -776,10 +995,20 @@ public float debugEngineThrustScale = 1f;
 
             float targetThrottle01 = engineRunning ? MapThrottlePercentToThrust01(throttlePercent) : 0f;
 
+            debugThrustBoostAllowance = 1f;
+
             if (engineRunning && autoSpeedAssist && throttlePercent > idleThrottlePercent)
             {
                 if (speed < minCombatSpeed)
-                    targetThrottle01 += lowSpeedThrustBoost;
+                {
+                    // Suppressed by load factor, so a sustained turn bleeds energy instead of having
+                    // the bill quietly paid by extra thrust.
+                    if (usePhase4BTurnDynamics)
+                        debugThrustBoostAllowance = MavTurnDynamicsRules.ComputeThrustBoostAllowance(
+                            CurrentAeroLiftG(), thrustBoostSuppressionG);
+
+                    targetThrottle01 += lowSpeedThrustBoost * debugThrustBoostAllowance;
+                }
 
                 if (speed > maxCombatSpeed)
                     targetThrottle01 *= Mathf.Lerp(1f, 0.70f, Mathf.InverseLerp(maxCombatSpeed, maxCombatSpeed + 190f, speed));
@@ -834,13 +1063,20 @@ public float debugEngineThrustScale = 1f;
         {
             Vector3 localVelocity = transform.InverseTransformDirection(rigid.linearVelocity);
             debugSideSlipAmount = localVelocity.x;
+
+            // Re-checked here as well as at the call site. These methods are individually reachable,
+            // and a gate that only guards one entry path is a gate with a second entrance.
+            if (!LegacyPhysicsAllowed())
+                return;
+
             Vector3 sideAccel = -transform.right * localVelocity.x * sideSlipDampingStrength * ManualPhysicsDampingScale();
             rigid.AddForce(sideAccel, ForceMode.Acceleration);
+            MarkLiveForceWritten();
         }
 
         private void ApplySemiAeroStabilizer()
         {
-            if (!useSemiAeroStabilizer || rigid == null)
+            if (!useSemiAeroStabilizer || rigid == null || !LegacyPhysicsAllowed())
                 return;
 
             Vector3 worldVel = rigid.linearVelocity;
@@ -865,19 +1101,34 @@ public float debugEngineThrustScale = 1f;
             sideDamping *= manualDampingScale;
             Vector3 sideAccel = -transform.right * localVel.x * sideDamping * Mathf.Lerp(0.35f, 1f, speedFactor);
             rigid.AddForce(sideAccel, ForceMode.Acceleration);
+            MarkLiveForceWritten();
 
             float angleDrag = (aoaAbs * aoaDragStrength + aosAbs * aosDragStrength)
                 * Mathf.Lerp(0.35f, 1f, highAngleT)
                 * manualDampingScale;
             if (angleDrag > 0.001f)
+            {
                 rigid.AddForce(-worldVel.normalized * angleDrag * Mathf.Lerp(0.35f, 1f, speedFactor), ForceMode.Acceleration);
+                MarkLiveForceWritten();
+            }
 
             ApplyEnvelopeDrag(worldVel, speedNow, aoaAbs, aosAbs, highSlipT);
             ApplyVelocityTurnAssist(worldVel, speedNow, speedFactor);
+            UpdateMeasuredCurvatureOwnership();
 
             Vector3 localTorque = Vector3.zero;
 
-            if (forwardVelocityAngleDeg > 3f)
+            // ---- forward alignment assist ------------------------------------------------------
+            // This torque rotates the nose back onto the velocity vector. That is the direct enemy of
+            // turn entry: angle of attack IS the difference between where the nose points and where
+            // the aircraft is going, so an assist that erases that difference erases the lift the
+            // turn is supposed to be built from. Under Phase 4B its authority is migrated by the same
+            // aero/legacy split as the velocity-turn assist, down to a floor that keeps the nose from
+            // wandering at low speed.
+            debugAlignmentAssistScale = GetAlignmentAssistScale();
+            debugAlignmentAssistTorque = 0f;
+
+            if (forwardVelocityAngleDeg > 3f && debugAlignmentAssistScale > 0.0001f)
             {
                 Vector3 velocityDir = worldVel.normalized;
                 Vector3 worldAlignAxis = Vector3.Cross(transform.forward, velocityDir);
@@ -887,10 +1138,16 @@ public float debugEngineThrustScale = 1f;
                     float angleT = Mathf.InverseLerp(8f, 75f, forwardVelocityAngleDeg);
                     Vector3 alignTorque = transform.InverseTransformDirection(worldAlignAxis.normalized)
                         * forwardAlignmentAssist
+                        * debugAlignmentAssistScale
                         * Mathf.Clamp01(angleT)
                         * Mathf.Lerp(0.25f, 1f, speedFactor);
 
-                    localTorque += Vector3.ClampMagnitude(alignTorque, Mathf.Max(0.01f, forwardAlignmentMaxTorque)) * manualDampingScale;
+                    Vector3 clampedAlign =
+                        Vector3.ClampMagnitude(alignTorque, Mathf.Max(0.01f, forwardAlignmentMaxTorque))
+                        * manualDampingScale;
+
+                    localTorque += clampedAlign;
+                    debugAlignmentAssistTorque = clampedAlign.magnitude;
                 }
             }
 
@@ -906,6 +1163,7 @@ public float debugEngineThrustScale = 1f;
             if (localTorque.sqrMagnitude > 0.000001f)
             {
                 rigid.AddRelativeTorque(localTorque, ForceMode.Acceleration);
+                MarkLiveForceWritten();
                 debugAppliedTorque += localTorque;
             }
 
@@ -916,7 +1174,7 @@ public float debugEngineThrustScale = 1f;
         private void ApplyEnvelopeDrag(Vector3 worldVel, float speedNow, float aoaAbs, float aosAbs, float highSlipT)
         {
             envelopeDragAmount = 0f;
-            if (!useAoAAoSSoftGuard || worldVel.sqrMagnitude < 1f)
+            if (!useAoAAoSSoftGuard || worldVel.sqrMagnitude < 1f || !LegacyPhysicsAllowed())
                 return;
 
             float highSpeedT = Mathf.InverseLerp(
@@ -937,14 +1195,21 @@ public float debugEngineThrustScale = 1f;
             envelopeDragAmount *= ManualPhysicsDampingScale();
 
             if (envelopeDragAmount > 0.001f)
+            {
                 rigid.AddForce(-worldVel.normalized * envelopeDragAmount, ForceMode.Acceleration);
+                MarkLiveForceWritten();
+            }
         }
 
         private void ApplyVelocityTurnAssist(Vector3 worldVel, float speedNow, float speedFactor)
         {
             velocityTurnAssistCurrentFactor = 0f;
-            if (!useVelocityTurnAssist || rigid == null || speedNow < velocityTurnAssistMinSpeed || worldVel.sqrMagnitude < 1f)
+            debugLegacyCurvatureAccel = 0f;
+            if (!useVelocityTurnAssist || rigid == null || speedNow < velocityTurnAssistMinSpeed
+                || worldVel.sqrMagnitude < 1f || !LegacyPhysicsAllowed())
+            {
                 return;
+            }
 
             if (forwardVelocityAngleDeg < 1f)
                 return;
@@ -994,14 +1259,48 @@ public float debugEngineThrustScale = 1f;
 
             alignAccel = Vector3.ClampMagnitude(alignAccel, Mathf.Max(0.1f, velocityTurnAssistMaxAccel));
             if (alignAccel.sqrMagnitude > 0.0001f)
+            {
                 rigid.AddForce(alignAccel, ForceMode.Acceleration);
+                MarkLiveForceWritten();
+            }
+
+            // forwardInVelPlane is perpendicular to the velocity vector by construction, so this
+            // whole acceleration is trajectory curvature produced directly by an assist rather than
+            // by aerodynamics. Measured from the force actually applied, so the ownership ratio
+            // below reports what happened rather than what was configured.
+            debugLegacyCurvatureAccel = alignAccel.magnitude;
 
             float extremeSlipT = Mathf.Clamp01(Mathf.Max(overLimitT, slipFadeT));
             if (extremeSlipT > 0.001f)
             {
                 float dampingAccel = velocityTurnAssistMaxAccel * 0.30f * extremeSlipT * Mathf.Lerp(0.35f, 1f, speedFactor);
                 rigid.AddForce(-worldVel.normalized * dampingAccel, ForceMode.Acceleration);
+                MarkLiveForceWritten();
             }
+        }
+
+        /// <summary>
+        /// Current load factor, taken from the aero body's measured lift where available.
+        ///
+        /// Uses the aerodynamic load rather than total acceleration so that thrust and the assists do
+        /// not read as manoeuvring load - the question being asked is "how hard is this aircraft
+        /// turning aerodynamically", not "how fast is it accelerating".
+        /// </summary>
+        /// <summary>
+        /// Magnitude of the AERODYNAMIC LIFT contribution, in g. NOT a load factor.
+        ///
+        /// Renamed in Phase 5B.7. It was called CurrentLoadFactorG, which made it the third distinct
+        /// quantity in this project called some variant of "G" - the other two being the legacy HUD
+        /// projection and true Nz. This one is |lift| / mg: unsigned, and lift only, with no gravity,
+        /// drag or thrust term. It feeds the Phase 4B thrust-boost suppression, which is what it was
+        /// always for; the behaviour is unchanged and only the name now says what it is.
+        /// </summary>
+        public float CurrentAeroLiftG()
+        {
+            if (aeroBody != null && aeroBody.useAeroBody)
+                return Mathf.Abs(aeroBody.debugAeroCurvatureG);
+
+            return 1f;
         }
 
         private float GetAeroControlAuthority()
@@ -1011,6 +1310,39 @@ public float debugEngineThrustScale = 1f;
 
             float target = Mathf.Clamp(aeroBody.debugControlAuthority, 0.05f, 1.5f);
             return Mathf.Lerp(1f, target, Mathf.Clamp01(aeroAuthorityBlend));
+        }
+
+        /// <summary>
+        /// How much of the alignment assist is allowed to act.
+        ///
+        /// Migrated by the same ownership split as the velocity-turn assist, because it is the same
+        /// kind of debt: both substitute for aerodynamics, and both have to be paid down when
+        /// aerodynamics takes over. The floor is not a fudge - with the assist at literally zero the
+        /// nose is free to sit far off the velocity vector at low speed, where there is not enough
+        /// dynamic pressure for aerodynamic weathercocking to bring it back.
+        /// </summary>
+        private float GetAlignmentAssistScale()
+        {
+            if (!usePhase4BTurnDynamics)
+                return 1f;
+
+            return MavTurnDynamicsRules.ComputeAlignmentAssistScale(
+                GetVelocityAssistAeroScale(), alignmentAssistFloorAtFullAero);
+        }
+
+        /// <summary>
+        /// Measured curvature ownership: the share of this step's trajectory bending that came from
+        /// aerodynamic lift rather than from a direct assist force.
+        ///
+        /// Deliberately computed from applied accelerations, not from blend settings. Phase 4A's
+        /// nominal accounting reported 1.00 while the aircraft was flying on 28% lift and 53% direct
+        /// steering, and only a measured ratio can catch that.
+        /// </summary>
+        private void UpdateMeasuredCurvatureOwnership()
+        {
+            float aeroAccel = aeroBody != null ? aeroBody.debugAeroCurvatureAccel : 0f;
+            debugMeasuredAeroCurvatureShare = MavTurnDynamicsRules.ComputeAeroCurvatureShare(
+                aeroAccel, debugLegacyCurvatureAccel);
         }
 
         private float GetVelocityAssistAeroScale()
@@ -1083,7 +1415,11 @@ private float GetAtmosphericEngineScale()
             debugControlTorqueAfterClamp = controlTorque;
             debugFinalTorque = controlTorque;
             debugActuatorState = debugManualInputActive ? "manual_control" : "instructor_control";
+            if (!LegacyPhysicsAllowed())
+                return;
+
             rigid.AddRelativeTorque(controlTorque, torqueMode);
+            MarkLiveForceWritten();
             debugAppliedTorque += controlTorque;
             ApplyDirectManualTorqueAssist();
         }
@@ -1114,10 +1450,23 @@ private float GetAtmosphericEngineScale()
             debugCurrentAngularRateDeg = localAngularVelDeg;
             debugRateErrorDeg = targetAngularRateDeg - localAngularVelDeg;
 
+            // ---- rotational inertia on release -------------------------------------------------
+            // A rate-command controller asked for zero rate is a brake: the proportional term sees
+            // the full current rate as error and fights it to a stop almost immediately. Stacked on
+            // Rigidbody angular damping and the semi-aero rate dampers, that is three independent
+            // mechanisms all driving angular velocity to zero, and it is why releasing the stick felt
+            // like hitting a wall rather than coasting.
+            //
+            // So when the pilot is NOT commanding a rate, the proportional term is scaled back and
+            // the decay is left to the derivative term and aerodynamic damping - which is what
+            // rotational inertia actually is. The derivative term is deliberately untouched: it is
+            // the part that keeps the decay stable instead of oscillatory.
+            debugRateNullingScale = ResolveRateNullingScale(controlCommand);
+
             Vector3 rateTorque = new Vector3(
-                debugRateErrorDeg.x * rateControlP.x - localAngularVelDeg.x * rateControlD.x,
-                debugRateErrorDeg.y * rateControlP.y - localAngularVelDeg.y * rateControlD.y,
-                debugRateErrorDeg.z * rateControlP.z - localAngularVelDeg.z * rateControlD.z
+                debugRateErrorDeg.x * rateControlP.x * debugRateNullingScale - localAngularVelDeg.x * rateControlD.x,
+                debugRateErrorDeg.y * rateControlP.y * debugRateNullingScale - localAngularVelDeg.y * rateControlD.y,
+                debugRateErrorDeg.z * rateControlP.z * debugRateNullingScale - localAngularVelDeg.z * rateControlD.z
             );
 
             debugControlTorqueBeforeClamp = rateTorque;
@@ -1139,8 +1488,33 @@ private float GetAtmosphericEngineScale()
             debugControlTorqueAfterClamp = rateTorque;
             debugFinalTorque = rateTorque;
             debugActuatorState = debugManualInputActive ? "manual_rate" : "instructor_rate";
+            if (!LegacyPhysicsAllowed())
+                return;
+
             rigid.AddRelativeTorque(rateTorque, ForceMode.Acceleration);
+            MarkLiveForceWritten();
             debugAppliedTorque += rateTorque;
+        }
+
+        /// <summary>
+        /// The proportional rate-nulling scale for this step: 1 while a rate is being commanded,
+        /// falling to releaseRateNullingScale as the command returns to neutral.
+        ///
+        /// Blended rather than switched, so there is no torque discontinuity as the stick crosses the
+        /// threshold - a step change here would show up as a twitch precisely when the pilot is
+        /// trying to settle the aircraft.
+        /// </summary>
+        public float ResolveRateNullingScale(Vector3 controlCommand)
+        {
+            if (!usePhase4BTurnDynamics)
+                return 1f;
+
+            float demand = Mathf.Max(
+                Mathf.Abs(controlCommand.x),
+                Mathf.Max(Mathf.Abs(controlCommand.y), Mathf.Abs(controlCommand.z)));
+
+            return MavTurnDynamicsRules.ComputeRateNullingScale(
+                demand, releaseCommandThreshold, releaseRateNullingScale);
         }
 
         private Vector3 UpdateImmediateRateCommandDebug(Vector3 targetCommand)
@@ -1209,7 +1583,8 @@ private float GetAtmosphericEngineScale()
             debugDirectManualAssistActive = false;
             debugDirectManualAssistTorque = Vector3.zero;
 
-            if (!useDirectManualTorqueAssist || rigid == null || !debugManualInputActive)
+            if (!useDirectManualTorqueAssist || rigid == null || !debugManualInputActive
+                || !LegacyPhysicsAllowed())
                 return;
 
             Vector3 assist = new Vector3(
@@ -1222,6 +1597,7 @@ private float GetAtmosphericEngineScale()
                 return;
 
             rigid.AddRelativeTorque(assist, ForceMode.Acceleration);
+            MarkLiveForceWritten();
             debugAppliedTorque += assist;
             debugDirectManualAssistTorque = assist;
             debugDirectManualAssistActive = true;

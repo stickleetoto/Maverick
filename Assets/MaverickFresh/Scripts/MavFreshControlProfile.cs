@@ -167,9 +167,9 @@ namespace MaverickFresh
                 jet.rollCommandSlewRate = 12f;
                 jet.yawAssistDeadzoneAosDeg = 2.5f;
                 jet.centerRollStabilizeStrength = 0.12f;
-                jet.aoaSoftLimitDeg = 24f;
-                jet.aoaHardLimitDeg = 34f;
-                jet.aoaPitchReduction = 0.45f;
+                jet.SetAoASoftLimitAuthority(24f);
+                jet.SetAoAHardLimitAuthority(34f);
+                jet.SetAoAPitchReductionAuthority(0.45f);
                 jet.sustainedGLimit = 8.8f;
                 jet.pitchLimiterStartSpeed = 310f;
                 jet.pitchLimiterFullSpeed = 500f;
@@ -285,9 +285,9 @@ namespace MaverickFresh
                 jet.rollCommandSlewRate = 9f;
                 jet.yawAssistDeadzoneAosDeg = 2.5f;
                 jet.centerRollStabilizeStrength = 0.12f;
-                jet.aoaSoftLimitDeg = 24f;
-                jet.aoaHardLimitDeg = 34f;
-                jet.aoaPitchReduction = 0.45f;
+                jet.SetAoASoftLimitAuthority(24f);
+                jet.SetAoAHardLimitAuthority(34f);
+                jet.SetAoAPitchReductionAuthority(0.45f);
                 jet.sustainedGLimit = 8.8f;
                 jet.pitchLimiterStartSpeed = 310f;
                 jet.pitchLimiterFullSpeed = 500f;
@@ -408,9 +408,9 @@ namespace MaverickFresh
                 jet.rollCommandSlewRate = 15f;
                 jet.yawAssistDeadzoneAosDeg = 2.5f;
                 jet.centerRollStabilizeStrength = 0.12f;
-                jet.aoaSoftLimitDeg = 24f;
-                jet.aoaHardLimitDeg = 34f;
-                jet.aoaPitchReduction = 0.45f;
+                jet.SetAoASoftLimitAuthority(24f);
+                jet.SetAoAHardLimitAuthority(34f);
+                jet.SetAoAPitchReductionAuthority(0.45f);
                 jet.sustainedGLimit = 8.8f;
                 jet.pitchLimiterStartSpeed = 310f;
                 jet.pitchLimiterFullSpeed = 500f;

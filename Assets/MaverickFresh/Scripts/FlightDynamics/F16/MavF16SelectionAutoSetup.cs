@@ -121,6 +121,7 @@ namespace MaverickFresh.FlightDynamics.F16
         [TextArea] public string readinessReason = "not evaluated";
 
         private MavAircraftKind lastObservedAircraft = (MavAircraftKind)(-1);
+        private bool lastObservedAuthority;
         private bool preparedByThisBinding;
         private bool loggedSelected;
 
@@ -136,8 +137,11 @@ namespace MaverickFresh.FlightDynamics.F16
             if (profileApplier == null)
                 return;
 
-            if (profileApplier.aircraft != lastObservedAircraft)
+            if (profileApplier.AppliedAircraft != lastObservedAircraft
+                || profileApplier.HasAuthoritativeAircraft != lastObservedAuthority)
+            {
                 ReconcileNow();
+            }
         }
 
         public void ReconcileNow()
@@ -149,8 +153,15 @@ namespace MaverickFresh.FlightDynamics.F16
                 return;
             }
 
-            lastObservedAircraft = profileApplier.aircraft;
-            f16Selected = profileApplier.aircraft == MavAircraftKind.F16C;
+            // Identity comes from what has actually been APPLIED, never from the applier's
+            // serialized request field. That field defaults to F22A, but the mirror-image mistake
+            // matters more here: a scene saved with F16C in the inspector would make this binding
+            // arm the new flight-dynamics path before any aircraft had been applied at all. Until an
+            // application has genuinely happened, this is not the F-16 and ownership stays off.
+            lastObservedAircraft = profileApplier.AppliedAircraft;
+            lastObservedAuthority = profileApplier.HasAuthoritativeAircraft;
+            f16Selected = profileApplier.HasAuthoritativeAircraft
+                          && profileApplier.AppliedAircraft == MavAircraftKind.F16C;
 
             if (!f16Selected)
             {

@@ -489,7 +489,12 @@ private string EngineFlapDebugLine()
             if (aircraftProfile == null)
                 return string.Empty;
 
-            return " | " + aircraftProfile.aircraft.ToString();
+            // Show the aircraft that has actually been applied. The applier's serialized request
+            // field would happily label the HUD "F22A" on an aircraft nothing has configured yet.
+            if (!aircraftProfile.HasAuthoritativeAircraft)
+                return string.Empty;
+
+            return " | " + aircraftProfile.AppliedAircraft.ToString();
         }
 
         private string ThrottleStatus(MavMouseFlightJet activeJet)

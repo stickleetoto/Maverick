@@ -16,6 +16,21 @@ namespace MaverickFresh.FlightDynamics.F16
     /// Until that thrust deck is frozen from an approved source, this component returns
     /// exactly zero force/moment while still advancing and exposing the sourced power state.
     /// That keeps the engine-state implementation useful without fabricating thrust.
+    ///
+    /// TRANSITIONAL as of the shared-propulsion migration (P0).
+    ///
+    /// The equations no longer live here. They are in
+    /// <see cref="MavF16GarzaMorelliEngineDynamics"/>, which is the canonical implementation and the
+    /// strategy the shared <see cref="MavEngineRuntime"/> calls; the static methods below forward to
+    /// it so the sourced constants exist exactly once in the repository. That matters more than the
+    /// small indirection: two copies of a gearing breakpoint is how one path gets fixed and the other
+    /// does not.
+    ///
+    /// This component is retained because several existing suites and the F-16 auto-setup reference it
+    /// directly, and because it is a single-engine aircraft where the two designs are numerically
+    /// identical. The replacement path is
+    /// <see cref="MavPropulsionSystem"/> + <see cref="MavF16PropulsionInstallation"/>, which is what a
+    /// multi-engine aircraft must use. Deleting this class is a later, separate step.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MavF16EnginePowerModel : MavPropulsionModelBase
@@ -175,11 +190,7 @@ namespace MaverickFresh.FlightDynamics.F16
         /// </summary>
         public static float ThrottleToCommandedPowerPercent(float throttle01)
         {
-            float throttle = Mathf.Clamp01(throttle01);
-            float command = throttle <= 0.77f
-                ? 64.94f * throttle
-                : 217.38f * throttle - 117.38f;
-            return Mathf.Clamp(command, 0f, 100f);
+            return MavF16GarzaMorelliEngineDynamics.ThrottleToCommandedPowerPercent(throttle01);
         }
 
         /// <summary>
@@ -188,12 +199,7 @@ namespace MaverickFresh.FlightDynamics.F16
         /// </summary>
         public static float ReciprocalTimeConstant(float deltaPowerPercent)
         {
-            float dp = deltaPowerPercent;
-            if (dp <= 25f)
-                return 1f;
-            if (dp >= 50f)
-                return 0.1f;
-            return 1.9f - 0.036f * dp;
+            return MavF16GarzaMorelliEngineDynamics.ReciprocalTimeConstant(deltaPowerPercent);
         }
 
         /// <summary>
@@ -203,40 +209,8 @@ namespace MaverickFresh.FlightDynamics.F16
             float actualPowerPercent,
             float commandedPowerPercent)
         {
-            float actual = Mathf.Clamp(actualPowerPercent, 0f, 100f);
-            float commanded = Mathf.Clamp(commandedPowerPercent, 0f, 100f);
-
-            float target;
-            float rateFactor;
-
-            if (commanded >= 50f)
-            {
-                if (actual >= 50f)
-                {
-                    target = commanded;
-                    rateFactor = 5f;
-                }
-                else
-                {
-                    target = 60f;
-                    rateFactor = ReciprocalTimeConstant(target - actual);
-                }
-            }
-            else
-            {
-                if (actual >= 50f)
-                {
-                    target = 40f;
-                    rateFactor = 5f;
-                }
-                else
-                {
-                    target = commanded;
-                    rateFactor = ReciprocalTimeConstant(target - actual);
-                }
-            }
-
-            return rateFactor * (target - actual);
+            return MavF16GarzaMorelliEngineDynamics.ComputePowerRatePercentPerSec(
+                actualPowerPercent, commandedPowerPercent);
         }
 
         /// <summary>
@@ -249,12 +223,8 @@ namespace MaverickFresh.FlightDynamics.F16
             float commandedPowerPercent,
             float deltaTime)
         {
-            float actual = Mathf.Clamp(actualPowerPercent, 0f, 100f);
-            if (deltaTime <= 0f)
-                return actual;
-
-            float rate = ComputePowerRatePercentPerSec(actual, commandedPowerPercent);
-            return Mathf.Clamp(actual + rate * deltaTime, 0f, 100f);
+            return MavF16GarzaMorelliEngineDynamics.StepActualPower(
+                actualPowerPercent, commandedPowerPercent, deltaTime);
         }
 
         /// <summary>

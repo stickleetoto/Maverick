@@ -23,27 +23,180 @@ namespace MaverickFresh
             return output;
         }
 
-        public static MavAircraftRuntimeProfile GetBuiltIn(MavAircraftKind kind)
+        /// <summary>
+        /// The canonical aircraft id for each MavAircraftKind.
+        ///
+        /// This exists so that "the enum says F16C" and "the profile really is the F-16" are two
+        /// independently checkable facts. A profile whose id does not match its kind is a mapping
+        /// bug, and the point of having the map is to catch it instead of flying it.
+        ///
+        /// Returns null for a value that is not a declared member of the enum.
+        /// </summary>
+        public static string CanonicalAircraftId(MavAircraftKind kind)
         {
-            List<MavAircraftRuntimeProfile> list = CreateBuiltInProfiles();
-            for (int i = 0; i < list.Count; i++)
+            switch (kind)
             {
-                if (list[i].aircraft == kind)
-                    return list[i];
+                case MavAircraftKind.F15E: return "f15e";
+                case MavAircraftKind.F16C: return "f16c";
+                case MavAircraftKind.FA18E: return "fa18e";
+                case MavAircraftKind.F22A: return "f22a";
+                case MavAircraftKind.F35A: return "f35a";
+                default: return null;
             }
-            return GetBuiltInFallback(list);
         }
 
-        private static MavAircraftRuntimeProfile GetBuiltInFallback(List<MavAircraftRuntimeProfile> list)
+        /// <summary>
+        /// Resolves the built-in profile for EXACTLY this aircraft kind, or fails.
+        ///
+        /// There is deliberately no substitute. An earlier revision answered an unmatched kind with
+        /// the F-22A profile, which meant a selection the catalog could not honour came back as a
+        /// different aircraft that looked like a successful answer: the caller received a valid,
+        /// fully populated profile and had no way to tell it was not the one it asked for. Selecting
+        /// the F-16 and flying F-22 mass, thrust, wing area and TVC is the failure mode that
+        /// produced. Failing closed is loud and recoverable; substituting silently is neither.
+        ///
+        /// Four independent things are checked, because each one is a different way the identity can
+        /// be wrong:
+        ///   - the requested value is a declared enum member at all
+        ///   - some built-in profile claims that kind
+        ///   - exactly ONE does (two claimants means the answer is ambiguous, not merely wrong)
+        ///   - that profile's aircraftId is the canonical id for the kind it claims
+        /// </summary>
+        public static bool TryGetBuiltIn(
+            MavAircraftKind kind,
+            out MavAircraftRuntimeProfile profile,
+            out string error)
         {
-            if (list == null || list.Count == 0)
-                return null;
+            return TryResolveFrom(CreateBuiltInProfiles(), kind, out profile, out error);
+        }
+
+        /// <summary>
+        /// The resolution rule itself, over an explicit candidate list.
+        ///
+        /// Separated from TryGetBuiltIn so the failure branches are reachable by a test. With all
+        /// five built-in profiles present, "this kind has no profile" and "two profiles claim this
+        /// kind" cannot happen - which meant a test written against the built-in list could not tell
+        /// a fail-closed resolver from one that quietly answered with the F-22A. Passing the
+        /// candidates in makes both branches testable, and they are the two that used to fall back.
+        /// </summary>
+        public static bool TryResolveFrom(
+            List<MavAircraftRuntimeProfile> candidates,
+            MavAircraftKind kind,
+            out MavAircraftRuntimeProfile profile,
+            out string error)
+        {
+            profile = null;
+
+            string canonicalId = CanonicalAircraftId(kind);
+            if (canonicalId == null || !System.Enum.IsDefined(typeof(MavAircraftKind), kind))
+            {
+                error = "MavAircraftKind value " + (int)kind
+                        + " is not a declared aircraft identity, so no profile can be resolved for it.";
+                return false;
+            }
+
+            List<MavAircraftRuntimeProfile> list = candidates;
+            if (list == null)
+            {
+                error = "No aircraft profiles were supplied, so MavAircraftKind." + kind
+                        + " cannot be resolved. The aircraft was NOT changed.";
+                return false;
+            }
+
+            MavAircraftRuntimeProfile match = null;
+            int matchCount = 0;
+
             for (int i = 0; i < list.Count; i++)
             {
-                if (list[i] != null && list[i].aircraft == MavAircraftKind.F22A)
-                    return list[i];
+                if (list[i] == null || list[i].aircraft != kind)
+                    continue;
+
+                matchCount++;
+                if (match == null)
+                    match = list[i];
             }
-            return list[0];
+
+            if (matchCount == 0)
+            {
+                error = "No built-in profile declares MavAircraftKind." + kind
+                        + ". The aircraft was NOT changed.";
+                return false;
+            }
+
+            if (matchCount > 1)
+            {
+                error = matchCount + " built-in profiles declare MavAircraftKind." + kind
+                        + ", so the identity is ambiguous. The aircraft was NOT changed.";
+                return false;
+            }
+
+            if (!IsIdentityConsistent(match, kind, out error))
+                return false;
+
+            profile = match;
+            error = string.Empty;
+            return true;
+        }
+
+        /// <summary>
+        /// Whether a profile actually IS the aircraft it is being used as. Public because the
+        /// applier re-checks it on custom profiles, which never went through TryGetBuiltIn.
+        /// </summary>
+        public static bool IsIdentityConsistent(
+            MavAircraftRuntimeProfile profile,
+            MavAircraftKind expectedKind,
+            out string error)
+        {
+            if (profile == null)
+            {
+                error = "Aircraft profile is null, so its identity cannot be confirmed as "
+                        + expectedKind + ". The aircraft was NOT changed.";
+                return false;
+            }
+
+            if (profile.aircraft != expectedKind)
+            {
+                error = "Aircraft profile identity mismatch: expected MavAircraftKind."
+                        + expectedKind + " but the profile declares MavAircraftKind."
+                        + profile.aircraft + ". The aircraft was NOT changed.";
+                return false;
+            }
+
+            string canonicalId = CanonicalAircraftId(expectedKind);
+            if (canonicalId == null)
+            {
+                error = "MavAircraftKind value " + (int)expectedKind
+                        + " has no canonical aircraft id. The aircraft was NOT changed.";
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(profile.aircraftId)
+                || profile.aircraftId.ToLowerInvariant() != canonicalId)
+            {
+                error = "Aircraft profile mapping is wrong: MavAircraftKind." + expectedKind
+                        + " must carry aircraftId '" + canonicalId + "' but this profile carries '"
+                        + (profile.aircraftId == null ? "<null>" : profile.aircraftId)
+                        + "'. The aircraft was NOT changed.";
+                return false;
+            }
+
+            error = string.Empty;
+            return true;
+        }
+
+        /// <summary>
+        /// Convenience form of TryGetBuiltIn for callers that already treat null as a hard failure.
+        /// Returns null - never a different aircraft - and reports why.
+        /// </summary>
+        public static MavAircraftRuntimeProfile GetBuiltIn(MavAircraftKind kind)
+        {
+            MavAircraftRuntimeProfile profile;
+            string error;
+            if (TryGetBuiltIn(kind, out profile, out error))
+                return profile;
+
+            Debug.LogError("[Maverick/Aircraft] " + error);
+            return null;
         }
 
         public static List<MavAircraftRuntimeProfile> CreateBuiltInProfiles()
@@ -162,9 +315,55 @@ namespace MaverickFresh
             p.highSpeedPitchAuthority = 0.65f;
             p.aoaSoftLimitDeg = 22f;
             p.aoaHardLimitDeg = 30f;
+
+            // Phase 4B: the AoA limiter has to be able to actually STOP angle of attack growing.
+            // At the Phase 4A default of 0.45 it only cut the pitch command to 45%, which still
+            // commands more nose rotation than the velocity vector is turning at - so AoA crept past
+            // stall on a held pull. Phase 4A never exposed that, because the velocity-turn assist was
+            // dragging the velocity vector onto the nose and keeping AoA small artificially. With
+            // aerodynamics actually producing the turn, a limiter that only reduces the command is not
+            // a limiter.
+            p.aoaPitchReduction = 0.05f;
             p.gunAmmo = 510; p.missileAmmo = 4; p.precisionAmmo = 2; p.bombAmmo = 4; p.rocketAmmo = 18;
             p.useAeroBody = true;
-            p.aeroBlend = 0.47f; p.liftBlend = 0.60f; p.dragBlend = 0.74f; p.gravityBlend = 0.45f;
+
+            // ---- PHASE 4B TURN ENTRY & INERTIA ---------------------------------------------------
+            // The F-16 is the first aircraft migrated. Phase 4A left it turning on 28% real lift
+            // (aeroBlend 0.47 * liftBlend 0.60) and 53% direct velocity steering, which is what the
+            // rail-like feel was: the assist redirected the velocity vector straight onto the nose,
+            // so angle of attack collapsed and lift never got the chance to build the turn.
+            //
+            // Aerodynamics now owns 0.95 * 0.92 = 0.874 of turn curvature, and the velocity-turn
+            // assist is left 0.126 by the conservation rule - down from 0.53. The alignment assist,
+            // which erases AoA directly, is migrated by the same split to 0.257.
+            //
+            // gravityBlend goes to full with it, and that pairing is not optional: lift is now ~3.1x
+            // what it was at a given AoA, so leaving gravity at 45% of weight would make the aircraft
+            // balloon out of every turn. Trim works out at about 1.4 deg AoA at 245 m/s sea level,
+            // and a 7g turn needs about 9.6 deg - inside the 17 deg stall.
+            p.usePhase4BTurnDynamics = true;
+
+            // The alignment assist is migrated down to 25.7%, so something has to hold the nose near
+            // the velocity vector. Without this the aircraft has NO pitching moment at all - the
+            // legacy aero core applies forces only - and angle of attack integrates without bound
+            // under a held pitch command. This is the mechanism that replaces the assist, and unlike
+            // the assist it scales with dynamic pressure.
+            p.useAeroStaticStability = true;
+            p.pitchStabilityStrength = 0.055f;
+            p.yawStabilityStrength = 0.030f;
+            p.aeroBlend = 0.95f; p.liftBlend = 0.92f; p.dragBlend = 0.95f; p.gravityBlend = 1.0f;
+
+            // Induced drag at 7g works out near 90 kN against 123 kN of installed thrust, so a
+            // sustained hard turn costs real energy instead of being free.
+            p.thrustBoostSuppressionG = 3.0f;
+
+            // Releasing the stick previously had three mechanisms driving angular velocity to zero:
+            // the rate controller's proportional term, Rigidbody angular damping, and the semi-aero
+            // rate dampers. The proportional term is scaled back on release so the rate decays
+            // through damping instead of being braked flat.
+            p.releaseRateNullingScale = 0.35f;
+            p.alignmentAssistFloorAtFullAero = 0.15f;
+
             p.wingArea = 27.9f; p.clSlopePerDeg = 0.078f; p.stallAoADeg = 17f; p.fullStallAoADeg = 29f; p.postStallLiftFactor = 0.28f;
             p.cd0 = 0.026f; p.aspectRatio = 3.2f; p.oswaldEfficiency = 0.78f; p.postStallDrag = 0.22f;
             p.maxLiftG = 9.4f; p.maxDragG = 3.0f; p.referenceControlSpeed = 235f; p.minControlAuthority = 0.30f; p.maxControlAuthority = 1.10f; p.velocityAssistFade = 0.50f;
