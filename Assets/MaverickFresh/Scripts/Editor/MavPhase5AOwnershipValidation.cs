@@ -350,8 +350,11 @@ namespace MaverickFresh.EditorTools
                 + "mutates MavAeroBody coefficients, and MavManeuverDiagnostics substitutes the pilot "
                 + "command while a scripted Phase 5B case runs",
                 report, ref passed, ref failed);
-            Record(scan.CountInCategory(MavWriterCategory.NotPlayerBody) == 3,
-                "3 writers that only touch non-player Rigidbodies",
+            Record(scan.CountInCategory(MavWriterCategory.NotPlayerBody) == 4,
+                "4 writers that only touch non-player Rigidbodies: the enemy spawner, the target "
+                + "drone, the tracer impact VFX, and the Phase 5C-R U5CR-008 diagnostic torque "
+                + "applier, which refuses at runtime to attach to anything carrying an aircraft "
+                + "physics stack",
                 report, ref passed, ref failed);
 
             // Classification is keyed by file NAME, so a duplicate name makes a verdict ambiguous.

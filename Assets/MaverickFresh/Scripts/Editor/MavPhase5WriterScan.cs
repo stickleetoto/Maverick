@@ -220,6 +220,15 @@ namespace MaverickFresh.EditorTools
                              + "state handover at the ownership transition";
                     return MavWriterCategory.TransitionOrSetupPose;
 
+                case "MavF16ReferenceFlightScenarios.cs":
+                    reason = "Phase 5C-R validation only. Its MavInertiaTorqueApplier applies a test "
+                             + "moment to the bare diagnostic Rigidbody the U5CR-008 rigid-body case "
+                             + "creates in memory, which is never an aircraft. The component refuses "
+                             + "at runtime to sit on an object carrying MavSixDoFBody, the ownership "
+                             + "authority or a legacy writer, so this classification is enforced "
+                             + "rather than asserted";
+                    return MavWriterCategory.NotPlayerBody;
+
                 case "MavCASWeaponSystem.cs":
                     reason = "gun recoil impulse, event-driven; weapons are out of scope for this work";
                     return MavWriterCategory.ScopedExemption;

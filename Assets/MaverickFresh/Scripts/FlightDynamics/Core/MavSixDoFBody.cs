@@ -26,6 +26,30 @@ namespace MaverickFresh.FlightDynamics
         [Tooltip("Deliberate acknowledgement that non-authoritative propulsion may be used. OFF by default.")]
         public bool acceptNonAuthoritativePropulsion = false;
 
+        [Tooltip("Supply the rigid-body inertial coupling moment -w x (I w) as part of the applied torque, because the measured Unity Rigidbody angular integration on this project omits it. Phase 5C-R measured w_dot = I^-1 M with zero coupling on Unity 6000.3.16f1. Turning this off returns the aircraft to that backend behaviour, which does NOT satisfy Euler's equation whenever w != 0.")]
+        public bool applyBackendGyroscopicCompensation = true;
+
+        [Tooltip("Deliberate acknowledgement that the aircraft may run with INCOMPLETE angular dynamics - the naive I^-1 M the backend integrates, without the w x (I w) coupling. OFF by default, and required before readiness will accept a body whose gyroscopic compensation is switched off. It exists so A/B validation is possible; it is not a configuration option for flying.")]
+        public bool acknowledgeIncompleteAngularDynamicsForTesting = false;
+
+        /// <summary>
+        /// Whether this body's rotational dynamics satisfy Euler's equation, or someone has explicitly
+        /// accepted that they do not.
+        ///
+        /// The Euler correction is MANDATORY for the replacement FDM, so an unticked checkbox must not
+        /// be enough to reach the naive dynamics. Readiness consumes this, and refuses when it is
+        /// false - the same shape as propulsion, where non-authoritative output has to be accepted on
+        /// purpose rather than merely tolerated.
+        /// </summary>
+        public bool AngularDynamicsAcceptable
+        {
+            get
+            {
+                return applyBackendGyroscopicCompensation
+                       || acknowledgeIncompleteAngularDynamicsForTesting;
+            }
+        }
+
         public static readonly string[] DefaultConflictingLegacyPhysicsComponents =
         {
             "MavAeroBody",
@@ -73,6 +97,22 @@ namespace MaverickFresh.FlightDynamics
         public MavAerodynamicLoads debugLoads;
         public Vector3 debugUnityLocalForceN;
         public Vector3 debugUnityLocalTorqueNm;
+
+        [Header("Moment Split (aero body axes, diagnostic only - one application)")]
+        [Tooltip("Aerodynamic + propulsive moment, i.e. what actually acts on the aircraft.")]
+        public Vector3 debugExternalMomentAeroBodyNm;
+
+        [Tooltip("The inertial coupling correction -w x (I w) added to compensate for the backend integrator.")]
+        public Vector3 debugGyroscopicMomentAeroBodyNm;
+
+        [Tooltip("What is handed to the load-application boundary: external + gyroscopic. Applied ONCE.")]
+        public Vector3 debugFinalMomentAeroBodyNm;
+
+        [Tooltip("Whether the gyroscopic correction was computed and added this step.")]
+        public bool debugGyroscopicApplied;
+
+        [Tooltip("Why the gyroscopic correction was not applied, when it was not.")]
+        public string debugGyroscopicStatus = "not evaluated";
         public int debugPhysicsStepIndex;
         public int debugLoadApplications;
         public int debugRejectedDuplicateApplications;
@@ -232,7 +272,21 @@ namespace MaverickFresh.FlightDynamics
                 debugLoadSet.AddPropulsive(propulsive);
             }
 
+            // RIGID-BODY INERTIAL COUPLING.
+            //
+            // Added to the SAME load set the aerodynamic and propulsive moments went into, so it
+            // leaves through the one existing application in TryApplyLoadSet. No second AddTorque
+            // exists, and MavSixDoFBody remains the aircraft's only physical writer.
+            //
+            // It is a moment only - the coupling term produces no force - so specific force below is
+            // unaffected, which is correct: an accelerometer does not feel it.
+            ApplyGyroscopicCompensation();
+
             PublishSpecificForce();
+
+            debugExternalMomentAeroBodyNm = debugLoadSet.ExternalMomentAeroBodyNm;
+            debugGyroscopicMomentAeroBodyNm = debugLoadSet.inertialCorrectionMomentAeroBodyNm;
+            debugFinalMomentAeroBodyNm = debugLoadSet.totalMomentAeroBodyNm;
 
             // ---- SHADOW: compute everything, apply nothing -------------------------------------
             //
@@ -658,6 +712,8 @@ namespace MaverickFresh.FlightDynamics
                 propulsionModel != null
                 && (propulsionModel.IsAcceptableForLiveFlight || acceptNonAuthoritativePropulsion);
 
+            snapshot.angularDynamicsAcceptable = AngularDynamicsAcceptable;
+
             snapshot.legacyOwnerActive = HasLegacyPhysicsOwnerConflict();
             debugLegacyPhysicsOwner = cachedLegacyOwnerName;
 
@@ -779,6 +835,108 @@ namespace MaverickFresh.FlightDynamics
             }
             return false;
         }
+
+        /// <summary>
+        /// Computes -w x (I w) for this step and adds it to the load set.
+        ///
+        /// The rate comes from <c>debugState.aeroBodyRatesRadSec</c>, which the state builder already
+        /// produced by taking Rigidbody.angularVelocity (WORLD), converting it to Unity local through
+        /// the transform, and then to aero body axes. That is the single frame boundary; this method
+        /// adds none of its own, and the resulting moment is summed in aero body axes with the other
+        /// moments and crosses back to Unity exactly once in TryApplyLoadSet.
+        ///
+        /// Fails closed and says why. A step with no valid tensor contributes no correction rather
+        /// than a guess, and the reason is on the component for anyone reading the inspector.
+        /// </summary>
+        private void ApplyGyroscopicCompensation()
+        {
+            debugGyroscopicApplied = false;
+
+            if (!applyBackendGyroscopicCompensation)
+            {
+                debugGyroscopicStatus =
+                    "disabled: the backend's own angular integration is being used unmodified, which "
+                    + "omits w x (I w) on the measured path";
+                return;
+            }
+
+            if (rb == null)
+            {
+                debugGyroscopicStatus = "no Rigidbody";
+                return;
+            }
+
+            if (!TryResolveAeroBodyInertia())
+            {
+                debugGyroscopicStatus =
+                    "the Rigidbody inertia tensor could not be resolved into aero body axes, so no "
+                    + "correction was applied";
+                return;
+            }
+
+            Vector3 moment;
+            if (!MavGyroscopicMoment.TryCompute(
+                    cachedAeroBodyInertia, debugState.aeroBodyRatesRadSec, out moment))
+            {
+                debugGyroscopicStatus = "non-finite angular rate or tensor: correction refused";
+                return;
+            }
+
+            if (!debugLoadSet.AddInertialCorrection(moment))
+            {
+                debugGyroscopicStatus = "refused: an inertial correction was already added this step";
+                return;
+            }
+
+            debugGyroscopicApplied = true;
+            debugGyroscopicStatus = "applied";
+        }
+
+        /// <summary>
+        /// Rebuilds the aero-body inertia matrix only when the Rigidbody's tensor actually changes.
+        ///
+        /// Mass properties are a spawn-time configuration and do not move during flight, so
+        /// recomputing a reconstruction and a congruence every physics step would be work with a
+        /// constant answer. The cache is keyed on the values themselves rather than on a dirty flag,
+        /// so anything that changes them - including code this class does not know about - is picked
+        /// up on the next step instead of being missed.
+        /// </summary>
+        private bool TryResolveAeroBodyInertia()
+        {
+            Vector3 principal = rb.inertiaTensor;
+            Quaternion rotation = rb.inertiaTensorRotation;
+
+            // Compared component by component, deliberately. Unity's Vector3 and Quaternion equality
+            // operators are APPROXIMATE - Quaternion == is a dot-product test with a tolerance - and a
+            // cache key wants exact identity, not "close enough". Writing it out also keeps this file
+            // free of an operator the offline harness stub does not define.
+            if (inertiaCacheValid
+                && principal.x == cachedPrincipalMoments.x
+                && principal.y == cachedPrincipalMoments.y
+                && principal.z == cachedPrincipalMoments.z
+                && rotation.x == cachedPrincipalRotation.x
+                && rotation.y == cachedPrincipalRotation.y
+                && rotation.z == cachedPrincipalRotation.z
+                && rotation.w == cachedPrincipalRotation.w)
+                return true;
+
+            if (!MavGyroscopicMoment.TryAeroBodyInertiaFromRigidbody(
+                    principal, rotation, out cachedAeroBodyInertia))
+            {
+                inertiaCacheValid = false;
+                return false;
+            }
+
+            cachedPrincipalMoments = principal;
+            cachedPrincipalRotation = rotation;
+            inertiaCacheValid = true;
+            return true;
+        }
+
+        private MavInertiaMatrix cachedAeroBodyInertia;
+        private Vector3 cachedPrincipalMoments;
+        private Quaternion cachedPrincipalRotation;
+        private bool inertiaCacheValid;
 
         private void PublishSpecificForce()
         {
@@ -938,6 +1096,14 @@ namespace MaverickFresh.FlightDynamics
             debugLoads = MavAerodynamicLoads.Zero;
             debugState.specificForceAeroBodyG = Vector3.zero;
             debugState.specificForceValid = false;
+
+            // The moment split is cleared with everything else, so a step that applied nothing cannot
+            // leave last step's correction on display and read as though it had.
+            debugExternalMomentAeroBodyNm = Vector3.zero;
+            debugGyroscopicMomentAeroBodyNm = Vector3.zero;
+            debugFinalMomentAeroBodyNm = Vector3.zero;
+            debugGyroscopicApplied = false;
+
             ClearUnityLoadDebug();
         }
 
