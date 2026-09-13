@@ -32,7 +32,7 @@ def canonical_csv(fields, data):
 
 def main():
     rf, raw = rows(RAW)
-    req(rf==RAW_FIELDS- "raw schema")
+    req(rf==RAW_FIELDS, "raw schema")
     req(len(raw)==60, "raw row count")
     expected_order=( [("SI",m,a) for m in MACH for a in ALT_M]
                     +[("US_CUSTOMARY",m,a) for m in MACH for a in ALT_FT] )
