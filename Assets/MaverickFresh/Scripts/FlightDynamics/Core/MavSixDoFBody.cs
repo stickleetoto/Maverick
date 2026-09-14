@@ -225,21 +225,42 @@ namespace MaverickFresh.FlightDynamics
 
             debugLoadSet.BeginStep(debugPhysicsStepIndex);
 
-            if (!simulationEnabled || rb == null || aerodynamicModel == null)
+            // Shadow is a compute permission, not an arming permission. The Phase 5 ownership
+            // authority deliberately keeps simulationEnabled false while owner == Shadow, but the
+            // replacement pipeline still has to execute so its telemetry can prove that it is finite.
+            // Live load application remains impossible because the shadow branch below returns before
+            // TryApplyLoadSet, and InitializePhysicsOwnership (which mutates Rigidbody settings) is
+            // also skipped while shadowing.
+            bool shadowComputeOnly = IsShadowComputeOnly();
+
+            if ((!simulationEnabled && !shadowComputeOnly) || rb == null || aerodynamicModel == null)
             {
                 ClearLoadDebug();
                 PublishTelemetry(false);
                 return false;
             }
 
-            if (!IsLoadApplicationPermitted())
+            // A shadow run may be operationally blocked by the legacy owner by design: legacy MUST
+            // remain active while the replacement observes. It still has to be structurally complete
+            // before we execute it. The normal live path keeps the full operational readiness gate.
+            if (shadowComputeOnly)
+            {
+                if (!debugReadiness.structurallyPrepared)
+                {
+                    debugShadowLoadSetFinite = false;
+                    ClearLoadDebug();
+                    PublishTelemetry(false);
+                    return false;
+                }
+            }
+            else if (!IsLoadApplicationPermitted())
             {
                 ClearLoadDebug();
                 PublishTelemetry(false);
                 return false;
             }
 
-            if (!ownershipInitialized)
+            if (!shadowComputeOnly && !ownershipInitialized)
                 InitializePhysicsOwnership();
 
             MavControlInput boundedInput = controlInput;
@@ -298,8 +319,8 @@ namespace MaverickFresh.FlightDynamics
             // eventually run.
             //
             // InitializePhysicsOwnership, which writes Rigidbody damping and gravity flags, is also
-            // already behind the readiness gate above and is not reached in shadow mode.
-            if (IsShadowComputeOnly())
+            // already behind the live-only branch above and is not reached in shadow mode.
+            if (shadowComputeOnly)
             {
                 debugShadowComputeSteps++;
                 debugShadowLoadSetFinite = debugLoadSet.IsFinite();
