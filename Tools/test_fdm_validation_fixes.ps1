@@ -245,12 +245,100 @@ else {
     Write-Host 'Fix commit is already present; no source changes needed.' -ForegroundColor DarkGray
 }
 
-$runner = Join-Path $RepoRoot 'Tools/run_fdm_validation.ps1'
-if (-not (Test-Path -LiteralPath $runner -PathType Leaf)) {
-    throw 'Tools/run_fdm_validation.ps1 is missing. Keep the local baseline tooling files before switching branches.'
+# -----------------------------------------------------------------------------
+# Directly probe the five suites that accounted for all 19 observed failures.
+# This intentionally bypasses baseline blob-hash bookkeeping until the fixes
+# themselves are proven green.
+# -----------------------------------------------------------------------------
+if (-not (Test-Path -LiteralPath $UnityPath -PathType Leaf)) {
+    throw "Unity executable not found: $UnityPath"
+}
+
+$manifestPath = Join-Path $RepoRoot 'Tools/fdm_validation_baseline_v1.json'
+$adapterPath = Join-Path $RepoRoot 'Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavFdmValidationBatchAdapter.cs'
+if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+    throw 'Tools/fdm_validation_baseline_v1.json is missing. Keep the local baseline tooling files before switching branches.'
+}
+if (-not (Test-Path -LiteralPath $adapterPath -PathType Leaf)) {
+    throw 'MavFdmValidationBatchAdapter.cs is missing. Keep the local baseline tooling files before switching branches.'
+}
+
+$manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+$suiteIds = @(
+    'fdm_ownership_scan_runtime',
+    'fdm_phase2',
+    'fdm_freeze_hardening',
+    'fdm_integration',
+    'aircraft_startup_order'
+)
+
+$stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+$runDir = Join-Path $env:TEMP "MaverickFdmFixProbe-$stamp"
+New-Item -ItemType Directory -Path $runDir -Force | Out-Null
+
+$failedSuites = 0
+Write-Host ''
+Write-Host '=== Probing the five affected suites ===' -ForegroundColor Cyan
+
+foreach ($suiteId in $suiteIds) {
+    $matches = @($manifest.surfaces | Where-Object { $_.id -eq $suiteId })
+    if ($matches.Count -ne 1) {
+        throw "Manifest suite '$suiteId' resolved to $($matches.Count) entries"
+    }
+
+    $surface = $matches[0]
+    $type = [string]$surface.execution.type
+    $method = [string]$surface.execution.method
+    if ([string]::IsNullOrWhiteSpace($type)) { throw "Suite '$suiteId' has no execution.type" }
+    if ([string]::IsNullOrWhiteSpace($method)) { $method = 'AUTO' }
+
+    $out = Join-Path $runDir "$suiteId.result.json"
+    $log = Join-Path $runDir "$suiteId.unity.log"
+
+    $proc = Start-Process `
+        -FilePath $UnityPath `
+        -ArgumentList @(
+            '-batchmode',
+            '-nographics',
+            '-projectPath', "`"$RepoRoot`"",
+            '-logFile', "`"$log`"",
+            '-executeMethod', 'MaverickFresh.FlightDynamics.EditorTools.MavFdmValidationBatchAdapter.RunBatch',
+            '-fdmMode', 'sync',
+            '-fdmSuite', $suiteId,
+            '-fdmType', $type,
+            '-fdmMethod', $method,
+            '-fdmOut', "`"$out`""
+        ) `
+        -PassThru `
+        -Wait
+
+    if (-not (Test-Path -LiteralPath $out -PathType Leaf)) {
+        $failedSuites++
+        Write-Host "FAIL  $suiteId - no result JSON (Unity exit $($proc.ExitCode))" -ForegroundColor Red
+        continue
+    }
+
+    $result = Get-Content -LiteralPath $out -Raw | ConvertFrom-Json
+    $summary = "$suiteId  status=$($result.status) passed=$($result.passed) failed=$($result.failed)"
+
+    if ($result.status -eq 'PASS' -and [int]$result.failed -eq 0) {
+        Write-Host "PASS  $summary" -ForegroundColor Green
+    }
+    else {
+        $failedSuites++
+        Write-Host "FAIL  $summary" -ForegroundColor Red
+        Select-String -Path $log -Pattern '^\s*FAIL\s+|RESULT: FAIL|FDM_OWNERSHIP_VIOLATION' -Context 0,0 |
+            ForEach-Object { Write-Host ('      ' + $_.Line.Trim()) }
+    }
 }
 
 Write-Host ''
-Write-Host '=== Running full FDM validation ===' -ForegroundColor Cyan
-& $runner -UnityPath $UnityPath
-exit $LASTEXITCODE
+Write-Host "Probe artifacts: $runDir" -ForegroundColor DarkGray
+
+if ($failedSuites -ne 0) {
+    Write-Host "AFFECTED SUITES: $failedSuites still failing" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host 'AFFECTED SUITES: ALL PASS' -ForegroundColor Green
+exit 0
