@@ -328,6 +328,7 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 commandSource.commandAvailable = true;
                 commandSource.command = MavPilotCommand.Neutral;
                 body.acceptNonAuthoritativePropulsion = true;
+            body.applyBackendGyroscopicCompensation = true;
             }
 
             public void SetFlightCondition(float altitudeM)

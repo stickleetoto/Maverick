@@ -631,6 +631,7 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 // No thrust deck exists, so the operator must explicitly accept non-authoritative
                 // propulsion. This is the deliberate acknowledgement, not a default.
                 body.acceptNonAuthoritativePropulsion = true;
+            body.applyBackendGyroscopicCompensation = true;
             }
 
             public void SetFlightCondition(float altitudeM, float trueAirspeedMps)

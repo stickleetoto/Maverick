@@ -1655,6 +1655,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             snapshot.aerodynamicModel = AnyPresentObject;
             snapshot.propulsionModel = AnyPresentObject;
             snapshot.propulsionAcceptableForLiveFlight = true;
+            snapshot.angularDynamicsAcceptable = true;
 
             snapshot.controlLaw = AnyPresentObject;
             snapshot.controlLawEnabled = true;
@@ -1904,6 +1905,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             snapshot.aerodynamicModel = AnyPresentObject;
             snapshot.propulsionModel = AnyPresentObject;
             snapshot.propulsionAcceptableForLiveFlight = true;
+            snapshot.angularDynamicsAcceptable = true;
             snapshot.controlLaw = AnyPresentObject;
             snapshot.controlLawEnabled = true;
             snapshot.controlLawDrivesActuatorEachStep = true;
