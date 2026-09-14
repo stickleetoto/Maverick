@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.Text;
+using System.Reflection;
 using UnityEngine;
 using MaverickFresh.FlightDynamics;
 using MaverickFresh.FlightDynamics.F16;
@@ -239,7 +240,7 @@ namespace MaverickFresh.FlightDynamics.EditorTools
         private static void ValidateOwnershipHandover(StringBuilder report, ref int passed, ref int failed)
         {
             report.AppendLine();
-            report.AppendLine("[I2] Ownership handover and rollback, on real components");
+            report.AppendLine("[I2] Phase5A ownership delegation fails closed on real components");
 
             MavIntegrationRig rig = MavIntegrationRig.Build(withLegacyOwner: true);
             try
@@ -250,52 +251,51 @@ namespace MaverickFresh.FlightDynamics.EditorTools
 
                 Record(
                     rig.legacyOwner.enabled && !rig.body.simulationEnabled,
-                    "before the handover: legacy is enabled and the new FDM is disarmed",
+                    "before the request: legacy is enabled and the new FDM is disarmed",
                     report, ref passed, ref failed);
 
                 rig.ownership.RequestTransitionToNewFdm();
                 rig.Step();
 
                 Record(
-                    rig.ownership.state == MavPhysicsOwnershipState.NewOwned,
-                    "after an explicit request the controller reaches NewOwned ("
+                    rig.ownership.state == MavPhysicsOwnershipState.LegacyOwned
+                    && rig.ownership.stateReason.Contains("arming was not granted by the ownership authority"),
+                    "without the Phase5A authority the controller fails closed back to LegacyOwned ("
                     + rig.ownership.state + ": " + rig.ownership.stateReason + ")",
                     report, ref passed, ref failed);
 
                 Record(
-                    !rig.legacyOwner.enabled && rig.body.simulationEnabled,
-                    "the real legacy component was disabled and the new FDM armed",
+                    rig.legacyOwner.enabled && !rig.body.simulationEnabled,
+                    "the denied request restores the real legacy component and leaves the replacement disarmed",
                     report, ref passed, ref failed);
 
                 Record(
                     !(rig.legacyOwner.enabled && rig.body.simulationEnabled),
-                    "and the exclusive-ownership invariant holds on the real components",
+                    "the exclusive-ownership invariant holds on the real components",
                     report, ref passed, ref failed);
 
-                int legacyStepsDuringNewOwnership = rig.legacyOwner.debugStepCount;
+                int legacyStepsAfterDeniedRequest = rig.legacyOwner.debugStepCount;
                 rig.Step();
 
                 Record(
-                    rig.legacyOwner.debugStepCount == legacyStepsDuringNewOwnership,
-                    "the legacy owner does not run while the new FDM owns physics",
+                    rig.legacyOwner.debugStepCount > legacyStepsAfterDeniedRequest,
+                    "legacy continues stepping after the replacement arming request is refused",
                     report, ref passed, ref failed);
 
-                // Hand back.
                 rig.ownership.RequestReturnToLegacy();
                 rig.Step();
 
                 Record(
                     rig.ownership.state == MavPhysicsOwnershipState.LegacyOwned,
-                    "an explicit return hands ownership back to legacy ("
+                    "an explicit return while legacy already owns physics remains LegacyOwned ("
                     + rig.ownership.state + ")",
                     report, ref passed, ref failed);
 
                 Record(
                     rig.legacyOwner.enabled && !rig.body.simulationEnabled,
-                    "the real legacy component was re-enabled and the new FDM disarmed",
+                    "legacy remains enabled and the replacement remains disarmed",
                     report, ref passed, ref failed);
 
-                // Rollback: make the stack unfit, then request a handover.
                 rig.commandSource.treatAsOperationalSource = false;
                 rig.ownership.RequestTransitionToNewFdm();
                 rig.Step();
@@ -316,23 +316,18 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 rig.Destroy();
             }
         }
-
         // ================================================================= [I3]
 
         /// <summary>
-        /// The ordering bug, demonstrated on real components.
-        ///
-        /// If ownership is arbitrated BEFORE the control law has polled, a source that drops out on
-        /// the current step still looks healthy to the arbiter. It releases legacy and arms the new
-        /// FDM; the law then observes the dropout; the body refuses loads for lack of a valid
-        /// command path; and legacy is already disabled. That is a physics step with NO owner.
+        /// Current-step command dropout plus the old wrong-order probe under the Phase5A gate.
+        /// The current production order must reject the dropout before release; even the deliberately
+        /// stale order must now fail closed because this Phase3 controller cannot grant arming.
         /// </summary>
         private static void ValidateCurrentStepDropout(StringBuilder report, ref int passed, ref int failed)
         {
             report.AppendLine();
             report.AppendLine("[I3] Command dropout on the handover step");
 
-            // --- production order: law first, then ownership ---
             MavIntegrationRig rig = MavIntegrationRig.Build(withLegacyOwner: true);
             try
             {
@@ -341,11 +336,10 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 rig.Step();
 
                 Record(
-                    rig.body.debugReadiness.operationallyLiveReady,
-                    "the rig is genuinely operationally live-ready before the dropout",
+                    rig.ownership.debugObservation.readyExceptLegacyOwnership,
+                    "before dropout the replacement stack satisfies every Phase3 readiness condition except legacy ownership",
                     report, ref passed, ref failed);
 
-                // The source drops out on the SAME step the handover is requested.
                 rig.commandSource.commandAvailable = false;
                 rig.ownership.RequestTransitionToNewFdm();
                 rig.Step();
@@ -377,7 +371,6 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 rig.Destroy();
             }
 
-            // --- ordering rationale: arbitrate BEFORE the law and the decision goes wrong ---
             MavIntegrationRig stale = MavIntegrationRig.Build(withLegacyOwner: true);
             try
             {
@@ -387,23 +380,20 @@ namespace MaverickFresh.FlightDynamics.EditorTools
 
                 stale.commandSource.commandAvailable = false;
                 stale.ownership.RequestTransitionToNewFdm();
-
-                // Deliberately the OLD ordering: ownership arbitrated ahead of the control law, so
-                // it reads last step's command resolution.
                 stale.StepWithOwnershipBeforeControlLaw();
 
                 Record(
-                    stale.ownership.state == MavPhysicsOwnershipState.NewOwned
-                    || !stale.legacyOwner.enabled,
-                    "arbitrating BEFORE the law acts on a stale SourceSignal and releases legacy - "
-                    + "which is exactly why the arbiter runs at -250 and not ahead of everything ("
+                    stale.ownership.state == MavPhysicsOwnershipState.LegacyOwned
+                    && stale.legacyOwner.enabled
+                    && !stale.body.simulationEnabled,
+                    "even the deliberately stale arbitration order cannot create a no-owner gap after Phase5A; arming fails closed ("
                     + stale.ownership.state + ")",
                     report, ref passed, ref failed);
 
                 Record(
-                    !stale.body.StepPhysics(FixedDeltaTime, 99f),
-                    "and the body then refuses loads for the dropped command path, leaving that "
-                    + "step with no owner at all",
+                    !stale.body.StepPhysicsForValidation(FixedDeltaTime, 99f)
+                    && stale.legacyOwner.enabled,
+                    "the replacement body refuses the dropped command path while legacy remains the physical owner",
                     report, ref passed, ref failed);
             }
             finally
@@ -411,13 +401,12 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 stale.Destroy();
             }
         }
-
         // ================================================================= [I4]
 
         private static void ValidateDestroyedLegacyOwner(StringBuilder report, ref int passed, ref int failed)
         {
             report.AppendLine();
-            report.AppendLine("[I4] Destroyed legacy owner cannot settle as Unowned");
+            report.AppendLine("[I4] Destroyed released legacy owner cannot settle as Unowned");
 
             MavIntegrationRig rig = MavIntegrationRig.Build(withLegacyOwner: true);
             try
@@ -426,26 +415,26 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 rig.MakeOperationallyLiveReady();
                 rig.Step();
 
-                rig.ownership.RequestTransitionToNewFdm();
-                rig.Step();
+                InvokeOwnershipPrivate(rig.ownership, "DisableLegacyOwners", null);
 
                 Record(
-                    rig.ownership.state == MavPhysicsOwnershipState.NewOwned
-                    && !rig.legacyOwner.enabled,
-                    "handover completed and the legacy owner is disabled",
+                    !rig.legacyOwner.enabled
+                    && rig.ownership.debugDisabledLegacyOwnerCount == 1,
+                    "the controller's real release boundary disables and tracks the legacy owner",
                     report, ref passed, ref failed);
 
-                // Destroy the disabled legacy owner behind the controller's back, then hand back.
                 Object.DestroyImmediate(rig.legacyOwner);
                 rig.legacyOwner = null;
 
-                rig.ownership.RequestReturnToLegacy();
-                rig.Step();
+                InvokeOwnershipPrivate(
+                    rig.ownership,
+                    "ReturnToLegacy",
+                    new object[] { "validation staged return" });
 
                 Record(
                     rig.ownership.state == MavPhysicsOwnershipState.Fault,
-                    "a legacy owner destroyed while disabled makes the hand-back a FAULT, not "
-                    + "Unowned (" + rig.ownership.state + ": " + rig.ownership.stateReason + ")",
+                    "a legacy owner destroyed while released makes restoration a FAULT, not Unowned ("
+                    + rig.ownership.state + ": " + rig.ownership.stateReason + ")",
                     report, ref passed, ref failed);
 
                 Record(
@@ -466,7 +455,6 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 rig.Destroy();
             }
         }
-
         // ================================================================= [I5]
 
         private static void ValidateBenchRigUnowned(StringBuilder report, ref int passed, ref int failed)
@@ -480,15 +468,12 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 rig.SetFlightCondition(altitudeM: 3000f, trueAirspeedMps: 200f);
                 rig.MakeOperationallyLiveReady();
 
-                // Nothing owns physics and nothing ever did: the controller should say so rather
-                // than claiming a legacy owner exists.
                 rig.ownership.RequestReturnToLegacy();
                 rig.Step();
 
                 Record(
-                    rig.ownership.state == MavPhysicsOwnershipState.LegacyOwned
-                    || rig.ownership.state == MavPhysicsOwnershipState.Unowned,
-                    "a rig with no legacy owner settles honestly rather than faulting ("
+                    rig.ownership.state == MavPhysicsOwnershipState.Unowned,
+                    "a rig that never had a legacy owner settles exactly Unowned ("
                     + rig.ownership.state + ": " + rig.ownership.stateReason + ")",
                     report, ref passed, ref failed);
 
@@ -496,8 +481,11 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 rig.Step();
 
                 Record(
-                    rig.ownership.state == MavPhysicsOwnershipState.NewOwned,
-                    "and it can still hand over to the new FDM (" + rig.ownership.state + ")",
+                    rig.ownership.state == MavPhysicsOwnershipState.Unowned
+                    && !rig.body.simulationEnabled
+                    && rig.ownership.stateReason.Contains("arming was not granted by the ownership authority"),
+                    "without Phase5A authority an Unowned bench rig remains safely Unowned instead of self-arming ("
+                    + rig.ownership.state + ")",
                     report, ref passed, ref failed);
 
                 Record(
@@ -510,8 +498,8 @@ namespace MaverickFresh.FlightDynamics.EditorTools
 
                 Record(
                     rig.ownership.state == MavPhysicsOwnershipState.Unowned,
-                    "returning from that leaves the rig explicitly Unowned - not a pretended "
-                    + "LegacyOwned (" + rig.ownership.state + ": " + rig.ownership.stateReason + ")",
+                    "returning from that leaves the rig explicitly Unowned - not a pretended LegacyOwned ("
+                    + rig.ownership.state + ": " + rig.ownership.stateReason + ")",
                     report, ref passed, ref failed);
 
                 Record(
@@ -525,6 +513,20 @@ namespace MaverickFresh.FlightDynamics.EditorTools
             }
         }
 
+        private static object InvokeOwnershipPrivate(
+            MavPhysicsOwnershipController ownership,
+            string methodName,
+            object[] arguments)
+        {
+            MethodInfo method = typeof(MavPhysicsOwnershipController).GetMethod(
+                methodName,
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (method == null)
+                throw new System.MissingMethodException("MavPhysicsOwnershipController." + methodName);
+
+            return method.Invoke(ownership, arguments);
+        }
         // ================================================================= rig
 
         /// <summary>

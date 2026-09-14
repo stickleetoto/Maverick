@@ -104,20 +104,34 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 rig.MakeOperationallyLiveReady();
                 rig.Step();
 
-                rig.ownership.RequestTransitionToNewFdm();
-                rig.Step();
+                // Phase5A correctly forbids this Phase3 controller from granting replacement
+                // ownership by itself. H1 owns restoration-debt behaviour, so stage the exact
+                // post-release component state through the controller's real private mutation
+                // boundary rather than weakening or faking the arming authority.
+                MethodInfo disableLegacyOwners = typeof(MavPhysicsOwnershipController).GetMethod(
+                    "DisableLegacyOwners",
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+                if (disableLegacyOwners == null)
+                    throw new System.MissingMethodException("MavPhysicsOwnershipController.DisableLegacyOwners");
+
+                disableLegacyOwners.Invoke(rig.ownership, null);
 
                 Record(
-                    rig.ownership.state == MavPhysicsOwnershipState.NewOwned
-                    && !rig.legacyA.enabled && !rig.legacyB.enabled,
-                    "handover disabled both legacy owners before the partial-restore test",
+                    !rig.legacyA.enabled && !rig.legacyB.enabled
+                    && rig.ownership.debugDisabledLegacyOwnerCount == 2,
+                    "the controller's real release boundary disabled both legacy owners before the partial-restore test",
                     report, ref passed, ref failed);
 
                 Object.DestroyImmediate(rig.legacyB);
                 rig.legacyB = null;
 
-                rig.ownership.RequestReturnToLegacy();
-                rig.Step();
+                MethodInfo returnToLegacy = typeof(MavPhysicsOwnershipController).GetMethod(
+                    "ReturnToLegacy",
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+                if (returnToLegacy == null)
+                    throw new System.MissingMethodException("MavPhysicsOwnershipController.ReturnToLegacy");
+
+                returnToLegacy.Invoke(rig.ownership, new object[] { "validation staged return" });
 
                 Record(
                     rig.ownership.state == MavPhysicsOwnershipState.Fault,
@@ -150,7 +164,6 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 rig.Destroy();
             }
         }
-
         private static void ValidateInitiallyUnownedRig(
             StringBuilder report,
             ref int passed,

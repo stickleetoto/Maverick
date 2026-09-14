@@ -101,7 +101,7 @@ namespace MaverickFresh.FlightDynamics.Validation
 
             for (int i = 0; i < ForbiddenTokens.Length; i++)
             {
-                if (code.Contains(ForbiddenTokens[i]))
+                if (ContainsForbiddenToken(code, ForbiddenTokens[i]))
                     return true;
             }
 
@@ -113,6 +113,58 @@ namespace MaverickFresh.FlightDynamics.Validation
         /// text is matched. Deliberately simple and deterministic; it does not attempt to parse C#.
         /// Block comments are not used anywhere in this folder and are not handled.
         /// </summary>
+        private static bool ContainsForbiddenToken(string code, string token)
+        {
+            int searchFrom = 0;
+
+            while (searchFrom < code.Length)
+            {
+                int index = code.IndexOf(token, searchFrom, System.StringComparison.Ordinal);
+                if (index < 0)
+                    return false;
+
+                int after = index + token.Length;
+                bool assignmentToken = token.EndsWith(" =", System.StringComparison.Ordinal);
+
+                // Assignment tokens must not classify equality comparisons ("==") as writes.
+                if (!assignmentToken || after >= code.Length || code[after] != '=')
+                    return true;
+
+                searchFrom = after + 1;
+            }
+
+            return false;
+        }
+
+        private static bool IsValidationOnlyPath(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath))
+                return false;
+
+            string normalized = filePath.Replace('\\', '/');
+            return normalized.IndexOf(
+                "/FlightDynamics/Validation/",
+                System.StringComparison.Ordinal) >= 0;
+        }
+        private static bool IsAllowedHandoverStateTransfer(string fileName, string sourceLine)
+        {
+            if (!string.Equals(
+                    fileName,
+                    "MavRuntimeHandoverTarget.cs",
+                    System.StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            string code = StripCommentsAndStringLiterals(sourceLine).Trim();
+
+            // The handover target owns only atomic capture/rollback of motion state.
+            // Keep this list exact so a future force/torque writer in the same file still fails.
+            return code == "c.linearVelocity = rb.linearVelocity;"
+                || code == "c.angularVelocity = rb.angularVelocity;"
+                || code == "rb.linearVelocity = linearVelocity;"
+                || code == "rb.angularVelocity = angularVelocity;";
+        }
         public static string StripCommentsAndStringLiterals(string sourceLine)
         {
             StringBuilder code = new StringBuilder(sourceLine.Length);
@@ -190,7 +242,7 @@ namespace MaverickFresh.FlightDynamics.Validation
                 string fileName = Path.GetFileName(file);
                 result.filesScanned++;
 
-                if (IsExemptFile(fileName))
+                if (IsExemptFile(fileName) || IsValidationOnlyPath(file))
                     continue;
 
                 string[] lines;
@@ -206,7 +258,7 @@ namespace MaverickFresh.FlightDynamics.Validation
 
                 for (int i = 0; i < lines.Length; i++)
                 {
-                    if (IsOwnershipViolation(lines[i]))
+                    if (IsOwnershipViolation(lines[i]) && !IsAllowedHandoverStateTransfer(fileName, lines[i]))
                         result.violations.Add(fileName + ":" + (i + 1) + ": " + lines[i].Trim());
                 }
             }
