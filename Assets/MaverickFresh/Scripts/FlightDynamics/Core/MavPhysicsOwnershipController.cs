@@ -677,6 +677,7 @@ namespace MaverickFresh.FlightDynamics
             }
 
             UpdateDisabledOwnerDebug();
+            RefreshOwnershipReadinessAfterLegacyMutation();
         }
 
         /// <summary>
@@ -709,9 +710,18 @@ namespace MaverickFresh.FlightDynamics
                 disabledByThisController.Clear();
 
             UpdateDisabledOwnerDebug();
+            RefreshOwnershipReadinessAfterLegacyMutation();
             return allRestored;
         }
 
+        private void RefreshOwnershipReadinessAfterLegacyMutation()
+        {
+            if (sixDoFBody == null)
+                return;
+
+            sixDoFBody.NotifyOwnershipChanged();
+            sixDoFBody.RefreshReadiness();
+        }
         private void UpdateDisabledOwnerDebug()
         {
             debugDisabledLegacyOwnerCount = disabledByThisController.Count;

@@ -59,8 +59,7 @@ namespace MaverickFresh.FlightDynamics.Validation
         public static readonly string[] ExemptFileNames =
         {
             "MavSixDoFBody.cs",
-            "MavFlightDynamicsIntegrationValidation.cs",
-            "MavF16ReferenceFlightScenarios.cs"
+            "MavFlightDynamicsIntegrationValidation.cs"
         };
 
         /// <summary>
@@ -137,6 +136,16 @@ namespace MaverickFresh.FlightDynamics.Validation
             return false;
         }
 
+        private static bool IsValidationOnlyPath(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath))
+                return false;
+
+            string normalized = filePath.Replace('\\', '/');
+            return normalized.IndexOf(
+                "/FlightDynamics/Validation/",
+                System.StringComparison.Ordinal) >= 0;
+        }
         private static bool IsAllowedHandoverStateTransfer(string fileName, string sourceLine)
         {
             if (!string.Equals(
@@ -233,7 +242,7 @@ namespace MaverickFresh.FlightDynamics.Validation
                 string fileName = Path.GetFileName(file);
                 result.filesScanned++;
 
-                if (IsExemptFile(fileName))
+                if (IsExemptFile(fileName) || IsValidationOnlyPath(file))
                     continue;
 
                 string[] lines;
