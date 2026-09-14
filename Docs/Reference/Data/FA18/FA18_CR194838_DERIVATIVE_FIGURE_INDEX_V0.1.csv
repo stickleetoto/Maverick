@@ -1,0 +1,20 @@
+figure,group,derivatives,axis,authority_status,notes
+8.7,Aerodynamic bias,CY0;Cl0;Cn0,LATERAL_DIRECTIONAL,FLIGHT_PEST_AVAILABLE,Squares=pEst flight; circles=Iliff prior analysis; triangles=simulator pEst; x=McDonnell Douglas wind tunnel; Cramer-Rao bars shown x5.
+8.8,Sideslip derivatives,CY_beta;Cl_beta;Cn_beta,LATERAL_DIRECTIONAL,FLIGHT_PEST_AVAILABLE,Flight estimates show scatter at high alpha; use with uncertainty.
+8.9,Roll-rate derivatives,CY_p;Cl_p;Cn_p,LATERAL_DIRECTIONAL,FLIGHT_PEST_AVAILABLE,Flight estimates from OBES-enabled HARV maneuvers.
+8.10,Yaw-rate derivatives,CY_r;Cl_r;Cn_r,LATERAL_DIRECTIONAL,FLIGHT_PEST_AVAILABLE,Flight estimates from OBES-enabled HARV maneuvers.
+8.11,Aileron derivatives,CY_dA;Cl_dA;Cn_dA,LATERAL_DIRECTIONAL,FLIGHT_PEST_AVAILABLE,Flight estimates; configuration is HARV TVCS+OBES.
+8.12,Rudder derivatives,CY_dR;Cl_dR;Cn_dR,LATERAL_DIRECTIONAL,FLIGHT_PEST_AVAILABLE,Flight estimates; configuration is HARV TVCS+OBES.
+8.13,Differential horizontal-tail derivatives,CY_dDHT;Cl_dDHT;Cn_dDHT,LATERAL_DIRECTIONAL,FLIGHT_PEST_AVAILABLE,Flight estimates; configuration is HARV TVCS+OBES.
+8.14,Pitch-vane derivatives,CY_dPV;Cl_dPV;Cn_dPV,LATERAL_DIRECTIONAL,PREDICTION_ONLY_NOT_FLIGHT_AUTHORITY,Report conclusion states thrust-vectoring doublet flight data could not be used due ITAR; treat plotted TV terms as initial predictions only.
+8.15,Yaw-vane derivatives,CY_dYV;Cl_dYV;Cn_dYV,LATERAL_DIRECTIONAL,PREDICTION_ONLY_NOT_FLIGHT_AUTHORITY,Same TVC caveat as Figure 8.14.
+8.16,Calculated thrust moment arm,thrust_moment_arm,THRUST_VECTORING,PREDICTION_SUPPORT_ONLY,Derived support quantity; not a basic-airframe aerodynamic coefficient.
+8.23,Aerodynamic bias,CN0;Cm0;CA0,LONGITUDINAL,FLIGHT_PEST_AVAILABLE,Flight pEst points available.
+8.24,Angle-of-attack derivatives,CN_alpha;Cm_alpha;CA_alpha,LONGITUDINAL,FLIGHT_PEST_AVAILABLE,Flight pEst points available.
+8.25,Pitch-rate derivatives,CN_q;Cm_q;CA_q,LONGITUDINAL,FLIGHT_PEST_AVAILABLE,Flight pEst points available.
+8.26,Trailing-edge-flap derivatives,CN_dTEF;Cm_dTEF;CA_dTEF,LONGITUDINAL,FLIGHT_PEST_AVAILABLE,Flight pEst points available.
+8.27,Leading-edge-flap derivatives,CN_dLEF;Cm_dLEF;CA_dLEF,LONGITUDINAL,FLIGHT_PEST_AVAILABLE,Flight pEst points available.
+8.28,Symmetric-aileron derivatives,CN_dSA;Cm_dSA;CA_dSA,LONGITUDINAL,FLIGHT_PEST_AVAILABLE,Flight pEst points available.
+8.29,Elevator/stabilator derivatives,CN_dE;Cm_dE;CA_dE,LONGITUDINAL,FLIGHT_PEST_AVAILABLE,Flight pEst points available.
+8.30,Pitch-vane derivatives,CN_dPV;Cm_dPV;CA_dPV,LONGITUDINAL,PREDICTION_ONLY_NOT_FLIGHT_AUTHORITY,Report conclusion states thrust-vectoring doublet flight data could not be used due ITAR.
+8.31,Yaw-vane derivatives,CN_dYV;Cm_dYV;CA_dYV,LONGITUDINAL,PREDICTION_ONLY_NOT_FLIGHT_AUTHORITY,Same TVC caveat as Figure 8.30.
