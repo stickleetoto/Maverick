@@ -17,6 +17,8 @@ namespace MaverickFresh.FlightDynamics.F16
     [DisallowMultipleComponent]
     public sealed class MavF16PoweredReferenceShadowSmoke : MonoBehaviour
     {
+        private const float DiagnosticIntervalSeconds = 0.20f;
+
         [Header("Explicit opt-in")]
         [Tooltip("OFF by default. Enable only in Play Mode for the powered replacement-FDM shadow smoke test.")]
         public bool enablePoweredReferenceShadowSmoke = false;
@@ -45,13 +47,16 @@ namespace MaverickFresh.FlightDynamics.F16
         private int shadowStepBaseline;
         private int loadApplicationBaseline;
         private bool loggedActive;
+        private float nextDiagnosticTime;
+        private MavF16SelectionAutoSetup suspendedAutoSetup;
+        private bool suspendedAutoSetupWasEnabled;
 
         private void Awake()
         {
             ResolveBinding();
         }
 
-        private void FixedUpdate()
+        private void Update()
         {
             ResolveBinding();
 
@@ -62,21 +67,43 @@ namespace MaverickFresh.FlightDynamics.F16
                 return;
             }
 
-            ApplyPoweredShadowConfiguration();
-            UpdateDiagnostics();
-        }
+            if (!configured)
+            {
+                ApplyPoweredShadowConfiguration();
+                if (configured)
+                {
+                    nextDiagnosticTime = Time.unscaledTime;
+                    UpdateDiagnostics();
+                }
+                return;
+            }
 
-        private void Update()
-        {
-            // Keep Inspector status useful even when physics is paused.
-            if (enablePoweredReferenceShadowSmoke && configured)
+            // Identity changes are a hard stop. The ordinary selection binding runs before this
+            // component and refreshes f16Selected when the applied aircraft changes.
+            if (binding == null || !binding.f16Selected)
+            {
+                enablePoweredReferenceShadowSmoke = false;
+                RestoreSafeLegacyWiring("authoritative F-16C selection ended during powered shadow");
+                return;
+            }
+
+            // Readiness inspection used to run in both Update and FixedUpdate, and the complete
+            // powered wiring used to be re-applied every physics step. Neither is necessary once the
+            // configuration has been established. Five diagnostic samples per second are enough for
+            // the inspector while the actual FDM still computes every fixed step.
+            if (Time.unscaledTime >= nextDiagnosticTime)
+            {
+                nextDiagnosticTime = Time.unscaledTime + DiagnosticIntervalSeconds;
                 UpdateDiagnostics();
+            }
         }
 
         private void OnDisable()
         {
             if (configured)
                 RestoreSafeLegacyWiring("powered reference shadow smoke component disabled");
+            else
+                ResumeSelectionAutoSetup();
         }
 
         private void ApplyPoweredShadowConfiguration()
@@ -132,15 +159,32 @@ namespace MaverickFresh.FlightDynamics.F16
             if (ownership == null)
                 ownership = gameObject.AddComponent<MavFlightPhysicsOwnership>();
 
+            if (ownership.owner == MavFlightPhysicsOwner.Fault)
+            {
+                status = "REFUSED - physics ownership is in Fault; clear the fault before a shadow run";
+                return;
+            }
+
+            if (ownership.owner == MavFlightPhysicsOwner.F16Replacement)
+            {
+                status = "REFUSED - aircraft is already in live replacement ownership; shadow smoke will not change ownership";
+                return;
+            }
+
+            // The conservative F-16 auto-setup normally re-runs every 0.25 s. During this explicit
+            // smoke experiment that would overwrite the powered wiring, forcing this component to
+            // fight it every FixedUpdate. Suspend that periodic reconciler for the duration of the
+            // experiment; the per-aircraft binding still observes authoritative identity changes.
+            SuspendSelectionAutoSetup();
+
             // This first smoke stage is SHADOW ONLY. Even a fully healthy run cannot accidentally
             // cross into live replacement ownership from this component.
             ownership.allowReplacementActivation = false;
             ownership.AttachGovernedBody(body);
             body.physicsOwnership = ownership;
 
-            // Re-assert these references every physics step because the older selection binding
-            // periodically reconciles its conservative bench wiring. This component executes before
-            // the control law/body and therefore leaves one deterministic configuration for the step.
+            // One-time powered wiring. Once established, nothing should rewrite these references
+            // until the experiment is stopped or the authoritative aircraft identity changes.
             body.propulsionModel = propulsionSystem;
             body.pilotCommandSource = commandSource;
             body.acceptNonAuthoritativePropulsion = false;
@@ -159,40 +203,26 @@ namespace MaverickFresh.FlightDynamics.F16
             if (idleLaw != null)
                 idleLaw.commandSource = commandSource;
 
-            if (ownership.owner == MavFlightPhysicsOwner.Fault)
-            {
-                status = "REFUSED - physics ownership is in Fault; clear the fault before a shadow run";
-                return;
-            }
-
-            if (ownership.owner == MavFlightPhysicsOwner.F16Replacement)
-            {
-                status = "REFUSED - aircraft is already in live replacement ownership; shadow smoke will not change ownership";
-                return;
-            }
-
             if (ownership.owner != MavFlightPhysicsOwner.Shadow)
             {
                 string error;
                 if (!ownership.TryEnterShadow(out error))
                 {
+                    ResumeSelectionAutoSetup();
                     status = "REFUSED - could not enter Shadow: " + error;
                     return;
                 }
             }
 
-            if (!configured)
-            {
-                shadowStepBaseline = body.debugShadowComputeSteps;
-                loadApplicationBaseline = body.debugLoadApplications;
-                configured = true;
-            }
+            shadowStepBaseline = body.debugShadowComputeSteps;
+            loadApplicationBaseline = body.debugLoadApplications;
+            configured = true;
 
             if (!loggedActive)
             {
                 Debug.Log(
                     "[Maverick/F16/FDM] POWERED_REFERENCE_SHADOW active | TP-1538 thrust sourced | "
-                    + "mouse-instructor command bridge operational | replacement live writes blocked",
+                    + "mouse-instructor command bridge operational | one-time wiring | replacement live writes blocked",
                     this);
                 loggedActive = true;
             }
@@ -270,9 +300,37 @@ namespace MaverickFresh.FlightDynamics.F16
             replacementWroteNoLiveLoads = true;
             status = "OFF - legacy flight unchanged";
 
+            ResumeSelectionAutoSetup();
+
             if (loggedActive)
                 Debug.Log("[Maverick/F16/FDM] POWERED_REFERENCE_SHADOW stopped; returned to Legacy.", this);
             loggedActive = false;
+        }
+
+        private void SuspendSelectionAutoSetup()
+        {
+            if (suspendedAutoSetup != null)
+                return;
+
+            suspendedAutoSetup = FindObjectOfType<MavF16SelectionAutoSetup>();
+            if (suspendedAutoSetup == null)
+                return;
+
+            suspendedAutoSetupWasEnabled = suspendedAutoSetup.enabled;
+            if (suspendedAutoSetupWasEnabled)
+                suspendedAutoSetup.enabled = false;
+        }
+
+        private void ResumeSelectionAutoSetup()
+        {
+            if (suspendedAutoSetup == null)
+                return;
+
+            if (suspendedAutoSetupWasEnabled)
+                suspendedAutoSetup.enabled = true;
+
+            suspendedAutoSetup = null;
+            suspendedAutoSetupWasEnabled = false;
         }
 
         private void ResolveBinding()
@@ -291,7 +349,7 @@ namespace MaverickFresh.FlightDynamics.F16
     public sealed class MavF16PoweredReferenceShadowSmokeBootstrap : MonoBehaviour
     {
         private const string BootstrapObjectName = "Mav_F16PoweredReferenceShadowSmoke";
-        private const float ScanIntervalSeconds = 0.25f;
+        private const float ScanIntervalSeconds = 1.0f;
         private float nextScanTime;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
