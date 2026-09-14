@@ -70,12 +70,16 @@ function Assert-StatusUnchanged {
 
 function Assert-AuthorityAndInventory {
     $head = Invoke-GitText @('-C',$Script:RepoRoot,'rev-parse','HEAD')
-    if ($head -ne [string]$Script:Manifest.authority_commit) {
-        throw "HEAD mismatch. Required exact authority $($Script:Manifest.authority_commit), got $head"
-    }
 
+    # The authority commit freezes the validation inventory and participating validator blobs; it is
+    # not required to be the checkout HEAD. Requiring exact HEAD made the runner impossible to track:
+    # committing the runner itself necessarily moves HEAD away from the frozen authority. Descendant
+    # checkouts are allowed, while the per-surface blob checks below still reject any drift in the
+    # validation authority itself.
     $ancestor = & git -C $Script:RepoRoot merge-base --is-ancestor $Script:Manifest.authority_commit HEAD 2>$null
-    if ($LASTEXITCODE -ne 0) { throw "authority commit is not an ancestor of HEAD" }
+    if ($LASTEXITCODE -ne 0) {
+        throw "authority commit $($Script:Manifest.authority_commit) is not an ancestor of HEAD $head"
+    }
 
     $roots = @($Script:Manifest.inventory.authority_cs_roots | ForEach-Object { [string]$_ })
     $authorityCs = @(& git -C $Script:RepoRoot ls-tree -r --name-only $Script:Manifest.authority_commit -- @roots |
@@ -466,6 +470,8 @@ function Write-FinalResult {
         }
     }
 
+    # Normalize the generic Lists once. ConvertTo-Json should see plain object arrays rather than
+    # re-enumerating List[object] values inside nested ordered dictionaries.
     $suiteArray = [object[]]$Script:SuiteResults.ToArray()
     $mutationArray = [object[]]$Script:MutationResults.ToArray()
 
@@ -480,8 +486,8 @@ function Write-FinalResult {
         historical_841_36 = 'EVIDENCE_ONLY'
         source_derived_known_subtotal = 642
         assertion_totals = [ordered]@{ passed=[int]$passedTotal; failed=[int]$failedTotal; counted_suite_results=$countedSuiteResults }
-        suites = $Script:SuiteResults.ToArray()
-        mutation = [ordered]@{ requested=[bool]$RunMutations; policy='NEW_ONLY'; historical_probes_imported=$false; results=$Script:MutationResults.ToArray() }
+        suites = $suiteArray
+        mutation = [ordered]@{ requested=[bool]$RunMutations; policy='NEW_ONLY'; historical_probes_imported=$false; results=$mutationArray }
         fatal_error = $FatalError
         commit = $null
         push = $null
