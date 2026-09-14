@@ -720,7 +720,6 @@ namespace MaverickFresh.FlightDynamics
                 return;
 
             sixDoFBody.NotifyOwnershipChanged();
-            sixDoFBody.RefreshReadiness();
         }
         private void UpdateDisabledOwnerDebug()
         {
