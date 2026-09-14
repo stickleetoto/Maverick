@@ -33,7 +33,7 @@ function Detect-Newline([string]$Text) {
 function Assert-Count([string]$Text, [string]$Needle, [int]$Expected, [string]$Label) {
     $count = Count-Exact $Text $Needle
     if ($count -ne $Expected) {
-        throw "$Label: expected $Expected occurrence(s), found $count"
+        throw "${Label}: expected $Expected occurrence(s), found $count"
     }
 }
 
@@ -63,7 +63,7 @@ if ($markerCount -eq 0) {
     Write-Text $rel $s
     $changed.Add($rel)
 }
-elif ($markerCount -ne 2) {
+elseif ($markerCount -ne 2) {
     throw "Phase2 angular readiness marker count is $markerCount; expected 0 or 2"
 }
 
