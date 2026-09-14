@@ -1,0 +1,12 @@
+surface,direction,position_limit,position_unit,rate_limit,rate_unit,source,anchor,page_anchor,provenance,notes
+stabilator,trailing_edge_up,24,deg,40,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,Phase-II report states conventional F-18 HARV surface limits; compatible with basic HARV conventional surfaces
+stabilator,trailing_edge_down,10.5,deg,40,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,
+aileron,trailing_edge_up,24,deg,100,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,
+aileron,trailing_edge_down,45,deg,100,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,
+rudder,trailing_edge_left,30,deg,82,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,HARV/Dryden value; differs from f18bas 61 deg/s
+rudder,trailing_edge_right,30,deg,82,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,HARV/Dryden value; differs from f18bas 61 deg/s
+trailing_edge_flap,up,8,deg,18,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,
+trailing_edge_flap,down,45,deg,18,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,
+leading_edge_flap,up,3,deg,15,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,HARV/Dryden value; differs from f18bas 18 deg/s
+leading_edge_flap,down,33,deg,15,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,HARV/Dryden value; differs from f18bas +34 deg
+speed_brake,trailing_edge_up,60,deg,20-30,deg/s,NASA/TP-97-206539,Table 1,PDF p14 / printed p8,EXACT_TABLE,Rate published as range

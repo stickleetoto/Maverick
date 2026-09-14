@@ -1,0 +1,6 @@
+actuator,no_load_rate_limit,rate_unit,position_min,position_max,position_unit,time_constant,time_unit,model,source,anchor,page_anchor,provenance
+stabilator,40,deg/s,-24,10.5,deg,0.0333333333,s,first_order_lag,NASA-TM-107601,Table 8.7,PDF p87 / printed p81,EXACT_TABLE
+rudder,61,deg/s,-30,30,deg,0.025,s,first_order_lag,NASA-TM-107601,Table 8.7,PDF p87 / printed p81,EXACT_TABLE
+aileron,100,deg/s,-25,45,deg,0.0208333333,s,first_order_lag,NASA-TM-107601,Table 8.7,PDF p87 / printed p81,EXACT_TABLE
+trailing_edge_flap,18,deg/s,-8,45,deg,0.05,s,first_order_lag,NASA-TM-107601,Table 8.7,PDF p87 / printed p81,EXACT_TABLE
+leading_edge_flap,18,deg/s,-3,34,deg,0.05,s,first_order_lag,NASA-TM-107601,Table 8.7,PDF p87 / printed p81,EXACT_TABLE

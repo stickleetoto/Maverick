@@ -1,0 +1,16 @@
+field,value,unit,source,anchor,page_anchor,provenance,notes
+wing_area_SREF,400,ft^2,NASA-TM-107601,Table 3.4,PDF p26 / printed p20,EXACT_TABLE,simulation-defined basic F/A-18
+wing_MAC_CREF,138.275,in,NASA-TM-107601,Table 3.4,PDF p26 / printed p20,EXACT_TABLE,=11.523 ft; LE MAC at FS 423.99
+wing_MAC_CREF,11.523,ft,NASA-TM-107601,Table 3.4,PDF p26 / printed p20,EXACT_TABLE,same published value converted in table
+wing_span_bREF,37.42,ft,NASA-TM-107601,Table 3.4,PDF p26 / printed p20,EXACT_TABLE,
+horizontal_tail_moment_arm,201.76,in,NASA-TM-107601,Table 3.4,PDF p26 / printed p20,EXACT_TABLE,c/4 to cHT/4
+horizontal_tail_volume_coefficient,0.321,dimensionless,NASA-TM-107601,Table 3.4,PDF p26 / printed p20,EXACT_TABLE,
+vertical_tail_moment_arm,122.1,in,NASA-TM-107601,Table 3.4,PDF p26 / printed p20,EXACT_TABLE,c/4 to cVT/4
+vertical_tail_volume_coefficient,0.0707,dimensionless,NASA-TM-107601,Table 3.4,PDF p26 / printed p20,EXACT_TABLE,
+fighter_escort_60pct_weight,31665,lb,NASA-TM-107601,Table 3.5,PDF p26 / printed p20,EXACT_TABLE,"Fighter Escort, 60% internal fuel"
+fighter_escort_60pct_cg_FS,457.3,in,NASA-TM-107601,Table 3.5,PDF p26 / printed p20,EXACT_TABLE,
+fighter_escort_60pct_cg_WL,101.6,in,NASA-TM-107601,Table 3.5,PDF p26 / printed p20,EXACT_TABLE,
+fighter_escort_60pct_Ixx,22337,slug-ft^2,NASA-TM-107601,Table 3.5,PDF p26 / printed p20,EXACT_TABLE,
+fighter_escort_60pct_Iyy,120293,slug-ft^2,NASA-TM-107601,Table 3.5,PDF p26 / printed p20,EXACT_TABLE,
+fighter_escort_60pct_Izz,138945,slug-ft^2,NASA-TM-107601,Table 3.5,PDF p26 / printed p20,EXACT_TABLE,
+fighter_escort_60pct_Ixz,-2430,slug-ft^2,NASA-TM-107601,Table 3.5,PDF p26 / printed p20,EXACT_TABLE,Preserve published sign; report defines Ixz=integral rho*x*z dV

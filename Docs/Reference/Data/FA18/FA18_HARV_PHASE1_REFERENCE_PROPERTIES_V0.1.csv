@@ -1,0 +1,16 @@
+field,value,unit,source,anchor,page_anchor,provenance,notes
+weight,31980,lb,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,"60% fuel (6480 lb), gear up, clean, pilot + support equipment"
+reference_wing_area,400,ft^2,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,Unmodified Phase I
+reference_mac,11.52,ft,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,Unmodified Phase I
+reference_span,37.4,ft,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,Unmodified Phase I
+cg_percent_mac,21.9,percent_MAC,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,Unmodified Phase I
+cg_fuselage_station,454.33,in,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,FS positive aft
+cg_waterline,105.24,in,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,
+Ixx,22040,slug-ft^2,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,
+Iyy,124554,slug-ft^2,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,
+Izz,139382,slug-ft^2,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,
+Ixz,-2039,slug-ft^2,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,Preserve published sign; tensor sign mapping is a separate implementation decision
+overall_length,56,ft,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,
+wing_aspect_ratio,3.5,dimensionless,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,
+stabilator_span,21.6,ft,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,
+stabilator_area,88.26,ft^2,NASA/TP-97-206539,Table 3,PDF p16 / printed p10,EXACT_TABLE,

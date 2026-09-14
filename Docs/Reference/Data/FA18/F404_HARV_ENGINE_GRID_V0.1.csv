@@ -1,0 +1,15 @@
+field,value,unit,source,anchor,page_anchor,provenance,notes
+mach_breakpoints,0.0;0.2;0.4;0.6;0.8;0.9;1.0;1.1;1.2;1.4;1.6;1.8,dimensionless,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,EXACT_TEXT,12 rows
+altitude_breakpoints,0;10;20;30;35;40;50,kft,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,EXACT_TEXT,7 columns
+power_states,flight_idle;mil_power;min_AB;max_AB,,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,EXACT_TEXT,4 power states
+dependent_variables,nozzle_area;drag;gross_thrust;nozzle_pressure_ratio;turbine_discharge_pressure;ram_drag;fuel_flow,,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,EXACT_TEXT,7 variables
+array_count,29,arrays,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,EXACT_TEXT,4x7 arrays plus windmill drag
+array_shape,12x7,,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,EXACT_TEXT,Mach rows x altitude columns
+interpolation,linear Mach + altitude,,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,EXACT_TEXT,performed for each power-state table
+nonAB_time_constant,0.625,s,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,EXACT_TEXT,same as TM-4240
+AB_time_constant,0.55,s,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,EXACT_TEXT,same as TM-4240
+nonAB_increasing_PLA_rate,14,deg/s,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,CONFLICTED_MODEL_VERSION,TM-4240 1990 simple model publishes 19.03 deg/s
+AB_increasing_PLA_rate,22,deg/s,NASA-TM-110216,sec 4.1,PDF p44 / printed p38,CONFLICTED_MODEL_VERSION,TM-4240 1990 simple model publishes 26.81 deg/s
+nonAB_increasing_PLA_rate_1990,19.03,deg/s,NASA-TM-4240,Fig. 5,PDF p15 / printed p11,CONFLICTED_MODEL_VERSION,Earlier 1990 simple engine model
+AB_increasing_PLA_rate_1990,26.81,deg/s,NASA-TM-4240,Fig. 5,PDF p15 / printed p11,CONFLICTED_MODEL_VERSION,Earlier 1990 simple engine model
+decreasing_PLA_rate_limit,none,,NASA-TM-4240,engine dynamics text,PDF pp7-8 / printed pp3-4,EXACT_TEXT,decreasing PLA modeled by pure first-order decay

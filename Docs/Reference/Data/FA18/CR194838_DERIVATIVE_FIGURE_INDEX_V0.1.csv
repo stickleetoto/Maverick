@@ -1,0 +1,19 @@
+figure,axis,effect,derivatives,printed_page,source,notes,status
+8.7,lateral,aerodynamic_bias,CY0;Cl0;Cn0,79,NASA-CR-194838,flight pEst squares; Iliff circles; simulator triangles; McDonnell Douglas wind-tunnel x,DIGITIZE_PENDING
+8.8,lateral,sideslip,CY_beta;Cl_beta;Cn_beta,80,NASA-CR-194838,"flight pEst squares at approx 10,25,30,40,50,60 deg AOA",DIGITIZE_PENDING
+8.9,lateral,roll_rate,CY_p;Cl_p;Cn_p,81,NASA-CR-194838,,DIGITIZE_PENDING
+8.10,lateral,yaw_rate,CY_r;Cl_r;Cn_r,82,NASA-CR-194838,,DIGITIZE_PENDING
+8.11,lateral,aileron,CY_deltaA;Cl_deltaA;Cn_deltaA,83,NASA-CR-194838,,DIGITIZE_PENDING
+8.12,lateral,rudder,CY_deltaR;Cl_deltaR;Cn_deltaR,84,NASA-CR-194838,,DIGITIZE_PENDING
+8.13,lateral,differential_horizontal_tail,CY_deltaDHT;Cl_deltaDHT;Cn_deltaDHT,85,NASA-CR-194838,,DIGITIZE_PENDING
+8.14,lateral,pitch_vane,CY_deltaPV;Cl_deltaPV;Cn_deltaPV,86,NASA-CR-194838,report analysis excluded thrust-vectoring doublets; do not promote without panel-level provenance audit,BLOCKED_FOR_AUTHORITY
+8.15,lateral,yaw_vane,CY_deltaYV;Cl_deltaYV;Cn_deltaYV,87,NASA-CR-194838,report analysis excluded thrust-vectoring doublets; do not promote without panel-level provenance audit,BLOCKED_FOR_AUTHORITY
+8.23,longitudinal,aerodynamic_bias,CN0;Cm0;CA0,95,NASA-CR-194838,,DIGITIZE_PENDING
+8.24,longitudinal,angle_of_attack,CN_alpha;Cm_alpha;CA_alpha,96,NASA-CR-194838,,DIGITIZE_PENDING
+8.25,longitudinal,pitch_rate,CN_q;Cm_q;CA_q,97,NASA-CR-194838,,DIGITIZE_PENDING
+8.26,longitudinal,trailing_edge_flap,CN_deltaTEF;Cm_deltaTEF;CA_deltaTEF,98,NASA-CR-194838,,DIGITIZE_PENDING
+8.27,longitudinal,leading_edge_flap,CN_deltaLEF;Cm_deltaLEF;CA_deltaLEF,99,NASA-CR-194838,,DIGITIZE_PENDING
+8.28,longitudinal,symmetric_aileron,CN_deltaSA;Cm_deltaSA;CA_deltaSA,100,NASA-CR-194838,,DIGITIZE_PENDING
+8.29,longitudinal,elevator,CN_deltaE;Cm_deltaE;CA_deltaE,101,NASA-CR-194838,,DIGITIZE_PENDING
+8.30,longitudinal,pitch_vane,CN_deltaPV;Cm_deltaPV;CA_deltaPV,102,NASA-CR-194838,report analysis excluded thrust-vectoring doublets; later NASA/TP-97-206539 is stronger exact source,BLOCKED_FOR_AUTHORITY
+8.31,longitudinal,yaw_vane,CN_deltaYV;Cm_deltaYV;CA_deltaYV,103,NASA-CR-194838,report analysis excluded thrust-vectoring doublets; do not promote without panel-level provenance audit,BLOCKED_FOR_AUTHORITY

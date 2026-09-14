@@ -1,0 +1,7 @@
+actuator,model,natural_frequency_or_poles,damping_ratio,no_load_rate_limit,rate_unit,position_min,position_max,position_unit,source,anchor,page_anchor,provenance,notes
+stabilator,second_order,30.74,0.509,40,deg/s,-24,10.5,deg,NASA-TM-110216,Table 6.1/6.2,PDF pp96-99 / printed pp90-93,EXACT_TABLE,Dryden HARV updated actuator model
+rudder,second_order,72.1,0.69,82,deg/s,-30,30,deg,NASA-TM-110216,Table 6.1/6.2,PDF pp96-99 / printed pp90-93,EXACT_TABLE,HARV value; do not replace f18bas 61 deg/s silently
+aileron,second_order,75,0.59,100,deg/s,-25,42,deg,NASA-TM-110216,Table 6.1/6.2,PDF pp96-99 / printed pp90-93,EXACT_TABLE,HARV updated position limit
+trailing_edge_flap,second_order,35,0.71,18,deg/s,-8,45,deg,NASA-TM-110216,Table 6.1/6.2,PDF pp96-99 / printed pp90-93,EXACT_TABLE,
+leading_edge_flap,two_real_poles,26.9;82.9,,15,deg/s,-3,33,deg,NASA-TM-110216,Table 6.1/6.2,PDF pp96-99 / printed pp90-93,EXACT_TABLE,H(s)=(26.9*82.9)/((s+26.9)(s+82.9))
+tvc_vane,second_order,75,0.59,80,deg/s,-10,25,deg,NASA-TM-110216,Eq. 4.1,PDF p46 / printed p40,EXACT_TEXT,same nominal second-order form as aileron; hinge moment modifies rate
