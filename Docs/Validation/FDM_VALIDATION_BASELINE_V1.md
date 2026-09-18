@@ -2,8 +2,9 @@
 
 **Authority:** `ef25b91857b2bd4ee4961d4eba1da390d8ee2180` (post-consolidation mainline)
 **State:** `CANDIDATE`
-**Execution status:** `PASS` — 1585 passed / 0 failed across 25 counted suite results
-**Last executed:** 2026-09-18, Unity `6000.3.16f1`, from a clean fully-committed checkout
+**Execution status:** `PASS` — runner verdict `PASS`, exit 0, no fatal error
+**Result:** 1585 passed / 0 failed across 25 counted suite results (28 suites, none non-PASS)
+**Last executed:** 2026-09-18, Unity `6000.3.16f1`, from a fully committed checkout with no tracked content changes and no non-ignored untracked files
 
 This package defines a fail-closed, executable candidate for the current Maverick flight-dynamics validation baseline. It does **not** freeze a result and it does **not** promote historical Phase 5 totals into current expectations.
 
@@ -47,9 +48,31 @@ A counted Unity suite must produce a valid runtime result with numeric `passed`/
 
 ## Fail-closed conditions
 
-The runner exits nonzero for any of the following: wrong HEAD, source hash mismatch, unlisted/missing validation surface, unexpected dirty path, missing Python, missing Unity, Python validator nonzero exit, Unity validator failure, Unity compile/import failure, timeout, malformed or missing result file/marker, deterministic source-cardinality drift, checkout dirty-state change during execution, or post-run validation-source hash change.
+The runner exits nonzero for any of the following: an authority commit that is not an ancestor of `HEAD`, source hash mismatch, a validation surface that is unlisted or missing at the authority commit or at `HEAD`, an unexpected dirty path, missing Python, missing Unity, Python validator nonzero exit, Unity validator failure, Unity compile/import failure, timeout, malformed or missing result file/marker, deterministic source-cardinality drift, a tracked-content change during execution, a change to the set of non-ignored untracked files, or a post-run validation-source hash change.
 
-Only the six candidate implementation files are allowed to be dirty when the runner begins. Any other dirty path is rejected before execution. The same status set and every authority validation-surface blob hash are rechecked in `finally`.
+Only the Baseline v1 implementation files are allowed to be dirty when the runner begins. Any other
+dirty path is rejected before execution, and the same comparison plus every authority
+validation-surface blob hash is rechecked in `finally`.
+
+Cleanliness is judged by **Git-normalized content identity**, not by raw `git status` lines. Unity
+rewrites files it owns - `ProjectSettings/*.asset` - during import, and on a `core.autocrlf=true`
+checkout that means LF where git wrote CRLF: `git status` reports a modification while the raw file
+hash, the index entry and the `HEAD` blob are identical. A gate that cannot tell a line ending from
+an edit cannot certify a clean run, so tracked paths are compared with `git diff --name-only HEAD`
+and untracked paths with `git ls-files --others --exclude-standard`.
+
+The rule remains fail-closed:
+
+- line-ending or stat churn whose normalized content is identical passes, and is recorded in the
+  result under `environment_churn` rather than swallowed
+- any real tracked-content change is `INFRA_FAILURE`
+- any untracked file not covered by `.gitignore` is `INFRA_FAILURE`; a generated artifact that
+  belongs in the tree needs an ignore entry, not a runner exception
+- Unity's generated artifacts are covered by `.gitignore` (`Library/`, `Temp/`, `*.csproj`, `*.sln`,
+  `*.slnx`) and are therefore invisible to the check by construction
+
+The runner never reverts, resets, checks out, cleans or stashes anything. It reports what it found
+and leaves the checkout exactly as Unity left it.
 
 ## Mutation v1
 
@@ -144,7 +167,9 @@ Python validators that do not emit assertion counts can still gate the baseline 
 BASELINE V1          CANDIDATE
 IMPLEMENTATION FILES COMMITTED (all six, sol/fdm-validation-baseline-v1-r1)
 EXECUTION            RUN 2026-09-18 ON A CLEAN COMMITTED CHECKOUT
+RUNNER VERDICT       PASS (exit 0, fatal_error empty, environment_churn 0)
 RESULT               1585 passed / 0 failed / 25 counted suite results
+AUTHORITY            ef25b91857b2bd4ee4961d4eba1da390d8ee2180
 COMMIT               yes
 PUSH                 yes
 PHYSICS DELTA        NONE
