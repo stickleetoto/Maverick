@@ -185,22 +185,59 @@ shared_propulsion_lifecycle 169/0 · fdm_scheduler 1/0.
 after-body:new-disarmed -> legacy-fixedupdate -> end | lawCurrent=True legacyKept=True
 newStayedOff=True ownership=LegacyOwned`.
 
-### 4.1 Gate limitations — still required by a human
+### 4.1 Scene/Play-Mode gates — executed
 
-Headless validation cannot cover these; they remain open before this is treated as exercised:
+These five were originally listed as requiring a human. They were instead executed in Unity
+`6000.3.16f1` with a temporary reflection-based probe (created for the run and deleted afterwards;
+it is not part of this PR). `Time.captureFramerate = 50` made the runs reproducible: two independent
+launches of the same tree produced byte-identical trajectories, so the `main` comparison below is
+exact rather than approximate.
 
-1. Open `Assets/MaverickFresh/Scenes/Mav_InGame.unity` in the Editor and confirm no Missing Script
-   warnings and no broken serialized references in the Inspector (static GUID analysis passed, but
-   it does not see prefab-override or type-rename breakage).
-2. Enter Play Mode, confirm the player aircraft spawns and normal mouse-flight control feels
-   unchanged versus `main` — specifically F-16 pitch trim, since `2edd3f1` was reverted precisely to
-   keep that identical.
-3. Confirm `MavF16PoweredReferenceShadowSmoke` shows `OFF - legacy flight unchanged` with no
-   ownership change, and that the 1 Hz bootstrap rescan costs nothing noticeable.
-4. Enable the shadow smoke once and confirm `owner=Shadow`, `replacementLiveWrites=0` and a
-   `HEALTHY POWERED SHADOW` status, then disable it and confirm legacy wiring is restored.
-5. Confirm no weapon/combat behavior changed (nothing in the diff touches it, but the scene has not
-   been exercised).
+| # | Gate | Result |
+|---|---|---|
+| 1 | Missing Script / broken references | **PASS** — 3 scenes + 6 prefabs opened, every component checked, `totalMissing=0` |
+| 2 | Player aircraft spawn | **PASS** — `Mav_Player`, `F-16C FIGHTING FALCON (F16C)` applied, `hasAuthoritativeAircraft=True`, Rigidbody present, `f16Selected=True` |
+| 3 | Control feel vs `main` | **PASS, bit-identical** — see below |
+| 4 | Shadow FDM OFF behavior | **PASS** — `OFF - legacy flight unchanged`, `owner=Legacy`, `simulationEnabled=False`, `debugLoadApplications=0`, `debugShadowComputeSteps=0`, legacy still the live writer |
+| 5 | One enabled shadow run | **NOT SATISFIABLE** — see 4.2 |
+
+Gate 3 detail, comparing this branch against `main` checked out in a separate worktree, same probe,
+same Unity version: 30 flight-relevant tuning parameters identical (including `jet.noseDownTrim` and
+`inst.noseDownTrim` both `0.115`, confirming legacy F-16 trim is untouched), spawn/mass/damping block
+identical, and 24 trajectory samples over 600 physics steps (12 s) of position, velocity, euler and
+angular velocity **bit-identical, 24/24**. Flight behavior on this branch is not merely similar to
+`main`, it is the same to the last bit.
+
+Weapon/combat behavior was not separately exercised; nothing in the diff touches it.
+
+### 4.2 Gate 5 — the powered shadow smoke cannot arm
+
+Enabling `MavF16PoweredReferenceShadowSmoke.enablePoweredReferenceShadowSmoke` produces:
+
+```
+REFUSED - TP-1538 propulsion is present but not acceptable for live flight
+```
+
+The cause is repository-wide, not environmental. `MavEngineProfile.IsAcceptableForLiveFlight`
+requires `thrustDeck.IsAcceptableForLiveFlight && sourceEnvelope.declared`. The deck reports
+acceptable, but **no code path anywhere declares a source envelope**: `MavF16PropulsionInstallation`
+and `MavF15PropulsionSkeleton` both set `sourceEnvelope = MavEngineSourceEnvelope.Undeclared`,
+deliberately, because the power model's validity envelope has not been separately established. So
+`tp1538PropulsionAcceptable` cannot become true and the component can never reach `Shadow`.
+
+The refusal is correct and fail-closed: zero live loads, ownership stays `Legacy`, legacy keeps
+flying, the status string is accurate, and disabling restores cleanly. What is unproven is the
+healthy shadow run itself.
+
+This is a pre-existing property of `main` — `MavF16PropulsionInstallation` is not in this PR's diff.
+This PR adds a component whose arming precondition the repository deliberately does not satisfy. It
+is therefore inert until a sourced engine validity envelope is declared, which is a sourcing
+decision rather than a code fix and is tracked separately. Merging changes no flight behavior, as
+gate 3 proves.
+
+The suite runs used the uncommitted `MavFdmValidationBatchAdapter.cs` (§7) as the headless entry
+point. It is editor-only and does not change validator semantics, but it is not part of this PR, so
+the numbers above were produced with one editor script present that `main` will not have.
 
 The suite runs used the uncommitted `MavFdmValidationBatchAdapter.cs` (§7) as the headless entry
 point. It is editor-only and does not change validator semantics, but it is not part of this PR, so
@@ -276,5 +313,12 @@ surface passes with zero failures on the exact tree, no reference data or aircra
 no scene/prefab/weapon/sensor/AI file is touched, and the single commit that did change legacy
 flight behavior — non-deterministically — has been rejected and reverted.
 
-It is **not** yet declared exercised: the human Unity items in §4.1 have not been performed, and
-`main` has not moved.
+The scene and Play-Mode gates in §4.1 have now been executed: scenes and prefabs carry no missing
+scripts, the player aircraft spawns and applies the F-16C, and flight behavior is bit-identical to
+`main` across 30 tuning parameters and 24 trajectory samples. Shadow FDM is inert when off.
+
+One limitation is carried knowingly into `main`: gate 5 could not be satisfied, because no engine
+profile in the repository declares a source envelope, so `MavF16PoweredReferenceShadowSmoke` refuses
+to arm (§4.2). It refuses fail-closed and changes no flight behavior, and the blocker predates this
+PR. The component is therefore inert on `main` until a sourced engine validity envelope is declared.
+That must be resolved before any live-handover phase relies on shadow evidence.
