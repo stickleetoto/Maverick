@@ -39,6 +39,21 @@ namespace MaverickFresh.Combat.Legacy
         [Tooltip("Rescan the scene for markers at most this often. Between rescans the cached marker set is reused.")]
         public float markerRescanInterval = 1.0f;
 
+        /// <summary>
+        /// Skips markers belonging to this feed's own aircraft.
+        ///
+        /// The player carries a MavRadarSignature of its own - MavInGameBootstrap installs one on the
+        /// aircraft so other sensors can see it - so without this the owner tracks the ownship, and a
+        /// gate run confirmed exactly that: one air marker, one track, the aircraft observing itself.
+        ///
+        /// This is platform self-exclusion, not a sensor filter. Range, aspect and field of view are
+        /// deliberately left to a real sensor, but "a platform does not observe itself" is not a
+        /// detection model, it is basic sanity, and leaving it out would force every later consumer
+        /// to special-case the ownship.
+        /// </summary>
+        [Tooltip("Skip markers on this feed's own aircraft. A platform does not observe itself.")]
+        public bool excludeOwnAircraft = true;
+
         [Header("Read-only state")]
         public int debugAirMarkers;
         public int debugGroundMarkers;
@@ -96,6 +111,8 @@ namespace MaverickFresh.Combat.Legacy
                     MavRadarSignature marker = airMarkers[i];
                     if (marker == null || marker.isDestroyed || !marker.isActiveAndEnabled)
                         continue;
+                    if (IsOwnAircraft(marker.transform))
+                        continue;
 
                     MavTrackObservation o = new MavTrackObservation();
                     o.sourceKey = marker.GetInstanceID();
@@ -118,6 +135,8 @@ namespace MaverickFresh.Combat.Legacy
                     MavCASTarget marker = groundMarkers[i];
                     if (marker == null || marker.isDestroyed || !marker.isActiveAndEnabled)
                         continue;
+                    if (IsOwnAircraft(marker.transform))
+                        continue;
 
                     MavTrackObservation o = new MavTrackObservation();
                     o.sourceKey = marker.GetInstanceID();
@@ -135,6 +154,17 @@ namespace MaverickFresh.Combat.Legacy
 
             debugObservationsLastCollect = appended;
             return appended;
+        }
+
+        /// <summary>
+        /// Whether a marker belongs to this feed's own aircraft. Compared by transform root so a
+        /// marker anywhere in the aircraft's hierarchy is excluded, not just one on the same object.
+        /// </summary>
+        private bool IsOwnAircraft(Transform markerTransform)
+        {
+            if (!excludeOwnAircraft || markerTransform == null)
+                return false;
+            return markerTransform.root == transform.root;
         }
 
         /// <summary>
