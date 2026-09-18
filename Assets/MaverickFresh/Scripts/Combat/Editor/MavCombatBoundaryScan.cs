@@ -33,8 +33,11 @@ namespace MaverickFresh.Combat.EditorTools
     ///   C-3  Combat/Core must not search the scene. Its whole purpose is to end the pattern where
     ///        every consumer finds its own targets with FindObjectsOfType.
     ///   C-4  Combat/Core must not read input. Input requests actions; it does not simulate them.
-    ///   C-5  No radar, seeker, guidance or missile-profile implementation may appear in Combat/,
-    ///        because those are later phases and this one is separation only.
+    ///   C-5  No later-phase implementation type may appear in Combat/ while its phase has not
+    ///        started. Radar detection was removed from this list for Radar Core R0, in an isolated
+    ///        commit; seekers, guidance, missile autopilots and the AIM-120/AIM-9 profiles remain
+    ///        forbidden. Each phase removes exactly its own entries, so the rule keeps meaning
+    ///        something after being relaxed.
     ///   C-6  No file under Combat/ may contain a Rigidbody-write token that the frozen Phase 5
     ///        writer scan would read as a live physics write - including a bare ".velocity =" on a
     ///        field that has nothing to do with a Rigidbody. C-2 is the same rule for Core alone;
@@ -109,11 +112,21 @@ namespace MaverickFresh.Combat.EditorTools
         /// Type names that would mean a later phase had started early. Matched as declarations only,
         /// so a comment or a contract that merely NAMES radar - which the track contract does, in its
         /// source enum - is not a false positive.
+        ///
+        /// RELAXED FOR RADAR CORE R0. The radar entries - "class MavRadarSystem" and
+        /// "class MavRadarScan" - were removed here, deliberately and in a commit that does nothing
+        /// else. C-5 is a PHASE tripwire, not a permanent prohibition: it exists so a later phase
+        /// cannot start by accident, and each phase that legitimately begins removes exactly its own
+        /// entries and says so. Radar detection is now in scope, so forbidding its type names would
+        /// make the rule lie.
+        ///
+        /// Everything else stays forbidden, because none of it is in scope: seekers, guidance laws,
+        /// proportional navigation, missile autopilots, and the AIM-120 / AIM-9 / AMRAAM profiles. A
+        /// radar that produces observations needs none of them, so if one of those names appears while
+        /// this list still forbids it, the phase boundary really has been crossed.
         /// </summary>
         private static readonly string[] PrematureImplementationDeclarations =
         {
-            "class MavRadarSystem",
-            "class MavRadarScan",
             "class MavSeeker",
             "class MavMissileSeeker",
             "class MavMissileGuidance",
