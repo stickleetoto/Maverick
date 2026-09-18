@@ -1,0 +1,578 @@
+{
+  "schema_version": 1,
+  "name": "Maverick FDM Validation Baseline v1",
+  "state": "CANDIDATE",
+  "authority_commit": "460713aeb93ad5345edf02562f9ab20c8c3efe9b",
+  "historical_evidence": {
+    "offline_assertions": 841,
+    "mutation_kills": 36,
+    "status": "EVIDENCE_ONLY",
+    "expected_result": false
+  },
+  "known_source_derived_counts": {
+    "MavF16ReferenceValidation": 17,
+    "MavF16PropulsionValidation": 20,
+    "MavFlightDynamicsPhase1Validation": 86,
+    "MavFlightDynamicsPhase2Validation": 192,
+    "MavFlightDynamicsPhase3Validation": 162,
+    "MavGyroscopicMomentValidation": 28,
+    "MavF16Tp1538RuntimeValidation": 137,
+    "subtotal": 642,
+    "status": "SOURCE_CARDINALITY_ONLY_NOT_EXECUTION_EVIDENCE"
+  },
+  "inventory": {
+    "authority_cs_roots": [
+      "Assets/MaverickFresh/Scripts/FlightDynamics/Validation",
+      "Assets/MaverickFresh/Scripts/FlightDynamics/Editor",
+      "Assets/MaverickFresh/Scripts/Editor"
+    ],
+    "python_glob": "Tools/validate_f16_tp1538_*.py",
+    "expected_authority_cs_surface_count": 36,
+    "expected_python_surface_count": 3
+  },
+  "implementation_paths": [
+    "Tools/run_fdm_validation.ps1",
+    "Tools/fdm_validation_baseline_v1.json",
+    "Docs/Validation/FDM_VALIDATION_BASELINE_V1.md",
+    "Docs/Validation/FDM_VALIDATION_INVENTORY_V1.md",
+    "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavFdmValidationBatchAdapter.cs",
+    "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavFdmValidationBatchAdapter.cs.meta"
+  ],
+  "protected_production_roots": [
+    "Assets/MaverickFresh/Scripts/FlightDynamics/Core",
+    "Assets/MaverickFresh/Scripts/FlightDynamics/F16",
+    "Assets/MaverickFresh/Scripts/Aero",
+    "Assets/MaverickFresh/Scripts/Aircraft",
+    "Assets/MaverickFresh/Resources",
+    "Assets/MaverickFresh/Prefabs",
+    "Assets/MaverickFresh/Scenes",
+    "ProjectSettings"
+  ],
+  "result_marker": "FDM_VALIDATION_RESULT_V1",
+  "surfaces": [
+    {
+      "id": "f16_propulsion",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF16PropulsionValidation.cs",
+      "git_blob": "777c72a23090a084b6361c820fe68e960f8a04f7",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "deterministic pure/static validation",
+      "counted": true,
+      "source_expected_assertions": 20,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavF16PropulsionValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "f16_reference_flight_rig",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF16ReferenceFlightRig.cs",
+      "git_blob": "014738ab6f98cf84cad4433832bc76133e94b8f9",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "reference-flight rig helper",
+      "counted": false,
+      "reason": "fixture/rig consumed by the reference-flight suite; not an independent assertion surface",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "f16_reference_flight_scenarios",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF16ReferenceFlightScenarios.cs",
+      "git_blob": "c5b55a9c2eb2fcd44738b922389caaced9bf77ce",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "reference-flight scenario runner/helper",
+      "counted": false,
+      "reason": "scenario implementation consumed by MavF16ReferenceFlightValidation; counting it separately would double count",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "f16_reference",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF16ReferenceValidation.cs",
+      "git_blob": "d66c32192c69d8d2dcab7a4cea260fa350d12367",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "deterministic side-effect-free F-16 reference validation",
+      "counted": true,
+      "source_expected_assertions": 17,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavF16ReferenceValidation",
+        "method": "RunAll"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "f16_tp1538_runtime",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF16Tp1538RuntimeValidation.cs",
+      "git_blob": "55f69c2c0f304d407e72f9bc28a264c259fa2bd1",
+      "classification": "UNITY_REQUIRED",
+      "role": "TP-1538 runtime validation; D4 constructs the real in-memory Unity reference rig/shared propulsion path",
+      "counted": true,
+      "source_expected_assertions": 137,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavF16Tp1538RuntimeValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "fdm_ownership_scan_runtime",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavFlightDynamicsOwnershipScan.cs",
+      "git_blob": "35653aa35e760586296e469ee8acba3b32c465b4",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "ownership/source scan validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavFlightDynamicsOwnershipScan",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "fdm_phase1",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavFlightDynamicsPhase1Validation.cs",
+      "git_blob": "d5f35ac3b0763ee837b686c895d57d4a1cd6b9e9",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "deterministic Phase 1 validation",
+      "counted": true,
+      "source_expected_assertions": 86,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavFlightDynamicsPhase1Validation",
+        "method": "RunAll"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "fdm_phase2",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavFlightDynamicsPhase2Validation.cs",
+      "git_blob": "ebafa5261722a28c5c7d11357b0891575ec322f0",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "deterministic Phase 2 validation",
+      "counted": true,
+      "source_expected_assertions": 192,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavFlightDynamicsPhase2Validation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "fdm_phase3",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavFlightDynamicsPhase3Validation.cs",
+      "git_blob": "8c8274ce78047d03320eb80ae14e8c6e497e4e6b",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "deterministic Phase 3 validation",
+      "counted": true,
+      "source_expected_assertions": 162,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavFlightDynamicsPhase3Validation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "fdm_scheduler_probe",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavFlightDynamicsSchedulerProbe.cs",
+      "git_blob": "b0226ef4fe4d5164f2bbbc8ee7a41947788e6880",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "runtime scheduler probe/helper",
+      "counted": false,
+      "reason": "probe state/components are consumed by the scheduler validation; not an independent suite",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "gyroscopic_moment",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavGyroscopicMomentValidation.cs",
+      "git_blob": "00c5d72bb49c58b582c6c08111b05a8aa4f55e11",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "deterministic gyroscopic validation",
+      "counted": true,
+      "source_expected_assertions": 28,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavGyroscopicMomentValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "integration_legacy_owner_fixture",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavIntegrationTestLegacyOwner.cs",
+      "git_blob": "9622921745ff5ce528677729a862487a83910db4",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "integration fixture component",
+      "counted": false,
+      "reason": "fixture/legacy-owner test component; no standalone result contract",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "propulsion_playmode_probe",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavPropulsionPlayModeProbe.cs",
+      "git_blob": "801e1e6a1e072548d74cd1ef8b0be7032d763bd2",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "Play Mode allocation probe/helper",
+      "counted": false,
+      "reason": "probe consumed by MavSharedPropulsionPlayModeLifecycle; not an independent suite",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "shared_propulsion",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavSharedPropulsionValidation.cs",
+      "git_blob": "5a141f96683a5a4c31b4822788010ab14812d131",
+      "classification": "UNITY_REQUIRED",
+      "role": "shared propulsion validation requiring real UnityEngine GameObject/AddComponent component semantics",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavSharedPropulsionValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "f16_engine_law_registrar_editor",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF16EngineLawRegistrarEditor.cs",
+      "git_blob": "915833644fb131d59e4bfe4016dd3c65691655d7",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "editor registration hook",
+      "counted": false,
+      "reason": "registration/bootstrap infrastructure; no independent validation result",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "f16_reference_flight",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF16ReferenceFlightValidation.cs",
+      "git_blob": "973388b915ba559b296fa391c75fb14eae4c7681",
+      "classification": "UNITY_REQUIRED",
+      "role": "real-Unity/PhysX F-16 reference-flight validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_existing_batch",
+        "execute_method": "MaverickFresh.FlightDynamics.EditorTools.MavF16ReferenceFlightValidation.RunBatch",
+        "result_arg": "-p5crOut"
+      },
+      "execution_mode": "UNITY_PLAYMODE"
+    },
+    {
+      "id": "f16_reference_editor_wrapper",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF16ReferenceValidationEditor.cs",
+      "git_blob": "19760044df2ad1152dabdd672606243d3143f010",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "editor UI wrapper for F-16 reference validation",
+      "counted": false,
+      "reason": "menu/editor presentation wrapper around MavF16ReferenceValidation; excluded to prevent duplicate assertions",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "f16_tp1538_editor_wrapper",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF16Tp1538RuntimeValidationEditor.cs",
+      "git_blob": "4cec406dc918663fe8ca26ede5b401b333326cff",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "editor UI wrapper for TP-1538 runtime validation",
+      "counted": false,
+      "reason": "menu/editor presentation wrapper around MavF16Tp1538RuntimeValidation; excluded to prevent duplicate assertions",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "fdm_freeze_hardening",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavFlightDynamicsFreezeHardeningValidation.cs",
+      "git_blob": "c65d1d5c3258cc316293edb2cec764271dde5b7f",
+      "classification": "UNITY_REQUIRED",
+      "role": "Unity edit-mode freeze-hardening validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavFlightDynamicsFreezeHardeningValidation",
+        "method": "RunAll"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "fdm_integration",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavFlightDynamicsIntegrationValidation.cs",
+      "git_blob": "3b00c2e085430667ff5b3ec5970ff78cf113d211",
+      "classification": "UNITY_REQUIRED",
+      "role": "Unity component integration validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavFlightDynamicsIntegrationValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "fdm_scheduler",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavFlightDynamicsSchedulerValidationEditor.cs",
+      "git_blob": "0ab83f049cb3b6d773a938cd850620b98515eb1a",
+      "classification": "UNITY_REQUIRED",
+      "role": "real-Unity FixedUpdate scheduler validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_scheduler_adapter",
+        "type": "MavFlightDynamicsSchedulerValidationEditor"
+      },
+      "execution_mode": "UNITY_PLAYMODE"
+    },
+    {
+      "id": "shared_propulsion_lifecycle",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavSharedPropulsionPlayModeLifecycle.cs",
+      "git_blob": "d4c8483931d4f2e576b1e2dc755dae344efdd42c",
+      "classification": "UNITY_REQUIRED",
+      "role": "real Play Mode shared-propulsion lifecycle validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_existing_batch",
+        "execute_method": "MaverickFresh.FlightDynamics.EditorTools.MavSharedPropulsionPlayModeLifecycle.RunBatch",
+        "result_arg": "-p02bOut"
+      },
+      "execution_mode": "UNITY_PLAYMODE"
+    },
+    {
+      "id": "shared_propulsion_unity",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavSharedPropulsionUnityValidation.cs",
+      "git_blob": "9a3c6ee495ce3190a7dc111cd917f81db5e4fc68",
+      "classification": "UNITY_REQUIRED",
+      "role": "Unity edit-mode shared propulsion validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavSharedPropulsionUnityValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "sixdof_validation_extensions",
+      "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavSixDoFBodyValidationExtensions.cs",
+      "git_blob": "c10ca696fde60b1de529bd78398735d9f5993eec",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "validation extension/helper methods",
+      "counted": false,
+      "reason": "helper extensions consumed by validation suites; no independent result contract",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "aircraft_identity_ownership_scan",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavAircraftIdentityOwnershipScan.cs",
+      "git_blob": "3a6548d452199a09f5fa82d47b9cbf8c42d49b8b",
+      "classification": "UNITY_REQUIRED",
+      "role": "aircraft identity ownership scan",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavAircraftIdentityOwnershipScan",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "aircraft_identity_validation",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavAircraftIdentityValidation.cs",
+      "git_blob": "ce912b5a4f8681d4a45920edf6a40755198e1bd2",
+      "classification": "UNITY_REQUIRED",
+      "role": "aircraft identity validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavAircraftIdentityValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "aircraft_scene_wiring_scan",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavAircraftSceneWiringScan.cs",
+      "git_blob": "ce0c4fbb904e7aec69a763b60fb289931ad12f0e",
+      "classification": "UNITY_REQUIRED",
+      "role": "aircraft scene wiring scan",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavAircraftSceneWiringScan",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "aircraft_startup_order",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavAircraftStartupOrderValidation.cs",
+      "git_blob": "ce69c9d95523ee6306390adca3599fa45e68973f",
+      "classification": "UNITY_REQUIRED",
+      "role": "aircraft startup-order validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavAircraftStartupOrderValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "aoa_limiter_ownership",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavAoALimiterOwnershipValidation.cs",
+      "git_blob": "1a1a7f740fc3bd09d31b82d99fb2c006eef4dd35",
+      "classification": "UNITY_REQUIRED",
+      "role": "AoA limiter ownership validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavAoALimiterOwnershipValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "envelope_protection_ownership",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavEnvelopeProtectionOwnershipValidation.cs",
+      "git_blob": "e97484758d1c25926d0a9443f8afbfdfd21b1fea",
+      "classification": "UNITY_REQUIRED",
+      "role": "envelope-protection ownership validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavEnvelopeProtectionOwnershipValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "phase5a_ownership",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavPhase5AOwnershipValidation.cs",
+      "git_blob": "cff7d124ba62a228e146b1d2d520143a7eac5c45",
+      "classification": "UNITY_REQUIRED",
+      "role": "Phase 5A ownership validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavPhase5AOwnershipValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "phase5_writer_scan",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavPhase5WriterScan.cs",
+      "git_blob": "a6efa352058c33c0a082256096ea394a7fa6c24c",
+      "classification": "UNITY_REQUIRED",
+      "role": "Phase 5 writer scan",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavPhase5WriterScan",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "turn_dynamics_migration",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavTurnDynamicsMigrationValidation.cs",
+      "git_blob": "d3e2dd8615b8bd700a90094f13848a49a85ad341",
+      "classification": "UNITY_REQUIRED",
+      "role": "turn-dynamics migration validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavTurnDynamicsMigrationValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "turn_dynamics_phase4b",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavTurnDynamicsPhase4BValidation.cs",
+      "git_blob": "842839fb1a4be9d49521b791815fe7d1ed63b1b6",
+      "classification": "UNITY_REQUIRED",
+      "role": "turn-dynamics Phase 4B validation",
+      "counted": true,
+      "execution": {
+        "kind": "unity_sync_adapter",
+        "type": "MavTurnDynamicsPhase4BValidation",
+        "method": "AUTO"
+      },
+      "execution_mode": "UNITY_EDITOR_SYNC"
+    },
+    {
+      "id": "phase5_checkpoint_wrapper",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavPhase5CheckpointValidation.cs",
+      "git_blob": "e14aae9eb4ad99a6b38791099abe913ab859173d",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "aggregate Phase 5 checkpoint wrapper",
+      "counted": false,
+      "reason": "aggregate wrapper over constituent validation surfaces; excluded to prevent duplicate counting",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "scene_pack_editor",
+      "path": "Assets/MaverickFresh/Scripts/Editor/MavScenePackEditor.cs",
+      "git_blob": "fd5005914387be3434c26f426cf84268273e3dc0",
+      "classification": "EXCLUDED_WITH_REASON",
+      "role": "scene pack editor utility",
+      "counted": false,
+      "reason": "editor tooling, not an FDM assertion suite; tracked explicitly because it resides in the agreed Editor inventory root",
+      "execution_mode": "EXCLUDED"
+    },
+    {
+      "id": "tp1538_python_runtime_semantics",
+      "path": "Tools/validate_f16_tp1538_runtime_semantics.py",
+      "git_blob": "050f3238f241e471e6b210991ada119708c019ae",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "TP-1538 Python runtime-semantics validator",
+      "counted": false,
+      "execution": {
+        "kind": "python",
+        "args": []
+      },
+      "execution_mode": "PYTHON"
+    },
+    {
+      "id": "tp1538_python_thrust_deck",
+      "path": "Tools/validate_f16_tp1538_thrust_deck.py",
+      "git_blob": "632054a0a44d39e6cc568deca3a476029a290fdb",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "TP-1538 Python thrust-deck validator",
+      "counted": false,
+      "execution": {
+        "kind": "python",
+        "args": []
+      },
+      "execution_mode": "PYTHON"
+    },
+    {
+      "id": "tp1538_python_thrust_deck_independent",
+      "path": "Tools/validate_f16_tp1538_thrust_deck_independent.py",
+      "git_blob": "f25fc59f139a1dc17b6631b988a16f5fd9fc0fdb",
+      "classification": "OFFLINE_ELIGIBLE",
+      "role": "independent TP-1538 Python thrust-deck validator",
+      "counted": false,
+      "execution": {
+        "kind": "python",
+        "args": []
+      },
+      "execution_mode": "PYTHON"
+    }
+  ],
+  "mutation_v1": {
+    "state": "CANDIDATE",
+    "policy": "NEW_ONLY",
+    "historical_probes_imported": false,
+    "probes": [],
+    "empty_probe_behavior": "-RunMutations fails closed until at least one reviewed NEW exact-preimage probe is present",
+    "workspace": "git archive authority commit -> temporary directory; never mutate authority checkout"
+  },
+  "classification_semantics": {
+    "OFFLINE_ELIGIBLE": "Validator semantics are runnable without Unity Editor and without PhysX. This is a semantic classification, not a statement about which transport this candidate runner currently uses.",
+    "UNITY_REQUIRED": "Validator semantics require real UnityEngine object/component/editor/runtime behavior and/or Play Mode/PhysX; Unity stubs are not valid execution evidence.",
+    "EXCLUDED_WITH_REASON": "Tracked surface is inventoried and hash-verified but is not an independent counted validator; a reason is mandatory."
+  },
+  "execution_modes": {
+    "UNITY_EDITOR_SYNC": "Run synchronously in the real Unity Editor through the Baseline v1 adapter; no Play Mode transition is required.",
+    "UNITY_PLAYMODE": "Run through the existing or adapter-driven real Unity Play Mode state machine/PhysX scheduler path.",
+    "PYTHON": "Run directly under the configured Python interpreter.",
+    "EXCLUDED": "Not independently executed; retained in inventory with an explicit reason."
+  }
+}
