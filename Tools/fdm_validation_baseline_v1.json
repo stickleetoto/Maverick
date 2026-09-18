@@ -30,7 +30,8 @@
   "expected_authority_cs_surface_count": 37,
   "expected_python_surface_count": 3,
   "enumeration_scope": "AUTHORITY_AND_HEAD",
-  "enumeration_note": "The runner enumerates the declared roots at the authority commit AND at the checkout HEAD. A C# surface added to an authority root after the authority commit is a hard failure until it is listed here, so post-authority additions cannot be invisible."
+  "enumeration_note": "The runner enumerates the declared roots at the authority commit AND at the checkout HEAD. The authority enumeration is a subset check - everything frozen there must still be listed - while the HEAD enumeration is exact, so a C# surface added to an authority root after the authority commit is a hard failure until it is listed here. Post-authority additions cannot be invisible.",
+  "expected_head_cs_surface_count": 38
  },
  "implementation_paths": [
   "Tools/run_fdm_validation.ps1",
@@ -565,6 +566,17 @@
    "role": "custom Inspector for MavSixDoFBody",
    "counted": false,
    "reason": "editor-only custom Inspector: it draws existing debug fields of MavSixDoFBody to reduce repaint cost and contains no assertions, so it is not an independent assertion surface",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "fdm_validation_batch_adapter",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavFdmValidationBatchAdapter.cs",
+   "git_blob": "e06156313dd15ba41fb65b9c013021b0fbd5d374",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "headless orchestration adapter for Baseline v1",
+   "counted": false,
+   "reason": "Baseline v1's own headless entry point, already declared in implementation_paths. It invokes existing validators and does not change their semantics, contains no assertions of its own, and postdates the authority commit, so it is pinned at HEAD rather than at the frozen authority tree",
    "execution_mode": "EXCLUDED"
   }
  ],

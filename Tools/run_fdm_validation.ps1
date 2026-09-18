@@ -87,9 +87,14 @@ function Assert-AuthorityAndInventory {
     if ($LASTEXITCODE -ne 0) { throw "git ls-tree failed while enumerating C# validation surfaces" }
     $manifestCs = @($Script:Manifest.surfaces | Where-Object { $_.path -like '*.cs' } |
         ForEach-Object { [string]$_.path } | Sort-Object)
-    $csDelta = Compare-Object -ReferenceObject $authorityCs -DifferenceObject $manifestCs
-    if ($csDelta) {
-        throw "missing/unlisted C# validation surface(s):`n$($csDelta | Out-String)"
+    # The frozen inventory must remain fully listed. This is a SUBSET check, not equality: the
+    # manifest is allowed to list surfaces that postdate the authority commit, because HEAD may be a
+    # descendant and the HEAD check below is what holds the manifest to the actual checkout. Anything
+    # frozen at the authority that is no longer listed is still a hard failure.
+    $csDelta = @(Compare-Object -ReferenceObject $authorityCs -DifferenceObject $manifestCs |
+        Where-Object { $_.SideIndicator -eq '<=' } | ForEach-Object { $_.InputObject })
+    if ($csDelta.Count -gt 0) {
+        throw "C# validation surface(s) frozen at the authority commit but missing from the manifest:`n    $($csDelta -join "`n    ")"
     }
     if ($authorityCs.Count -ne [int]$Script:Manifest.inventory.expected_authority_cs_surface_count) {
         throw "authority C# surface count drift: expected $($Script:Manifest.inventory.expected_authority_cs_surface_count), found $($authorityCs.Count)"
@@ -104,6 +109,12 @@ function Assert-AuthorityAndInventory {
     $headCs = @(& git -C $Script:RepoRoot ls-tree -r --name-only HEAD -- @roots |
         Where-Object { $_ -like '*.cs' } | Sort-Object)
     if ($LASTEXITCODE -ne 0) { throw "git ls-tree failed while enumerating C# validation surfaces at HEAD" }
+    if ($null -ne $Script:Manifest.inventory.PSObject.Properties['expected_head_cs_surface_count']) {
+        $expectedHead = [int]$Script:Manifest.inventory.expected_head_cs_surface_count
+        if ($headCs.Count -ne $expectedHead) {
+            throw "HEAD C# surface count drift: expected $expectedHead, found $($headCs.Count)"
+        }
+    }
     $headDelta = Compare-Object -ReferenceObject $headCs -DifferenceObject $manifestCs
     if ($headDelta) {
         $added = @($headDelta | Where-Object { $_.SideIndicator -eq '<=' } | ForEach-Object { $_.InputObject })
@@ -123,9 +134,10 @@ function Assert-AuthorityAndInventory {
     if ($LASTEXITCODE -ne 0) { throw "git ls-tree failed while enumerating Python validators" }
     $manifestPy = @($Script:Manifest.surfaces | Where-Object { $_.path -like '*.py' } |
         ForEach-Object { [string]$_.path } | Sort-Object)
-    $pyDelta = Compare-Object -ReferenceObject $toolFiles -DifferenceObject $manifestPy
-    if ($pyDelta) {
-        throw "missing/unlisted TP-1538 Python validator(s):`n$($pyDelta | Out-String)"
+    $pyDelta = @(Compare-Object -ReferenceObject $toolFiles -DifferenceObject $manifestPy |
+        Where-Object { $_.SideIndicator -eq '<=' } | ForEach-Object { $_.InputObject })
+    if ($pyDelta.Count -gt 0) {
+        throw "TP-1538 Python validator(s) frozen at the authority commit but missing from the manifest:`n    $($pyDelta -join "`n    ")"
     }
     if ($toolFiles.Count -ne [int]$Script:Manifest.inventory.expected_python_surface_count) {
         throw "authority Python validator count drift: expected $($Script:Manifest.inventory.expected_python_surface_count), found $($toolFiles.Count)"
