@@ -7,7 +7,14 @@ onto it. No radar detection, no guidance, no missile, no real-world weapon param
 |---|---|
 | Base | `0ba3f3824dcdb8a4c7f29dadcf984c4f35586ab6` (post Weapon Separation R0) |
 | Branch | `sol/target-track-core-r0` |
+| Branch HEAD | `a6fe576` |
+| **Merged** | **2026-09-18, PR #17, merge commit `735ce0665dbc1377c1595eca962bdf88a62bab9a`** |
+| **TargetTrack Core R0 authority** | **`735ce06`** — the base for Radar Core R0 and everything after |
 | Unity | `6000.3.16f1` |
+
+`735ce06` is the TargetTrack Core R0 authority. The implementation in it is **complete and closed**:
+Radar Core and later phases build on the feed contract rather than editing the owner. Issue #16
+remains **open** — lock authority has not moved, and this phase deliberately did not move it.
 
 ## 1. What exists now
 

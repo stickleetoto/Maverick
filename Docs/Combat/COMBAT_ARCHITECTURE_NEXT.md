@@ -67,7 +67,27 @@ deliberately as each lands. Relaxing it is a decision, not an accident.
 Inventory, ownership audit, three contracts, damage-contract adoption, boundary scan. No behavior
 change.
 
-### TargetTrack Core — next
+## 2.1 Standing requirement for every combat branch
+
+**Every combat branch runs the full FDM validation baseline and must report 1585 / 0 across 25
+counted suite results, from a clean committed checkout, before it is proposed for merge.**
+
+This is not a formality. Weapon Separation R0 introduced a change that no combat-side check could
+have caught - a struct field named `velocity` in a file that touches no physics, which the frozen
+Phase 5 writer scan reads as a live Rigidbody write - and only the full baseline found it. The
+combat work and the flight-dynamics ownership rules share one source tree, so combat changes can
+break flight-dynamics validation without touching flight-dynamics code.
+
+Alongside it, every combat branch also demonstrates:
+
+- the combat boundary scan passing (C-1..C-6, or the current rule set)
+- flight behavior bit-identical to its base, by deterministic trajectory comparison
+- no Missing Scripts in scenes or prefabs
+
+A relaxation of any boundary rule is an isolated, documented commit with a stated reason - never a
+side effect of the work that needed it.
+
+### TargetTrack Core — done (PR #17, authority `735ce06`)
 
 Make `MavTargetTrackData` real: something owns tracks, assigns stable ids, ages them, and drops them.
 A legacy adapter presents today's `MavCASTarget` and `MavRadarSignature` scans as tracks, so HUD and
