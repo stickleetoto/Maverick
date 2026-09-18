@@ -1,3 +1,4 @@
+using MaverickFresh.Combat;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -16,7 +17,7 @@ namespace MaverickFresh
     /// This is intentionally lightweight: health, damage, destroyed state, gizmo marker.
     /// </summary>
     [DisallowMultipleComponent]
-    public class MavCASTarget : MonoBehaviour
+    public class MavCASTarget : MonoBehaviour, IMavDamageReceiver
     {
         [Header("Target")]
         public MavCASTargetType targetType = MavCASTargetType.Truck;
@@ -59,6 +60,21 @@ namespace MaverickFresh
         public float DistanceTo(Vector3 point)
         {
             return Vector3.Distance(transform.position, point);
+        }
+
+        /// <summary>
+        /// <see cref="IMavDamageReceiver"/> implementation. Delegates to the existing
+        /// <see cref="ApplyDamage(float, string)"/> so behavior is identical whichever path a caller
+        /// takes; the hit point is ignored here because this target type has never used one.
+        /// </summary>
+        bool IMavDamageReceiver.IsDamageReceiverAlive
+        {
+            get { return !isDestroyed; }
+        }
+
+        void IMavDamageReceiver.ReceiveDamage(MavDamageInfo info)
+        {
+            ApplyDamage(info.amount, info.source);
         }
 
         public void ApplyDamage(float amount, string source)
