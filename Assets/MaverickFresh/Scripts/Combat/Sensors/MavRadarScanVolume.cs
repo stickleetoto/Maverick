@@ -135,14 +135,26 @@ namespace MaverickFresh.Combat.Sensors
 
             // Azimuth in the sensor's horizontal plane, elevation out of it. Atan2 over the projected
             // components rather than a single Vector3.Angle, because the two axes have different limits.
-            g.azimuthDeg = Mathf.Abs(Mathf.Atan2(local.x, Mathf.Max(1e-4f, local.z)) * Mathf.Rad2Deg);
+            //
+            // Atan2 is given the RAW local.z, including negatives. An earlier version clamped it with
+            // Max(1e-4f, local.z) and then "corrected" rear targets with 180 - azimuth, which silently
+            // destroyed the whole rear quadrant: clamping z to a positive epsilon made every rear
+            // target read as 90 degrees before the correction, and 180 - 90 is 90 again. A target at
+            // local (+1000, 0, -1000) - truly 135 degrees off boresight - reported 90, and one at
+            // (+100, 0, -1000), truly 174 degrees, also reported 90. A scan volume wider than 90
+            // degrees would then have admitted targets far outside its real limit.
+            //
+            // Atan2(x, z) over the unclamped components is already correct over the full circle, and
+            // its absolute value is exactly the contract's unsigned 0..180 representation: front-right
+            // and front-left both give 45, rear-right and rear-left both give 135, directly astern
+            // gives 180. No rear correction is needed, and adding one is what caused the bug.
+            g.azimuthDeg = Mathf.Abs(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg);
+
+            // Elevation is measured off the sensor's horizontal plane, so it uses the horizontal
+            // MAGNITUDE and is unaffected by whether the target is ahead or behind. The epsilon here
+            // only avoids a zero denominator for a target directly above or below.
             float horizontal = new Vector2(local.x, local.z).magnitude;
             g.elevationDeg = Mathf.Atan2(local.y, Mathf.Max(1e-4f, horizontal)) * Mathf.Rad2Deg;
-
-            // A target behind the sensor has negative local z; Atan2 above already folds that into a
-            // large azimuth, but make it explicit so a rear target can never read as boresight.
-            if (local.z < 0f)
-                g.azimuthDeg = 180f - g.azimuthDeg;
 
             g.offBoresightDeg = Vector3.Angle(Vector3.forward, local);
 

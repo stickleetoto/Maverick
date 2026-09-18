@@ -52,7 +52,7 @@ namespace MaverickFresh.Combat.Sensors
         public MavRadarScanVolume scanVolume = MavRadarScanVolume.Default;
 
         [Header("Cadence")]
-        [Tooltip("Seconds between scans. Between scans the sensor reports its last scan's contacts unchanged.")]
+        [Tooltip("Seconds between scans. One scan emits one observation batch; between scans the sensor emits nothing and the track owner ages the existing tracks.")]
         public float scanIntervalSeconds = 0.25f;
 
         [Tooltip("Rescan the scene for candidate objects at most this often. Independent of scan cadence.")]
@@ -84,6 +84,12 @@ namespace MaverickFresh.Combat.Sensors
         public float debugNearestContactRange;
         public string debugNearestContactName = "none";
 
+        /// <summary>Polls that produced no observations because no scan was due. Proves the cadence is real.</summary>
+        public int debugPollsWithoutScan;
+
+        /// <summary>Total observations emitted. Should equal the sum over actual scans, never a multiple of it.</summary>
+        public int debugObservationsEmitted;
+
         /// <summary>
         /// Radar-local keys, assigned by this sensor and meaningful only to it.
         ///
@@ -94,13 +100,39 @@ namespace MaverickFresh.Combat.Sensors
         /// reason.
         /// </summary>
         private readonly Dictionary<int, int> localKeys = new Dictionary<int, int>(64);
+
+        /// <summary>
+        /// The object each local key was issued for, so a destroyed object's entry can be pruned.
+        ///
+        /// Kept alongside rather than inside <see cref="localKeys"/> because the prune test is "has this
+        /// object been destroyed", which needs the reference, while correlation only needs the id.
+        /// </summary>
+        private readonly Dictionary<int, MavRadarSignature> keyedObjects =
+            new Dictionary<int, MavRadarSignature>(64);
         private int nextLocalKey = 1;
+
+        /// <summary>Local-key entries pruned because their object was destroyed.</summary>
+        public int DebugPrunedLocalKeys { get { return debugPrunedLocalKeys; } }
+        private int debugPrunedLocalKeys;
 
         private MavRadarSignature[] candidates = new MavRadarSignature[0];
         private readonly List<MavTrackObservation> contacts = new List<MavTrackObservation>(32);
         private float nextScanTime;
         private float nextCandidateRescanTime;
         private bool hasRescannedOnce;
+
+        /// <summary>
+        /// Test clock. Cadence is the whole point of the one-scan/one-batch rule, and editor time does
+        /// not advance between calls, so validation needs to be able to move time itself. Unset in
+        /// every normal run, where the sensor reads Time.unscaledTime.
+        /// </summary>
+        private bool useTestClock;
+        private float testClockSeconds;
+
+        private float CurrentTime
+        {
+            get { return useTestClock ? testClockSeconds : Time.unscaledTime; }
+        }
 
         public bool IsFeedActive
         {
@@ -141,27 +173,40 @@ namespace MaverickFresh.Combat.Sensors
         }
 
         /// <summary>
-        /// Reports this scan's contacts.
+        /// Emits observations for ONE actual scan, or nothing at all.
         ///
-        /// Scanning is throttled to <see cref="scanIntervalSeconds"/> independently of how often the
-        /// owner asks. Between scans the last scan's contacts are reported unchanged rather than
-        /// recomputed, which is what gives the sensor a real revisit rate instead of silently tracking
-        /// at the owner's sample rate.
+        /// ONE SCAN, ONE OBSERVATION BATCH. When a scan is due the sensor scans and emits that scan's
+        /// contacts. When no scan is due it emits ZERO observations and the track owner ages the
+        /// existing tracks normally until the next scan refreshes them.
+        ///
+        /// An earlier version replayed the last scan's cached contacts on every poll, which quietly
+        /// broke the track contract. The owner stamps `observedAtTime = now` on every observation it
+        /// receives - correctly, since an observation means "I saw this now" - so replaying one
+        /// measurement at the owner's poll rate presented a single 1 Hz radar measurement as four fresh
+        /// 4 Hz measurements. Track age never grew, and staleness and dropping were driven by how often
+        /// the owner asked rather than by when the sensor actually looked.
+        ///
+        /// Emitting nothing between scans is what makes track age mean something, and it needed no
+        /// change to the owner: an observation is now always a real measurement.
         /// </summary>
         public int CollectObservations(List<MavTrackObservation> into)
         {
             if (into == null || !IsFeedActive)
                 return 0;
 
-            if (Time.unscaledTime >= nextScanTime)
+            if (CurrentTime < nextScanTime)
             {
-                nextScanTime = Time.unscaledTime + Mathf.Max(0.02f, scanIntervalSeconds);
-                Scan();
+                debugPollsWithoutScan++;
+                return 0;
             }
+
+            nextScanTime = CurrentTime + Mathf.Max(0.02f, scanIntervalSeconds);
+            Scan();
 
             for (int i = 0; i < contacts.Count; i++)
                 into.Add(contacts[i]);
 
+            debugObservationsEmitted += contacts.Count;
             return contacts.Count;
         }
 
@@ -294,11 +339,56 @@ namespace MaverickFresh.Combat.Sensors
             int instanceId = candidate.GetInstanceID();
             int key;
             if (localKeys.TryGetValue(instanceId, out key))
+            {
+                keyedObjects[instanceId] = candidate;
                 return key;
+            }
 
             key = nextLocalKey++;
             localKeys[instanceId] = key;
+            keyedObjects[instanceId] = candidate;
             return key;
+        }
+
+        /// <summary>
+        /// Drops local keys whose object has been destroyed.
+        ///
+        /// Two reasons. The table would otherwise grow for the life of the session, and a key must never
+        /// outlive the thing it identified: a later target picking up a dead one's key would silently
+        /// continue its track. The counter never rewinds, so a new object always gets a NEW key rather
+        /// than a recycled one - which is what keeps the owner creating a new track instead of extending
+        /// the old one.
+        ///
+        /// Only DESTROYED objects are pruned, not merely absent ones. A target that is temporarily
+        /// deactivated leaves the candidate set and comes back, and it should come back as the same
+        /// radar contact rather than as a new one. Cleanup is local to this sensor: no registry, no
+        /// shared lifecycle service.
+        /// </summary>
+        private void PruneDestroyedLocalKeys()
+        {
+            if (keyedObjects.Count == 0)
+                return;
+
+            List<int> dead = null;
+            foreach (KeyValuePair<int, MavRadarSignature> entry in keyedObjects)
+            {
+                if (entry.Value == null)
+                {
+                    if (dead == null)
+                        dead = new List<int>(8);
+                    dead.Add(entry.Key);
+                }
+            }
+
+            if (dead == null)
+                return;
+
+            for (int i = 0; i < dead.Count; i++)
+            {
+                keyedObjects.Remove(dead[i]);
+                localKeys.Remove(dead[i]);
+                debugPrunedLocalKeys++;
+            }
         }
 
         private bool IsOwnAircraft(Transform candidateTransform)
@@ -341,21 +431,55 @@ namespace MaverickFresh.Combat.Sensors
         /// </summary>
         private void RescanCandidatesIfDue()
         {
-            if (hasRescannedOnce && Time.unscaledTime < nextCandidateRescanTime)
+            if (hasRescannedOnce && CurrentTime < nextCandidateRescanTime)
                 return;
 
-            nextCandidateRescanTime = Time.unscaledTime + Mathf.Max(0.1f, candidateRescanInterval);
+            nextCandidateRescanTime = CurrentTime + Mathf.Max(0.1f, candidateRescanInterval);
             hasRescannedOnce = true;
             debugCandidateRescanCount++;
 
             candidates = FindObjectsOfType<MavRadarSignature>(false);
             debugCandidateCount = candidates.Length;
+
+            // Candidate discovery is also when a destroyed object's local key stops being reachable, so
+            // it is the natural place to prune.
+            PruneDestroyedLocalKeys();
         }
 
         /// <summary>Test seam: forces one scan immediately, ignoring cadence.</summary>
         public void ScanNowForTesting()
         {
             Scan();
+        }
+
+        /// <summary>Test seam: drives the sensor from an explicit clock instead of Time.unscaledTime.</summary>
+        public void UseTestClock(float seconds)
+        {
+            useTestClock = true;
+            testClockSeconds = seconds;
+        }
+
+        /// <summary>Test seam: advances the test clock.</summary>
+        public void AdvanceTestClock(float seconds)
+        {
+            testClockSeconds += seconds;
+        }
+
+        /// <summary>Test seam: returns to real time.</summary>
+        public void ClearTestClock()
+        {
+            useTestClock = false;
+        }
+
+        /// <summary>Test seam: resets cadence so the next poll scans.</summary>
+        public void ResetCadenceForTesting()
+        {
+            nextScanTime = CurrentTime;
+            nextCandidateRescanTime = CurrentTime;
+            hasRescannedOnce = false;
+            debugPollsWithoutScan = 0;
+            debugObservationsEmitted = 0;
+            debugScanCount = 0;
         }
 
         /// <summary>Test seam: this scan's contacts, for validation to inspect.</summary>

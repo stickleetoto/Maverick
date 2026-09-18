@@ -40,8 +40,12 @@ namespace MaverickFresh.Combat.EditorTools
             report.AppendLine("=================================");
 
             ValidateGeometry(report, ref passed, ref failed);
+            ValidateRearQuadrant(report, ref passed, ref failed);
             ValidateEnvelope(report, ref passed, ref failed);
+            ValidateWideVolume(report, ref passed, ref failed);
             ValidateSensor(report, ref passed, ref failed);
+            ValidateScanCadence(report, ref passed, ref failed);
+            ValidateLocalKeyLifecycle(report, ref passed, ref failed);
             ValidateFeedSeparation(report, ref passed, ref failed);
 
             report.AppendLine("RESULT: " + (failed == 0 ? "PASS" : "FAIL")
@@ -120,6 +124,116 @@ namespace MaverickFresh.Combat.EditorTools
                 origin, facingZ, new Vector3(0f, 0f, 1000f), false, Vector3.zero, Vector3.zero);
             Record(!noVel.hasClosure && Mathf.Approximately(noVel.closureMps, 0f),
                    "R-006c", "closure is not invented when no velocity was supplied",
+                   report, ref passed, ref failed);
+        }
+
+        // ---- rear quadrant, the case the first implementation got wrong -------------------------
+        //
+        // The original Measure clamped local.z to a positive epsilon before Atan2 and then applied a
+        // "180 - azimuth" rear correction. Both halves cancelled: every rear target read as 90 degrees.
+        // The only rear case tested was directly astern, which happened to still come out at 180, so
+        // the entire rear quadrant was wrong and nothing caught it.
+        private static void ValidateRearQuadrant(StringBuilder report, ref int passed, ref int failed)
+        {
+            Quaternion facing = Quaternion.identity;
+            Vector3 origin = Vector3.zero;
+
+            Record(Mathf.Abs(Az(origin, facing, new Vector3(1000f, 0f, 1000f)) - 45f) < 0.01f,
+                   "R-040", "front-right measures 45 degrees azimuth",
+                   report, ref passed, ref failed);
+
+            Record(Mathf.Abs(Az(origin, facing, new Vector3(-1000f, 0f, 1000f)) - 45f) < 0.01f,
+                   "R-041", "front-left measures 45 degrees azimuth",
+                   report, ref passed, ref failed);
+
+            Record(Mathf.Abs(Az(origin, facing, new Vector3(1000f, 0f, -1000f)) - 135f) < 0.01f,
+                   "R-042", "rear-right measures 135 degrees azimuth, not 90",
+                   report, ref passed, ref failed);
+
+            Record(Mathf.Abs(Az(origin, facing, new Vector3(-1000f, 0f, -1000f)) - 135f) < 0.01f,
+                   "R-043", "rear-left measures 135 degrees azimuth, not 90",
+                   report, ref passed, ref failed);
+
+            Record(Mathf.Abs(Az(origin, facing, new Vector3(0f, 0f, -1000f)) - 180f) < 0.01f,
+                   "R-044", "directly astern measures 180 degrees azimuth",
+                   report, ref passed, ref failed);
+
+            // Near-astern but off axis: atan2(100, -1000) is about 174.29 degrees. The old code reported
+            // 90 here, which is the difference between "behind me" and "almost on the nose".
+            float nearAstern = Az(origin, facing, new Vector3(100f, 0f, -1000f));
+            Record(Mathf.Abs(nearAstern - 174.29f) < 0.05f,
+                   "R-045", "near-astern off-axis measures about 174 degrees, not 90",
+                   report, ref passed, ref failed);
+
+            Record(Mathf.Abs(Az(origin, facing, new Vector3(-100f, 0f, -1000f)) - nearAstern) < 0.01f,
+                   "R-045b", "near-astern is symmetric left and right",
+                   report, ref passed, ref failed);
+
+            // Azimuth must be monotonic as a target swings from the nose to astern. A sign or clamp
+            // error shows up here as a fold rather than a single wrong value.
+            float a0 = Az(origin, facing, new Vector3(0f, 0f, 1000f));
+            float a45 = Az(origin, facing, new Vector3(1000f, 0f, 1000f));
+            float a90 = Az(origin, facing, new Vector3(1000f, 0f, 0f));
+            float a135 = Az(origin, facing, new Vector3(1000f, 0f, -1000f));
+            float a180 = Az(origin, facing, new Vector3(0f, 0f, -1000f));
+            Record(a0 < a45 && a45 < a90 && a90 < a135 && a135 < a180,
+                   "R-046", "azimuth increases monotonically from boresight round to astern",
+                   report, ref passed, ref failed);
+
+            // A rotated sensor must measure the rear quadrant in its own frame. Sensor faces world +X,
+            // target sits behind-right of the sensor, so it must read 135 regardless of world axes.
+            Quaternion facingX = Quaternion.Euler(0f, 90f, 0f);
+            // Sensor forward is world +X, sensor right is world -Z. Behind-right is world (-1000, 0, +1000).
+            Record(Mathf.Abs(Az(origin, facingX, new Vector3(-1000f, 0f, 1000f)) - 135f) < 0.01f,
+                   "R-047", "a rotated sensor measures the rear quadrant in its own frame",
+                   report, ref passed, ref failed);
+
+            // Elevation must stay correct for a rear target: astern and above is still +45.
+            MavRadarGeometry rearHigh = MavRadarScanVolume.Measure(
+                origin, facing, new Vector3(0f, 1000f, -1000f), false, Vector3.zero, Vector3.zero);
+            Record(Mathf.Abs(rearHigh.elevationDeg - 45f) < 0.01f && rearHigh.azimuthDeg > 179f,
+                   "R-048", "a target astern and above reports 180 azimuth with +45 elevation",
+                   report, ref passed, ref failed);
+        }
+
+        private static float Az(Vector3 origin, Quaternion rotation, Vector3 target)
+        {
+            return MavRadarScanVolume.Measure(origin, rotation, target, false, Vector3.zero, Vector3.zero).azimuthDeg;
+        }
+
+        // ---- a wide volume must still respect its own limit -------------------------------------
+        private static void ValidateWideVolume(StringBuilder report, ref int passed, ref int failed)
+        {
+            // This is the case the azimuth bug would have let through. With a +/-100 degree volume, a
+            // target at a true 135 degrees is outside the limit - but the old code reported it as 90,
+            // which the volume would have admitted.
+            MavRadarScanVolume wide;
+            wide.minRangeMeters = 0f;
+            wide.maxRangeMeters = 50000f;
+            wide.azimuthHalfAngleDeg = 100f;
+            wide.elevationHalfAngleDeg = 60f;
+            wide = wide.Sanitized();
+
+            MavRadarGeometry rearRight = MavRadarScanVolume.Measure(
+                Vector3.zero, Quaternion.identity, new Vector3(1000f, 0f, -1000f),
+                false, Vector3.zero, Vector3.zero);
+
+            Record(rearRight.azimuthDeg > wide.azimuthHalfAngleDeg,
+                   "R-050", "a true 135 degree target is outside a 100 degree half-angle volume",
+                   report, ref passed, ref failed);
+
+            Record(!wide.Contains(rearRight, wide.EffectiveMaxRange(1f)),
+                   "R-051", "a volume wider than 90 degrees still rejects a target outside its limit",
+                   report, ref passed, ref failed);
+
+            // And it must admit one genuinely inside the wide limit: 95 degrees is inside 100.
+            MavRadarGeometry justInside = MavRadarScanVolume.Measure(
+                Vector3.zero, Quaternion.identity,
+                new Vector3(Mathf.Sin(95f * Mathf.Deg2Rad) * 1000f, 0f, Mathf.Cos(95f * Mathf.Deg2Rad) * 1000f),
+                false, Vector3.zero, Vector3.zero);
+            Record(Mathf.Abs(justInside.azimuthDeg - 95f) < 0.05f
+                   && wide.Contains(justInside, wide.EffectiveMaxRange(1f)),
+                   "R-052", "a wide volume admits a target just inside its limit, measured correctly",
                    report, ref passed, ref failed);
         }
 
@@ -326,6 +440,204 @@ namespace MaverickFresh.Combat.EditorTools
                 if (astern != null) Object.DestroyImmediate(astern);
                 if (tooFar != null) Object.DestroyImmediate(tooFar);
                 Object.DestroyImmediate(sensorHost);
+            }
+        }
+
+        // ---- one scan, one observation batch ----------------------------------------------------
+        //
+        // The bug this covers: the sensor used to replay its cached contacts on every poll. The owner
+        // stamps observedAtTime = now on every observation it receives - correctly - so one 1 Hz
+        // measurement was presented as four fresh 4 Hz measurements. Track age never grew and staleness
+        // was driven by owner polling rather than by when the sensor actually looked.
+        private static void ValidateScanCadence(StringBuilder report, ref int passed, ref int failed)
+        {
+            GameObject host = new GameObject("MavRadarCadenceHost");
+            GameObject target = null;
+            try
+            {
+                MavTargetTrackOwner owner = host.AddComponent<MavTargetTrackOwner>();
+                MavRadarSensor radar = host.AddComponent<MavRadarSensor>();
+                radar.owner = owner;
+                radar.requireLineOfSight = false;
+                radar.excludeOwnAircraft = true;
+
+                // Intentionally different cadences: radar every 1.0 s, owner polling four times faster.
+                radar.scanIntervalSeconds = 1.0f;
+                radar.candidateRescanInterval = 1.0f;
+                radar.UseTestClock(0f);
+                radar.ResetCadenceForTesting();
+
+                target = MakeMarker("CADENCE", new Vector3(0f, 0f, 4000f));
+                owner.RegisterFeed(radar);
+
+                List<MavTrackObservation> sink = new List<MavTrackObservation>();
+
+                // t = 0: a scan is due, so exactly one batch is emitted.
+                int first = radar.CollectObservations(sink);
+                Record(first == 1 && radar.debugScanCount == 1,
+                       "R-060", "the first poll performs one scan and emits one observation batch",
+                       report, ref passed, ref failed);
+
+                // t = 0.25, 0.50, 0.75: owner polls, no scan due, nothing emitted.
+                int emittedBetween = 0;
+                for (int i = 0; i < 3; i++)
+                {
+                    radar.AdvanceTestClock(0.25f);
+                    sink.Clear();
+                    emittedBetween += radar.CollectObservations(sink);
+                }
+                Record(emittedBetween == 0,
+                       "R-061", "polls between scans emit zero observations, so nothing is replayed",
+                       report, ref passed, ref failed);
+                Record(radar.debugScanCount == 1,
+                       "R-061b", "polls between scans perform no additional scan",
+                       report, ref passed, ref failed);
+                Record(radar.debugPollsWithoutScan == 3,
+                       "R-061c", "the suppressed polls are counted, so the cadence is observable",
+                       report, ref passed, ref failed);
+
+                // t = 1.0: the next scan is due and refreshes.
+                radar.AdvanceTestClock(0.25f);
+                sink.Clear();
+                int second = radar.CollectObservations(sink);
+                Record(second == 1 && radar.debugScanCount == 2,
+                       "R-062", "the next due scan emits a fresh observation batch",
+                       report, ref passed, ref failed);
+
+                // Over four seconds of polling at 4 Hz there must be about four scans, not sixteen.
+                for (int i = 0; i < 12; i++)
+                {
+                    radar.AdvanceTestClock(0.25f);
+                    sink.Clear();
+                    radar.CollectObservations(sink);
+                }
+                Record(radar.debugScanCount == 5,
+                       "R-063", "four seconds of 4 Hz polling produces five 1 Hz scans, not sixteen",
+                       report, ref passed, ref failed);
+                Record(radar.debugObservationsEmitted == radar.debugScanCount,
+                       "R-063b", "one observation per scan for one target: emissions never multiply with poll rate",
+                       report, ref passed, ref failed);
+
+                // The owner keeps the track across quiet polls rather than losing it.
+                //
+                // Driven through the OWNER here, not by polling the radar directly. One scan produces
+                // one batch for whoever consumes it, so a direct CollectObservations would take the
+                // scan the owner was going to get - which is correct behavior and was what made an
+                // earlier version of this case fail against working code.
+                radar.ResetCadenceForTesting();
+                owner.ClearTracksForTesting();
+
+                owner.SweepNowForTesting();
+                int tracksAfterScan = owner.TrackCount;
+                Record(tracksAfterScan == 1 && owner.debugObservationsLastSweep == 1,
+                       "R-064", "an owner sweep that lands on a due scan receives one observation and one track",
+                       report, ref passed, ref failed);
+
+                radar.AdvanceTestClock(0.25f);
+                owner.SweepNowForTesting();
+                Record(owner.debugObservationsLastSweep == 0,
+                       "R-064b", "an owner sweep between radar scans receives no observation",
+                       report, ref passed, ref failed);
+                Record(owner.TrackCount == 1,
+                       "R-064c", "the track owner keeps the track across polls that carried no observation",
+                       report, ref passed, ref failed);
+
+                radar.AdvanceTestClock(1.0f);
+                owner.SweepNowForTesting();
+                Record(owner.debugObservationsLastSweep == 1 && owner.TrackCount == 1,
+                       "R-064d", "the next due radar scan refreshes the same track rather than adding one",
+                       report, ref passed, ref failed);
+
+                // A disabled radar emits nothing even when a scan would be due.
+                radar.AdvanceTestClock(10f);
+                radar.enableRadar = false;
+                sink.Clear();
+                Record(radar.CollectObservations(sink) == 0,
+                       "R-065", "a disabled radar emits nothing even when a scan is due",
+                       report, ref passed, ref failed);
+                radar.enableRadar = true;
+                radar.ClearTestClock();
+            }
+            finally
+            {
+                if (target != null) Object.DestroyImmediate(target);
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        // ---- radar-local key lifecycle ----------------------------------------------------------
+        private static void ValidateLocalKeyLifecycle(StringBuilder report, ref int passed, ref int failed)
+        {
+            GameObject host = new GameObject("MavRadarKeyLifecycleHost");
+            GameObject a = null;
+            GameObject b = null;
+            try
+            {
+                MavTargetTrackOwner owner = host.AddComponent<MavTargetTrackOwner>();
+                MavRadarSensor radar = host.AddComponent<MavRadarSensor>();
+                radar.owner = owner;
+                radar.requireLineOfSight = false;
+                radar.scanIntervalSeconds = 1.0f;
+                radar.candidateRescanInterval = 1.0f;
+                radar.UseTestClock(0f);
+                radar.ResetCadenceForTesting();
+                owner.RegisterFeed(radar);
+
+                a = MakeMarker("TARGET-A", new Vector3(0f, 0f, 4000f));
+
+                // Driven through the owner. The radar's own last-scan contacts are read for the key,
+                // rather than polling the radar separately: one scan yields one batch, so a second
+                // consumer would take the observation the owner needed.
+                owner.SweepNowForTesting();
+                Record(radar.ContactCount == 1, "R-070", "target A is detected",
+                       report, ref passed, ref failed);
+                int keyA = radar.ContactCount == 1 ? radar.GetContact(0).sourceKey : 0;
+
+                int trackA;
+                bool haveTrackA = owner.TryResolveTrackId(radar, keyA, out trackA);
+                Record(haveTrackA && trackA != 0,
+                       "R-070b", "target A has a track",
+                       report, ref passed, ref failed);
+
+                // A is destroyed and a different object takes its place.
+                Object.DestroyImmediate(a);
+                a = null;
+                radar.AdvanceTestClock(1.5f);
+                b = MakeMarker("TARGET-B", new Vector3(0f, 0f, 4200f));
+
+                owner.SweepNowForTesting();
+                Record(radar.ContactCount == 1, "R-071", "target B is detected after A was destroyed",
+                       report, ref passed, ref failed);
+                int keyB = radar.ContactCount == 1 ? radar.GetContact(0).sourceKey : 0;
+
+                Record(keyB != 0 && keyB != keyA,
+                       "R-072", "target B does not inherit A's radar-local key",
+                       report, ref passed, ref failed);
+
+                Record(radar.DebugPrunedLocalKeys >= 1,
+                       "R-073", "the destroyed target's local key was pruned rather than retained forever",
+                       report, ref passed, ref failed);
+
+                int trackB;
+                bool haveTrackB = owner.TryResolveTrackId(radar, keyB, out trackB);
+                Record(haveTrackB && trackB != 0 && (!haveTrackA || trackB != trackA),
+                       "R-074", "B gets its own track instead of continuing A's",
+                       report, ref passed, ref failed);
+
+                // A's key must no longer resolve to anything, so nothing can address the dead target.
+                int strayA;
+                Record(keyA == 0 || !owner.TryResolveTrackId(radar, keyA, out strayA)
+                       || strayA == trackA,
+                       "R-074b", "A's pruned key cannot resolve to B's track",
+                       report, ref passed, ref failed);
+
+                radar.ClearTestClock();
+            }
+            finally
+            {
+                if (a != null) Object.DestroyImmediate(a);
+                if (b != null) Object.DestroyImmediate(b);
+                Object.DestroyImmediate(host);
             }
         }
 

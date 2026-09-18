@@ -51,10 +51,33 @@ consumer. This one reports only what survives
 - a **range envelope** — minimum and maximum, the maximum scaled by target size
 - a **scan volume** — separate azimuth and elevation half-angles
 - optional **line-of-sight gating** against a configurable blocker mask
-- its own **scan cadence**, independent of how often the owner asks
+- its own **scan cadence**: one scan emits one observation batch, and between scans the sensor emits
+  **nothing** (§2.1)
 
 so a target behind the aircraft, too close, too far, or behind terrain is **genuinely not known**.
 That is the first time anything in Maverick can represent that.
+
+## 2.1 One scan, one observation batch
+
+When a scan is due the sensor scans and emits that scan's contacts. When no scan is due it emits
+**zero** observations, and the track owner ages the existing tracks until the next scan refreshes
+them.
+
+This is not a detail. `MavTargetTrackOwner` stamps `observedAtTime = now` on every observation it
+receives — correctly, because an observation means "I saw this now". So a sensor that re-reports the
+same measurement on every poll presents one 1 Hz measurement as four fresh 4 Hz measurements: track
+age never grows, and staleness and dropping end up driven by how often the *owner* asks rather than by
+when the *sensor* looked. An earlier version of this sensor did exactly that by replaying cached
+contacts, which made `observedAtTime` mean the wrong thing.
+
+Emitting nothing between scans is what makes track age meaningful, and it required **no change to the
+owner**: an observation is now always a real measurement. `debugPollsWithoutScan` counts the
+suppressed polls so the cadence is observable rather than assumed.
+
+One consequence worth knowing: **one scan yields one batch for whoever consumes it.** A second
+consumer polling the sensor directly takes the observation the owner would have received. That is
+correct — a measurement is not a broadcast — and it is what made two early versions of the validation
+harness fail against working code.
 
 Azimuth and elevation are separate limits rather than one cone angle, because a real scan volume is
 wider than it is tall and a single cone cannot express that. Rejections are counted **per reason**
@@ -131,7 +154,7 @@ seeker type appears while the list still forbids it, the boundary really has bee
 | Check | Result |
 |---|---|
 | Compile | **PASS**, 0 `error CS` |
-| Radar Core validation | **PASS 39/0** |
+| Radar Core validation | **PASS 71/0** |
 | TargetTrack validation (unchanged) | **PASS 35/0** |
 | Combat boundary scan, after the C-5 update | **PASS 3/0** |
 | Full FDM baseline | **PASS — 1585 / 0 across 25 counted suite results** |
@@ -142,7 +165,7 @@ seeker type appears while the list still forbids it, the boundary really has bee
 | Disabling radar leaves legacy unchanged | **PASS** — 0 scans and 0 sweeps after disable, legacy still registered |
 | No Missing Scripts | **PASS** |
 
-The 39 assertions split three ways:
+The 71 assertions split five ways:
 
 - **Geometry (R-001…R-006c)** against `MavRadarScanVolume.Measure` directly — positions and a rotation
   in, measurement out, so no scene, physics or running game is involved. Boresight, left/right
@@ -153,11 +176,67 @@ The 39 assertions split three ways:
   limit, azimuth and elevation as *independent* limits rather than one cone, fourth-root size scaling
   including the exact sixteen-times-doubles check, quality falloff with range and with angle staying
   inside [0,1], and a nonsense envelope being clamped instead of producing negative geometry.
+- **Rear quadrant and wide volumes (R-040…R-052)** — the geometry defect found in review, §9.1.
+- **Scan cadence (R-060…R-065)** and **key lifecycle (R-070…R-074b)** — the other two review items.
 - **Sensor and integration (R-020…R-032)** — envelope filtering against synthetic markers, ownship
   rejection, per-reason rejection counters, `Radar` provenance, never-`Locked`, local key stability
   across scans, keys being a small counter rather than an instance id, the disabled path producing
   nothing, throttled candidate discovery, two feeds with identical local keys producing separate
   tracks with distinct provenance, and the legacy track surviving radar unregistration.
+
+## 9.1 Two defects found in review
+
+### Rear-quadrant azimuth was wrong — BLOCKER, fixed
+
+`Measure` clamped `local.z` with `Mathf.Max(1e-4f, local.z)` before `Atan2`, then "corrected" rear
+targets with `180 - azimuth`. Both halves cancelled: clamping z to a positive epsilon made every rear
+target read 90 degrees, and `180 - 90` is 90 again. **The entire rear quadrant reported 90 degrees
+regardless of true bearing.**
+
+| target (local x, z) | true azimuth | reported before |
+|---|---|---|
+| +1000, −1000 | 135° | **90°** |
+| −1000, −1000 | 135° | **90°** |
+| +100, −1000 | 174.3° | **90°** |
+| 0, −1000 | 180° | 180° ✓ |
+
+The only rear case the original 39 assertions covered was directly astern, which came out at 180 by
+coincidence — so the bug sat behind a passing test. It also had a real consequence: a scan volume wider
+than ±90° would have **admitted** a target at a true 135°, because the reported 90° was inside the
+limit.
+
+Fixed by giving `Atan2` the raw, unclamped `local.z`. `Abs(Atan2(x, z))` is already correct over the
+full circle and is exactly the contract's unsigned 0–180 representation, so the rear correction was
+deleted rather than repaired — adding it was the mistake. Elevation was already correct, since it uses
+the horizontal *magnitude* and does not care whether the target is ahead or behind.
+
+Covered by R-040…R-048 and R-050…R-052: all four quadrants at 45°/135°, directly astern, near-astern
+off-axis at 174°, left/right symmetry, **monotonicity** from nose to astern (which catches a fold that
+any single-value check would miss), a rotated sensor measuring the rear quadrant in its own frame,
+astern-and-above keeping +45° elevation, and a ±100° volume rejecting a true 135° target while
+admitting a true 95° one.
+
+### Cached contacts falsely refreshed observation time — BLOCKER, fixed
+
+See §2.1. Covered by R-060…R-065: one batch per due scan, zero emitted between scans, suppressed polls
+counted, four seconds of 4 Hz polling producing five 1 Hz scans rather than sixteen, emissions never
+multiplying with poll rate, the owner keeping its track across quiet polls, the next due scan
+refreshing the same track rather than adding one, and a disabled radar emitting nothing even when a
+scan is due.
+
+### Radar-local key lifecycle — reviewed and closed
+
+`localKeys` grew for the life of the session, keyed by instance id, with no entry ever removed. The
+table now prunes entries whose object has been **destroyed**, checked on candidate discovery, and the
+key counter never rewinds — so a new target always receives a new key rather than a recycled one, and
+the owner creates a new track instead of extending a dead target's.
+
+Only destroyed objects are pruned, not merely absent ones: a temporarily deactivated target leaves the
+candidate set and comes back, and it should come back as the same contact. Cleanup is local to
+`MavRadarSensor` — no registry, no shared lifecycle service.
+
+Covered by R-070…R-074b: A detected and tracked, A destroyed, B appearing, B not inheriting A's key,
+the stale entry pruned, B getting its own track, and A's pruned key not resolving to B's track.
 
 ## 10. Known limitations
 
