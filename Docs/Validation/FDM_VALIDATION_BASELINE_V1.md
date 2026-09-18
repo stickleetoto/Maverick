@@ -5,6 +5,18 @@
 **Execution status:** `PASS` — runner verdict `PASS`, exit 0, no fatal error
 **Result:** 1585 passed / 0 failed across 25 counted suite results (28 suites, none non-PASS)
 **Last executed:** 2026-09-18, Unity `6000.3.16f1`, from a fully committed checkout with no tracked content changes and no non-ignored untracked files
+**Authoritative baseline mainline:** `026a1a28ff5d4db836e9bff753d3b5d8d7276890` (merge of PR #13)
+
+`026a1a2` is the authoritative FDM validation baseline: the first `main` that carries all six
+implementation files, so a validation result is reproducible from committed repository state
+alone. Later FDM work states its evidence against this commit or a descendant.
+
+The manifest's `authority_commit` deliberately stays at `ef25b91`, one commit behind. The
+authority freezes the validation inventory and is required to be an **ancestor** of `HEAD`, not
+to equal it, and `ef25b91` is the commit the PASS above was actually executed against. Moving
+the pin to `026a1a2` would claim a frozen inventory at a commit where nothing was run, and buy
+nothing: no validation surface differs between the two, and the `HEAD` enumeration already
+rejects anything added since.
 
 This package defines a fail-closed, executable candidate for the current Maverick flight-dynamics validation baseline. It does **not** freeze a result and it does **not** promote historical Phase 5 totals into current expectations.
 
