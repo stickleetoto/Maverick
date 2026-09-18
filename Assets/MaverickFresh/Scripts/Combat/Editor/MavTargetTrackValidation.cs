@@ -25,9 +25,10 @@ namespace MaverickFresh.Combat.EditorTools
         {
             public readonly List<MavTrackObservation> pending = new List<MavTrackObservation>();
             public bool active = true;
+            public MavTrackSource feedSource = MavTrackSource.Legacy;
 
             public bool IsFeedActive { get { return active; } }
-            public MavTrackSource FeedSource { get { return MavTrackSource.Legacy; } }
+            public MavTrackSource FeedSource { get { return feedSource; } }
 
             public int CollectObservations(List<MavTrackObservation> into)
             {
@@ -150,13 +151,13 @@ namespace MaverickFresh.Combat.EditorTools
 
                 // T-008 resolving a source key back to a track id works, and an unknown key does not.
                 int resolved;
-                bool ok = owner.TryResolveTrackId(MavTrackSource.Legacy, 404, out resolved);
+                bool ok = owner.TryResolveTrackId(feed, 404, out resolved);
                 Record(ok && resolved == owner.GetTrack(0).trackId,
                        "T-008", "a known source key resolves to its track id",
                        report, ref passed, ref failed);
 
                 int unresolved;
-                bool miss = owner.TryResolveTrackId(MavTrackSource.Legacy, 999999, out unresolved);
+                bool miss = owner.TryResolveTrackId(feed, 999999, out unresolved);
                 Record(!miss && unresolved == 0, "T-008b", "an unknown source key resolves to nothing",
                        report, ref passed, ref failed);
 
@@ -200,6 +201,105 @@ namespace MaverickFresh.Combat.EditorTools
                        "T-013", "age is measured from the observation time and never negative",
                        report, ref passed, ref failed);
 
+                // ---- feed identity is part of correlation authority --------------------------------
+                //
+                // The bug this covers: correlating on (source CATEGORY, sourceKey) merges two
+                // different objects the moment two feeds of the same category pick the same local key.
+                // Two radars are both MavTrackSource.Radar, so the category cannot separate them.
+                owner.ClearTracksForTesting();
+                owner.UnregisterFeed(feed);
+
+                ScriptedFeed radarA = new ScriptedFeed();
+                ScriptedFeed radarB = new ScriptedFeed();
+                radarA.feedSource = MavTrackSource.Radar;
+                radarB.feedSource = MavTrackSource.Radar;
+                owner.RegisterFeed(radarA);
+                owner.RegisterFeed(radarB);
+
+                Record(owner.GetFeedId(radarA) != 0
+                       && owner.GetFeedId(radarB) != 0
+                       && owner.GetFeedId(radarA) != owner.GetFeedId(radarB),
+                       "T-016", "two feeds sharing a FeedSource still get distinct feed identities",
+                       report, ref passed, ref failed);
+
+                radarA.Set(7, new Vector3(0f, 0f, 0f), false, Vector3.zero, MavTrackQuality.Coarse);
+                radarB.Set(7, new Vector3(1000f, 0f, 0f), false, Vector3.zero, MavTrackQuality.Coarse);
+                owner.SweepNowForTesting();
+
+                Record(owner.TrackCount == 2,
+                       "T-017", "two feeds emitting the same sourceKey produce two distinct tracks",
+                       report, ref passed, ref failed);
+
+                int idA, idB;
+                bool okA = owner.TryResolveTrackId(radarA, 7, out idA);
+                bool okB = owner.TryResolveTrackId(radarB, 7, out idB);
+                Record(okA && okB && idA != 0 && idB != 0 && idA != idB,
+                       "T-017b", "each feed's key resolves to its own track id, not the other's",
+                       report, ref passed, ref failed);
+
+                radarA.Set(7, new Vector3(0f, 0f, 25f), false, Vector3.zero, MavTrackQuality.Coarse);
+                radarB.Set(7, new Vector3(1000f, 0f, 25f), false, Vector3.zero, MavTrackQuality.Coarse);
+                owner.SweepNowForTesting();
+
+                int idA2, idB2;
+                owner.TryResolveTrackId(radarA, 7, out idA2);
+                owner.TryResolveTrackId(radarB, 7, out idB2);
+                Record(owner.TrackCount == 2 && idA2 == idA && idB2 == idB,
+                       "T-018", "re-observation from each feed keeps that feed's own stable track id",
+                       report, ref passed, ref failed);
+
+                MavTargetTrackData stamped;
+                bool haveStamped = owner.TryGetTrackById(idA, out stamped);
+                Record(haveStamped && stamped.source == MavTrackSource.Radar,
+                       "T-019", "provenance is stamped from the registered feed",
+                       report, ref passed, ref failed);
+
+                int feedIdOfTrack;
+                Record(owner.TryGetTrackFeedId(idA, out feedIdOfTrack)
+                       && feedIdOfTrack == owner.GetFeedId(radarA),
+                       "T-019b", "a track reports which feed produced it",
+                       report, ref passed, ref failed);
+
+                int mismatchesBefore = owner.debugProvenanceMismatches;
+                MavTrackObservation lying = new MavTrackObservation();
+                lying.sourceKey = 8;
+                lying.source = MavTrackSource.Datalink;
+                lying.quality = MavTrackQuality.Coarse;
+                lying.position = new Vector3(0f, 0f, 50f);
+                lying.displayName = "liar";
+                radarA.pending.Clear();
+                radarA.pending.Add(lying);
+                radarB.pending.Clear();
+                owner.SweepNowForTesting();
+
+                int lyingId;
+                MavTargetTrackData lyingTrack;
+                Record(owner.TryResolveTrackId(radarA, 8, out lyingId)
+                       && owner.TryGetTrackById(lyingId, out lyingTrack)
+                       && lyingTrack.source == MavTrackSource.Radar
+                       && owner.debugProvenanceMismatches == mismatchesBefore + 1,
+                       "T-020", "an observation claiming the wrong source is counted and overridden by the feed",
+                       report, ref passed, ref failed);
+
+                owner.UnregisterFeed(radarA);
+                int stillB;
+                Record(owner.TryResolveTrackId(radarB, 7, out stillB) && stillB == idB,
+                       "T-021", "unregistering one feed leaves the other feed's resolution intact",
+                       report, ref passed, ref failed);
+
+                radarB.Set(7, new Vector3(1000f, 0f, 60f), false, Vector3.zero, MavTrackQuality.Coarse);
+                owner.SweepNowForTesting();
+                int afterB;
+                Record(owner.TryResolveTrackId(radarB, 7, out afterB) && afterB == idB,
+                       "T-021b", "the remaining feed keeps its track id across a later sweep",
+                       report, ref passed, ref failed);
+
+                int idBeforeCycle = owner.GetFeedId(radarA);
+                owner.RegisterFeed(radarA);
+                Record(owner.GetFeedId(radarA) == idBeforeCycle,
+                       "T-022", "a feed that re-registers keeps its original feed identity",
+                       report, ref passed, ref failed);
+
                 // T-014 the engagement view reports disagreement only when authorities differ.
                 MavEngagementView view = host.AddComponent<MavEngagementView>();
                 view.PublishDesignation(7, "a");
@@ -234,6 +334,41 @@ namespace MaverickFresh.Combat.EditorTools
                 Record(view.PrimaryTrackId == 0 && view.claimingAuthorityCount == 0,
                        "T-015d", "a cleared view claims nothing",
                        report, ref passed, ref failed);
+
+                // ---- legacy feed: the rescan throttle must not depend on finding anything ----------
+                //
+                // The bug this covers: the time gate originally also required a non-empty cached
+                // marker set, so a scene with ZERO targets re-swept on every observation sample rather
+                // than at markerRescanInterval - the one case where the sweep buys nothing at all.
+                GameObject feedHost = new GameObject("MavLegacyFeedValidationHost");
+                try
+                {
+                    MaverickFresh.Combat.Legacy.MavLegacyTargetObservationFeed legacyFeed =
+                        feedHost.AddComponent<MaverickFresh.Combat.Legacy.MavLegacyTargetObservationFeed>();
+                    legacyFeed.markerRescanInterval = 30f;
+
+                    List<MavTrackObservation> sink = new List<MavTrackObservation>();
+
+                    legacyFeed.CollectObservations(sink);
+                    int afterFirst = legacyFeed.debugRescanCount;
+
+                    // Several more collects inside the interval. Editor time does not advance between
+                    // them, so all of these are within the throttle window.
+                    for (int i = 0; i < 5; i++)
+                        legacyFeed.CollectObservations(sink);
+
+                    Record(afterFirst == 1, "T-023",
+                           "the legacy feed sweeps the scene once on its first collect",
+                           report, ref passed, ref failed);
+
+                    Record(legacyFeed.debugRescanCount == 1, "T-024",
+                           "further collects inside the rescan interval do not re-sweep, even with zero markers found",
+                           report, ref passed, ref failed);
+                }
+                finally
+                {
+                    Object.DestroyImmediate(feedHost);
+                }
             }
             finally
             {

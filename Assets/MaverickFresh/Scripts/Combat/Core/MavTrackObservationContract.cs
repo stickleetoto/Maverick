@@ -17,13 +17,24 @@ namespace MaverickFresh.Combat
     public struct MavTrackObservation
     {
         /// <summary>
-        /// Stable key for this object, as the producing source sees it, for as long as the source
-        /// considers it the same object. The owner correlates on (source, sourceKey) and never
-        /// interprets the value. Zero is invalid.
+        /// The producing feed's own LOCAL key for this object, stable for as long as that feed
+        /// considers it the same object. Zero is invalid.
+        ///
+        /// Local is the operative word: it need only be unique within one feed, because the owner
+        /// correlates on (FEED IDENTITY, sourceKey). Two feeds may use the same value for different
+        /// objects without colliding. The owner never interprets the value, and a feed must not try to
+        /// make it globally unique - that is what the owner's <c>trackId</c> is for.
         /// </summary>
         public int sourceKey;
 
-        /// <summary>What produced this observation.</summary>
+        /// <summary>
+        /// What kind of producer this is. Category only.
+        ///
+        /// The owner does NOT trust this field: it already knows which registered feed it just
+        /// called, and stamps provenance from that feed's <see cref="IMavTargetObservationFeed.FeedSource"/>.
+        /// A disagreement is counted as a provenance mismatch and the feed's value wins. Leave it
+        /// <see cref="MavTrackSource.Unknown"/> if there is nothing meaningful to say.
+        /// </summary>
         public MavTrackSource source;
 
         /// <summary>How much the producer trusts it.</summary>
@@ -60,7 +71,12 @@ namespace MaverickFresh.Combat
         /// <summary>Whether this feed should be consulted at all right now.</summary>
         bool IsFeedActive { get; }
 
-        /// <summary>What kind of producer this is. Used for correlation keys and for display.</summary>
+        /// <summary>
+        /// What kind of producer this is: classification and provenance, such as Legacy, Radar,
+        /// InfraRed or Datalink. NOT an identity, and NOT part of the correlation key - two feeds may
+        /// legitimately share a value. The owner assigns each registered feed its own identity and
+        /// correlates on that.
+        /// </summary>
         MavTrackSource FeedSource { get; }
 
         /// <summary>Appends this sample's observations. Returns how many were appended.</summary>

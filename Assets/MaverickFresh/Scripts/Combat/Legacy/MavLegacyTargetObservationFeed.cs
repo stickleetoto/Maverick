@@ -60,9 +60,19 @@ namespace MaverickFresh.Combat.Legacy
         public int debugObservationsLastCollect;
         public bool debugRegistered;
 
+        /// <summary>
+        /// How many times the scene has actually been swept. Exposed so the rescan THROTTLE can be
+        /// validated rather than assumed: the first version of this class only honoured the timer when
+        /// a previous scan had found something, so a scene with zero targets re-swept on every
+        /// observation sample instead of at markerRescanInterval - the one case where the sweep is
+        /// pure waste.
+        /// </summary>
+        public int debugRescanCount;
+
         private MavRadarSignature[] airMarkers = new MavRadarSignature[0];
         private MavCASTarget[] groundMarkers = new MavCASTarget[0];
         private float nextRescanTime;
+        private bool hasScannedOnce;
 
         public bool IsFeedActive
         {
@@ -86,6 +96,7 @@ namespace MaverickFresh.Combat.Legacy
             }
 
             nextRescanTime = 0f;
+            hasScannedOnce = false;
         }
 
         private void OnDisable()
@@ -193,13 +204,17 @@ namespace MaverickFresh.Combat.Legacy
         /// </summary>
         private void RescanIfDue()
         {
-            if (Time.unscaledTime < nextRescanTime
-                && (airMarkers.Length > 0 || groundMarkers.Length > 0))
-            {
+            // The time gate is deliberately independent of what the previous scan FOUND. An earlier
+            // version also required a non-empty cached marker set, which meant an empty scene - no
+            // targets at all - fell through the gate and re-swept on every observation sample, at the
+            // sweep rate rather than the rescan rate. "Found nothing" is a perfectly good scan result
+            // and must be cached like any other.
+            if (hasScannedOnce && Time.unscaledTime < nextRescanTime)
                 return;
-            }
 
             nextRescanTime = Time.unscaledTime + Mathf.Max(0.1f, markerRescanInterval);
+            hasScannedOnce = true;
+            debugRescanCount++;
 
             if (includeAirSignatures)
             {

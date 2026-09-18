@@ -152,6 +152,7 @@ namespace MaverickFresh
                 probe = aircraftObject.AddComponent<MavLegacyEngagementProbe>();
             probe.owner = owner;
             probe.view = view;
+            probe.feed = feed;
             probe.casTargeting = aircraftObject.GetComponent<MavCASTargetingSystem>();
             probe.sensorSuite = aircraftObject.GetComponent<MavF22SensorSuite>();
             probe.targetingPod = aircraftObject.GetComponent<MavTargetingPodSystem>();

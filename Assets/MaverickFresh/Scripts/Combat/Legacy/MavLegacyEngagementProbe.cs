@@ -23,6 +23,13 @@ namespace MaverickFresh.Combat.Legacy
         public MavTargetTrackOwner owner;
         public MavEngagementView view;
 
+        /// <summary>
+        /// The feed whose local keys this probe speaks. Resolution is per FEED, not per source
+        /// category: the legacy objects this probe holds are keyed by the legacy feed, and only that
+        /// feed's keys can be resolved to its tracks.
+        /// </summary>
+        public MavLegacyTargetObservationFeed feed;
+
         [Header("Legacy authorities (read-only)")]
         public MavCASTargetingSystem casTargeting;
         public MavF22SensorSuite sensorSuite;
@@ -50,6 +57,8 @@ namespace MaverickFresh.Combat.Legacy
                 owner = GetComponent<MavTargetTrackOwner>();
             if (view == null)
                 view = GetComponent<MavEngagementView>();
+            if (feed == null)
+                feed = GetComponent<MavLegacyTargetObservationFeed>();
             if (casTargeting == null)
                 casTargeting = GetComponent<MavCASTargetingSystem>();
             if (sensorSuite == null)
@@ -68,7 +77,7 @@ namespace MaverickFresh.Combat.Legacy
             if (view == null)
                 return;
 
-            if (owner == null)
+            if (owner == null || feed == null)
             {
                 view.ClearAll();
                 return;
@@ -132,7 +141,7 @@ namespace MaverickFresh.Combat.Legacy
             int trackId = 0;
             if (instanceId != 0)
             {
-                if (owner.TryResolveTrackId(MavTrackSource.Legacy, instanceId, out trackId))
+                if (owner.TryResolveTrackId(feed, instanceId, out trackId))
                     resolved++;
                 else
                     unresolved++;

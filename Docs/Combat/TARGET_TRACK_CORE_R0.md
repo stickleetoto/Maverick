@@ -41,12 +41,35 @@ A radar will emit observations only for what it can see, at the quality it can s
 does not change when that happens — which is the entire reason the feed is an interface and the
 legacy adapter is one implementation of it rather than the design.
 
-## 3. What the owner does, and refuses to do
+## 3. Who owns identity
 
-Does: correlates observations on `(source, sourceKey)`; assigns stable track ids; carries a reported
-velocity through unchanged and otherwise differences position between samples; ages tracks from
-observation time; drops tracks unseen for longer than `trackDropSeconds`; resolves a producer's key
-back to a track id.
+The single most important contract in this phase, and the one the first implementation got wrong:
+
+| Thing | Owner | Notes |
+|---|---|---|
+| `sourceKey` | the **feed** | Local. Unique only within that feed. Two feeds may reuse the same value. |
+| `trackId` | the **track owner** | Global and stable. No producer ever assigns one. |
+| `MavTrackSource` | the feed declares it, the owner stamps it | Provenance/**category** — `Legacy`, `Radar`, `InfraRed`, `Datalink`. **Never an identity.** |
+| feed identity | the **track owner**, on registration | Assigned, so it cannot be spoofed or duplicated by a producer. |
+| correlation key | the track owner | `(feed identity, sourceKey)`. |
+
+Correlating on `(source category, sourceKey)` — which the first version did — merges two different
+objects the moment two feeds of the same category pick the same local key. Two radars are both
+`MavTrackSource.Radar`, so the category cannot separate them. Feed identity can, and it is assigned
+by the owner rather than claimed by the producer.
+
+The owner also does not trust `MavTrackObservation.source`. It already knows which registered feed it
+just called, so provenance is stamped from that feed; a producer declaring something different is
+counted in `debugProvenanceMismatches` and overridden. Feeds are therefore collected **one at a
+time** rather than into one shared list, because a single pooled list throws away which feed produced
+which observation.
+
+## 3.1 What the owner does, and refuses to do
+
+Does: correlates observations on `(feed identity, sourceKey)`; assigns stable track ids; stamps
+provenance from the registered feed; carries a reported velocity through unchanged and otherwise
+differences position between samples; ages tracks from observation time; drops tracks unseen for
+longer than `trackDropSeconds`; resolves a feed's local key back to a track id.
 
 Refuses: detection, scan volumes, lock semantics, fusion between feeds, identification, seekers,
 guidance. It also never searches the scene — feeds register themselves.
@@ -110,12 +133,15 @@ state, and writes nothing. Removing all four returns the aircraft to its previou
 Cost: one throttled scene rescan (default 1 Hz, cached between rescans) and one observation sweep
 (default 4 Hz). Tracks age continuously; only sampling is throttled.
 
+The rescan throttle is deliberately independent of what the previous scan found. "Found nothing" is a
+cached scan result like any other — see §7.2.
+
 ## 7. Validation
 
 | Check | Result |
 |---|---|
 | Compile | PASS, 0 `error CS` |
-| TargetTrack Core validation | **PASS 23/0** |
+| TargetTrack Core validation | **PASS 35/0** |
 | Combat boundary scan C-1..C-6 | **PASS 3/0** |
 | FDM baseline, full, clean committed checkout | **PASS — 1585 / 0 across 25 counted suite results** |
 | Aircraft spawns | PASS |
@@ -124,11 +150,12 @@ Cost: one throttled scene rescan (default 1 Hz, cached between rescans) and one 
 | No radar detection / guidance / AIM-120 / AIM-9 | PASS, enforced by C-5 |
 | FDM independence | PASS, enforced by C-1 |
 
-The 23 assertions cover identity, correlation, a second key producing a second track, reported
+The 35 assertions cover identity, correlation, a second key producing a second track, reported
 velocity carried unchanged, quality capping without velocity, aging from observation time, dropping,
 key-to-id resolution, unknown-key rejection, zero-key rejection, inactive feeds, the invalid default,
-and all four engagement-view precedence cases. Every one runs against a scripted feed, so none of it
-depends on scene contents and all of it survives the legacy feed being deleted.
+all four engagement-view precedence cases, and — added after review — the feed-identity cases in §7.2
+and the zero-target rescan throttle. Every one runs against a scripted feed, so none of it depends on
+scene contents and all of it survives the legacy feed being deleted.
 
 ## 7.1 A defect the gate run found
 
@@ -145,6 +172,43 @@ sanity, and leaving it out would force every later consumer to special-case the 
 After the fix, the same scene reports 1 air marker seen, 0 observations, 0 tracks. Flight behavior
 remained bit-identical across the change.
 
+## 7.2 Two defects found in review
+
+### Correlation merged feeds of the same category — BLOCKER, fixed
+
+Correlation was keyed on `(MavTrackSource, sourceKey)`. `MavTrackSource` is a **category**, not an
+identity: two radars, or a radar and a datalink both reporting `Radar`, collide as soon as they pick
+the same local key, and two different objects silently become one track. Nothing in the first
+implementation could have detected that.
+
+Fixed by making the owner assign each registered feed an identity and correlating on
+`(feed identity, sourceKey)`. Provenance is now stamped from the registered feed instead of trusted
+from the observation, feeds are collected one at a time so the owner always knows the producer, and
+`TryResolveTrackId` takes the feed rather than a category. A feed that unregisters and re-registers
+keeps its identity, so its tracks survive an enable cycle instead of being minted again.
+
+Covered by T-016 … T-022: two feeds sharing a `FeedSource` get distinct identities; both emitting the
+same `sourceKey` produce two distinct tracks; each key resolves to its own track and not the other's;
+re-observation preserves each feed's own id; provenance is stamped from the feed; an observation
+claiming the wrong source is counted and overridden; unregistering one feed leaves the other's
+resolution intact, across a later sweep too; re-registration keeps the original identity.
+
+Cross-feed **fusion is still not implemented** — two feeds observing the same physical object produce
+two tracks, on purpose. Merging them needs a correlation model nobody has written, and guessing one
+would be worse than leaving the duplication visible.
+
+### Rescan throttle ignored with zero targets — fixed
+
+`RescanIfDue` honoured `nextRescanTime` only when a cached marker array was non-empty, so a scene
+with **zero** targets fell through the gate and re-swept the scene on every observation sample — at
+the 4 Hz sweep rate rather than the 1 Hz rescan rate, in exactly the case where the sweep finds
+nothing and buys nothing.
+
+Fixed with a `hasScannedOnce` flag, so the time gate no longer depends on the result: "found nothing"
+is a cached scan result like any other. `debugRescanCount` was added so the throttle is checkable
+rather than assumed, and T-023/T-024 assert that repeated collects inside the interval do not
+re-sweep with zero markers found.
+
 ## 8. Known limitations
 
 1. **Tracks are not predicted.** A consumer reading a track between sweeps gets a position up to one
@@ -153,8 +217,8 @@ remained bit-identical across the change.
 2. **No correlation between feeds.** Two feeds observing the same object produce two tracks. Fusion
    is a later phase and pretending otherwise here would be a guess.
 3. **`sourceKey` is an instance id in the legacy feed.** Adequate because the marker objects live as
-   long as the target does; a real sensor must assign its own keys, which the contract already
-   allows and documents.
+   long as the target does, and it only has to be unique within that one feed. A real sensor assigns
+   its own local keys, which the contract allows and documents.
 4. **Ground and air remain separate concepts** at the marker level. The owner unifies them into one
    track set, which is already an improvement over three disconnected sweeps, but identification is
    not modelled.
