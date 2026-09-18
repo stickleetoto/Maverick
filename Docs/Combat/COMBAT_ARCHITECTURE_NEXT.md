@@ -87,6 +87,11 @@ Alongside it, every combat branch also demonstrates:
 A relaxation of any boundary rule is an isolated, documented commit with a stated reason - never a
 side effect of the work that needed it.
 
+Phases are also **closed** when they merge. Their authority commit is recorded, and their
+implementation is not revisited by a later phase unless a concrete defect is proven against it. So
+far: `MavTargetTrackOwner` closed at `735ce06`, Radar Core R0 closed at `c805eb9`. A later phase that
+believes it must change closed work states the defect first.
+
 ### TargetTrack Core — done (PR #17, authority `735ce06`)
 
 Make `MavTargetTrackData` real: something owns tracks, assigns stable ids, ages them, and drops them.
@@ -96,7 +101,7 @@ AI can move onto the contract before any real sensor exists.
 Done when: no consumer calls `FindObjectsOfType` for targets; `MavFreshHud` reads tracks; there is
 one answer to "what is the aircraft engaging" (closes O-4).
 
-### Radar Core R0
+### Radar Core R0 — done (PR #18, authority `c805eb9`)
 
 A real sensor producing tracks: scan volume, range, aspect, detection, track initiation and drop.
 Ownership only — no lock semantics yet. `MavF22SensorSuite` is prior art to read, **not** a base to

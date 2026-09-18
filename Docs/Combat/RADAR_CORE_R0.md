@@ -7,7 +7,20 @@ existing feed contract, with `MavTargetTrackOwner` unchanged.
 |---|---|
 | Base | `49626857b1e155e6e150d295de5285a04248fae5` (post TargetTrack Core R0) |
 | Branch | `sol/radar-core-r0` |
+| Branch HEAD | `8974ccb` |
+| **Merged** | **2026-09-18, PR #18, merge commit `c805eb92fdda4cc832f48e0751e575c0935d4b1f`** |
+| **Radar Core R0 authority** | **`c805eb9`** — the base for Radar track/lock and everything after |
 | Unity | `6000.3.16f1` |
+
+`c805eb9` is the Radar Core R0 authority. Two things are **closed** as of it, and stay closed unless a
+concrete defect is proven against them:
+
+- `MavTargetTrackOwner` — later phases build on the feed contract, not by editing the owner
+- **Radar Core R0 itself** — the detection layer is done; lock semantics are a separate concern and
+  must not be folded back into the sensor
+
+Issue #16 remains **open**: the three legacy lock authorities still own their locks. Radar Core
+deliberately did not touch them, because a detector has no business holding a lock.
 
 **Not implemented, deliberately:** AIM-120, AIM-9, missile guidance, seeker logic, datalink fusion,
 ECM/ECCM, clutter, PRF, notching, scan patterns, beam dwell, lock semantics, lock-authority
