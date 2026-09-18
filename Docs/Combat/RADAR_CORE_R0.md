@@ -40,7 +40,7 @@ Combat/
 └── Editor/
     ├── MavCombatBoundaryScan.cs     C-5 relaxed for radar, in its own commit
     ├── MavTargetTrackValidation.cs  [unchanged, still 35/0]
-    └── MavRadarCoreValidation.cs    [NEW]  39 assertions
+    └── MavRadarCoreValidation.cs    [NEW]  71 assertions
 ```
 
 ## 2. What makes it a sensor rather than a scene query
