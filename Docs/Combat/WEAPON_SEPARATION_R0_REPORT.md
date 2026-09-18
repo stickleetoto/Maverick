@@ -10,7 +10,9 @@ radar, no AIM-120, no AIM-9, no guidance, no seeker.
 |---|---|
 | Authoritative base | `ed778000f528eb8ebd2ff53a45ea59216e858267` |
 | Branch | `sol/weapon-system-separation-r0` |
-| Branch HEAD | `a1b2929` + this document |
+| Branch HEAD | `25b8dfd` |
+| **Merged** | **2026-09-18, PR #14, merge commit `9c132572505144a4e94aa69cbe39e2ed036d9e3b`** |
+| **New authoritative `main`** | **`9c13257`** — the base for TargetTrack Core R0 and everything after |
 | Ancestry verified | `ed77800` is an ancestor of HEAD; branch was cut from it exactly |
 | Unity | `6000.3.16f1` |
 
