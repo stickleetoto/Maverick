@@ -35,6 +35,10 @@ namespace MaverickFresh.Combat.EditorTools
     ///   C-4  Combat/Core must not read input. Input requests actions; it does not simulate them.
     ///   C-5  No radar, seeker, guidance or missile-profile implementation may appear in Combat/,
     ///        because those are later phases and this one is separation only.
+    ///   C-6  No file under Combat/ may contain a Rigidbody-write token that the frozen Phase 5
+    ///        writer scan would read as a live physics write - including a bare ".velocity =" on a
+    ///        field that has nothing to do with a Rigidbody. C-2 is the same rule for Core alone;
+    ///        C-6 extends it to every combat file, because the FDM baseline scans all of them.
     /// </summary>
     public static class MavCombatBoundaryScan
     {
@@ -55,6 +59,18 @@ namespace MaverickFresh.Combat.EditorTools
             "MavEngineInstallation",
         };
 
+        /// <summary>
+        /// Rigidbody-write tokens. Deliberately the SAME SET the Phase 5 writer scan uses, including
+        /// the bare ".velocity =", because these two scans have to agree.
+        ///
+        /// That token is why this list matters beyond its own rule. The FDM writer scan treats
+        /// ".velocity =" anywhere under MaverickFresh/Scripts as a live Rigidbody write, and it is
+        /// frozen validation authority that weapon separation must not edit. A combat file that
+        /// merely NAMES a field "velocity" therefore fails the FDM baseline - which is exactly what
+        /// happened to the track contract during R0, caught by a full baseline run. Checking the same
+        /// tokens here means combat code fails fast, in its own scan, with an explanation, instead of
+        /// surfacing as a mysterious flight-dynamics ownership failure.
+        /// </summary>
         private static readonly string[] RigidbodyWriteTokens =
         {
             "AddForce(",
@@ -62,8 +78,12 @@ namespace MaverickFresh.Combat.EditorTools
             "AddRelativeForce(",
             "AddRelativeTorque(",
             "AddForceAtPosition(",
-            "linearVelocity =",
-            "angularVelocity =",
+            "AddExplosionForce(",
+            "MovePosition(",
+            "MoveRotation(",
+            ".linearVelocity =",
+            ".angularVelocity =",
+            ".velocity =",
         };
 
         private static readonly string[] SceneSearchTokens =
@@ -146,7 +166,7 @@ namespace MaverickFresh.Combat.EditorTools
             if (result.violations.Count == 0)
             {
                 passed++;
-                report.AppendLine("PASS  C-1..C-5  no combat boundary violation found");
+                report.AppendLine("PASS  C-1..C-6  no combat boundary violation found");
             }
             else
             {
@@ -241,6 +261,8 @@ namespace MaverickFresh.Combat.EditorTools
 
                     CheckTokens(result, name, l + 1, code, PrematureImplementationDeclarations,
                         "C-5 declares a later-phase implementation type in a separation-only branch");
+                    CheckTokens(result, name, l + 1, code, RigidbodyWriteTokens,
+                        "C-6 contains a token the frozen Phase 5 writer scan reads as a live Rigidbody write");
                 }
             }
 

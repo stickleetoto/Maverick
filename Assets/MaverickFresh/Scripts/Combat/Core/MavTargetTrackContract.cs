@@ -61,8 +61,17 @@ namespace MaverickFresh.Combat
         /// <summary>Best known world position.</summary>
         public Vector3 position;
 
-        /// <summary>Best known world velocity, m/s. Zero when the producer cannot estimate it.</summary>
-        public Vector3 velocity;
+        /// <summary>
+        /// Best known world velocity in m/s. Zero when the producer cannot estimate it.
+        ///
+        /// Named with its unit rather than plainly "velocity" for two reasons: the unit belongs in
+        /// the name of a physical quantity, and the Phase 5 writer scan treats the text
+        /// ".velocity =" anywhere under MaverickFresh/Scripts as a live Rigidbody write. A track is
+        /// not a Rigidbody, but that scan is frozen validation authority for flight-dynamics
+        /// ownership and weapon separation must not edit it, so this contract avoids the token
+        /// instead of asking for an exemption.
+        /// </summary>
+        public Vector3 velocityMps;
 
         /// <summary>
         /// `Time.time` when this information was last actually observed - NOT when it was read.
@@ -95,7 +104,7 @@ namespace MaverickFresh.Combat
                 MavTargetTrackData t;
                 t.trackId = 0;
                 t.position = Vector3.zero;
-                t.velocity = Vector3.zero;
+                t.velocityMps = Vector3.zero;
                 t.observedAtTime = 0f;
                 t.quality = MavTrackQuality.None;
                 t.source = MavTrackSource.Unknown;
