@@ -1,11 +1,11 @@
 # FDM Validation Inventory v1 — Authority-exact candidate
 
-**Authority:** `460713aeb93ad5345edf02562f9ab20c8c3efe9b`
+**Authority:** `ef25b91857b2bd4ee4961d4eba1da390d8ee2180` (post-consolidation mainline)
 **Baseline state:** `CANDIDATE`
 
-The agreed authority inventory contains **36 tracked C# surfaces** across the three declared roots and **3 TP-1538 Python validators**, for **39 explicit manifest entries**. No entry is implicit. Helpers, aggregate wrappers, probes, and editor-only utilities remain visible as `EXCLUDED_WITH_REASON` rather than disappearing.
+The agreed authority inventory contains **37 tracked C# surfaces** across the three declared roots and **3 TP-1538 Python validators**, for **40 explicit manifest entries**. No entry is implicit. Helpers, aggregate wrappers, probes, and editor-only utilities remain visible as `EXCLUDED_WITH_REASON` rather than disappearing.
 
-Classification totals: **10 `OFFLINE_ELIGIBLE`**, **18 `UNITY_REQUIRED`**, **11 `EXCLUDED_WITH_REASON`**. Of the 39 entries, **25 are counted C# suites**; the three Python validators are gating validators but are not added to the C# assertion aggregate unless policy is explicitly changed in a later baseline revision.
+Classification totals: **10 `OFFLINE_ELIGIBLE`**, **18 `UNITY_REQUIRED`**, **12 `EXCLUDED_WITH_REASON`**. Of the 40 entries, **25 are counted C# suites**; the three Python validators are gating validators but are not added to the C# assertion aggregate unless policy is explicitly changed in a later baseline revision.
 
 | # | ID | Classification | Counted | Source cardinality | Path / exclusion reason |
 |---:|---|---|:---:|---:|---|
@@ -75,3 +75,19 @@ Two corrections are material here. `MavF16Tp1538RuntimeValidation` is `UNITY_REQ
 `MavF16ReferenceFlightValidation` and `MavSharedPropulsionPlayModeLifecycle` retain their existing self-exiting batch entry points. The scheduler uses only the new headless orchestration bridge; the existing scheduler probe construction and result state remain authoritative.
 
 No line in this inventory constitutes an execution PASS. Runtime logs from the authority checkout are still required before any candidate total can be reported.
+
+## Re-pin, 2026-09-18
+
+Re-pinned from `460713aeb93ad5345edf02562f9ab20c8c3efe9b` to the post-consolidation mainline `ef25b91857b2bd4ee4961d4eba1da390d8ee2180` after PR #11 merged.
+
+The 40th entry is new. `MavSixDoFBodyInspector.cs` was added to `FlightDynamics/Editor` by `7ef0c3b`,
+which is inside a declared authority root, and the previous inventory could not see it: the runner
+enumerated the roots only at the authority commit, so anything added afterwards was invisible to the
+integrity checks. The runner now enumerates at `HEAD` as well, and an unlisted surface is a hard
+failure there too.
+
+| # | ID | Classification | Counted | Source cardinality | Path / exclusion reason |
+|---:|---|---|:---:|---:|---|
+| 40 | `sixdof_body_inspector` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavSixDoFBodyInspector.cs` — editor-only custom Inspector: it draws existing debug fields of `MavSixDoFBody` to reduce repaint cost and contains no assertions, so it is not an independent assertion surface |
+
+No other blob pin changed: no validation surface drifted between `460713aeb9` and `ef25b91857`.

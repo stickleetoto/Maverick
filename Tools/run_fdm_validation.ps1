@@ -95,6 +95,29 @@ function Assert-AuthorityAndInventory {
         throw "authority C# surface count drift: expected $($Script:Manifest.inventory.expected_authority_cs_surface_count), found $($authorityCs.Count)"
     }
 
+    # HEAD enumeration. Allowing descendant checkouts (so the runner can be committed at all) opened
+    # a hole: enumerating only at the authority commit means a validation/editor surface ADDED after
+    # it is invisible to every integrity check here. MavSixDoFBodyInspector.cs entered
+    # FlightDynamics/Editor exactly that way. The declared roots are therefore enumerated at HEAD as
+    # well, and an unlisted surface is a hard failure until the manifest accounts for it - as an
+    # executed suite or as EXCLUDED_WITH_REASON, but never by silence.
+    $headCs = @(& git -C $Script:RepoRoot ls-tree -r --name-only HEAD -- @roots |
+        Where-Object { $_ -like '*.cs' } | Sort-Object)
+    if ($LASTEXITCODE -ne 0) { throw "git ls-tree failed while enumerating C# validation surfaces at HEAD" }
+    $headDelta = Compare-Object -ReferenceObject $headCs -DifferenceObject $manifestCs
+    if ($headDelta) {
+        $added = @($headDelta | Where-Object { $_.SideIndicator -eq '<=' } | ForEach-Object { $_.InputObject })
+        $removed = @($headDelta | Where-Object { $_.SideIndicator -eq '=>' } | ForEach-Object { $_.InputObject })
+        $msg = "C# validation surface drift between HEAD and the manifest."
+        if ($added.Count -gt 0) {
+            $msg += "`n  present at HEAD but unlisted (add them to the manifest, executed or EXCLUDED_WITH_REASON):`n    " + ($added -join "`n    ")
+        }
+        if ($removed.Count -gt 0) {
+            $msg += "`n  listed in the manifest but absent at HEAD:`n    " + ($removed -join "`n    ")
+        }
+        throw $msg
+    }
+
     $toolFiles = @(& git -C $Script:RepoRoot ls-tree -r --name-only $Script:Manifest.authority_commit -- Tools |
         Where-Object { $_ -like 'Tools/validate_f16_tp1538_*.py' } | Sort-Object)
     if ($LASTEXITCODE -ne 0) { throw "git ls-tree failed while enumerating Python validators" }
@@ -106,6 +129,15 @@ function Assert-AuthorityAndInventory {
     }
     if ($toolFiles.Count -ne [int]$Script:Manifest.inventory.expected_python_surface_count) {
         throw "authority Python validator count drift: expected $($Script:Manifest.inventory.expected_python_surface_count), found $($toolFiles.Count)"
+    }
+
+    # Same HEAD enumeration for the Python validators, for the same reason.
+    $headPy = @(& git -C $Script:RepoRoot ls-tree -r --name-only HEAD -- Tools |
+        Where-Object { $_ -like 'Tools/validate_f16_tp1538_*.py' } | Sort-Object)
+    if ($LASTEXITCODE -ne 0) { throw "git ls-tree failed while enumerating Python validators at HEAD" }
+    $headPyDelta = Compare-Object -ReferenceObject $headPy -DifferenceObject $manifestPy
+    if ($headPyDelta) {
+        throw "TP-1538 Python validator drift between HEAD and the manifest:`n$($headPyDelta | Out-String)"
     }
 
     foreach ($surface in $Script:Manifest.surfaces) {

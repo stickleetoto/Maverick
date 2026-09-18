@@ -1,8 +1,9 @@
 # FDM Validation Baseline v1 — CANDIDATE
 
-**Authority:** `460713aeb93ad5345edf02562f9ab20c8c3efe9b`
+**Authority:** `ef25b91857b2bd4ee4961d4eba1da390d8ee2180` (post-consolidation mainline)
 **State:** `CANDIDATE`
-**Execution status:** `PASS`
+**Execution status:** `PASS` — 1585 passed / 0 failed across 25 counted suite results
+**Last executed:** 2026-09-18, Unity `6000.3.16f1`, from a clean fully-committed checkout
 
 This package defines a fail-closed, executable candidate for the current Maverick flight-dynamics validation baseline. It does **not** freeze a result and it does **not** promote historical Phase 5 totals into current expectations.
 
@@ -10,7 +11,7 @@ Historical `841 / 0` offline assertions and `36 / 36` mutation bites remain **EV
 
 ## Baseline authority and count policy
 
-The runner requires `HEAD` to equal the authority commit exactly. It also verifies the Git blob hash of every tracked validation surface in the manifest and compares the authority tree against the manifest so that a newly added, removed, or unlisted validation surface is a hard failure.
+The runner requires the authority commit to be an **ancestor** of `HEAD`, not to equal it. Exact-HEAD was unshippable: committing the runner itself necessarily moves `HEAD` off the authority, so the baseline could never be recorded in the repository it validates. Integrity is preserved by the per-surface checks instead. It verifies the Git blob hash of every tracked validation surface in the manifest, and it compares **both** the authority tree and the `HEAD` tree against the manifest, so that a newly added, removed, or unlisted validation surface is a hard failure whether it was introduced before or after the authority commit.
 
 Seven deterministic suites have source-derived cardinality known before execution:
 
@@ -92,7 +93,7 @@ The final file is `baseline_v1_result.json` and has this shape:
   "schema_version": 1,
   "baseline": "FDM Validation Baseline v1",
   "baseline_state": "CANDIDATE",
-  "authority_commit": "460713aeb93ad5345edf02562f9ab20c8c3efe9b",
+  "authority_commit": "ef25b91857b2bd4ee4961d4eba1da390d8ee2180",
   "execution_status": "PASS | FAIL | INFRA_FAILURE",
   "started_utc": "...",
   "completed_utc": "...",
@@ -141,97 +142,50 @@ Python validators that do not emit assertion counts can still gate the baseline 
 
 ```text
 BASELINE V1          CANDIDATE
-IMPLEMENTATION FILES EMITTED
-EXECUTION            NOT YET RUN ON AUTHORITY CHECKOUT
-COMMIT               NONE
-PUSH                 NONE
-PHYSICS DELTA         NONE
+IMPLEMENTATION FILES COMMITTED (all six, sol/fdm-validation-baseline-v1-r1)
+EXECUTION            RUN 2026-09-18 ON A CLEAN COMMITTED CHECKOUT
+RESULT               1585 passed / 0 failed / 25 counted suite results
+COMMIT               yes
+PUSH                 yes
+PHYSICS DELTA        NONE
 HISTORICAL 841/36    EVIDENCE ONLY
 ```
 
 ---
 
-## Baseline V1 observed failure classification
+## Baseline V1 observed failure classification — RESOLVED
 
-Baseline investigation result:
+The earlier investigation on this baseline observed **1566 passed / 19 failed across 25 counted
+suite results**. Those 19 were classified then as validation/fixture/scanner debt, with zero
+demonstrated production flight-physics regressions.
 
-- execution infrastructure is operational
-- `INFRA_FAILURE`: 0 after batch-adapter source-scan bridging
-- current observed aggregate: 1566 passed / 19 failed across 25 counted suite results
-- no production flight-physics regression was demonstrated by the 19 observed failures
+All 19 have since been repaired, by the commits that the 2026-09 mainline consolidation integrated
+(see `Docs/Mainline/MAINLINE_CONSOLIDATION_2026-09.md`). The suite population is unchanged: the same
+25 counted suite results, the same 1585 total assertions.
 
-### `fdm_ownership_scan_runtime` — 1 failed suite assertion
+| Suite | Failures then | Repaired by | Now |
+|---|---:|---|---|
+| `fdm_ownership_scan_runtime` | 1 | `00ae6e0` — `ContainsForbiddenToken` removed the `==` lexical false positive, `IsAllowedHandoverStateTransfer` allowlists the atomic handover's motion-state transfer, `IsValidationOnlyPath` excludes validation-only writes | PASS |
+| `fdm_phase2` | 4 | `00ae6e0` — fixtures declare `angularDynamicsAcceptable`, plus the scan fix above | PASS |
+| `fdm_freeze_hardening` | 4 | `2b7677e` — validators realigned to the Phase 5A authority, which forbids the Phase-3 controller from granting replacement ownership | PASS |
+| `fdm_integration` | 9 | `2b7677e` — same realignment; these were a cascade downstream of the rejected initial handover | PASS |
+| `aircraft_startup_order` | 1 | `00ae6e0` — `MavWTFeelPolishController` now records the skip reason instead of reporting a preset it did not apply | PASS |
+| **Total** | **19** | | **0 failures** |
 
-Classification: **validator/scanner debt**
+Verified execution on authority `ef25b91857b2bd4ee4961d4eba1da390d8ee2180`, Unity `6000.3.16f1`:
 
-The ownership source scan reports 10 textual hits.
+- 22 synchronous editor suites: 1247 passed / 0 failed
+- 3 Play Mode suites: 338 passed / 0 failed (`f16_reference_flight` 168, `shared_propulsion_lifecycle` 169, `fdm_scheduler` 1)
+- 3 TP-1538 Python validators: PASS, including the independent re-derivation and its mutation probes
+- **25 counted suite results, 1585 passed, 0 failed**
 
-Observed categories:
+Note on counting: the four scan-type surfaces (`fdm_ownership_scan_runtime`,
+`aircraft_identity_ownership_scan`, `aircraft_scene_wiring_scan`, `phase5_writer_scan`) produce a
+single binary result each rather than an assertion count, so they contribute 1 apiece to the 1585.
 
-- 2 read/capture false positives in `MavRuntimeHandoverTarget`
-- 2 intentional Rigidbody restoration writes in the atomic handover rollback path
-- 1 comparison-expression lexical false positive (`linearVelocity == ...`)
-- 5 validation-only writes in `MavF16ReferenceFlightScenarios`
+One known limitation is unrelated to these suites: `MavF16PoweredReferenceShadowSmoke` cannot arm,
+because no engine profile declares a source envelope. Tracked as issue #12.
 
-No unauthorized live-aircraft physics writer was demonstrated by these hits.
-
-### `fdm_phase2` — 4 failed assertions
-
-Classification: **stale validation fixture / scanner debt**
-
-- 3 assertions expect operational live readiness from a fixture that no longer satisfies
-  the current angular-dynamics / gyroscopic-coupling readiness requirements.
-- 1 assertion embeds the same stale ownership-source scan described above.
-
-The production readiness gate is failing closed; this baseline did not demonstrate a
-production-physics regression.
-
-### `fdm_freeze_hardening` — 4 failed assertions
-
-Classification: **stale validation fixture cascade**
-
-The H1 fixture expects the initial handover to reach `NewOwned`, but the fixture no
-longer satisfies all current operational-readiness requirements.
-
-Because the initial handover does not complete, the subsequent partial-restore,
-sticky-fault, and restoration-debt assertions fail as a cascade.
-
-### `fdm_integration` — 9 failed assertions
-
-Classification: **stale validation fixture cascade**
-
-The affected integration scenarios depend on a successful transition to the new FDM.
-The integration fixture no longer establishes every current operational-readiness
-precondition before requesting that transition.
-
-Observed failures in handover, dropout, destroyed-owner, and bench-rig scenarios are
-therefore downstream of the rejected initial handover.
-
-No independent production-physics regression was demonstrated by these nine failures.
-
-### `aircraft_startup_order` — 1 failed assertion
-
-Classification: **non-physics diagnostic / observability defect**
-
-WT-feel correctly:
-
-- does not select an aircraft identity
-- does not apply an aircraft profile
-- does not change Rigidbody mass
-- does not commit an aircraft visual
-
-The failed assertion is specifically that the skip reason should be recorded in
-`lastApplied`; instead the observed value remains `WarThunderF15Balanced`.
-
-Aircraft startup behavior is otherwise correct in this scenario.
-
-## Baseline interpretation
-
-Observed failures: **19**
-
-- validation / fixture / scanner debt: **18**
-- non-physics diagnostic defect: **1**
-- demonstrated production flight-physics regressions: **0**
 
 These failures are baseline evidence. They are not silently converted to PASS and are
 not repaired as part of Baseline V1 creation.
