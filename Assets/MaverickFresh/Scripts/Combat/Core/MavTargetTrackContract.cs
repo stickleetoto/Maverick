@@ -21,8 +21,13 @@ namespace MaverickFresh.Combat
     }
 
     /// <summary>
-    /// What produced a track. Consumers use this for display and for deciding whether a track is
-    /// good enough for a given job, never to reach back into the producer's implementation.
+    /// What KIND of producer a track came from: provenance and category, deliberately NOT identity.
+    ///
+    /// Two radars are both <see cref="Radar"/>, so this value cannot distinguish them and must never
+    /// be used as half of a correlation key. Feed identity, which the track owner assigns on
+    /// registration, is what distinguishes producers. Consumers use this for display and for deciding
+    /// whether a track is good enough for a given job, never to reach back into the producer's
+    /// implementation.
     /// </summary>
     public enum MavTrackSource
     {
@@ -49,12 +54,24 @@ namespace MaverickFresh.Combat
     /// same thing as the object itself: it can be stale, wrong, or about something no longer there.
     /// A consumer that holds the GameObject cannot represent any of that, and ends up reading truth
     /// the sensor never had - the exact shortcut today's scene-searching code takes.
+    ///
+    /// Who owns what, since it is easy to assume wrongly:
+    ///
+    ///   - a FEED owns its local <c>sourceKey</c> and its own sampling
+    ///   - the TRACK OWNER owns <see cref="trackId"/>, aging, dropping and correlation
+    ///   - <see cref="MavTrackSource"/> is provenance/category only
+    ///   - correlation authority is (feed identity, sourceKey); the source category plays no part
     /// </summary>
     public struct MavTargetTrackData
     {
         /// <summary>
-        /// Stable identity for as long as the producer considers this the same object. Zero means no
-        /// track. Identity is the producer's to assign and must not be derived from instance ids.
+        /// The global, stable identity of this track. Zero means no track.
+        ///
+        /// ASSIGNED BY THE TRACK OWNER, never by a producer. A feed knows only its own local
+        /// <c>sourceKey</c>, which is meaningful to that feed alone; the owner correlates
+        /// (feed identity, sourceKey) and mints the id that everything else in the game uses. That
+        /// split is what lets two feeds report the same local key without their tracks merging, and
+        /// what stops a producer from claiming an identity it has no authority over.
         /// </summary>
         public int trackId;
 

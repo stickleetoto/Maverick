@@ -1,3 +1,5 @@
+using MaverickFresh.Combat.Legacy;
+using MaverickFresh.Combat.Targeting;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -110,6 +112,50 @@ namespace MaverickFresh
                 if (rangeSpawner == null)
                     rangeSpawner = gameObject.AddComponent<MavCASTestRangeSpawner>();
             }
+
+            InstallTargetTrackCore(aircraftObject);
+        }
+
+        /// <summary>
+        /// Installs the TargetTrack Core observer stack beside the legacy CAS stack.
+        ///
+        /// Purely observational, which is what makes it safe to install by default: the track owner
+        /// collects observations, the legacy feed reports today's markers, and the engagement probe
+        /// reads the three lock authorities without writing to any of them. Nothing here fires,
+        /// designates, locks or clears anything, and removing all four components returns the
+        /// aircraft to exactly its previous behavior.
+        ///
+        /// It is wired here, in the existing composition root, rather than from a new bootstrap of
+        /// its own, so there is still one place that decides what a Maverick aircraft is made of.
+        /// </summary>
+        private void InstallTargetTrackCore(GameObject aircraftObject)
+        {
+            if (aircraftObject == null)
+                return;
+
+            MavTargetTrackOwner owner = aircraftObject.GetComponent<MavTargetTrackOwner>();
+            if (owner == null)
+                owner = aircraftObject.AddComponent<MavTargetTrackOwner>();
+
+            MavEngagementView view = aircraftObject.GetComponent<MavEngagementView>();
+            if (view == null)
+                view = aircraftObject.AddComponent<MavEngagementView>();
+
+            MavLegacyTargetObservationFeed feed = aircraftObject.GetComponent<MavLegacyTargetObservationFeed>();
+            if (feed == null)
+                feed = aircraftObject.AddComponent<MavLegacyTargetObservationFeed>();
+            feed.owner = owner;
+            owner.RegisterFeed(feed);
+
+            MavLegacyEngagementProbe probe = aircraftObject.GetComponent<MavLegacyEngagementProbe>();
+            if (probe == null)
+                probe = aircraftObject.AddComponent<MavLegacyEngagementProbe>();
+            probe.owner = owner;
+            probe.view = view;
+            probe.feed = feed;
+            probe.casTargeting = aircraftObject.GetComponent<MavCASTargetingSystem>();
+            probe.sensorSuite = aircraftObject.GetComponent<MavF22SensorSuite>();
+            probe.targetingPod = aircraftObject.GetComponent<MavTargetingPodSystem>();
         }
     }
 }

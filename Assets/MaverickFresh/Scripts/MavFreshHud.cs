@@ -1,3 +1,4 @@
+using MaverickFresh.Combat.Targeting;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -14,6 +15,14 @@ namespace MaverickFresh
         public MavCASWeaponSystem casWeapons;
         public MavCASCCIPPredictor casCCIP;
         public MavTargetingPodSystem targetingPod;
+
+        /// <summary>
+        /// TargetTrack Core R0. The HUD's first read from the unified track owner instead of from
+        /// a legacy targeting component. Read-only and additive: the legacy TGT line is untouched,
+        /// so nothing that was displayed before changes.
+        /// </summary>
+        public MavTargetTrackOwner trackOwner;
+        public MavEngagementView engagementView;
         public MavWTFeelPolishController wtPolish;
         public MavPhysicalAIController physicalAI;
         public MavPhysicalAIRewardLogger rewardLogger;
@@ -100,6 +109,16 @@ namespace MaverickFresh
             if (targetingPod == null)
                 targetingPod = FindObjectOfType<MavTargetingPodSystem>();
 
+            // Resolved the same way as everything else here for now. The HUD discovering concrete
+            // components by scene search is O-8 in the ownership audit and is a separate cleanup;
+            // what matters in R0 is that the TARGET data below no longer comes from a legacy
+            // targeting component.
+            if (trackOwner == null)
+                trackOwner = FindObjectOfType<MavTargetTrackOwner>();
+
+            if (engagementView == null)
+                engagementView = FindObjectOfType<MavEngagementView>();
+
             if (wtPolish == null)
                 wtPolish = FindObjectOfType<MavWTFeelPolishController>();
 
@@ -183,6 +202,7 @@ namespace MaverickFresh
                     (casWeapons != null ? $"CAS PRIMARY Gun  SECONDARY {casWeapons.selectedSecondaryWeapon}  GUN {casWeapons.gunAmmo} RKT {casWeapons.rocketAmmo} BOMB {casWeapons.bombAmmo} PGM {casWeapons.precisionAmmo} MSL {casWeapons.missileAmmo} KILL {casWeapons.destroyedCount}\n" : "") +
                     (casTargeting != null ? $"TGT {(casTargeting.designatedTarget != null ? casTargeting.designatedTarget.displayName : casTargeting.candidateTarget != null ? "CAND:" + casTargeting.candidateTarget.displayName : casTargeting.status)}\n" : "") +
                     (targetingPod != null ? $"TGP {targetingPod.displayMode} {(targetingPod.isLocked ? "LOCK" : "SEARCH")} FOV {targetingPod.fov:0.0}\n" : "") +
+                    TrackHudLine() +
                     (physicalAI != null ? $"PAI {(physicalAI.aiEnabled ? "ON" : "OFF")} {physicalAI.mode} {physicalAI.aiState}  F11 Toggle F3 Mode\n" : "") +
                     (rewardLogger != null ? $"RWD {(rewardLogger.isRecording ? "REC" : "OFF")} {rewardLogger.totalReward:0.00} F4 Log\n" : "") +
                     "Mouse aim | Mouse0 neon gun | Space missile/secondary | G gear | 1/2 secondary | W/S pitch | A/D roll | Shift/Ctrl throttle";
@@ -208,6 +228,36 @@ namespace MaverickFresh
 
             GUI.Box(new Rect(10, 10, 620, height), text, panel);
         }
+
+        /// <summary>
+        /// The track readout, sourced entirely from MavTargetTrackOwner and MavEngagementView.
+        ///
+        /// Developer-debug panel only (F2), so nothing a player sees changes. It shows what the
+        /// unified track owner holds and what each of the three legacy lock authorities currently
+        /// claims, expressed as track ids - which makes the disagreement between them visible for
+        /// the first time instead of leaving it spread across three components.
+        ///
+        /// An authority claiming a track the owner does not hold shows as id 0. That is real
+        /// information rather than a bug: it means the authority points at something the track owner
+        /// has never observed.
+        /// </summary>
+        private string TrackHudLine()
+        {
+            if (trackOwner == null)
+                return string.Empty;
+
+            string line = $"TRK {trackOwner.debugTrackCount} tracks  obs {trackOwner.debugObservationsLastSweep}  dropped {trackOwner.debugTracksDropped}";
+
+            if (engagementView != null)
+            {
+                line += $"  DES {engagementView.designatedTrackId} STT {engagementView.sensorLockTrackId} POD {engagementView.podLockTrackId}";
+                if (engagementView.authoritiesDisagree)
+                    line += "  DISAGREE";
+            }
+
+            return line + "\n";
+        }
+
 
         private void DrawControlDebugPanel()
         {
