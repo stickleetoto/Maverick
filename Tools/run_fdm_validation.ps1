@@ -16,6 +16,8 @@ $Script:RepoRoot = $null
 $Script:UnityExe = $null
 $Script:PythonExe = $null
 $Script:InitialStatus = @()
+$Script:InitialState = $null
+$Script:EnvironmentChurn = @()
 $Script:SuiteResults = [System.Collections.Generic.List[object]]::new()
 $Script:MutationResults = [System.Collections.Generic.List[object]]::new()
 $Script:StartedUtc = [DateTime]::UtcNow
@@ -45,27 +47,91 @@ function Get-StatusPath {
     return $path.Trim('"') -replace '\\','/'
 }
 
-function Assert-OnlyImplementationDirty {
-    param([string[]]$StatusLines)
-    $allowed = @{}
-    foreach ($p in $Script:Manifest.implementation_paths) { $allowed[[string]$p] = $true }
-    $unexpected = New-Object System.Collections.Generic.List[string]
-    foreach ($line in $StatusLines) {
-        $p = Get-StatusPath $line
-        if (-not $allowed.ContainsKey($p)) { $unexpected.Add("$line") }
-    }
-    if ($unexpected.Count -gt 0) {
-        throw "unexpected dirty checkout paths (only the six Baseline v1 candidate files may be dirty):`n$($unexpected -join "`n")"
+# Tracked paths whose GIT-NORMALIZED content differs from HEAD. This is content identity, not
+# `git status`: a file Unity rewrote with different line endings but identical normalized content
+# does not appear here, while any real edit does. That distinction is the whole point - Unity
+# rewrites ProjectSettings/*.asset during import, and failing a validation run over a line ending
+# would make a clean run impossible while proving nothing.
+function Get-TrackedContentChanges {
+    $lines = & git -C $Script:RepoRoot diff --name-only HEAD 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "git diff --name-only HEAD failed: $($lines -join ' ')" }
+    return @($lines | Where-Object { $_ -ne $null -and $_.Length -gt 0 } |
+        ForEach-Object { ([string]$_).Trim().Trim('"') -replace '\','/' } | Sort-Object)
+}
+
+# Untracked files that .gitignore does NOT cover. Unity's generated artifacts (Library/, Temp/,
+# *.csproj, *.sln, *.slnx) are ignored and therefore invisible here by design; anything else that
+# appears is a real, unexplained new file and fails the run.
+function Get-UntrackedFiles {
+    $lines = & git -C $Script:RepoRoot ls-files --others --exclude-standard 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "git ls-files --others failed: $($lines -join ' ')" }
+    return @($lines | Where-Object { $_ -ne $null -and $_.Length -gt 0 } |
+        ForEach-Object { ([string]$_).Trim().Trim('"') -replace '\','/' } | Sort-Object)
+}
+
+function Get-CheckoutState {
+    return [ordered]@{
+        trackedContentChanges = @(Get-TrackedContentChanges)
+        untracked             = @(Get-UntrackedFiles)
+        statusLines           = @(Get-GitStatusLines | Sort-Object)
     }
 }
 
-function Assert-StatusUnchanged {
-    $now = @(Get-GitStatusLines | Sort-Object)
-    $before = @($Script:InitialStatus | Sort-Object)
-    $delta = Compare-Object -ReferenceObject $before -DifferenceObject $now
-    if ($delta) {
-        throw "checkout dirty-state changed during validation:`n$($delta | Out-String)"
+function Assert-OnlyImplementationDirty {
+    param($State)
+    $allowed = @{}
+    foreach ($p in $Script:Manifest.implementation_paths) { $allowed[[string]$p] = $true }
+
+    $unexpected = New-Object System.Collections.Generic.List[string]
+    foreach ($p in $State.trackedContentChanges) {
+        if (-not $allowed.ContainsKey($p)) { $unexpected.Add("modified: $p") }
     }
+    foreach ($p in $State.untracked) {
+        if (-not $allowed.ContainsKey($p)) { $unexpected.Add("untracked: $p") }
+    }
+    if ($unexpected.Count -gt 0) {
+        throw ("unexpected dirty checkout paths (only the Baseline v1 implementation files may be " +
+               "dirty; Unity's generated artifacts must be covered by .gitignore):`n    " +
+               ($unexpected -join "`n    "))
+    }
+}
+
+# Post-run. Fail closed on anything that changed the repository, tolerate only churn that provably
+# changed no content. Nothing here reverts, resets, checks out, cleans or stashes: the runner
+# reports what it found and leaves the checkout exactly as Unity left it.
+function Assert-CheckoutUnchanged {
+    $after = Get-CheckoutState
+    $before = $Script:InitialState
+
+    $contentDelta = Compare-Object -ReferenceObject @($before.trackedContentChanges) `
+                                   -DifferenceObject @($after.trackedContentChanges)
+    if ($contentDelta) {
+        $appeared = @($contentDelta | Where-Object { $_.SideIndicator -eq '=>' } | ForEach-Object { $_.InputObject })
+        $vanished = @($contentDelta | Where-Object { $_.SideIndicator -eq '<=' } | ForEach-Object { $_.InputObject })
+        $msg = "tracked content changed during validation."
+        if ($appeared.Count -gt 0) { $msg += "`n  newly modified:`n    " + ($appeared -join "`n    ") }
+        if ($vanished.Count -gt 0) { $msg += "`n  no longer modified:`n    " + ($vanished -join "`n    ") }
+        throw $msg
+    }
+
+    $untrackedDelta = Compare-Object -ReferenceObject @($before.untracked) -DifferenceObject @($after.untracked)
+    if ($untrackedDelta) {
+        $appeared = @($untrackedDelta | Where-Object { $_.SideIndicator -eq '=>' } | ForEach-Object { $_.InputObject })
+        $vanished = @($untrackedDelta | Where-Object { $_.SideIndicator -eq '<=' } | ForEach-Object { $_.InputObject })
+        $msg = "untracked files changed during validation (a generated artifact that should be here needs a .gitignore entry, not an exception)."
+        if ($appeared.Count -gt 0) { $msg += "`n  appeared:`n    " + ($appeared -join "`n    ") }
+        if ($vanished.Count -gt 0) { $msg += "`n  disappeared:`n    " + ($vanished -join "`n    ") }
+        throw $msg
+    }
+
+    # Whatever git status now reports that it did not before, with identical normalized content and
+    # an identical untracked set, is line-ending/stat churn from Unity rewriting a file it owns.
+    # Recorded as evidence rather than swallowed, so a reviewer can see exactly what Unity touched.
+    $statusDelta = @(Compare-Object -ReferenceObject @($before.statusLines) -DifferenceObject @($after.statusLines) |
+        Where-Object { $_.SideIndicator -eq '=>' } | ForEach-Object { ([string]$_.InputObject).Trim() })
+    $Script:EnvironmentChurn = @($statusDelta | ForEach-Object {
+        [ordered]@{ entry = $_; classification = 'LINE_ENDING_OR_STAT_ONLY'; normalized_content_identical = $true }
+    })
 }
 
 function Assert-AuthorityAndInventory {
@@ -533,6 +599,13 @@ function Write-FinalResult {
         suites = $suiteArray
         mutation = [ordered]@{ requested=[bool]$RunMutations; policy='NEW_ONLY'; historical_probes_imported=$false; results=$mutationArray }
         fatal_error = $FatalError
+        # Churn that provably changed no Git-normalized tracked content: Unity rewriting files it
+        # owns with different line endings. Reported, never swallowed, and never auto-reverted.
+        environment_churn = [ordered]@{
+            policy = 'CONTENT_IDENTITY: tracked files compared by Git-normalized content, not by git status lines'
+            entries = [object[]]$Script:EnvironmentChurn
+            count = @($Script:EnvironmentChurn).Count
+        }
         commit = $null
         push = $null
         physics_delta = 'NONE'
@@ -570,8 +643,9 @@ try {
     New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
     $ResultsDir = (Resolve-Path -LiteralPath $ResultsDir).Path
 
-    $Script:InitialStatus = @(Get-GitStatusLines)
-    Assert-OnlyImplementationDirty $Script:InitialStatus
+    $Script:InitialState = Get-CheckoutState
+    $Script:InitialStatus = @($Script:InitialState.statusLines)
+    Assert-OnlyImplementationDirty $Script:InitialState
     Assert-AuthorityAndInventory
 
     # Dependencies are resolved before any suite runs: missing Python or Unity is a hard NO-GO.
@@ -619,7 +693,7 @@ finally {
                     $blob = (& git -C $Script:RepoRoot hash-object -- $path 2>$null).Trim()
                     if ($LASTEXITCODE -ne 0 -or $blob -ne [string]$surface.git_blob) { throw "surface changed during run: $path" }
                 }
-                Assert-StatusUnchanged
+                Assert-CheckoutUnchanged
             }
         } catch {
             $postError = $_.Exception.Message
