@@ -1,4 +1,5 @@
 using MaverickFresh.Combat.Legacy;
+using MaverickFresh.Combat.Sensors;
 using MaverickFresh.Combat.Targeting;
 using UnityEngine;
 
@@ -146,6 +147,16 @@ namespace MaverickFresh
                 feed = aircraftObject.AddComponent<MavLegacyTargetObservationFeed>();
             feed.owner = owner;
             owner.RegisterFeed(feed);
+
+            // Radar Core R0. Registers as a second feed beside the legacy one; the owner is unchanged
+            // by its arrival. The legacy feed deliberately STAYS registered: it is the architectural
+            // coverage the radar has to match before anything is removed, and keeping both is also what
+            // proves two feeds with identical local keys stay separate tracks.
+            MavRadarSensor radar = aircraftObject.GetComponent<MavRadarSensor>();
+            if (radar == null)
+                radar = aircraftObject.AddComponent<MavRadarSensor>();
+            radar.owner = owner;
+            owner.RegisterFeed(radar);
 
             MavLegacyEngagementProbe probe = aircraftObject.GetComponent<MavLegacyEngagementProbe>();
             if (probe == null)
