@@ -12,6 +12,11 @@ namespace MaverickFresh.Combat.Legacy
     /// authorities behave exactly as they did before it existed, which is the property that makes it
     /// safe to run alongside live gameplay.
     ///
+    /// It publishes two different things. The TRACK IDS say what each authority points at; the
+    /// PROJECTED LOCK STATES, via <see cref="MavLegacyLockProjection"/>, say where each one is in its
+    /// own lifecycle. The second is what makes the migration's equivalence claim checkable rather than
+    /// merely stated.
+    ///
     /// It lives in Legacy/ because it is the only thing besides the observation feed that knows the
     /// concrete legacy types. Targeting/ stays clean, so when those authorities are retired this file
     /// is deleted and nothing in Targeting/ changes.
@@ -114,6 +119,21 @@ namespace MaverickFresh.Combat.Legacy
                        podTarget != null ? podTarget.displayName : null,
                        ref resolved, ref unresolved,
                        PublishKind.PodLock);
+
+            // Each authority's own lifecycle state, in the new vocabulary. Read-only, like everything
+            // else here: MavLegacyLockProjection is a pure mapping and none of these reads can change
+            // what the legacy components do.
+            view.PublishLegacyLockStates(
+                MavLegacyLockProjection.ProjectCasDesignation(
+                    designated != null, designated != null && designated.IsAlive()),
+                MavLegacyLockProjection.ProjectSensorSuite(
+                    sensorSuite != null && sensorSuite.selectedTarget != null,
+                    sensorSuite != null ? sensorSuite.debugLockProgress01 : 0f,
+                    sensorSuite != null && sensorSuite.debugHasLock),
+                MavLegacyLockProjection.ProjectTargetingPod(
+                    targetingPod != null && targetingPod.isLocked,
+                    targetingPod != null && targetingPod.lockedToTarget,
+                    targetingPod != null && targetingPod.lockedTarget != null));
 
             view.RefreshDisagreement();
             debugResolvedCount = resolved;
