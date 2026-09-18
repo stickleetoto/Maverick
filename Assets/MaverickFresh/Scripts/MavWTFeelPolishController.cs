@@ -42,6 +42,7 @@ namespace MaverickFresh
         /// warning on every F5 press would bury the one that matters.
         /// </summary>
         private bool loggedMissingAircraftAuthority;
+        private bool skippedAircraftAwareForMissingAuthority;
 
         private void Awake() { Resolve(); }
 
@@ -82,6 +83,7 @@ namespace MaverickFresh
         public void ApplyPreset(MavWTFeelPreset p)
         {
             preset = p;
+            skippedAircraftAwareForMissingAuthority = false;
             Resolve();
             if (jet == null) return;
 
@@ -373,7 +375,8 @@ namespace MaverickFresh
                 targetingPod.fov = Mathf.Clamp(targetingPod.fov, targetingPod.minFov, targetingPod.maxFov);
             }
 
-            lastApplied = p.ToString();
+            if (!skippedAircraftAwareForMissingAuthority)
+                lastApplied = p.ToString();
         }
 
         /// <summary>
@@ -410,6 +413,7 @@ namespace MaverickFresh
             // established? Never "which one should it be?".
             if (!applier.HasAuthoritativeAircraft)
             {
+                skippedAircraftAwareForMissingAuthority = true;
                 lastApplied = "no aircraft applied yet: WT feel skipped its aircraft-aware pass "
                               + "rather than defaulting to one";
 

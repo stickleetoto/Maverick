@@ -168,10 +168,12 @@ namespace MaverickFresh.FlightDynamics
         private bool readinessEvaluatedOnce;
 
         private const int LegacyOwnershipScanIntervalSteps = 25;
+        private const int ShadowReadinessRefreshIntervalSteps = 10;
 
         private readonly System.Collections.Generic.List<MonoBehaviour> behaviourScratch =
             new System.Collections.Generic.List<MonoBehaviour>(32);
         private int legacyOwnershipScanCountdown;
+        private int shadowReadinessRefreshCountdown;
         private bool cachedLegacyOwnershipConflict;
         private string cachedLegacyOwnerName = "none";
 
@@ -219,27 +221,51 @@ namespace MaverickFresh.FlightDynamics
             Resolve();
             debugPhysicsStepIndex++;
 
+            // Resolve shadow ownership before readiness work so the expensive pipeline snapshot can
+            // be sampled at a diagnostic cadence in Shadow. The actual FDM below still runs on every
+            // physics step; only readiness/component discovery is throttled.
+            bool shadowComputeOnly = IsShadowComputeOnly();
+
             UpdateStateAndAtmosphere();
             UpdateProfileDebug();
-            UpdateReadinessDebug();
+            UpdateReadinessDebug(shadowComputeOnly);
 
             debugLoadSet.BeginStep(debugPhysicsStepIndex);
 
-            if (!simulationEnabled || rb == null || aerodynamicModel == null)
+            // Shadow is a compute permission, not an arming permission. The Phase 5 ownership
+            // authority deliberately keeps simulationEnabled false while owner == Shadow, but the
+            // replacement pipeline still has to execute so its telemetry can prove that it is finite.
+            // Live load application remains impossible because the shadow branch below returns before
+            // TryApplyLoadSet, and InitializePhysicsOwnership (which mutates Rigidbody settings) is
+            // also skipped while shadowing.
+            if ((!simulationEnabled && !shadowComputeOnly) || rb == null || aerodynamicModel == null)
             {
                 ClearLoadDebug();
                 PublishTelemetry(false);
                 return false;
             }
 
-            if (!IsLoadApplicationPermitted())
+            // A shadow run may be operationally blocked by the legacy owner by design: legacy MUST
+            // remain active while the replacement observes. It still has to be structurally complete
+            // before we execute it. The normal live path keeps the full operational readiness gate.
+            if (shadowComputeOnly)
+            {
+                if (!debugReadiness.structurallyPrepared)
+                {
+                    debugShadowLoadSetFinite = false;
+                    ClearLoadDebug();
+                    PublishTelemetry(false);
+                    return false;
+                }
+            }
+            else if (!IsLoadApplicationPermitted())
             {
                 ClearLoadDebug();
                 PublishTelemetry(false);
                 return false;
             }
 
-            if (!ownershipInitialized)
+            if (!shadowComputeOnly && !ownershipInitialized)
                 InitializePhysicsOwnership();
 
             MavControlInput boundedInput = controlInput;
@@ -298,8 +324,8 @@ namespace MaverickFresh.FlightDynamics
             // eventually run.
             //
             // InitializePhysicsOwnership, which writes Rigidbody damping and gravity flags, is also
-            // already behind the readiness gate above and is not reached in shadow mode.
-            if (IsShadowComputeOnly())
+            // already behind the live-only branch above and is not reached in shadow mode.
+            if (shadowComputeOnly)
             {
                 debugShadowComputeSteps++;
                 debugShadowLoadSetFinite = debugLoadSet.IsFinite();
@@ -640,8 +666,23 @@ namespace MaverickFresh.FlightDynamics
             debugInsideProfileEnvelope = activeProfile.envelope.Contains(debugState);
         }
 
-        private void UpdateReadinessDebug()
+        private void UpdateReadinessDebug(bool shadowComputeOnly)
         {
+            // Readiness discovery walks component bindings and legacy ownership state. That is useful
+            // for safety/diagnostics but needlessly expensive at physics rate while Shadow is only
+            // observing. Sample it every ten shadow steps (~5 Hz at the default 50 Hz fixed step).
+            // Live/non-shadow retains the original every-step behavior.
+            if (shadowComputeOnly && readinessEvaluatedOnce)
+            {
+                shadowReadinessRefreshCountdown--;
+                if (shadowReadinessRefreshCountdown > 0)
+                    return;
+            }
+
+            shadowReadinessRefreshCountdown = shadowComputeOnly
+                ? ShadowReadinessRefreshIntervalSteps
+                : 0;
+
             debugReadinessInputs = BuildReadinessInputs();
 
             int mask = debugReadinessInputs.ToBitmask();
@@ -760,6 +801,7 @@ namespace MaverickFresh.FlightDynamics
         {
             RefreshLegacyPhysicsOwner();
             legacyOwnershipScanCountdown = 0;
+            shadowReadinessRefreshCountdown = 0;
             readinessEvaluatedOnce = false;
             lastReadinessMask = -1;
         }
@@ -779,6 +821,7 @@ namespace MaverickFresh.FlightDynamics
 
             RefreshLegacyPhysicsOwner();
             legacyOwnershipScanCountdown = LegacyOwnershipScanIntervalSteps;
+            shadowReadinessRefreshCountdown = 0;
 
             debugReadinessInputs = BuildReadinessInputs();
             debugReadiness = MavFlightDynamicsReadiness.Evaluate(debugReadinessInputs);
