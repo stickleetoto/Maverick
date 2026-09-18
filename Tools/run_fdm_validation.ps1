@@ -537,7 +537,20 @@ try {
     if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) { throw "manifest missing: $manifestPath" }
     $Script:Manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
     if ([string]$Script:Manifest.state -ne 'CANDIDATE') { throw "manifest state must be CANDIDATE" }
-    if ([string]$Script:Manifest.authority_commit -ne '460713aeb93ad5345edf02562f9ab20c8c3efe9b') { throw 'unexpected authority commit in manifest' }
+    # The manifest is the single source of truth for which commit the inventory is frozen against.
+    # A second copy of that SHA baked into this script cannot be re-pinned without editing the
+    # runner, which is the same coupling that forcing HEAD==authority created. What is checked here
+    # is that the value is a real, well-formed commit in this repository; the integrity that matters
+    # - ancestry, inventory enumeration at both authority and HEAD, and per-surface blob pins - is
+    # enforced in Assert-AuthorityAndInventory.
+    $authorityCommit = [string]$Script:Manifest.authority_commit
+    if ($authorityCommit -notmatch '^[0-9a-f]{40}$') {
+        throw "manifest authority_commit is not a full 40-character SHA: '$authorityCommit'"
+    }
+    $authorityType = (& git -C $Script:RepoRoot cat-file -t $authorityCommit 2>$null)
+    if ($LASTEXITCODE -ne 0 -or [string]$authorityType -ne 'commit') {
+        throw "manifest authority_commit $authorityCommit is not a commit in this repository"
+    }
 
     if ([string]::IsNullOrWhiteSpace($ResultsDir)) {
         $ResultsDir = Join-Path ([IO.Path]::GetTempPath()) ("MaverickFdmValidation-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
