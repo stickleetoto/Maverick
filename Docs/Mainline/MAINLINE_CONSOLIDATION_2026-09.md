@@ -12,7 +12,8 @@ consolidation changes aircraft tuning, reference data, scenes, prefabs, weapons,
 - Old `main`: `bb3a5273a8baf43eeb0b46277269d4b130c852d4` ("chore: preserve source newline")
 - Integration candidate: `origin/sol/f16-powered-reference-smoke` @ `8215e1ce71af39ce3e69604ccd52ca458ee99c67`
 - Integration branch: `sol/mainline-consolidation-2026-09` (candidate + one revert + this document)
-- Integration state: **PR opened, not merged.** `main` is unchanged by this task.
+- Integration state: **MERGED 2026-09-18 via PR #11.** New authoritative `main`:
+  `28c174e7ce6504e3353b7aba18c75b66b43bf621` (§5)
 
 ## 1. Verified branch graph
 
@@ -245,7 +246,22 @@ the numbers above were produced with one editor script present that `main` will 
 
 ## 5. Integration
 
-Chosen shape: **PR, not a direct merge.** `main` is untouched by this task.
+Chosen shape: **PR, not a direct merge.**
+
+**MERGED — 2026-09-18.**
+
+| | |
+|---|---|
+| Old `main` | `bb3a5273a8baf43eeb0b46277269d4b130c852d4` |
+| Integration source | `sol/mainline-consolidation-2026-09` @ `255978e` |
+| Pull request | #11 (`--merge`, no squash, no rebase) |
+| Merge commit | `28c174e7ce6504e3353b7aba18c75b66b43bf621` |
+| **New authoritative `main`** | **`28c174e7ce6504e3353b7aba18c75b66b43bf621`** |
+| Commits integrated | 21 audited + 1 revert + 2 documentation |
+
+`28c174e` is the authoritative base for all subsequent combat-system work. Every later branch —
+`sol/weapon-system-separation-r0` and everything after it — is cut from this commit or a descendant,
+never from a `sol/*` branch audited here.
 
 - Branch: `sol/mainline-consolidation-2026-09` = `8215e1c` + `1bc9dd0` (revert of `2edd3f1`) + this document.
 - PR base: `main`. Merging it integrates all 21 audited commits at once, with the one rejected
@@ -256,12 +272,8 @@ Chosen shape: **PR, not a direct merge.** `main` is untouched by this task.
 - No branch deleted. `sol/fdm-validation-fixes` and `sol/f16-powered-reference-smoke` stay as
   history and stay recoverable.
 
-Once the PR is merged, record here: integration/merge commit, new `main` HEAD, and the date. Until
-then the authoritative base for combat work is still old `main` (`bb3a527`).
-
-**After merge, this main HEAD is the authoritative base for all subsequent combat-system work**
-(`sol/weapon-system-separation-r0` and everything after it). That branch must be created from the
-post-merge `main`, not from any `sol/*` branch audited here.
+PR #10 was left open through the merge and can now be closed as superseded; its 11 commits are in
+`28c174e`. Gate 5's blocker is tracked as issue #12.
 
 ## 6. Known risks carried forward
 
