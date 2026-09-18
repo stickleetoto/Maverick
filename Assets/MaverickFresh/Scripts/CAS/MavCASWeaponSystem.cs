@@ -1,4 +1,5 @@
 using System.Reflection;
+using MaverickFresh.Combat;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -572,6 +573,40 @@ namespace MaverickFresh
             if (collider == null)
                 return false;
 
+            // CONTRACT PATH. Anything implementing IMavDamageReceiver is damaged through the
+            // interface, checked by the compiler. This is the path a future missile warhead or any
+            // new munition uses, and it is tried first so the reflection below stops being reached
+            // as receivers adopt the contract.
+            IMavDamageReceiver[] receivers = collider.GetComponentsInParent<IMavDamageReceiver>();
+            for (int i = 0; i < receivers.Length; i++)
+            {
+                IMavDamageReceiver receiver = receivers[i];
+                if (receiver == null)
+                    continue;
+
+                // MavCASTarget is a damage receiver too, but the caller already gave it a dedicated
+                // branch with its own hit accounting and event string, using the same
+                // GetComponentInParent scope this loop walks. Skipping it here keeps this method
+                // meaning exactly what its name says - aircraft - so adopting the contract changes
+                // no outcome. A type check, not a type-name string: the compiler can see this one.
+                if (receiver is MavCASTarget)
+                    continue;
+
+                if (!receiver.IsDamageReceiverAlive)
+                    return false;
+
+                receiver.ReceiveDamage(MavDamageInfo.AtPoint(amount, source, point));
+
+                if (!receiver.IsDamageReceiverAlive)
+                    destroyedCount++;
+                return true;
+            }
+
+            // LEGACY FALLBACK, retained deliberately and scheduled for deletion once every receiver
+            // implements IMavDamageReceiver. It matches a receiver by comparing a type NAME against a
+            // string literal and then probes three possible method signatures by reflection: a
+            // coupling no compiler can see, where renaming the receiver silently stops all damage.
+            // It is kept only so a receiver this code has not been told about keeps working today.
             Component[] components = collider.GetComponentsInParent<Component>();
             for (int i = 0; i < components.Length; i++)
             {

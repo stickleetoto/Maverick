@@ -1,4 +1,5 @@
 using System.Reflection;
+using MaverickFresh.Combat;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -9,7 +10,7 @@ namespace MaverickFresh
     /// can be dropped into older local projects without breaking compilation.
     /// </summary>
     [DisallowMultipleComponent]
-    public class MavAircraftDamageState : MonoBehaviour
+    public class MavAircraftDamageState : MonoBehaviour, IMavDamageReceiver
     {
         [Header("Identity")]
         public string displayName = "Aircraft";
@@ -104,6 +105,21 @@ namespace MaverickFresh
         public bool IsAlive()
         {
             return !destroyed && health > 0f && gameObject.activeInHierarchy;
+        }
+
+        /// <summary>
+        /// <see cref="IMavDamageReceiver"/> implementation. Delegates to the existing
+        /// <see cref="ApplyDamage(float, string, Vector3)"/> and to <see cref="IsAlive"/>, so the
+        /// contract path and the legacy reflection path produce exactly the same result.
+        /// </summary>
+        bool IMavDamageReceiver.IsDamageReceiverAlive
+        {
+            get { return IsAlive(); }
+        }
+
+        void IMavDamageReceiver.ReceiveDamage(MavDamageInfo info)
+        {
+            ApplyDamage(info.amount, info.source, info.hitPoint);
         }
 
         public void ApplyDamage(float amount, string source, Vector3 hitPoint)
