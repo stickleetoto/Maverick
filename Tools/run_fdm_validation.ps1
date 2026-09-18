@@ -34,9 +34,11 @@ function Invoke-GitText {
 }
 
 function Get-GitStatusLines {
-    $lines = & git -C $Script:RepoRoot status --porcelain=v1 --untracked-files=all 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "git status failed: $($lines -join ' ')" }
-    return @($lines | Where-Object { $_ -ne $null -and $_.Length -gt 0 })
+    $out = & git -C $Script:RepoRoot status --porcelain=v1 --untracked-files=all 2>$null
+    if ($LASTEXITCODE -ne 0) { throw "git status failed" }
+    if ($null -eq $out) { return @() }
+    return @(@($out) | Where-Object { $null -ne $_ } | ForEach-Object { [string]$_ } |
+        Where-Object { $_.Trim() -ne '' })
 }
 
 function Get-StatusPath {
@@ -47,26 +49,43 @@ function Get-StatusPath {
     return $path.Trim('"') -replace '\\','/'
 }
 
+# Normalises raw git output into a sorted string[] of repo-relative paths. Everything is cast to
+# string before any member access, so a non-string object on the pipeline cannot trip strict mode.
+function ConvertTo-PathList {
+    param($Raw)
+    if ($null -eq $Raw) { return @() }
+    $list = New-Object System.Collections.Generic.List[string]
+    foreach ($item in @($Raw)) {
+        if ($null -eq $item) { continue }
+        $text = ([string]$item).Trim()
+        if ($text -eq '') { continue }
+        $list.Add(($text.Trim('"') -replace '\','/'))
+    }
+    return @($list | Sort-Object)
+}
+
 # Tracked paths whose GIT-NORMALIZED content differs from HEAD. This is content identity, not
 # `git status`: a file Unity rewrote with different line endings but identical normalized content
 # does not appear here, while any real edit does. That distinction is the whole point - Unity
 # rewrites ProjectSettings/*.asset during import, and failing a validation run over a line ending
 # would make a clean run impossible while proving nothing.
 function Get-TrackedContentChanges {
-    $lines = & git -C $Script:RepoRoot diff --name-only HEAD 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "git diff --name-only HEAD failed: $($lines -join ' ')" }
-    return @($lines | Where-Object { $_ -ne $null -and $_.Length -gt 0 } |
-        ForEach-Object { ([string]$_).Trim().Trim('"') -replace '\','/' } | Sort-Object)
+    # stdout only. git writes its "LF will be replaced by CRLF" advisories to stderr, and merging
+    # them in with 2>&1 puts ErrorRecord objects in this list; under Set-StrictMode -Version Latest
+    # reading .Length off one of those is a terminating error, which would fail the run over a
+    # warning about the very line endings this function exists to ignore.
+    $out = & git -C $Script:RepoRoot diff --name-only HEAD 2>$null
+    if ($LASTEXITCODE -ne 0) { throw "git diff --name-only HEAD failed while listing tracked content changes" }
+    return @(ConvertTo-PathList $out)
 }
 
 # Untracked files that .gitignore does NOT cover. Unity's generated artifacts (Library/, Temp/,
 # *.csproj, *.sln, *.slnx) are ignored and therefore invisible here by design; anything else that
 # appears is a real, unexplained new file and fails the run.
 function Get-UntrackedFiles {
-    $lines = & git -C $Script:RepoRoot ls-files --others --exclude-standard 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "git ls-files --others failed: $($lines -join ' ')" }
-    return @($lines | Where-Object { $_ -ne $null -and $_.Length -gt 0 } |
-        ForEach-Object { ([string]$_).Trim().Trim('"') -replace '\','/' } | Sort-Object)
+    $out = & git -C $Script:RepoRoot ls-files --others --exclude-standard 2>$null
+    if ($LASTEXITCODE -ne 0) { throw "git ls-files --others failed while listing untracked files" }
+    return @(ConvertTo-PathList $out)
 }
 
 function Get-CheckoutState {
