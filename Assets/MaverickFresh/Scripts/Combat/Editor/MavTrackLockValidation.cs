@@ -679,8 +679,9 @@ namespace MaverickFresh.Combat.EditorTools
             {
                 MavEngagementView view = host.AddComponent<MavEngagementView>();
 
-                Record(view.preferAuthoritativeLock,
-                       "L-065", "the migration switch is on by default, so one answer is nominated",
+                // THE DEFAULT. Legacy authority, because consumers have not migrated yet.
+                Record(!view.preferAuthoritativeLock,
+                       "L-065", "the migration switch defaults to legacy authority",
                        report, ref passed, ref failed);
 
                 view.PublishDesignation(21, "cas");
@@ -689,27 +690,37 @@ namespace MaverickFresh.Combat.EditorTools
                 view.PublishAuthoritativeLock(24, MavLockState.Locked, "authoritative");
                 view.RefreshDisagreement();
 
-                Record(view.PrimaryTrackId == 24,
-                       "L-065b", "with the switch on the authoritative lock wins",
+                Record(view.PrimaryTrackId == 22 && view.PrimarySourceName == "legacy-sensor-stt",
+                       "L-065b", "by default the answer is the pre-migration legacy order, even with an authoritative lock held",
+                       report, ref passed, ref failed);
+                Record(view.authoritativeLockTrackId == 24
+                       && view.authoritativeLockState == MavLockState.Locked,
+                       "L-065c", "the default withholds the authoritative lock from consumers without erasing it",
+                       report, ref passed, ref failed);
+                Record(!view.legacyDisagreesWithAuthoritative,
+                       "L-065d", "with the migration not in effect there is no disagreement to report",
                        report, ref passed, ref failed);
 
+                // THE OPT-IN. Deliberate, and it is the whole of the change when it happens.
+                view.preferAuthoritativeLock = true;
+                view.RefreshDisagreement();
+
+                Record(view.PrimaryTrackId == 24 && view.PrimarySourceName == "authoritative-lock",
+                       "L-066", "opting in makes the authoritative lock outrank all three legacy authorities",
+                       report, ref passed, ref failed);
+                Record(view.legacyDisagreesWithAuthoritative,
+                       "L-066b", "the migration signal becomes meaningful only once the move is in effect",
+                       report, ref passed, ref failed);
+
+                // AND BACK. Reversible at one field, not by reverting code.
                 view.preferAuthoritativeLock = false;
                 view.RefreshDisagreement();
 
                 Record(view.PrimaryTrackId == 22 && view.PrimarySourceName == "legacy-sensor-stt",
-                       "L-066", "with the switch off the answer is exactly the pre-migration legacy order",
+                       "L-066c", "turning the switch back off restores legacy behavior exactly",
                        report, ref passed, ref failed);
-                Record(view.authoritativeLockTrackId == 24,
-                       "L-066b", "the switch hides the authoritative lock from consumers without erasing it",
-                       report, ref passed, ref failed);
-                Record(!view.legacyDisagreesWithAuthoritative,
-                       "L-066c", "with the migration off there is no disagreement to report",
-                       report, ref passed, ref failed);
-
-                view.preferAuthoritativeLock = true;
-                view.RefreshDisagreement();
-                Record(view.PrimaryTrackId == 24 && view.legacyDisagreesWithAuthoritative,
-                       "L-066d", "the switch is reversible in both directions",
+                Record(!view.legacyDisagreesWithAuthoritative && view.authoritativeLockTrackId == 24,
+                       "L-066d", "the switch is reversible in both directions and loses nothing either way",
                        report, ref passed, ref failed);
             }
             finally { Object.DestroyImmediate(host); }
@@ -889,6 +900,12 @@ namespace MaverickFresh.Combat.EditorTools
             try
             {
                 MavEngagementView view = host.AddComponent<MavEngagementView>();
+
+                // This section is about the ORDER of precedence once the authoritative lock is allowed
+                // to compete, so it opts in explicitly. The DEFAULT is asserted in the migration-switch
+                // section instead - keeping the two apart is what stops a precedence case from silently
+                // becoming the thing that documents the default.
+                view.preferAuthoritativeLock = true;
 
                 view.PublishDesignation(11, "cas");
                 view.PublishSensorLock(12, "stt");

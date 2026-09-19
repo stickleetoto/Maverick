@@ -3,6 +3,9 @@
 One authoritative lock: selection, acquisition, maintenance, coast and loss, expressed entirely in
 track ids, with the three legacy lock authorities represented before any authority moves.
 
+**Authority has not moved.** The new lock path is opt-in: `preferAuthoritativeLock` defaults to
+`false`, so every consumer still gets the legacy answer. Consumers migrate first.
+
 | | |
 |---|---|
 | Base | `1d722fde41fe49d85d3f1fc3334ea3be5e7b9f39` (post Radar Core R0 authority `c805eb9`) |
@@ -165,15 +168,28 @@ moves the equivalence claim stops being true.
 
 ## 7. Moving authority, and the one switch that decides it
 
-`MavEngagementView.PrimaryTrackId` now prefers `authoritativeLockTrackId`, then falls back to the
-unchanged legacy order: sensor STT lock, pod lock, CAS designation.
+`MavEngagementView.PrimaryTrackId` **still answers the legacy order by default**: sensor STT lock,
+pod lock, CAS designation, exactly as before this phase. The authoritative lock outranks all three
+only once `preferAuthoritativeLock` is turned on.
 
 `preferAuthoritativeLock` is the migration switch, in one place, so moving authority is a decision
-rather than a side effect of a class existing. Off, `PrimaryTrackId` answers exactly what it answered
-before this phase. It defaults on because it changes nothing today — **no gameplay system reads
-`PrimaryTrackId`; only validation does** — and because the phase should settle which answer is meant
-to win before a consumer depends on it. It earns its keep the moment one does: the migration reverses
-at one field instead of by reverting code.
+rather than a side effect of a class existing. **It defaults to `false` — legacy authority.**
+
+The reason is the migration order itself:
+
+> legacy authority → project and observe → validate equivalence → introduce the new authority →
+> **migrate consumers** → switch the default → retire the legacy owners
+
+Consumers have not migrated. Defaulting to the new path would move authority ahead of the step that
+proves the move is safe. That no gameplay system reads `PrimaryTrackId` today is not a reason to get
+the order wrong — it only means the mistake would be invisible until the first consumer inherited a
+default nobody had validated against it.
+
+So this phase leaves the authoritative lock **computed, published and visible, but not preferred**.
+Turning the switch on is the deliberate opt-in, it is the entire change when that happens, and it is
+reversible at one field rather than by reverting code. Both positions are asserted, and the default is
+asserted separately from the precedence order so a precedence case can never quietly become the thing
+that documents the default.
 
 The legacy fallback is kept, and the legacy components are **not deleted**. Removing them now would
 change behavior in every case the authoritative lock has not taken over.
@@ -214,7 +230,7 @@ incidental.
 
 ## 10. Validation
 
-`MavTrackLockValidation`, **100 assertions, 0 failures.** Every case drives the controller with an
+`MavTrackLockValidation`, **102 assertions, 0 failures.** Every case drives the controller with an
 explicit clock and explicit step deltas rather than waiting on frames, because lock semantics are
 entirely about elapsed time and editor time does not advance between calls. Nothing depends on a
 scene, on physics, or on a real sensor.
@@ -229,17 +245,17 @@ scene, on physics, or on a real sensor.
 | Stalled selection | `L-047`–`L-049d` | the defect above, the narrowness of its fix, commanded break |
 | Effective quality | `L-050`–`L-055` | `Locked` asserted here and nowhere else; owner not rewritten |
 | Engagement precedence | `L-060`–`L-064` | authoritative wins, legacy order preserved beneath it |
-| Migration switch | `L-065`–`L-066d` | both positions, reversible, nothing erased |
+| Migration switch | `L-065`–`L-066d` | the legacy default, the opt-in, reversibility, nothing erased |
 | Legacy equivalence | `L-070`–`L-085b` | the three projections, their reachable shapes, the divergences |
 
 **Determinism** was checked rather than assumed: two independent Unity launches produced
-byte-identical assertion reports, all 101 report lines.
+byte-identical assertion reports, all 103 report lines.
 
 ### Gates
 
 | Gate | Result |
 |---|---|
-| Track lock | **100 / 0 PASS** |
+| Track lock | **102 / 0 PASS** |
 | Radar Core | **71 / 0 PASS** (unchanged) |
 | TargetTrack Core | **35 / 0 PASS** (unchanged) |
 | Combat boundary scan | **PASS**, 3 / 0 |
@@ -260,11 +276,13 @@ would have been crossed.
 - There is no multi-target track-while-scan lock. One authority holds one lock.
 - The three legacy authorities still run and still own their own state. They are represented, not
   retired.
-- Nothing consumes the lock yet. That is the next phase's job, and it is why the migration switch
-  exists.
+- Nothing consumes the lock yet, and the default therefore stays on legacy authority. That is the
+  next phase's job, and it is why the migration switch exists.
 
 ## 12. Next
 
 Migrate consumers onto `IMavTrackLockAuthority` — the HUD first, since it reads the engagement view
-already — and only once they read the authoritative answer, retire the legacy authorities one at a
-time, each with `legacyDisagreesWithAuthoritative` staying false as the evidence.
+already. Only once they read the authoritative answer does `preferAuthoritativeLock` flip to `true`,
+and only after that do the legacy authorities retire, one at a time, each with
+`legacyDisagreesWithAuthoritative` staying false as the evidence. Three separate steps, in that order,
+and none of them is this phase.

@@ -13,15 +13,16 @@ namespace MaverickFresh.Combat.Targeting
     /// <see cref="MavTargetTrackOwner"/> - and their disagreement became visible instead of being
     /// buried in three components.
     ///
-    /// MOVE has begun here. <see cref="authoritativeLockTrackId"/> carries the claim of the one real
-    /// lock authority, <see cref="MavTrackLockController"/>, and <see cref="PrimaryTrackId"/> now
-    /// prefers it over all three legacy projections.
+    /// MOVE has been PREPARED here, not performed. <see cref="authoritativeLockTrackId"/> carries the
+    /// claim of the one real lock authority, <see cref="MavTrackLockController"/>, and
+    /// <see cref="PrimaryTrackId"/> can be made to prefer it - but
+    /// <see cref="preferAuthoritativeLock"/> is OFF by default, so the answer consumers get is still
+    /// the legacy one. Consumers migrate first; the default moves after.
     ///
-    /// The legacy authorities still run and still own their own state. They are NOT deleted, and the
-    /// legacy fallback in PrimaryTrackId is kept, because their behavior has to be demonstrably
-    /// represented by the new path before removing them can be called safe.
-    /// <see cref="legacyDisagreesWithAuthoritative"/> is the signal that says when that is true, and
-    /// <see cref="preferAuthoritativeLock"/> is the one switch deciding whether the move is in effect.
+    /// The legacy authorities still run and still own their own state. They are NOT deleted, because
+    /// their behavior has to be demonstrably represented by the new path before removing them can be
+    /// called safe. <see cref="legacyDisagreesWithAuthoritative"/> is the signal that says when that
+    /// is true.
     ///
     /// Read-only for consumers. A publisher fills it; nothing here decides anything.
     /// </summary>
@@ -60,17 +61,24 @@ namespace MaverickFresh.Combat.Targeting
         /// Whether the authoritative lock is allowed to win <see cref="PrimaryTrackId"/>.
         ///
         /// The migration switch, in one place, so moving authority is a decision rather than a side
-        /// effect of a class existing. Turn it off and <see cref="PrimaryTrackId"/> answers exactly
-        /// what it answered before this phase: sensor STT lock, then pod lock, then designation.
+        /// effect of a class existing.
         ///
-        /// It defaults to ON because it changes nothing today - no gameplay system reads
-        /// <see cref="PrimaryTrackId"/> yet, only validation does - and because the point of the phase
-        /// is to settle which answer is meant to win BEFORE a consumer depends on it. The switch earns
-        /// its keep at the moment a consumer does depend on it: the migration can then be reversed at
-        /// one field instead of by reverting code.
+        /// DEFAULTS TO LEGACY - false. While it is off, <see cref="PrimaryTrackId"/> answers exactly
+        /// what it answered before this phase: sensor STT lock, then pod lock, then designation. The
+        /// authoritative lock is still computed, still published and still visible; it simply does not
+        /// win yet.
+        ///
+        /// WHY OFF. The migration order is legacy authority, project and observe, validate equivalence,
+        /// introduce the new authority, MIGRATE CONSUMERS, then switch the default, and only then
+        /// retire the legacy owners. Consumers have not migrated. Making the new path the default
+        /// before they have would move authority ahead of the step that proves the move is safe, and
+        /// the fact that no consumer reads this property today is not a reason to get the order wrong -
+        /// the first one that does would inherit a default nobody had validated against it.
+        ///
+        /// Turning it on is the deliberate, reversible opt-in, and it is asserted in both positions.
         /// </summary>
-        [Tooltip("When off, PrimaryTrackId ignores the authoritative lock and uses the legacy order only.")]
-        public bool preferAuthoritativeLock = true;
+        [Tooltip("Off by default: PrimaryTrackId uses the legacy order. On: the authoritative lock wins.")]
+        public bool preferAuthoritativeLock = false;
 
         [Header("Legacy lock states, projected (diagnostics)")]
         /// <summary>
@@ -117,20 +125,21 @@ namespace MaverickFresh.Combat.Targeting
         /// <summary>
         /// The single answer.
         ///
-        /// The AUTHORITATIVE LOCK now wins, which is the change this phase exists to make. It is the
-        /// only claim produced by a system whose whole job is the lock lifecycle - acquisition,
-        /// maintenance, coast and loss - rather than by a component that also scans, reads keys and
-        /// draws a HUD.
+        /// BY DEFAULT this is the LEGACY answer, unchanged from before this phase: sensor STT lock,
+        /// then pod lock, then CAS designation. That ordering reflects claim strength as the legacy
+        /// systems actually use it - an STT lock is a maintained commitment to one object, a pod lock
+        /// is a maintained commitment to a ground point, and a designation is a marker that survives
+        /// losing sight of the target.
         ///
-        /// The legacy order is kept as a fallback, unchanged, for exactly as long as those systems
-        /// still run: sensor STT lock, then pod lock, then CAS designation. That ordering reflects
-        /// claim strength as the legacy systems actually use it - an STT lock is a maintained
-        /// commitment to one object, a pod lock is a maintained commitment to a ground point, and a
-        /// designation is a marker that survives losing sight of the target.
+        /// The AUTHORITATIVE LOCK outranks all three once <see cref="preferAuthoritativeLock"/> is
+        /// turned on. It is the only claim produced by a system whose whole job is the lock lifecycle -
+        /// acquisition, maintenance, coast and loss - rather than by a component that also scans, reads
+        /// keys and draws a HUD. Which is why it is meant to win eventually, and why it does not win
+        /// yet: consumers have to migrate onto it first.
         ///
-        /// The fallback is not politeness. Deleting it now would change behavior in every case the
-        /// authoritative lock has not yet taken over, and this phase moves authority without changing
-        /// what the aircraft does.
+        /// The legacy path is not kept out of politeness. Removing it, or defaulting past it, would
+        /// change behavior in every case the authoritative lock has not taken over, and this phase
+        /// moves authority without changing what the aircraft does.
         /// </summary>
         public int PrimaryTrackId
         {
