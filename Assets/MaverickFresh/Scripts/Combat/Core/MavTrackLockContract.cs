@@ -93,6 +93,17 @@ namespace MaverickFresh.Combat
         /// <summary>Seconds the current lock has been held. Zero when not locked.</summary>
         float TimeInLockSeconds { get; }
 
+        /// <summary>
+        /// How far through acquisition, 0..1. Zero unless acquiring, one while committed.
+        ///
+        /// Added for the first migrated consumer. A HUD that can read <see cref="LockState"/> but not the
+        /// progress behind <see cref="MavLockState.Acquiring"/> can only show that something is happening,
+        /// not how close it is - and the alternative was for the consumer to reach past this interface to
+        /// the concrete controller, which is the coupling the interface exists to prevent. Like every
+        /// other member here it must fail closed when the authority is unavailable.
+        /// </summary>
+        float AcquisitionProgress01 { get; }
+
         /// <summary>Why the last lock ended. <see cref="MavLockLossReason.None"/> if none has.</summary>
         MavLockLossReason LastLossReason { get; }
     }

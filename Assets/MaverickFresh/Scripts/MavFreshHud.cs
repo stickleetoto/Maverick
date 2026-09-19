@@ -1,3 +1,4 @@
+using MaverickFresh.Combat;
 using MaverickFresh.Combat.Targeting;
 using UnityEngine;
 
@@ -22,6 +23,39 @@ namespace MaverickFresh
         /// so nothing that was displayed before changes.
         /// </summary>
         public MavTargetTrackOwner trackOwner;
+
+        /// <summary>
+        /// Consumer Migration R0. The HUD reads the one lock authority THROUGH ITS INTERFACE.
+        ///
+        /// Typed as <see cref="IMavTrackLockAuthority"/>, never as the concrete controller, so the lock
+        /// implementation can be replaced without touching presentation. Not serialized, because Unity
+        /// cannot serialize an interface field - it is resolved instead, and resolved WITHOUT a new scene
+        /// search: the authority lives on the same GameObject as <see cref="engagementView"/>, which this
+        /// HUD already holds, so a GetComponent on that object is enough. Another scene-wide search here
+        /// would have widened the reach of this HUD for no reason.
+        ///
+        /// STRICTLY READ-ONLY. The HUD never selects, requests, breaks or clears a lock, never mutates a
+        /// track, never drives a sensor, and holds no target GameObject. Track ids stay the identity
+        /// boundary.
+        /// </summary>
+        private IMavTrackLockAuthority lockAuthority;
+
+        /// <summary>
+        /// The same object as <see cref="lockAuthority"/>, held as a <see cref="Component"/> so its
+        /// LIFETIME can actually be checked.
+        ///
+        /// WHY BOTH. UnityEngine.Object overloads <c>==</c> so that a destroyed object compares equal to
+        /// null. That overload is chosen by the STATIC type, so it does not apply through an interface
+        /// reference: after the authority component is destroyed, <c>lockAuthority == null</c> is still
+        /// false and the HUD would keep querying a dead object. Worse, it would never re-resolve, so an
+        /// aircraft swap would leave the HUD bound to the previous aircraft's authority.
+        ///
+        /// Holding the same instance as a Component gives back the engine's null semantics, and its
+        /// <c>gameObject</c> gives the host identity needed to notice that
+        /// <see cref="engagementView"/> now belongs to a different aircraft. Neither check needs the
+        /// concrete controller type or a scene search.
+        /// </summary>
+        private Component lockAuthorityComponent;
         public MavEngagementView engagementView;
         public MavWTFeelPolishController wtPolish;
         public MavPhysicalAIController physicalAI;
@@ -119,6 +153,35 @@ namespace MaverickFresh
             if (engagementView == null)
                 engagementView = FindObjectOfType<MavEngagementView>();
 
+            // Consumer Migration R0. The authority is bound to the CURRENT engagement view, resolved from
+            // that view's own GameObject rather than by searching the scene, and by interface rather than
+            // by concrete type.
+            //
+            // The binding is re-validated on every resolve, through the Component handle rather than the
+            // interface reference. An interface reference to a destroyed MonoBehaviour does NOT compare
+            // null, so testing lockAuthority alone would keep a dead authority forever - and would also
+            // never notice the engagement view moving to another aircraft, because a non-null reference
+            // suppresses re-resolution.
+            if (lockAuthorityComponent == null
+                || engagementView == null
+                || lockAuthorityComponent.gameObject != engagementView.gameObject)
+            {
+                lockAuthority = null;
+                lockAuthorityComponent = null;
+            }
+
+            if (lockAuthority == null && engagementView != null)
+            {
+                lockAuthority = engagementView.GetComponent<IMavTrackLockAuthority>();
+
+                // GetComponent can only return a Component, so this cast holds for anything it finds. An
+                // implementation whose lifetime cannot be checked is not bound at all rather than bound
+                // unverifiably, because the whole point here is that the binding stays checkable.
+                lockAuthorityComponent = lockAuthority as Component;
+                if (lockAuthorityComponent == null)
+                    lockAuthority = null;
+            }
+
             if (wtPolish == null)
                 wtPolish = FindObjectOfType<MavWTFeelPolishController>();
 
@@ -203,6 +266,7 @@ namespace MaverickFresh
                     (casTargeting != null ? $"TGT {(casTargeting.designatedTarget != null ? casTargeting.designatedTarget.displayName : casTargeting.candidateTarget != null ? "CAND:" + casTargeting.candidateTarget.displayName : casTargeting.status)}\n" : "") +
                     (targetingPod != null ? $"TGP {targetingPod.displayMode} {(targetingPod.isLocked ? "LOCK" : "SEARCH")} FOV {targetingPod.fov:0.0}\n" : "") +
                     TrackHudLine() +
+                    AuthoritativeLockDebugHudLine() +
                     (physicalAI != null ? $"PAI {(physicalAI.aiEnabled ? "ON" : "OFF")} {physicalAI.mode} {physicalAI.aiState}  F11 Toggle F3 Mode\n" : "") +
                     (rewardLogger != null ? $"RWD {(rewardLogger.isRecording ? "REC" : "OFF")} {rewardLogger.totalReward:0.00} F4 Log\n" : "") +
                     "Mouse aim | Mouse0 neon gun | Space missile/secondary | G gear | 1/2 secondary | W/S pitch | A/D roll | Shift/Ctrl throttle";
@@ -222,6 +286,7 @@ namespace MaverickFresh
                     TvcHudLine() +
                     (casWeapons != null ? $"GUN {casWeapons.gunAmmo}  SEC {casWeapons.selectedSecondaryWeapon}  RKT {casWeapons.rocketAmmo}  BOMB {casWeapons.bombAmmo}  MSL {casWeapons.missileAmmo}\n" : "") +
                     (targetingPod != null ? $"TGP {targetingPod.displayMode} {(targetingPod.isLocked ? "LOCK" : "SEARCH")}\n" : "") +
+                    AuthoritativeLockHudLine() +
                     "F2 debug | F12 HUD | Mouse0 neon gun | Space missile/secondary | G gear | W/S pitch | A/D roll";
                 height = 144f;
             }
@@ -241,6 +306,35 @@ namespace MaverickFresh
         /// information rather than a bug: it means the authority points at something the track owner
         /// has never observed.
         /// </summary>
+        /// <summary>
+        /// The player-facing authoritative lock line. Consumer Migration R0.
+        ///
+        /// ADDITIVE. The existing TGT and TGP lines are untouched, because they mean different things:
+        /// TGT is a CAS designation and TGP is a targeting-pod lock, and both can refer to a bare ground
+        /// point, which the track vocabulary deliberately cannot represent. Folding them into the
+        /// authoritative lock would have thrown that information away.
+        ///
+        /// FAILS CLOSED. The formatter returns an empty string whenever the authority is unavailable, so
+        /// the line vanishes instead of freezing on its last value. Nothing is cached here to freeze: the
+        /// string is rebuilt from the authority every frame.
+        /// </summary>
+        private string AuthoritativeLockHudLine()
+        {
+            string line = MavLockHudPresentation.FormatPlayerLine(lockAuthority, engagementView);
+            return string.IsNullOrEmpty(line) ? string.Empty : line + "\n";
+        }
+
+        /// <summary>
+        /// The developer lock line: full lifecycle, plus what each legacy authority still claims and
+        /// whether it disagrees with the authoritative answer.
+        /// </summary>
+        private string AuthoritativeLockDebugHudLine()
+        {
+            if (lockAuthority == null && engagementView == null)
+                return string.Empty;
+            return MavLockHudPresentation.FormatDebugLine(lockAuthority, engagementView) + "\n";
+        }
+
         private string TrackHudLine()
         {
             if (trackOwner == null)
