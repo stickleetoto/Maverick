@@ -39,6 +39,23 @@ namespace MaverickFresh
         /// boundary.
         /// </summary>
         private IMavTrackLockAuthority lockAuthority;
+
+        /// <summary>
+        /// The same object as <see cref="lockAuthority"/>, held as a <see cref="Component"/> so its
+        /// LIFETIME can actually be checked.
+        ///
+        /// WHY BOTH. UnityEngine.Object overloads <c>==</c> so that a destroyed object compares equal to
+        /// null. That overload is chosen by the STATIC type, so it does not apply through an interface
+        /// reference: after the authority component is destroyed, <c>lockAuthority == null</c> is still
+        /// false and the HUD would keep querying a dead object. Worse, it would never re-resolve, so an
+        /// aircraft swap would leave the HUD bound to the previous aircraft's authority.
+        ///
+        /// Holding the same instance as a Component gives back the engine's null semantics, and its
+        /// <c>gameObject</c> gives the host identity needed to notice that
+        /// <see cref="engagementView"/> now belongs to a different aircraft. Neither check needs the
+        /// concrete controller type or a scene search.
+        /// </summary>
+        private Component lockAuthorityComponent;
         public MavEngagementView engagementView;
         public MavWTFeelPolishController wtPolish;
         public MavPhysicalAIController physicalAI;
@@ -136,10 +153,34 @@ namespace MaverickFresh
             if (engagementView == null)
                 engagementView = FindObjectOfType<MavEngagementView>();
 
-            // Consumer Migration R0. Resolved from the view's own GameObject rather than by searching the
-            // scene again, and by interface rather than by concrete type.
+            // Consumer Migration R0. The authority is bound to the CURRENT engagement view, resolved from
+            // that view's own GameObject rather than by searching the scene, and by interface rather than
+            // by concrete type.
+            //
+            // The binding is re-validated on every resolve, through the Component handle rather than the
+            // interface reference. An interface reference to a destroyed MonoBehaviour does NOT compare
+            // null, so testing lockAuthority alone would keep a dead authority forever - and would also
+            // never notice the engagement view moving to another aircraft, because a non-null reference
+            // suppresses re-resolution.
+            if (lockAuthorityComponent == null
+                || engagementView == null
+                || lockAuthorityComponent.gameObject != engagementView.gameObject)
+            {
+                lockAuthority = null;
+                lockAuthorityComponent = null;
+            }
+
             if (lockAuthority == null && engagementView != null)
+            {
                 lockAuthority = engagementView.GetComponent<IMavTrackLockAuthority>();
+
+                // GetComponent can only return a Component, so this cast holds for anything it finds. An
+                // implementation whose lifetime cannot be checked is not bound at all rather than bound
+                // unverifiably, because the whole point here is that the binding stays checkable.
+                lockAuthorityComponent = lockAuthority as Component;
+                if (lockAuthorityComponent == null)
+                    lockAuthority = null;
+            }
 
             if (wtPolish == null)
                 wtPolish = FindObjectOfType<MavWTFeelPolishController>();

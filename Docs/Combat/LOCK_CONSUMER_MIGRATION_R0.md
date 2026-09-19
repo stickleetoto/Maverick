@@ -114,7 +114,7 @@ comment.
 
 ## 8. Validation
 
-`MavLockConsumerMigrationValidation`, **61 assertions, 0 failures**, deterministic across two independent
+`MavLockConsumerMigrationValidation`, **75 assertions, 0 failures**, deterministic across two independent
 Unity launches. Every case drives the real `MavTrackLockController` with an explicit clock, so the lifecycle
 being presented is the real one rather than a mock.
 
@@ -130,6 +130,7 @@ being presented is the real one rather than a mock.
 | 8. legacy-only pod/designation data still visible | `C-011`–`C-011d` |
 | 9. disagreement observable | `C-012`–`C-013b` |
 | 10. no HUD path writes selection or lock state | `C-020`–`C-024c` |
+| 11. consumer binding survives destruction and host change | `C-030`–`C-035b` |
 
 Requirement 10 is checked by reading the HUD source, because the absence of a call is not observable at
 runtime: 16 forbidden tokens (`RequestSelection`, `BreakLock`, every `Publish*`, `RegisterFeed`,
@@ -155,7 +156,7 @@ and it leaked into `C-007`, which is about something else.
 | Gate | Result |
 |---|---|
 | Compile | **0 errors** |
-| Lock consumer migration | **61 / 0 PASS** |
+| Lock consumer migration | **75 / 0 PASS** |
 | Track Lock | **147 / 0 PASS** (unchanged) |
 | Radar Core | **71 / 0 PASS** (unchanged) |
 | TargetTrack | **35 / 0 PASS** (unchanged) |
@@ -171,6 +172,73 @@ previously did not have at all — aircraft lock lifecycle — and it disappears
 unavailable.
 
 Global authority did not move: `PrimaryTrackId` still answers the legacy order, and `C-010b` asserts it.
+
+## 8.1 Consumer-binding lifetime — a defect found in review
+
+The presentation was right; the HUD could be looking at the wrong authority.
+
+The first version cached the authority as `IMavTrackLockAuthority` and re-resolved only when
+`lockAuthority == null`. **UnityEngine.Object overloads `==` so a destroyed object compares equal to
+null, but that overload is chosen by the STATIC type** - so it does not apply through an interface
+reference. Two consequences, both introduced by this phase:
+
+1. After the authority component was destroyed, the cached interface reference stayed non-null and the HUD
+   kept using it.
+2. A non-null cache also **suppressed re-resolution**, so when `engagementView` moved to another aircraft
+   the HUD stayed bound to the previous aircraft's authority.
+
+### It does not merely go stale, it throws
+
+Reverting the binding and re-running made the suite fail with
+`MissingReferenceException: The object of type 'MavTrackLockController' has been destroyed but you are
+still trying to access it`. So in a real aircraft swap or teardown this would have been a hard fault the
+next time the HUD drew, not a quietly wrong readout.
+
+### The fix
+
+A second handle on the same instance, typed `Component`, which restores the engine's null semantics and
+supplies host identity:
+
+```csharp
+private IMavTrackLockAuthority lockAuthority;
+private Component lockAuthorityComponent;   // same object, lifetime-checkable
+```
+
+Every resolve drops a binding that is dead or belongs to a different host, then re-resolves from the
+current view:
+
+```csharp
+if (lockAuthorityComponent == null
+    || engagementView == null
+    || lockAuthorityComponent.gameObject != engagementView.gameObject)
+{
+    lockAuthority = null;
+    lockAuthorityComponent = null;
+}
+
+if (lockAuthority == null && engagementView != null)
+{
+    lockAuthority = engagementView.GetComponent<IMavTrackLockAuthority>();
+    lockAuthorityComponent = lockAuthority as Component;
+    if (lockAuthorityComponent == null)
+        lockAuthority = null;
+}
+```
+
+The `lockAuthorityComponent == null` test comes **first**, so a destroyed component is never dereferenced
+for its `gameObject`. No scene search was added - the count is still 53 - and no concrete controller type
+is named.
+
+### Tested through the real binding path
+
+`C-030`-`C-035b` drive the actual private `MavFreshHud.ResolveReferences` by reflection and read the two
+private fields, because the presentation cases cannot prove which authority the HUD is looking at.
+Reflection is deliberate: widening those members for a test would change the production surface in order to
+observe it, and edit-mode Unity raises no `OnEnable`, so the resolve has to be invoked explicitly anyway.
+
+Covered: binds to A; A destroyed and the reference not retained; a replacement on the same host picked up;
+switching the view to aircraft B rebinds to B and no longer holds A; switching back rebinds again; a host
+with no authority leaves the HUD bound to nothing and presenting nothing.
 
 ## 9.1 Known debt
 

@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using MaverickFresh.Combat.Targeting;
 using UnityEditor;
@@ -80,6 +81,7 @@ namespace MaverickFresh.Combat.EditorTools
             ValidateLegacyPreserved(report, ref passed, ref failed);
             ValidateDisagreementObservable(report, ref passed, ref failed);
             ValidateHudRemainsReadOnly(report, ref passed, ref failed);
+            ValidateHudAuthorityBinding(report, ref passed, ref failed);
 
             report.AppendLine("RESULT: " + (failed == 0 ? "PASS" : "FAIL")
                               + " passed=" + passed + " failed=" + failed);
@@ -512,6 +514,145 @@ namespace MaverickFresh.Combat.EditorTools
                        && !presenter.Contains("MavF22SensorSuite"),
                        "C-024c", "the presentation searches no scene and knows no sensor",
                        report, ref passed, ref failed);
+            }
+        }
+
+        // ---- the real HUD binding path, and its lifetime -------------------------------------------
+        /// <summary>
+        /// Drives the actual <c>MavFreshHud.ResolveReferences</c> and inspects what it bound to.
+        ///
+        /// The presentation cases above prove the HUD shows the right thing for a given authority. They
+        /// cannot prove the HUD is looking at the RIGHT authority, and that turned out to be a real defect:
+        /// UnityEngine.Object overloads <c>==</c> so a destroyed object compares null, but the overload is
+        /// picked by the STATIC type, so it does not apply through an interface reference. A cached
+        /// <c>IMavTrackLockAuthority</c> therefore stayed non-null after its component was destroyed, and a
+        /// non-null cache also suppressed re-resolution - so an aircraft swap left the HUD reading the old
+        /// aircraft's authority.
+        ///
+        /// Reflection is used deliberately: ResolveReferences and the two binding fields are private, and
+        /// the alternative - widening them for a test - would change the production surface to observe it.
+        /// Edit-mode Unity raises no OnEnable, so the resolve has to be invoked explicitly regardless.
+        /// </summary>
+        private static void ValidateHudAuthorityBinding(StringBuilder report, ref int passed, ref int failed)
+        {
+            MethodInfo resolve = typeof(MavFreshHud).GetMethod(
+                "ResolveReferences", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo authorityField = typeof(MavFreshHud).GetField(
+                "lockAuthority", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo handleField = typeof(MavFreshHud).GetField(
+                "lockAuthorityComponent", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Record(resolve != null,
+                   "C-030", "the HUD binding path can be driven directly",
+                   report, ref passed, ref failed);
+            Record(authorityField != null,
+                   "C-030b", "the HUD holds the authority as an interface reference",
+                   report, ref passed, ref failed);
+            Record(handleField != null && handleField.FieldType == typeof(Component),
+                   "C-030c", "and holds it a second time as a Component, so its lifetime is checkable",
+                   report, ref passed, ref failed);
+
+            if (resolve == null || authorityField == null || handleField == null)
+                return;
+
+            GameObject hudHost = new GameObject("MavConsumerHudHost");
+            GameObject aircraftA = new GameObject("MavConsumerAircraftA");
+            GameObject aircraftB = new GameObject("MavConsumerAircraftB");
+            try
+            {
+                MavTargetTrackOwner ownerA;
+                MavTrackLockController ctlA;
+                MavEngagementView viewA;
+                ScriptedFeed feedA;
+                Build(aircraftA, out ownerA, out ctlA, out viewA, out feedA);
+
+                MavFreshHud hud = hudHost.AddComponent<MavFreshHud>();
+                hud.engagementView = viewA;
+
+                // 1. Binds to A.
+                resolve.Invoke(hud, null);
+                object bound = authorityField.GetValue(hud);
+                Record(ReferenceEquals(bound, ctlA),
+                       "C-031", "the HUD binds to the authority on its engagement view's host",
+                       report, ref passed, ref failed);
+                Record(ReferenceEquals(handleField.GetValue(hud), ctlA),
+                       "C-031b", "and the Component handle refers to the same instance",
+                       report, ref passed, ref failed);
+
+                // 2/3. Destroy A. The binding must not survive it.
+                Object.DestroyImmediate(ctlA);
+                resolve.Invoke(hud, null);
+                object afterDestroy = authorityField.GetValue(hud);
+
+                Record(!ReferenceEquals(afterDestroy, ctlA),
+                       "C-032", "resolving does not retain the destroyed authority reference",
+                       report, ref passed, ref failed);
+                Record(afterDestroy == null,
+                       "C-032b", "with nothing to bind to, the authority reference is cleared outright",
+                       report, ref passed, ref failed);
+                Record(handleField.GetValue(hud) == null,
+                       "C-032c", "and the Component handle is cleared with it",
+                       report, ref passed, ref failed);
+
+                // 4. A replacement on the SAME host is picked up.
+                MavTrackLockController ctlA2 = aircraftA.AddComponent<MavTrackLockController>();
+                ctlA2.owner = ownerA;
+                ctlA2.engagementView = viewA;
+                resolve.Invoke(hud, null);
+
+                Record(ReferenceEquals(authorityField.GetValue(hud), ctlA2),
+                       "C-033", "a replacement authority on the same host is picked up",
+                       report, ref passed, ref failed);
+
+                // 5. Pointing the HUD at another aircraft rebinds to that aircraft's authority.
+                MavTargetTrackOwner ownerB;
+                MavTrackLockController ctlB;
+                MavEngagementView viewB;
+                ScriptedFeed feedB;
+                Build(aircraftB, out ownerB, out ctlB, out viewB, out feedB);
+
+                hud.engagementView = viewB;
+                resolve.Invoke(hud, null);
+
+                Record(ReferenceEquals(authorityField.GetValue(hud), ctlB),
+                       "C-034", "changing the engagement view rebinds to the new host's authority",
+                       report, ref passed, ref failed);
+                Record(!ReferenceEquals(authorityField.GetValue(hud), ctlA2),
+                       "C-034b", "the previous aircraft's authority is not still bound",
+                       report, ref passed, ref failed);
+
+                // And back again, so the rebinding is not one-directional.
+                hud.engagementView = viewA;
+                resolve.Invoke(hud, null);
+                Record(ReferenceEquals(authorityField.GetValue(hud), ctlA2),
+                       "C-034c", "and rebinds back when the view returns to the first host",
+                       report, ref passed, ref failed);
+
+                // A view with no authority on it binds nothing rather than keeping the last one.
+                GameObject bare = new GameObject("MavConsumerBareHost");
+                try
+                {
+                    MavEngagementView bareView = bare.AddComponent<MavEngagementView>();
+                    hud.engagementView = bareView;
+                    resolve.Invoke(hud, null);
+                    Record(authorityField.GetValue(hud) == null
+                           && handleField.GetValue(hud) == null,
+                           "C-035", "a host with no authority leaves the HUD bound to nothing",
+                           report, ref passed, ref failed);
+                }
+                finally { Object.DestroyImmediate(bare); }
+
+                // The presentation of an unbound HUD is the fail-closed one.
+                Record(MavLockHudPresentation.FormatPlayerLine(
+                           authorityField.GetValue(hud) as IMavTrackLockAuthority, viewA) == string.Empty,
+                       "C-035b", "an unbound HUD presents no lock",
+                       report, ref passed, ref failed);
+            }
+            finally
+            {
+                Object.DestroyImmediate(aircraftB);
+                Object.DestroyImmediate(aircraftA);
+                Object.DestroyImmediate(hudHost);
             }
         }
 
