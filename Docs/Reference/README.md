@@ -51,6 +51,7 @@ Tier 3 is useful for regression, trim, trajectory, and architecture comparisons.
 
 - [`F16_SOURCE_PACK_V0.1.md`](./F16_SOURCE_PACK_V0.1.md) — current F-16 reference chain, supporting F-16/AFTI/F-16XL/MATV research, and validation implementations.
 - [`F15_SOURCE_PACK_V0.1.md`](./F15_SOURCE_PACK_V0.1.md) — baseline/high-alpha/spin/transonic/propulsion F-15 research sources and configuration-separation rules.
+- [`FA18_SOURCE_PACK_V0.1.md`](./FA18_SOURCE_PACK_V0.1.md) — consolidated F/A-18/HARV source graph covering Phase-I basic flight PID, rotary/high-alpha data, transonic family validation, inlet/F404 evidence, and TVC-specific research.
 
 ## Architecture and roadmaps
 
@@ -68,6 +69,10 @@ Best current candidate for the first deeply validated reference aircraft because
 ### F-15
 
 The public record is exceptionally rich, especially at high angle of attack and spin, but is distributed across multiple models and flight/research configurations. The F-15 reference model should therefore be assembled from a **configuration-tagged source graph**, not by treating all NASA F-15 reports as one interchangeable database.
+
+### F/A-18
+
+The strongest exact physical target is `NASA_F18_HARV_160780_PHASE1_BASIC`. Public NASA evidence now strongly covers reference geometry/mass properties, basic-configuration high-alpha flight derivatives, scale-model rotary/spin aerodynamics, installed-inlet behavior, F404 airflow estimation, and family-level transonic/supersonic PID. The full original nonlinear aerodynamic lookup arrays and complete F404 numeric thrust deck remain open blockers.
 
 ## Propulsion development rule
 
