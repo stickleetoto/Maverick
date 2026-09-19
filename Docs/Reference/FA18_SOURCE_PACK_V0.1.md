@@ -72,7 +72,7 @@ Morelli & Ward demonstrate a defensible method for combining approximate wind-tu
 
 Priority order for source-derived numeric ingestion:
 
-1. **CR-3608 Appendix** — **IN PROGRESS**. A2–A32 cover Body beta=0/10 and the Body→Wing→LEX horizontal/vertical-tail buildup branches. A33–A39 now add the first complete **Basic F-18** block: beta=0 with delta_H/delta_a/delta_r/delta_d/delta_f all zero, 266 rows on the full printed 14-point spin grid at every alpha. Current raw total: **1,576 rows**. Derived component data: **908 rows**. Review Table II before selecting the next block.
+1. **CR-3608 Appendix** — **IN PROGRESS**. A2–A32 cover Body beta=0/10 and the Body→Wing→LEX horizontal/vertical-tail buildup branches. A33–A39 provide Basic F-18 at beta=0 and A40–A46 provide the matched Basic F-18 block at beta=+10, both with delta_H/delta_a/delta_r/delta_d/delta_f=0 and 266 rows each. Current raw total: **1,842 rows**. Derived component data: **908 rows**. Next block: A47–A52, Basic F-18 beta=-10.
 2. **NASA/TP-2000-209033 Appendices C/D** — CPT/RVDT derivative increments by Mach/altitude, preserving interpolated/hold-last-value provenance.
 3. **NASA-TM-104329 Tables 4/5** — steady inlet recovery/distortion database at Mach 0.3/0.4.
 4. **NASA-TM-4341 Tables 2/3** — single/dual-vane axial thrust-loss comparison data.
