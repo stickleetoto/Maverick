@@ -172,6 +172,25 @@ unavailable.
 
 Global authority did not move: `PrimaryTrackId` still answers the legacy order, and `C-010b` asserts it.
 
+## 9.1 Known debt
+
+Carried deliberately out of this phase, not fixed here.
+
+**`MavEngagementView.legacyDisagreesWithAuthoritative` is not yet a usable migration-evidence signal.**
+It is only computed while `preferAuthoritativeLock` is `true`, and the migration plan keeps that `false`
+until consumers have moved - so for the whole duration in which disagreement between the authoritative
+lock and the legacy authorities is the evidence the migration depends on, the flag reads `false` because
+nothing computed it, not because the authorities agree.
+
+That matters because the retirement criterion in `RADAR_TRACK_LOCK_R0.md` §7 is "retire the legacy
+authorities one at a time, each with `legacyDisagreesWithAuthoritative` staying false as the evidence".
+As it stands that criterion would be satisfied vacuously.
+
+This phase works around it without touching the view: `MavLockHudPresentation.AuthoritativeDisagreesWithLegacy`
+compares the published ids directly, and `C-012c` asserts disagreement is observable while the view flag
+stays false. So the HUD is not blind - but the field itself is still misleading to anyone who reads it
+expecting evidence, and the fix belongs in whichever phase next touches `MavEngagementView`.
+
 ## 10. Next
 
 The remaining steps, in order, none of them in this phase:
