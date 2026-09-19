@@ -158,6 +158,14 @@ namespace MaverickFresh
             radar.owner = owner;
             owner.RegisterFeed(radar);
 
+            // Radar track/lock R0. The one authoritative lock authority. It reads tracks and decides
+            // commitment; it does not detect, and the radar knows nothing about it.
+            MavTrackLockController lockController = aircraftObject.GetComponent<MavTrackLockController>();
+            if (lockController == null)
+                lockController = aircraftObject.AddComponent<MavTrackLockController>();
+            lockController.owner = owner;
+            lockController.engagementView = view;
+
             MavLegacyEngagementProbe probe = aircraftObject.GetComponent<MavLegacyEngagementProbe>();
             if (probe == null)
                 probe = aircraftObject.AddComponent<MavLegacyEngagementProbe>();
