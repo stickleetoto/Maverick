@@ -72,7 +72,7 @@ Morelli & Ward demonstrate a defensible method for combining approximate wind-tu
 
 Priority order for source-derived numeric ingestion:
 
-1. **CR-3608 Appendix** — **IN PROGRESS**. A2–A6 (`F-18 Body`, beta=0): 228 rows; A7–A12 (`F-18 Body`, beta=10): 174 rows; A13–A17 (`F-18 Body, Wing`, beta=0): 228 rows. Current raw total: **630 rows**. A matched 228-row derived wing-increment dataset is also available. Next block: A18–A22 (`F-18 Body, Wing, LEX`, beta=0).
+1. **CR-3608 Appendix** — **IN PROGRESS**. A2–A6 (`Body`, beta=0): 228 rows; A7–A12 (`Body`, beta=10): 174 rows; A13–A17 (`Body+Wing`, beta=0): 228 rows; A18–A22 (`Body+Wing+LEX`, beta=0): 227 rows. Current raw total: **857 rows**. Derived wing increment: 228 rows; derived LEX increment: 227 rows. Next block: A23–A27 (`Body+Wing+LEX+horizontal tail`, beta=0, delta_H=0).
 2. **NASA/TP-2000-209033 Appendices C/D** — CPT/RVDT derivative increments by Mach/altitude, preserving interpolated/hold-last-value provenance.
 3. **NASA-TM-104329 Tables 4/5** — steady inlet recovery/distortion database at Mach 0.3/0.4.
 4. **NASA-TM-4341 Tables 2/3** — single/dual-vane axial thrust-loss comparison data.
