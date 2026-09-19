@@ -22,6 +22,12 @@ namespace MaverickFresh.Combat.Targeting
     /// measurement is rewritten - the lock is expressed as a property of the engagement, layered over
     /// the measurement rather than overwriting it.
     ///
+    /// THE AUTHORITY BOUNDARY FAILS CLOSED. When <see cref="IsLockAuthorityActive"/> is false, every
+    /// lock-facing accessor reports nothing held - Idle, zero, false, and no promotion to
+    /// <see cref="MavTrackQuality.Locked"/> - and the claim published to
+    /// <see cref="MavEngagementView"/> is withdrawn. That has to hold even when Update will never run
+    /// again, which is why <see cref="OnDisable"/> exists and why the enable switch is a property.
+    ///
     /// SELECTION OWNERSHIP. Two things can select a track: a command source, and the automatic rule.
     /// The controller records which, because the difference is not recoverable from the state machine
     /// afterwards and the two have different rights - an automatic selection that cannot reach a lock
@@ -35,8 +41,37 @@ namespace MaverickFresh.Combat.Targeting
     public sealed class MavTrackLockController : MonoBehaviour, IMavTrackLockAuthority
     {
         [Header("Enable")]
+        [SerializeField]
         [Tooltip("Master switch. When off the authority reports Idle and never locks.")]
-        public bool enableLockAuthority = true;
+        private bool enableLockAuthority = true;
+
+        /// <summary>
+        /// The master switch, as a property so that turning it OFF withdraws the claim immediately
+        /// rather than at some later frame.
+        ///
+        /// It is a property and not a public field for one concrete reason: a field write has no hook,
+        /// so a lock could be left standing internally while the authority reported itself unavailable.
+        /// The accessors below fail closed regardless, but withdrawing at the moment of the decision is
+        /// what keeps the internal state and the published state honest with each other.
+        ///
+        /// An Inspector edit writes the serialized field directly and so bypasses this setter; the
+        /// falling-edge check in <see cref="Step"/> catches that on the next update.
+        /// </summary>
+        public bool EnableLockAuthority
+        {
+            get { return enableLockAuthority; }
+            set
+            {
+                if (enableLockAuthority == value)
+                    return;
+                enableLockAuthority = value;
+                if (!value)
+                {
+                    WithdrawAuthority(MavLockLossReason.AuthorityUnavailable);
+                    PublishDebug();
+                }
+            }
+        }
 
         [Header("Wiring")]
         [Tooltip("Track source. Resolved from this GameObject when left empty.")]
@@ -116,14 +151,33 @@ namespace MaverickFresh.Combat.Targeting
             get { return enableLockAuthority && isActiveAndEnabled && owner != null; }
         }
 
+        /// <summary>
+        /// Whether a lock is being held BY AN AVAILABLE AUTHORITY.
+        ///
+        /// Every lock-facing accessor goes through this rather than testing the state directly, because
+        /// an unavailable authority must fail closed. Without it the stored state leaked past the
+        /// boundary: a disabled component stops receiving Update, so the inactive path in
+        /// <see cref="Step"/> never ran, and a consumer could keep seeing Locked forever while
+        /// <see cref="IsLockAuthorityActive"/> said false. "Nothing is holding this" is the only honest
+        /// answer an unavailable authority can give.
+        /// </summary>
+        private bool HasCommittedLock
+        {
+            get
+            {
+                return IsLockAuthorityActive
+                       && (state == MavLockState.Locked || state == MavLockState.Coasting);
+            }
+        }
+
         public MavLockState LockState
         {
-            get { return state; }
+            get { return IsLockAuthorityActive ? state : MavLockState.Idle; }
         }
 
         public float TimeInLockSeconds
         {
-            get { return state == MavLockState.Locked || state == MavLockState.Coasting ? lockElapsed : 0f; }
+            get { return HasCommittedLock ? lockElapsed : 0f; }
         }
 
         public MavLockLossReason LastLossReason
@@ -134,7 +188,7 @@ namespace MaverickFresh.Combat.Targeting
         /// <summary>The track currently selected, whether or not it is locked. Zero when none.</summary>
         public int SelectedTrackId
         {
-            get { return selectedTrackId; }
+            get { return IsLockAuthorityActive ? selectedTrackId : 0; }
         }
 
         /// <summary>
@@ -146,13 +200,13 @@ namespace MaverickFresh.Combat.Targeting
         /// </summary>
         public bool SelectionIsExplicit
         {
-            get { return selectedTrackId != 0 && selectionIsExplicit; }
+            get { return IsLockAuthorityActive && selectedTrackId != 0 && selectionIsExplicit; }
         }
 
         /// <summary>The locked track, including while coasting. Zero when not locked.</summary>
         public int LockedTrackId
         {
-            get { return state == MavLockState.Locked || state == MavLockState.Coasting ? lockedTrackId : 0; }
+            get { return HasCommittedLock ? lockedTrackId : 0; }
         }
 
         /// <summary>How far through acquisition, 0..1. Zero unless acquiring.</summary>
@@ -160,6 +214,8 @@ namespace MaverickFresh.Combat.Targeting
         {
             get
             {
+                if (!IsLockAuthorityActive)
+                    return 0f;
                 if (state != MavLockState.Acquiring)
                     return state == MavLockState.Locked || state == MavLockState.Coasting ? 1f : 0f;
                 return Mathf.Clamp01(acquisitionElapsed / Mathf.Max(0.01f, acquisitionSeconds));
@@ -169,9 +225,7 @@ namespace MaverickFresh.Combat.Targeting
         public bool TryGetLockedTrack(out MavTargetTrackData track)
         {
             track = MavTargetTrackData.Invalid;
-            if (owner == null)
-                return false;
-            if (state != MavLockState.Locked && state != MavLockState.Coasting)
+            if (!HasCommittedLock)
                 return false;
             return owner.TryGetTrackById(lockedTrackId, out track);
         }
@@ -190,7 +244,10 @@ namespace MaverickFresh.Combat.Targeting
             if (owner == null || trackId == 0 || !owner.TryGetTrackById(trackId, out track))
                 return MavTrackQuality.None;
 
-            if ((state == MavLockState.Locked || state == MavLockState.Coasting) && trackId == lockedTrackId)
+            // Only an AVAILABLE authority may promote a track to Locked. An unavailable one reports the
+            // producer's measurement unchanged, which is the honest answer: there is no engagement to
+            // layer over it. Returning None instead would destroy information the sensor really has.
+            if (HasCommittedLock && trackId == lockedTrackId)
                 return MavTrackQuality.Locked;
 
             return track.quality;
@@ -247,11 +304,28 @@ namespace MaverickFresh.Combat.Targeting
         /// <summary>Deliberately abandons any selection and lock.</summary>
         public void BreakLock(MavLockLossReason reason)
         {
+            WithdrawAuthority(reason);
+        }
+
+        /// <summary>
+        /// THE one place the authority gives up what it is holding.
+        ///
+        /// Every way a claim can end routes through here - a commanded break, the selected track
+        /// disappearing, the authority becoming unavailable, and component disable - so there is exactly
+        /// one definition of "holding nothing" to get right. Several of those paths used to reset the
+        /// same six fields separately, and the authority-unavailable case did not reset them at all.
+        ///
+        /// A loss is RECORDED only if a lock was actually held. There is nothing to lose from
+        /// <see cref="MavLockState.Acquiring"/>, and recording one would make
+        /// <see cref="LastLossReason"/> describe something that never happened.
+        /// </summary>
+        private void WithdrawAuthority(MavLockLossReason reason)
+        {
             if (state == MavLockState.Locked || state == MavLockState.Coasting)
                 RecordLoss(reason);
 
             selectedTrackId = 0;
-            selectionIsExplicit = false;   // the command is over; automatic selection may resume
+            selectionIsExplicit = false;   // the claim is over; automatic selection may resume
             lockedTrackId = 0;
             acquisitionElapsed = 0f;
             lockElapsed = 0f;
@@ -265,6 +339,21 @@ namespace MaverickFresh.Combat.Targeting
                 owner = GetComponent<MavTargetTrackOwner>();
             if (engagementView == null)
                 engagementView = GetComponent<MavEngagementView>();
+        }
+
+        /// <summary>
+        /// Withdraws the claim when the component is disabled, destroyed, or its GameObject deactivated.
+        ///
+        /// This is REQUIRED, not tidiness. Unity stops calling Update the moment the component is
+        /// disabled, so the inactive path in <see cref="Step"/> never runs again - the internal state and
+        /// whatever was last published to <see cref="MavEngagementView"/> would both stay Locked
+        /// indefinitely. A consumer would then see a lock held by an authority that reports itself
+        /// unavailable and can never change its mind.
+        /// </summary>
+        private void OnDisable()
+        {
+            WithdrawAuthority(MavLockLossReason.AuthorityUnavailable);
+            PublishDebug();
         }
 
         private void Update()
@@ -281,7 +370,7 @@ namespace MaverickFresh.Combat.Targeting
             if (!IsLockAuthorityActive)
             {
                 if (state != MavLockState.Idle)
-                    BreakLock(MavLockLossReason.AuthorityUnavailable);
+                    WithdrawAuthority(MavLockLossReason.AuthorityUnavailable);
                 PublishDebug();
                 return;
             }
@@ -303,18 +392,10 @@ namespace MaverickFresh.Combat.Targeting
             MavTargetTrackData selected;
             if (!owner.TryGetTrackById(selectedTrackId, out selected) || !selected.IsValid)
             {
-                // The track is gone entirely. A lock in progress or held cannot survive that.
-                bool wasCommitted = state == MavLockState.Locked || state == MavLockState.Coasting;
-                selectedTrackId = 0;
-                // The commanded track no longer exists, so the command cannot still be honoured.
-                selectionIsExplicit = false;
-                lockedTrackId = 0;
-                acquisitionElapsed = 0f;
-                if (wasCommitted)
-                    RecordLoss(MavLockLossReason.TrackDropped);
-                lockElapsed = 0f;
-                coastElapsed = 0f;
-                state = MavLockState.Idle;
+                // The track is gone entirely. A lock in progress or held cannot survive that, and a
+                // commanded track that no longer exists cannot still be honoured - so this is the same
+                // withdrawal as any other, with its own reason.
+                WithdrawAuthority(MavLockLossReason.TrackDropped);
                 PublishDebug();
                 return;
             }
@@ -534,10 +615,17 @@ namespace MaverickFresh.Combat.Targeting
             }
         }
 
+        /// <summary>
+        /// Mirrors state for the Inspector and publishes the authoritative claim.
+        ///
+        /// Deliberately reads through the PUBLIC accessors, not the private fields, so that what is
+        /// published and what the Inspector shows are exactly what a consumer would observe. An
+        /// unavailable authority therefore publishes "nothing held" without needing a second rule here.
+        /// </summary>
         private void PublishDebug()
         {
-            debugLockState = state;
-            debugSelectedTrackId = selectedTrackId;
+            debugLockState = LockState;
+            debugSelectedTrackId = SelectedTrackId;
             debugLockedTrackId = LockedTrackId;
             debugAcquisitionProgress01 = AcquisitionProgress01;
             debugTimeInLock = TimeInLockSeconds;
@@ -549,7 +637,7 @@ namespace MaverickFresh.Combat.Targeting
                 : "none";
 
             if (engagementView != null)
-                engagementView.PublishAuthoritativeLock(LockedTrackId, state, debugLockedTrackName);
+                engagementView.PublishAuthoritativeLock(LockedTrackId, LockState, debugLockedTrackName);
         }
 
         /// <summary>Test seam: drives lifecycle timing from an explicit clock.</summary>

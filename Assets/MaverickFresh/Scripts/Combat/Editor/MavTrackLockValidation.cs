@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using MaverickFresh.Combat.Legacy;
 using MaverickFresh.Combat.Targeting;
@@ -93,6 +94,7 @@ namespace MaverickFresh.Combat.EditorTools
             ValidateSelection(report, ref passed, ref failed);
             ValidateStalledSelection(report, ref passed, ref failed);
             ValidateSelectionOwnership(report, ref passed, ref failed);
+            ValidateAuthorityWithdrawal(report, ref passed, ref failed);
             ValidateEffectiveQuality(report, ref passed, ref failed);
             ValidateEngagementPrecedence(report, ref passed, ref failed);
             ValidateMigrationSwitch(report, ref passed, ref failed);
@@ -411,7 +413,7 @@ namespace MaverickFresh.Combat.EditorTools
                        "L-035", "the engagement can be re-established after a commanded break",
                        report, ref passed, ref failed);
 
-                lockCtl.enableLockAuthority = false;
+                lockCtl.EnableLockAuthority = false;
                 lockCtl.Step(0.05f);
                 Record(lockCtl.LockState == MavLockState.Idle
                        && lockCtl.LastLossReason == MavLockLossReason.AuthorityUnavailable
@@ -419,7 +421,7 @@ namespace MaverickFresh.Combat.EditorTools
                        "L-036", "disabling the authority drops the lock and says why",
                        report, ref passed, ref failed);
 
-                lockCtl.enableLockAuthority = true;
+                lockCtl.EnableLockAuthority = true;
             }
             finally { Object.DestroyImmediate(host3); }
         }
@@ -894,6 +896,253 @@ namespace MaverickFresh.Combat.EditorTools
                        report, ref passed, ref failed);
             }
             finally { Object.DestroyImmediate(hostD); }
+        }
+
+        // ---- an unavailable authority must fail closed --------------------------------------------
+        /// <summary>
+        /// The third defect this phase found in review, and the one that failed permanently.
+        ///
+        /// The lock-facing accessors returned the stored state directly, with no reference to
+        /// <c>IsLockAuthorityActive</c>. The persistent case: disable the component, Unity stops calling
+        /// Update, the inactive path in Step never runs again, and both the internal state and the claim
+        /// published to MavEngagementView stay Locked FOREVER. A consumer would see a lock held by an
+        /// authority that reported itself unavailable and could never change its mind.
+        ///
+        /// Three causes of unavailability are exercised separately because they have different hooks:
+        /// the enable switch (a property setter), the wiring going away (no hook at all - only the
+        /// accessors and the next Step can catch it), and component disable (OnDisable).
+        /// </summary>
+        private static void ValidateAuthorityWithdrawal(StringBuilder report, ref int passed, ref int failed)
+        {
+            MavTargetTrackData held;
+
+            // ---- 1. the enable switch, BEFORE any further lifecycle step --------------------------
+            GameObject host1 = new GameObject("MavLockWithdrawFlagHost");
+            try
+            {
+                MavTargetTrackOwner owner;
+                MavTrackLockController ctl;
+                ScriptedFeed feed;
+                Build(host1, out owner, out ctl, out feed);
+
+                feed.Set(1, new Vector3(0f, 0f, 5000f), MavTrackQuality.Tracked, true);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+                ctl.Step(0f);
+                ctl.Step(1.0f);
+
+                int wasLockedId = ctl.LockedTrackId;
+                Record(ctl.LockState == MavLockState.Locked && wasLockedId != 0,
+                       "L-100", "a lock is held before the authority is disabled",
+                       report, ref passed, ref failed);
+
+                // No Step after this. The boundary has to hold on its own.
+                ctl.EnableLockAuthority = false;
+
+                Record(!ctl.IsLockAuthorityActive,
+                       "L-100b", "disabling the switch makes the authority report itself unavailable",
+                       report, ref passed, ref failed);
+                Record(ctl.LockState == MavLockState.Idle,
+                       "L-100c", "an unavailable authority exposes Idle without waiting for a step",
+                       report, ref passed, ref failed);
+                Record(ctl.LockedTrackId == 0,
+                       "L-100d", "an unavailable authority exposes no locked track",
+                       report, ref passed, ref failed);
+                Record(!ctl.TryGetLockedTrack(out held) && held.trackId == 0,
+                       "L-100e", "TryGetLockedTrack fails closed while the authority is unavailable",
+                       report, ref passed, ref failed);
+                Record(ctl.EffectiveQualityOf(wasLockedId) != MavTrackQuality.Locked,
+                       "L-100f", "an unavailable authority promotes nothing to Locked",
+                       report, ref passed, ref failed);
+                Record(ctl.EffectiveQualityOf(wasLockedId) == MavTrackQuality.Tracked,
+                       "L-100g", "it reports the producer's measurement instead, losing no information",
+                       report, ref passed, ref failed);
+                Record(ctl.TimeInLockSeconds == 0f
+                       && ctl.AcquisitionProgress01 == 0f
+                       && ctl.SelectedTrackId == 0
+                       && !ctl.SelectionIsExplicit,
+                       "L-100h", "every other lock-facing reading fails closed too",
+                       report, ref passed, ref failed);
+                Record(ctl.LastLossReason == MavLockLossReason.AuthorityUnavailable,
+                       "L-101", "terminating a held lock by disabling the authority records AuthorityUnavailable",
+                       report, ref passed, ref failed);
+            }
+            finally { Object.DestroyImmediate(host1); }
+
+            // ---- 2. the enable switch, and a step afterwards ---------------------------------------
+            GameObject host2 = new GameObject("MavLockWithdrawStepHost");
+            try
+            {
+                MavTargetTrackOwner owner;
+                MavTrackLockController ctl;
+                ScriptedFeed feed;
+                Build(host2, out owner, out ctl, out feed);
+                MavEngagementView view = host2.AddComponent<MavEngagementView>();
+                ctl.engagementView = view;
+
+                feed.Set(1, new Vector3(0f, 0f, 5000f), MavTrackQuality.Tracked, true);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+                ctl.Step(0f);
+                ctl.Step(1.0f);
+                int publishedId = view.authoritativeLockTrackId;
+
+                Record(publishedId != 0 && view.authoritativeLockState == MavLockState.Locked,
+                       "L-102", "the engagement view carries the authoritative lock while it is held",
+                       report, ref passed, ref failed);
+
+                ctl.EnableLockAuthority = false;
+                ctl.Step(0.5f);
+
+                Record(ctl.LockState == MavLockState.Idle
+                       && ctl.LockedTrackId == 0
+                       && ctl.LastLossReason == MavLockLossReason.AuthorityUnavailable,
+                       "L-102b", "stepping a disabled authority ends Idle with AuthorityUnavailable",
+                       report, ref passed, ref failed);
+                Record(view.authoritativeLockTrackId == 0
+                       && view.authoritativeLockState == MavLockState.Idle,
+                       "L-102c", "the engagement view no longer carries the withdrawn lock",
+                       report, ref passed, ref failed);
+            }
+            finally { Object.DestroyImmediate(host2); }
+
+            // ---- 3. the wiring going away: no hook at all ------------------------------------------
+            GameObject host3 = new GameObject("MavLockWithdrawWiringHost");
+            try
+            {
+                MavTargetTrackOwner owner;
+                MavTrackLockController ctl;
+                ScriptedFeed feed;
+                Build(host3, out owner, out ctl, out feed);
+
+                feed.Set(1, new Vector3(0f, 0f, 5000f), MavTrackQuality.Tracked, true);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+                ctl.Step(0f);
+                ctl.Step(1.0f);
+                Record(ctl.LockState == MavLockState.Locked,
+                       "L-103", "a lock is held before the track source is removed",
+                       report, ref passed, ref failed);
+
+                // Losing the owner has no callback. Only the accessors can catch this instant.
+                ctl.owner = null;
+                Record(!ctl.IsLockAuthorityActive
+                       && ctl.LockState == MavLockState.Idle
+                       && ctl.LockedTrackId == 0
+                       && !ctl.TryGetLockedTrack(out held),
+                       "L-103b", "losing the track source fails closed with no step and no callback",
+                       report, ref passed, ref failed);
+                Record(ctl.EffectiveQualityOf(1) == MavTrackQuality.None,
+                       "L-103c", "with no track source there is no quality to report at all",
+                       report, ref passed, ref failed);
+
+                ctl.Step(0.05f);
+                Record(ctl.LastLossReason == MavLockLossReason.AuthorityUnavailable,
+                       "L-103d", "the step that observes the loss records AuthorityUnavailable",
+                       report, ref passed, ref failed);
+
+                // Restoring the wiring must not resurrect the lock.
+                ctl.owner = owner;
+                ctl.Step(0f);
+                Record(ctl.LockState != MavLockState.Locked && ctl.LockState != MavLockState.Coasting,
+                       "L-103e", "restoring the track source does not resurrect the withdrawn lock",
+                       report, ref passed, ref failed);
+
+                ctl.Step(1.0f);
+                Record(ctl.LockState == MavLockState.Locked,
+                       "L-103f", "a fresh acquisition can still establish a lock afterwards",
+                       report, ref passed, ref failed);
+            }
+            finally { Object.DestroyImmediate(host3); }
+
+            // ---- 4. component disable: the case that used to persist forever ----------------------
+            GameObject host4 = new GameObject("MavLockWithdrawDisableHost");
+            try
+            {
+                MavTargetTrackOwner owner;
+                MavTrackLockController ctl;
+                ScriptedFeed feed;
+                Build(host4, out owner, out ctl, out feed);
+                MavEngagementView view = host4.AddComponent<MavEngagementView>();
+                ctl.engagementView = view;
+
+                feed.Set(1, new Vector3(0f, 0f, 5000f), MavTrackQuality.Tracked, true);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+                ctl.Step(0f);
+                ctl.Step(1.0f);
+                int lockedId = ctl.LockedTrackId;
+                Record(lockedId != 0 && view.authoritativeLockTrackId == lockedId,
+                       "L-104", "a lock is held and published before the component is disabled",
+                       report, ref passed, ref failed);
+
+                // Unity stops calling Update from here. OnDisable is the only chance to withdraw.
+                ctl.enabled = false;
+
+                // FIRST, with no callback of any kind having run: the boundary must already hold. This
+                // is the part that protects a consumer even if the callback never arrives.
+                Record(!ctl.IsLockAuthorityActive
+                       && ctl.LockState == MavLockState.Idle
+                       && ctl.LockedTrackId == 0
+                       && !ctl.TryGetLockedTrack(out held),
+                       "L-105", "a disabled component holds nothing a consumer can observe",
+                       report, ref passed, ref failed);
+                Record(ctl.EffectiveQualityOf(lockedId) != MavTrackQuality.Locked,
+                       "L-105b", "a disabled component promotes nothing to Locked",
+                       report, ref passed, ref failed);
+
+                // NOW the callback. Edit-mode Unity raises neither OnEnable nor OnDisable - measured
+                // with a throwaway probe in this project and this Unity version: a component added to a
+                // live GameObject and then disabled and re-enabled recorded 0 OnEnable and 0 OnDisable
+                // calls. So the harness cannot make Unity raise it, and invoking the real method body
+                // directly is the closest honest thing. What this does NOT verify is Unity's own
+                // guarantee to call OnDisable on disable, which play mode provides and which is the
+                // documented behavior the fix relies on.
+                MethodInfo onDisable = typeof(MavTrackLockController)
+                    .GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic);
+                Record(onDisable != null,
+                       "L-105c", "the controller has an OnDisable to withdraw its claim in",
+                       report, ref passed, ref failed);
+                if (onDisable != null)
+                    onDisable.Invoke(ctl, null);
+
+                Record(view.authoritativeLockTrackId == 0
+                       && view.authoritativeLockState == MavLockState.Idle,
+                       "L-105d", "disable withdraws the published authoritative track from the view",
+                       report, ref passed, ref failed);
+                Record(ctl.LastLossReason == MavLockLossReason.AuthorityUnavailable,
+                       "L-105e", "the lock ended because the authority became unavailable",
+                       report, ref passed, ref failed);
+
+                // Re-enable. Nothing may come back without acquiring again.
+                ctl.enabled = true;
+                MethodInfo onEnable = typeof(MavTrackLockController)
+                    .GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (onEnable != null)
+                    onEnable.Invoke(ctl, null);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+                ctl.Step(0f);
+
+                Record(ctl.LockState != MavLockState.Locked && ctl.LockState != MavLockState.Coasting,
+                       "L-106", "re-enabling the component does not resurrect the stale lock",
+                       report, ref passed, ref failed);
+                Record(view.authoritativeLockTrackId == 0,
+                       "L-106b", "nor does it republish one before a lock exists",
+                       report, ref passed, ref failed);
+
+                ctl.Step(0.5f);
+                Record(ctl.LockState != MavLockState.Locked,
+                       "L-106c", "a full acquisition is required, not a partial one",
+                       report, ref passed, ref failed);
+
+                ctl.Step(0.6f);
+                Record(ctl.LockState == MavLockState.Locked
+                       && view.authoritativeLockTrackId == ctl.LockedTrackId,
+                       "L-106d", "a newly acquired lock is published normally again",
+                       report, ref passed, ref failed);
+            }
+            finally { Object.DestroyImmediate(host4); }
         }
 
         // ---- the migration switch ----------------------------------------------------------------

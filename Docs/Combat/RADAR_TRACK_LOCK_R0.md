@@ -98,7 +98,8 @@ asserted, not left to be discovered.
 The radar knows nothing about the lock, and the lock knows nothing about the radar. The controller
 reads `MavTargetTrackOwner` only. Removing `MavTrackLockController` leaves radar detection behaving
 exactly as it did, and disabling the radar leaves the lock authority reporting `Idle` rather than
-failing.
+failing. Disabling the *lock authority* withdraws its claim entirely rather than freezing it — see
+§8.2.
 
 The controller is wired in `MavCASStarterBootstrap` after the radar and the owner, and owns no other
 responsibility.
@@ -280,6 +281,89 @@ from `Acquiring` and then asserted `LastLossReason == Commanded`, but `BreakLock
 when a lock was actually held — which is right, there is nothing to lose from `Acquiring`. The case now
 lets acquisition finish first, and `L-093c` pins the lock it then breaks.
 
+## 8.2 The authority boundary must fail closed — a defect found in review
+
+The third review defect, and the only one that failed **permanently** rather than for a step or a
+frame.
+
+`IsLockAuthorityActive` existed and was correct, but no lock-facing accessor consulted it. `LockState`,
+`LockedTrackId`, `TimeInLockSeconds`, `TryGetLockedTrack` and `EffectiveQualityOf` all read the stored
+state directly, and there was no `OnDisable`.
+
+The persistent case: establish a lock, set `controller.enabled = false`. Unity stops calling `Update`,
+so the inactive path inside `Step` **never runs again** — and both the internal state and the claim last
+published to `MavEngagementView` stay `Locked` forever. A consumer would see a lock held by an authority
+that reported itself unavailable and could never change its mind. That is not a stale read, it is a
+permanent contradiction.
+
+### The rule
+
+When `IsLockAuthorityActive` is false, every lock-facing reading fails closed: `LockState` is `Idle`,
+`LockedTrackId` and `TimeInLockSeconds` and `AcquisitionProgress01` are zero, `SelectedTrackId` is zero,
+`SelectionIsExplicit` is false, `TryGetLockedTrack` returns false, and `EffectiveQualityOf` promotes
+nothing to `Locked`.
+
+`EffectiveQualityOf` returns the **producer's measurement** rather than `None` while unavailable. There
+is no engagement to layer over the measurement, but the sensor's reading is still real, and discarding
+it would destroy information to make a point.
+
+A private `HasCommittedLock` is what the accessors consult, so there is one definition of "holding
+something" rather than five copies of the same two-state test.
+
+### One withdrawal path
+
+Every way a claim can end now routes through `WithdrawAuthority(reason)`: a commanded break, the
+selected track disappearing, the authority becoming unavailable, and component disable. Three of those
+previously reset the same six fields in their own code, and the authority-unavailable case did not reset
+them at all. A loss is *recorded* only when a lock was actually held — there is nothing to lose from
+`Acquiring`, and recording one would make `LastLossReason` describe something that never happened.
+
+`OnDisable` withdraws and republishes, because it is the only hook that fires when `Update` will not run
+again. The enable switch became a property, `EnableLockAuthority`, so turning it off withdraws at the
+moment of the decision rather than at some later frame; an Inspector edit writes the serialized field
+and is caught by the next `Step`.
+
+`PublishDebug` now reads through the **public accessors**, so what is published and what the Inspector
+shows are exactly what a consumer would observe, and an unavailable authority publishes "nothing held"
+without needing a second rule.
+
+### Confirmed, and one thing the harness cannot confirm
+
+With the gating, `OnDisable` and the eager withdrawal all removed, **18 assertions failed** — 14 in the
+authority section including the permanent case, plus 4 in the selection-ownership section.
+
+**Edit-mode Unity raises neither `OnEnable` nor `OnDisable`.** Measured, not assumed: a throwaway probe
+in this project and Unity version added a component to a live GameObject, disabled it and re-enabled it,
+and recorded **0 `OnEnable` and 0 `OnDisable` calls**. So the validation harness cannot make Unity raise
+the callback. The cases therefore split in two:
+
+- **Verified directly:** the accessor contract. `ctl.enabled = false` with *no callback of any kind* and
+  the boundary already holds (`L-105`, `L-105b`, and `L-103b` for the wiring-loss variant). This is the
+  part that protects a consumer even if a callback never arrives.
+- **Verified by invoking the real method body** via reflection, since Unity will not raise it here
+  (`L-105c`–`L-106d`). What this does *not* verify is Unity's own guarantee to call `OnDisable` on
+  disable — documented engine behavior that play mode provides. A play-mode probe would close that last
+  step and is a reasonable follow-up.
+
+### A bug of mine that the existing tests caught
+
+The first version of this fix added an `authorityActiveLastStep` guard, meant to stop anything resuming
+across an availability gap. It defaulted to `false`, and `RequestSelection` sets the state to `Selected`
+without a `Step` — so a fresh controller's very first `Step` read "returning from a gap" and **withdrew
+the commanded selection immediately**, breaking four §8.1 ownership assertions.
+
+On examination the guard could never fire for a legitimate reason: every other write of a non-`Idle`
+state happens inside `Step` after the availability check, and `RequestSelection` refuses while inactive.
+It was dead code that could only misfire, so it was **removed** rather than patched. Speculative
+belt-and-braces that cannot help but can hurt is worse than nothing.
+
+### Residual, stated rather than hidden
+
+If `owner` is set to null and restored with **zero** `Step` calls in between, nothing observes the gap
+and the internal state survives. `owner` is bootstrap wiring rather than a runtime control, so this is
+outside the contract — but it is a real property of the design and worth knowing. `L-103e` covers the
+realistic form, where a step observes the loss.
+
 ## 9. A behavior kept because legacy has it
 
 A commanded break with automatic selection on returns the selection on the next step — but from zero
@@ -291,7 +375,7 @@ incidental.
 
 ## 10. Validation
 
-`MavTrackLockValidation`, **119 assertions, 0 failures.** Every case drives the controller with an
+`MavTrackLockValidation`, **147 assertions, 0 failures.** Every case drives the controller with an
 explicit clock and explicit step deltas rather than waiting on frames, because lock semantics are
 entirely about elapsed time and editor time does not advance between calls. Nothing depends on a
 scene, on physics, or on a real sensor.
@@ -305,19 +389,20 @@ scene, on physics, or on a real sensor.
 | Selection | `L-040`–`L-046` | automatic rule, explicit override, no-op re-request, clearing |
 | Stalled selection | `L-047`–`L-049d` | the §8 defect, the narrowness of its fix, commanded break |
 | Selection ownership | `L-090`–`L-097c` | the §8.1 defect: automatic may yield, commanded may not |
+| Authority withdrawal | `L-100`–`L-106d` | the §8.2 defect: an unavailable authority holds nothing |
 | Effective quality | `L-050`–`L-055` | `Locked` asserted here and nowhere else; owner not rewritten |
 | Engagement precedence | `L-060`–`L-064` | authoritative wins, legacy order preserved beneath it |
 | Migration switch | `L-065`–`L-066d` | the legacy default, the opt-in, reversibility, nothing erased |
 | Legacy equivalence | `L-070`–`L-085b` | the three projections, their reachable shapes, the divergences |
 
 **Determinism** was checked rather than assumed: two independent Unity launches produced
-byte-identical assertion reports, all 120 report lines.
+byte-identical assertion reports, all 148 report lines.
 
 ### Gates
 
 | Gate | Result |
 |---|---|
-| Track lock | **119 / 0 PASS** |
+| Track lock | **147 / 0 PASS** |
 | Radar Core | **71 / 0 PASS** (unchanged) |
 | TargetTrack Core | **35 / 0 PASS** (unchanged) |
 | Combat boundary scan | **PASS**, 3 / 0 |
