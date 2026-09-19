@@ -22,6 +22,12 @@ namespace MaverickFresh.Combat.Targeting
     /// measurement is rewritten - the lock is expressed as a property of the engagement, layered over
     /// the measurement rather than overwriting it.
     ///
+    /// SELECTION OWNERSHIP. Two things can select a track: a command source, and the automatic rule.
+    /// The controller records which, because the difference is not recoverable from the state machine
+    /// afterwards and the two have different rights - an automatic selection that cannot reach a lock
+    /// may be replaced by one that can, while a commanded selection is held until the command is
+    /// withdrawn or its track disappears. See <see cref="SelectionIsExplicit"/>.
+    ///
     /// Deliberately NOT here, because they are later phases: missile guidance, seekers, autopilots,
     /// datalink fusion, ECM, and any weapon at all. This class knows nothing about what a lock is FOR.
     /// </summary>
@@ -67,11 +73,25 @@ namespace MaverickFresh.Combat.Targeting
         public float debugTimeInLock;
         public float debugCoastElapsed;
         public MavLockLossReason debugLastLossReason = MavLockLossReason.None;
+        public bool debugSelectionIsExplicit;
         public int debugLocksEstablished;
         public int debugLocksLost;
         public string debugLockedTrackName = "none";
 
         private int selectedTrackId;
+
+        /// <summary>
+        /// Whether the current selection was ASKED FOR or merely picked.
+        ///
+        /// The controller has two ways to arrive in <see cref="MavLockState.Selected"/> - a command
+        /// source calling <see cref="RequestSelection"/>, and the automatic rule picking something - and
+        /// without this flag those two are indistinguishable afterwards. That mattered: automatic
+        /// reconsideration would happily replace a commanded selection whose quality was below the lock
+        /// threshold, silently overriding a player, an AI or a FAM command. Selection ownership is not
+        /// derivable from the state machine, so it is recorded.
+        /// </summary>
+        private bool selectionIsExplicit;
+
         private int lockedTrackId;
         private MavLockState state = MavLockState.Idle;
         private float acquisitionElapsed;
@@ -115,6 +135,18 @@ namespace MaverickFresh.Combat.Targeting
         public int SelectedTrackId
         {
             get { return selectedTrackId; }
+        }
+
+        /// <summary>
+        /// True when the current selection was commanded rather than picked automatically.
+        ///
+        /// A commanded selection is an instruction, not a suggestion: the automatic rule may not take it
+        /// away. Exposed so a consumer - and validation - can tell the two apart, because the lock state
+        /// alone cannot.
+        /// </summary>
+        public bool SelectionIsExplicit
+        {
+            get { return selectedTrackId != 0 && selectionIsExplicit; }
         }
 
         /// <summary>The locked track, including while coasting. Zero when not locked.</summary>
@@ -189,12 +221,21 @@ namespace MaverickFresh.Combat.Targeting
                 return false;
 
             if (trackId == selectedTrackId)
+            {
+                // Re-commanding the track already selected does NOT restart acquisition - a command
+                // source repeating itself must not reset progress - but it DOES claim ownership. If the
+                // automatic rule had picked this track, an operator naming it makes the selection
+                // commanded from now on, and therefore no longer something the automatic rule may
+                // replace. Returning early without this was the same defect in a second place.
+                selectionIsExplicit = true;
                 return true;
+            }
 
             if (state == MavLockState.Locked || state == MavLockState.Coasting)
                 RecordLoss(MavLockLossReason.SelectionChanged);
 
             selectedTrackId = trackId;
+            selectionIsExplicit = true;   // commanded: the automatic rule may not take this away
             lockedTrackId = 0;
             acquisitionElapsed = 0f;
             lockElapsed = 0f;
@@ -210,6 +251,7 @@ namespace MaverickFresh.Combat.Targeting
                 RecordLoss(reason);
 
             selectedTrackId = 0;
+            selectionIsExplicit = false;   // the command is over; automatic selection may resume
             lockedTrackId = 0;
             acquisitionElapsed = 0f;
             lockElapsed = 0f;
@@ -264,6 +306,8 @@ namespace MaverickFresh.Combat.Targeting
                 // The track is gone entirely. A lock in progress or held cannot survive that.
                 bool wasCommitted = state == MavLockState.Locked || state == MavLockState.Coasting;
                 selectedTrackId = 0;
+                // The commanded track no longer exists, so the command cannot still be honoured.
+                selectionIsExplicit = false;
                 lockedTrackId = 0;
                 acquisitionElapsed = 0f;
                 if (wasCommitted)
@@ -413,13 +457,14 @@ namespace MaverickFresh.Combat.Targeting
             if (bestId != 0)
             {
                 selectedTrackId = bestId;
+                selectionIsExplicit = false;   // picked, not asked for
                 acquisitionElapsed = 0f;
                 state = MavLockState.Selected;
             }
         }
 
         /// <summary>
-        /// Re-picks the automatic selection when the current one cannot reach a lock and another can.
+        /// Re-picks an AUTOMATIC selection when the current one cannot reach a lock and another can.
         ///
         /// WHY THIS IS NEEDED. Automatic selection used to run only while nothing was selected, so the
         /// FIRST lock-capable-looking track latched forever. With the legacy scene-sweep feed live -
@@ -429,15 +474,28 @@ namespace MaverickFresh.Combat.Targeting
         /// good enough to lock went unlooked-at. Nothing was logged, because nothing had failed: it was
         /// a selection that simply could never progress.
         ///
-        /// Deliberately narrow. It runs ONLY in <see cref="MavLockState.Selected"/> and ONLY when the
-        /// current selection is below the lock threshold, so it can never interrupt acquisition, a
-        /// lock, or a coast - and it never overrides an explicit request, because an explicit request
-        /// leaves the state machine in Selected only until the track it named becomes lockable. A rule
-        /// that could re-pick mid-acquisition would make acquisition timing unpredictable, which is the
-        /// opposite of what this phase is for.
+        /// OWNERSHIP RULE. Automatic selections may yield; commanded ones may not. An earlier version of
+        /// this method claimed it "never overrides an explicit request" and reasoned that a commanded
+        /// selection stays in Selected only until its track becomes lockable - which is false whenever
+        /// the commanded track simply stays Coarse. Nothing recorded WHICH kind of selection was held,
+        /// so a player, AI or FAM command naming a Coarse track could be silently replaced. The origin
+        /// is now tracked in <see cref="selectionIsExplicit"/> and checked here first.
+        ///
+        /// A commanded selection is therefore held until one of: its quality improves, its track is
+        /// dropped, another selection is commanded, a commanded clear or break, or the authority is
+        /// disabled. Waiting on a low-quality track is a legitimate thing to be told to do - the point
+        /// of a command is that the machine does not know better.
+        ///
+        /// Otherwise deliberately narrow: it runs ONLY in <see cref="MavLockState.Selected"/> and ONLY
+        /// when the selection is below the lock threshold, so it can never interrupt acquisition, a
+        /// lock, or a coast. A rule that could re-pick mid-acquisition would make acquisition timing
+        /// unpredictable, which is the opposite of what this phase is for.
         /// </summary>
         private void ReconsiderStalledSelection()
         {
+            if (selectionIsExplicit)
+                return;   // commanded: not ours to replace
+
             MavTargetTrackData current;
             if (!owner.TryGetTrackById(selectedTrackId, out current))
                 return;
@@ -469,6 +527,9 @@ namespace MaverickFresh.Combat.Targeting
             if (bestId != 0 && bestId != selectedTrackId)
             {
                 selectedTrackId = bestId;
+                // Already false - this method returns early for a commanded selection - but stated so
+                // that every write to selectedTrackId visibly decides the origin alongside it.
+                selectionIsExplicit = false;
                 acquisitionElapsed = 0f;
             }
         }
@@ -482,6 +543,7 @@ namespace MaverickFresh.Combat.Targeting
             debugTimeInLock = TimeInLockSeconds;
             debugCoastElapsed = state == MavLockState.Coasting ? coastElapsed : 0f;
             debugLastLossReason = lastLossReason;
+            debugSelectionIsExplicit = SelectionIsExplicit;
             debugLockedTrackName = owner != null && LockedTrackId != 0
                 ? owner.GetTrackDisplayName(LockedTrackId)
                 : "none";

@@ -92,6 +92,7 @@ namespace MaverickFresh.Combat.EditorTools
             ValidateLossReasons(report, ref passed, ref failed);
             ValidateSelection(report, ref passed, ref failed);
             ValidateStalledSelection(report, ref passed, ref failed);
+            ValidateSelectionOwnership(report, ref passed, ref failed);
             ValidateEffectiveQuality(report, ref passed, ref failed);
             ValidateEngagementPrecedence(report, ref passed, ref failed);
             ValidateMigrationSwitch(report, ref passed, ref failed);
@@ -665,6 +666,234 @@ namespace MaverickFresh.Combat.EditorTools
                 finally { Object.DestroyImmediate(host3); }
             }
             finally { Object.DestroyImmediate(host); }
+        }
+
+        // ---- selection ownership: automatic may yield, commanded may not -------------------------
+        /// <summary>
+        /// The second defect this phase found, and the one that mattered more.
+        ///
+        /// <c>ReconsiderStalledSelection</c> claimed it never overrode an explicit request, on the
+        /// reasoning that a commanded selection sits in Selected only until its track becomes lockable.
+        /// That is false whenever the commanded track simply stays Coarse - and nothing recorded WHICH
+        /// kind of selection was held, so a player, AI or FAM command naming a Coarse track was
+        /// silently replaceable by the automatic rule.
+        ///
+        /// Every case here steps the controller AFTER the request. Checking the immediate return of
+        /// RequestSelection proves nothing: the override happened on the following step, which is
+        /// exactly why reading the state machine did not reveal it.
+        /// </summary>
+        private static void ValidateSelectionOwnership(StringBuilder report, ref int passed, ref int failed)
+        {
+            // ---- 1. an AUTOMATIC stalled selection still yields (L-047 behavior, via the origin) ----
+            GameObject hostA = new GameObject("MavLockOwnershipAutoHost");
+            try
+            {
+                MavTargetTrackOwner owner;
+                MavTrackLockController ctl;
+                ScriptedFeed feed;
+                Build(hostA, out owner, out ctl, out feed);
+                hostA.transform.position = Vector3.zero;
+
+                feed.Set(1, new Vector3(0f, 0f, 2000f), MavTrackQuality.Coarse, false);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+                ctl.Step(0f);
+
+                int autoCoarseId = ctl.SelectedTrackId;
+                Record(autoCoarseId != 0 && !ctl.SelectionIsExplicit
+                       && ctl.LockState == MavLockState.Selected,
+                       "L-090", "an automatically picked selection reports itself as not commanded",
+                       report, ref passed, ref failed);
+
+                feed.pending.Clear();
+                feed.Add(1, new Vector3(0f, 0f, 2000f), MavTrackQuality.Coarse, false);
+                feed.Add(2, new Vector3(0f, 0f, 9000f), MavTrackQuality.Tracked, true);
+                owner.SweepNowForTesting();
+                ctl.Step(0f);
+
+                Record(ctl.SelectedTrackId != 0 && ctl.SelectedTrackId != autoCoarseId
+                       && !ctl.SelectionIsExplicit,
+                       "L-090b", "an automatic stalled selection still yields to a lock-capable track",
+                       report, ref passed, ref failed);
+            }
+            finally { Object.DestroyImmediate(hostA); }
+
+            // ---- 2..5. a COMMANDED selection is held -----------------------------------------------
+            GameObject hostB = new GameObject("MavLockOwnershipExplicitHost");
+            try
+            {
+                MavTargetTrackOwner owner;
+                MavTrackLockController ctl;
+                ScriptedFeed feed;
+                Build(hostB, out owner, out ctl, out feed);
+                hostB.transform.position = Vector3.zero;
+
+                // A Coarse track AND a better Tracked track exist. The automatic rule would take the
+                // Tracked one, so commanding the Coarse one is the case that used to be overridden.
+                feed.pending.Clear();
+                feed.Add(1, new Vector3(0f, 0f, 2000f), MavTrackQuality.Coarse, false);
+                feed.Add(2, new Vector3(0f, 0f, 9000f), MavTrackQuality.Tracked, true);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+
+                int coarseId = 0, trackedId = 0;
+                for (int i = 0; i < owner.TrackCount; i++)
+                {
+                    MavTargetTrackData t = owner.GetTrack(i);
+                    if (t.quality == MavTrackQuality.Coarse) coarseId = t.trackId;
+                    else if (t.quality == MavTrackQuality.Tracked) trackedId = t.trackId;
+                }
+
+                Record(coarseId != 0 && trackedId != 0 && ctl.RequestSelection(coarseId)
+                       && ctl.SelectionIsExplicit,
+                       "L-091", "a commanded selection of a Coarse track is accepted and marked commanded",
+                       report, ref passed, ref failed);
+
+                // THE BLOCKER. One step later the automatic rule must not have taken it.
+                ctl.Step(0f);
+                Record(ctl.SelectedTrackId == coarseId
+                       && ctl.LockState == MavLockState.Selected
+                       && ctl.SelectionIsExplicit,
+                       "L-091b", "one step after the command the commanded track is still selected",
+                       report, ref passed, ref failed);
+
+                // And it does not drift away over time either.
+                ctl.Step(0.5f);
+                ctl.Step(0.5f);
+                ctl.Step(1.0f);
+                Record(ctl.SelectedTrackId == coarseId
+                       && ctl.LockState == MavLockState.Selected
+                       && ctl.LockedTrackId == 0,
+                       "L-091c", "a commanded low-quality selection is held indefinitely, not replaced",
+                       report, ref passed, ref failed);
+
+                // 3. When the commanded track's own quality improves, acquisition begins on THAT track.
+                feed.pending.Clear();
+                feed.Add(1, new Vector3(0f, 0f, 2000f), MavTrackQuality.Tracked, true);
+                feed.Add(2, new Vector3(0f, 0f, 9000f), MavTrackQuality.Tracked, true);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+                ctl.Step(0f);
+
+                Record(ctl.SelectedTrackId == coarseId && ctl.LockState == MavLockState.Acquiring,
+                       "L-092", "acquisition begins on the commanded track once its quality improves",
+                       report, ref passed, ref failed);
+
+                ctl.Step(1.0f);
+                Record(ctl.LockState == MavLockState.Locked && ctl.LockedTrackId == coarseId,
+                       "L-092b", "the lock is established on the commanded track, not the automatic pick",
+                       report, ref passed, ref failed);
+
+                // 4. A second command replaces the first.
+                Record(ctl.RequestSelection(trackedId)
+                       && ctl.SelectedTrackId == trackedId
+                       && ctl.SelectionIsExplicit,
+                       "L-093", "a second commanded selection replaces the first",
+                       report, ref passed, ref failed);
+                ctl.Step(0f);
+                Record(ctl.SelectedTrackId == trackedId && ctl.SelectionIsExplicit,
+                       "L-093b", "the replacement command survives the following step",
+                       report, ref passed, ref failed);
+
+                // 5. Breaking releases ownership, so automatic selection may resume.
+                //
+                // Let the commanded selection finish acquiring first. BreakLock records a loss reason
+                // only when a lock was actually held, which is right - there is nothing to lose from
+                // Acquiring - so breaking mid-acquisition would leave LastLossReason reading the
+                // earlier SelectionChanged. An earlier version of this case asserted Commanded after
+                // breaking from Acquiring and was simply wrong about the code.
+                ctl.Step(1.0f);
+                Record(ctl.LockState == MavLockState.Locked && ctl.LockedTrackId == trackedId,
+                       "L-093c", "the replacement command acquires its own lock",
+                       report, ref passed, ref failed);
+
+                ctl.BreakLock(MavLockLossReason.Commanded);
+                Record(ctl.SelectedTrackId == 0 && !ctl.SelectionIsExplicit
+                       && ctl.LastLossReason == MavLockLossReason.Commanded,
+                       "L-094", "a commanded break releases selection ownership",
+                       report, ref passed, ref failed);
+
+                ctl.Step(0f);
+                Record(ctl.SelectedTrackId != 0 && !ctl.SelectionIsExplicit,
+                       "L-094b", "automatic selection resumes after a commanded break, as automatic",
+                       report, ref passed, ref failed);
+
+                // Requesting zero is also a release, not a silent no-op.
+                Record(ctl.RequestSelection(coarseId) && ctl.SelectionIsExplicit
+                       && ctl.RequestSelection(0) && !ctl.SelectionIsExplicit,
+                       "L-095", "commanding track zero releases ownership too",
+                       report, ref passed, ref failed);
+            }
+            finally { Object.DestroyImmediate(hostB); }
+
+            // ---- a commanded track that disappears cannot still be honoured -------------------------
+            GameObject hostC = new GameObject("MavLockOwnershipDropHost");
+            try
+            {
+                MavTargetTrackOwner owner;
+                MavTrackLockController ctl;
+                ScriptedFeed feed;
+                Build(hostC, out owner, out ctl, out feed);
+
+                feed.Set(1, new Vector3(0f, 0f, 2000f), MavTrackQuality.Coarse, false);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+                int onlyId = owner.GetTrack(0).trackId;
+                ctl.RequestSelection(onlyId);
+                ctl.Step(0f);
+
+                feed.pending.Clear();
+                owner.ClearTracksForTesting();
+                owner.SweepNowForTesting();
+                ctl.Step(0f);
+
+                Record(ctl.SelectedTrackId == 0 && !ctl.SelectionIsExplicit
+                       && ctl.LockState == MavLockState.Idle,
+                       "L-096", "a commanded selection whose track is dropped releases ownership",
+                       report, ref passed, ref failed);
+            }
+            finally { Object.DestroyImmediate(hostC); }
+
+            // ---- 6. automatic selection cannot interrupt a coast -----------------------------------
+            // Acquiring and Locked are pinned by L-048b and L-048d. Coasting is the remaining state,
+            // and it is the one where the selected track is deliberately NOT being refreshed - so it is
+            // the state most likely to look like a stalled selection to a careless rule.
+            GameObject hostD = new GameObject("MavLockOwnershipCoastHost");
+            try
+            {
+                MavTargetTrackOwner owner;
+                MavTrackLockController ctl;
+                ScriptedFeed feed;
+                Build(hostD, out owner, out ctl, out feed);
+                hostD.transform.position = Vector3.zero;
+
+                feed.Set(1, new Vector3(0f, 0f, 9000f), MavTrackQuality.Tracked, true);
+                owner.SweepNowForTesting();
+                ctl.UseTestClock(Time.time);
+                ctl.Step(0f);
+                ctl.Step(1.0f);
+                int lockedId = ctl.LockedTrackId;
+                Record(ctl.LockState == MavLockState.Locked && lockedId != 0,
+                       "L-097", "an automatic lock is held before the coast case",
+                       report, ref passed, ref failed);
+
+                // Let the locked track go stale, then offer a nearer, fresher, equally good track.
+                ctl.AdvanceTestClock(1.0f);
+                ctl.Step(0.1f);
+                Record(ctl.LockState == MavLockState.Coasting && ctl.LockedTrackId == lockedId,
+                       "L-097b", "the stale locked track coasts rather than dropping",
+                       report, ref passed, ref failed);
+
+                feed.pending.Clear();
+                feed.Add(2, new Vector3(0f, 0f, 200f), MavTrackQuality.Tracked, true);
+                owner.SweepNowForTesting();
+                ctl.Step(0.1f);
+
+                Record(ctl.LockState == MavLockState.Coasting && ctl.LockedTrackId == lockedId,
+                       "L-097c", "automatic selection cannot interrupt a coast for a better track",
+                       report, ref passed, ref failed);
+            }
+            finally { Object.DestroyImmediate(hostD); }
         }
 
         // ---- the migration switch ----------------------------------------------------------------

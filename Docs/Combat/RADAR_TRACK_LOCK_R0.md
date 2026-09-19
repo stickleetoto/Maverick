@@ -213,11 +213,72 @@ correct.
 Confirmed before being fixed: with the assertions added and the controller untouched, exactly
 `L-047c`, `L-047d` and `L-047e` failed and the other 97 passed.
 
-The fix, `ReconsiderStalledSelection`, is deliberately narrow. It runs **only** in `Selected` and
-**only** when the current selection is below the lock threshold, and it moves only to a track that is
-lock-capable right now. So it can never interrupt acquisition, a lock, or a coast — a rule that could
-re-pick mid-acquisition would make acquisition timing unpredictable, which is the opposite of what
-this phase is for. `L-048b`, `L-048c` and `L-048d` pin that narrowness.
+The fix, `ReconsiderStalledSelection`, is deliberately narrow. It runs **only** in `Selected`, **only**
+when the current selection is below the lock threshold, **only** when the selection was automatic, and
+it moves only to a track that is lock-capable right now. So it can never interrupt acquisition, a lock,
+or a coast — a rule that could re-pick mid-acquisition would make acquisition timing unpredictable,
+which is the opposite of what this phase is for. `L-048b`, `L-048c`, `L-048d` and `L-097c` pin that
+narrowness.
+
+The "only when the selection was automatic" clause was **not** in the first version of this fix, and
+§8.1 is about why that mattered.
+
+## 8.1 Selection ownership — a defect found in review
+
+The first version of the fix above carried a comment claiming it "never overrides an explicit
+request", reasoning that a commanded selection sits in `Selected` only until its track becomes
+lockable. **That reasoning is false** whenever the commanded track simply stays `Coarse`. Worse,
+nothing in the controller recorded *which kind* of selection was being held: `RequestSelection` and
+the automatic rule both landed in `Selected` with no distinguishing state, so reconsideration could
+not have honoured the distinction even if it had tried.
+
+The consequence: an explicit player, AI or FAM selection of a `Coarse` track was **silently replaced**
+by the automatic selector on the very next step. Not gameplay-visible yet only because nothing
+consumes the controller — it would have become visible the moment a command path was migrated.
+
+### The rule, as it now actually is
+
+The controller records selection origin in `selectionIsExplicit`, exposed as `SelectionIsExplicit`,
+because the difference is not recoverable from the state machine afterwards:
+
+| Origin | Rights |
+|---|---|
+| **Automatic** (`SelectBestTrack`) | may be replaced by reconsideration when it cannot reach a lock and another track can |
+| **Commanded** (`RequestSelection`) | **may not** be replaced by reconsideration, at any quality |
+
+A commanded selection is held until one of: **its quality improves**, **its track is dropped**,
+**another selection is commanded**, a **commanded clear or break**, or the **authority is disabled**.
+Waiting on a low-quality track is a legitimate thing to be told to do — the whole point of a command
+is that the machine does not know better.
+
+Every write to `selectedTrackId` now decides the origin beside it, so the set of places that can
+change ownership is auditable by reading five lines rather than by reasoning about the state machine.
+
+### A second instance in the same defect class
+
+`RequestSelection` returned early when the requested track was already selected — correctly, since a
+command source repeating itself must not reset acquisition progress — but that early return **skipped
+marking the selection commanded**. So commanding the track the automatic rule happened to have already
+picked left it flagged automatic, and therefore still replaceable. It now claims ownership without
+touching progress, which keeps `L-042` true.
+
+This one was found by the new tests rather than by reading: `L-095` failed, and the diagnosis had to
+establish which side was wrong before anything changed.
+
+### Confirmed, not assumed
+
+The ownership guard was temporarily disabled and the suite re-run: **7 assertions failed**, all in the
+commanded path — `L-091b`, `L-091c`, `L-092`, `L-092b`, `L-093`, `L-093b`, `L-095`.
+
+`L-091` — the immediate return of `RequestSelection` — **passed with the guard disabled**. That is the
+point: the override happened on the *following* step, so a case that checks only the immediate result
+of `RequestSelection` cannot detect this class of defect at all. Every case in the ownership section
+steps the controller after the request.
+
+One of the two remaining failures turned out to be a **bad test, not bad code**: `L-094` broke a lock
+from `Acquiring` and then asserted `LastLossReason == Commanded`, but `BreakLock` records a reason only
+when a lock was actually held — which is right, there is nothing to lose from `Acquiring`. The case now
+lets acquisition finish first, and `L-093c` pins the lock it then breaks.
 
 ## 9. A behavior kept because legacy has it
 
@@ -230,7 +291,7 @@ incidental.
 
 ## 10. Validation
 
-`MavTrackLockValidation`, **102 assertions, 0 failures.** Every case drives the controller with an
+`MavTrackLockValidation`, **119 assertions, 0 failures.** Every case drives the controller with an
 explicit clock and explicit step deltas rather than waiting on frames, because lock semantics are
 entirely about elapsed time and editor time does not advance between calls. Nothing depends on a
 scene, on physics, or on a real sensor.
@@ -242,20 +303,21 @@ scene, on physics, or on a real sensor.
 | Maintenance and coast | `L-020`–`L-024` | coast entry, resumption without re-acquiring, expiry |
 | Loss reasons | `L-030`–`L-036` | every reason reached by its own cause |
 | Selection | `L-040`–`L-046` | automatic rule, explicit override, no-op re-request, clearing |
-| Stalled selection | `L-047`–`L-049d` | the defect above, the narrowness of its fix, commanded break |
+| Stalled selection | `L-047`–`L-049d` | the §8 defect, the narrowness of its fix, commanded break |
+| Selection ownership | `L-090`–`L-097c` | the §8.1 defect: automatic may yield, commanded may not |
 | Effective quality | `L-050`–`L-055` | `Locked` asserted here and nowhere else; owner not rewritten |
 | Engagement precedence | `L-060`–`L-064` | authoritative wins, legacy order preserved beneath it |
 | Migration switch | `L-065`–`L-066d` | the legacy default, the opt-in, reversibility, nothing erased |
 | Legacy equivalence | `L-070`–`L-085b` | the three projections, their reachable shapes, the divergences |
 
 **Determinism** was checked rather than assumed: two independent Unity launches produced
-byte-identical assertion reports, all 103 report lines.
+byte-identical assertion reports, all 120 report lines.
 
 ### Gates
 
 | Gate | Result |
 |---|---|
-| Track lock | **102 / 0 PASS** |
+| Track lock | **119 / 0 PASS** |
 | Radar Core | **71 / 0 PASS** (unchanged) |
 | TargetTrack Core | **35 / 0 PASS** (unchanged) |
 | Combat boundary scan | **PASS**, 3 / 0 |
@@ -272,7 +334,9 @@ would have been crossed.
 - Every lifecycle value is synthetic tuning. No sourced radar lock performance data is used.
 - The automatic selection rule is highest quality, nearest as the tie-break. Deliberately plain and
   documented rather than clever — threat evaluation is a later concern, and a rule nobody can predict
-  is worse than a simple one.
+  is worse than a simple one. It applies only to selections it made itself; see §8.1.
+- A commanded selection of a track that never reaches `Tracked` will sit in `Selected` forever without
+  locking. That is the intended reading of a command, not an oversight, and `L-091c` pins it.
 - There is no multi-target track-while-scan lock. One authority holds one lock.
 - The three legacy authorities still run and still own their own state. They are represented, not
   retired.
