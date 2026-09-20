@@ -221,7 +221,29 @@ the two agree, so they cannot drift into two definitions of one word.
 | TargetTrack Core | **35 / 0 PASS** |
 | Combat boundary | **3 / 0 PASS** |
 | FDM baseline | **1585 / 0 PASS** |
-| Missing Script scan | **PASS** |
+| Missing Script scan | **PASS** (scenes=3 prefabs=6 missing=0) |
+
+Baseline detail: 25 counted suite results, `execution_status=PASS`, empty `fatal_error`,
+`physics_delta=NONE`, churn 1 entry — `M ProjectSettings/EditorSettings.asset`, classified
+`LINE_ENDING_OR_STAT_ONLY` with `normalized_content_identical: true`, i.e. Unity rewriting its own settings
+during import. Clean on the first attempt.
+
+### A finding about the gate itself, not about this branch
+
+The baseline first aborted with `INFRA_FAILURE` in two seconds, before running a single suite:
+`fatal_error: "정규식 패턴 \이(가) 유효하지 않습니다"` — "the regex pattern `\` is not valid".
+
+`Tools/run_fdm_validation.ps1:62`, in `ConvertTo-PathList`, has `-replace '\','/'`. PowerShell treats the
+left operand as a regex and a lone backslash is not a valid pattern, so it throws. The correct form is used
+thirteen lines earlier at `:49`. `ConvertTo-PathList` is fed by `Get-TrackedContentChanges`
+(`git diff --name-only HEAD`) and `Get-UntrackedFiles`, so with a clean tree both return nothing, the loop
+body never executes and the bug is dormant — which is why every previous baseline, run from a fresh
+worktree, passed. With any genuinely modified tracked file it fires and the whole baseline dies.
+
+Note git normalizes line endings for `diff`, so the ProjectSettings churn above does **not** trigger it;
+a real content change does. Not fixed here — it is the FDM validation runner, outside this phase's scope —
+and the baseline above was therefore run from a throwaway worktree at `2e7ae14` with a clean tree. Raised
+separately.
 
 ## 7. Scope held
 
