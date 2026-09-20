@@ -1,3 +1,4 @@
+using MaverickFresh.Combat;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -29,15 +30,22 @@ namespace MaverickFresh
                 return;
 
             EnsureStyles();
-            string lockText = sensor.debugHasLock ? "LOCK" : $"ACQ {sensor.debugLockProgress01 * 100f:0}%";
+
+            // The F-22 suite's STT lock is NOT the aircraft's lock authority - MavTrackLockController is.
+            // STT is kept running as the legacy evidence the lock migration is measured against, so this
+            // overlay is a SHADOW readout and says so. An unlabelled "LOCK" here is indistinguishable from
+            // the authoritative lock, which is the exact confusion the authority was extracted to end.
+            string lockText = MavCombatScopePolicy.ShadowLabel + " "
+                            + (sensor.debugHasLock ? "STT LOCK" : $"STT ACQ {sensor.debugLockProgress01 * 100f:0}%");
             string text =
-                $"SENSOR {sensor.debugModeLabel} {(sensor.useSensorSuite ? "ON" : "OFF")}  Z MODE  X TARGET  F9 HIDE\n" +
+                $"SENSOR {sensor.debugModeLabel} {(sensor.useSensorSuite ? "ON" : "OFF")} [{MavCombatScopePolicy.ShadowLabel}]  Z MODE  X TARGET  F9 HIDE\n" +
                 $"CONTACTS {sensor.debugContactCount}  TGT {sensor.debugSelectedName}  {sensor.debugSelectedDistance:0}m  ASP {sensor.debugSelectedAspectDeg:0}  Q {sensor.debugSelectedQuality:0.00}  {lockText}";
 
             GUI.Box(new Rect(Screen.width - 430f, 10f, 420f, 54f), text, panel);
 
             if (drawTargetMarker && sensor.selectedTarget != null && playerCamera != null)
-                DrawMarker(sensor.selectedTarget.transform.position, sensor.debugHasLock ? "LOCK" : "TGT");
+                DrawMarker(sensor.selectedTarget.transform.position,
+                           sensor.debugHasLock ? MavCombatScopePolicy.ShadowLabel + " STT" : "TGT");
         }
 
         private void DrawMarker(Vector3 world, string label)

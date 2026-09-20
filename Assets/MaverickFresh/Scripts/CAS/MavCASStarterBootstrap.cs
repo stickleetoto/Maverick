@@ -1,6 +1,7 @@
 using MaverickFresh.Combat.Legacy;
 using MaverickFresh.Combat.Sensors;
 using MaverickFresh.Combat.Targeting;
+using MaverickFresh.Combat;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -49,6 +50,34 @@ namespace MaverickFresh
                 Debug.LogWarning("MavCASStarterBootstrap: aircraftObject missing.");
                 return;
             }
+
+            InstallAirToGround();
+
+            // ALWAYS, and deliberately outside the A2G freeze. This composition root installs both stacks,
+            // and the A2A one - track owner, engagement view, radar, the lock authority - is the path this
+            // phase exists to leave running. Freezing A2G by returning early from Setup would have taken
+            // the whole of A2A with it, which is the one mistake this method's shape invites.
+            InstallTargetTrackCore(aircraftObject);
+        }
+
+        /// <summary>
+        /// Installs the legacy air-to-ground stack: CAS targeting, CAS weapons, CCIP, ordnance, the
+        /// targeting pod and its state manager.
+        ///
+        /// DORMANT. Combat development is A2A-first and A2G is frozen, so this installs nothing - which is
+        /// the OUTERMOST barrier and the one that matters most. If the components are never added there is
+        /// nothing to disable, nothing reading input, and nothing writing a designation. The per-component
+        /// guards behind this one exist for aircraft that already carry these components in scene or prefab
+        /// data, which this bootstrap never sees.
+        ///
+        /// <c>setupOnAwake</c>, <c>addTargeting</c> and the rest are left alone on purpose. They are `true`
+        /// in the scenes that exist, and editing scene data would hide this decision somewhere it cannot be
+        /// reviewed or asserted. A scene with all of them set is now harmless.
+        /// </summary>
+        private void InstallAirToGround()
+        {
+            if (MavCombatScopePolicy.AirToGroundFrozen)
+                return;
 
             if (addTargeting)
             {
@@ -113,8 +142,6 @@ namespace MaverickFresh
                 if (rangeSpawner == null)
                     rangeSpawner = gameObject.AddComponent<MavCASTestRangeSpawner>();
             }
-
-            InstallTargetTrackCore(aircraftObject);
         }
 
         /// <summary>

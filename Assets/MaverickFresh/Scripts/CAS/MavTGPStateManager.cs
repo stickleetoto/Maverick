@@ -1,5 +1,6 @@
-using UnityEngine;
+using MaverickFresh.Combat;
 using UnityEngine.UI;
+using UnityEngine;
 
 namespace MaverickFresh
 {

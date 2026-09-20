@@ -187,11 +187,41 @@ namespace MaverickFresh
 
         private void Awake()
         {
+            if (!IsWeaponReleaseAllowed)
+            {
+                lastEvent = "weapons" + MavCombatScopePolicy.FrozenEventSuffix;
+                enabled = false;
+                return;
+            }
+
             Resolve();
+        }
+
+        /// <summary>
+        /// Whether this weapon system may fire anything.
+        ///
+        /// A2G is frozen, so it may not - INCLUDING THE GUN. The gun is not spared for being useful in
+        /// air-to-air: it is declared here, selected here, fed by this component's ammo, heat, spin-up and
+        /// tracer state, and fired from this component's Update. Keeping it alive would mean keeping
+        /// MavCASWeaponSystem alive, which is the half-frozen ownership the freeze exists to prevent. An
+        /// A2A gun, if one is wanted, is a later phase with an owner of its own.
+        /// </summary>
+        public bool IsWeaponReleaseAllowed
+        {
+            get { return MavCombatScopePolicy.AirToGroundAllowed; }
         }
 
         private void Update()
         {
+            // The input barrier. Every A2G command - trigger, secondary release, weapon cycle, the missile
+            // and bomb quick-selects - is read in this method, so refusing here is what makes the keys
+            // inert. They are NOT repurposed for A2A in this phase.
+            if (!IsWeaponReleaseAllowed)
+            {
+                enabled = false;
+                return;
+            }
+
             Resolve();
             NormalizeSecondarySelection();
 
@@ -239,12 +269,24 @@ namespace MaverickFresh
 
         public bool TryFirePrimary()
         {
+            if (!IsWeaponReleaseAllowed)
+            {
+                lastEvent = "gun" + MavCombatScopePolicy.FrozenEventSuffix;
+                return false;
+            }
+
             selectedWeapon = MavCASWeapon.Gun;
             return FireGun();
         }
 
         public bool TryFireSecondary()
         {
+            if (!IsWeaponReleaseAllowed)
+            {
+                lastEvent = "secondary" + MavCombatScopePolicy.FrozenEventSuffix;
+                return false;
+            }
+
             NormalizeSecondarySelection();
             selectedWeapon = selectedSecondaryWeapon;
             return TryFireWeapon(selectedSecondaryWeapon);
@@ -252,6 +294,12 @@ namespace MaverickFresh
 
         public bool TryFireSelected()
         {
+            if (!IsWeaponReleaseAllowed)
+            {
+                lastEvent = "release" + MavCombatScopePolicy.FrozenEventSuffix;
+                return false;
+            }
+
             if (selectedWeapon != MavCASWeapon.Gun && IsSecondaryWeapon(selectedWeapon))
                 selectedSecondaryWeapon = selectedWeapon;
 
@@ -260,6 +308,15 @@ namespace MaverickFresh
 
         private bool TryFireWeapon(MavCASWeapon weapon)
         {
+            // The innermost barrier, on the one path every store goes through: gun, rockets, bomb,
+            // precision strike and the CAS missile. A direct call to any Fire* method from a future
+            // consumer cannot get past this without removing it deliberately.
+            if (!IsWeaponReleaseAllowed)
+            {
+                lastEvent = weapon.ToString().ToLowerInvariant() + MavCombatScopePolicy.FrozenEventSuffix;
+                return false;
+            }
+
             switch (weapon)
             {
                 case MavCASWeapon.Gun:

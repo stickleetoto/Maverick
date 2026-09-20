@@ -1,3 +1,4 @@
+using MaverickFresh.Combat;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -343,7 +344,11 @@ namespace MaverickFresh
             if (!installStateSanityPatch || aircraftObject == null)
                 return;
 
-            if (installTGPStateManager)
+            // The TGP state manager exists to force the pod off and keep it off. With A2G frozen there is
+            // no pod to manage - the CAS bootstrap installs none - so installing its manager would add a
+            // component whose only job is already done by the freeze. Left uninstalled rather than
+            // installed-and-idle, so the dormant surface stays as small as the freeze claims.
+            if (installTGPStateManager && MavCombatScopePolicy.AirToGroundAllowed)
             {
                 tgpStateManager = aircraftObject.GetComponent<MavTGPStateManager>();
                 if (tgpStateManager == null)

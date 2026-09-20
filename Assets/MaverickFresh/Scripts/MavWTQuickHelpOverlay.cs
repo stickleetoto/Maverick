@@ -1,3 +1,4 @@
+using MaverickFresh.Combat;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -43,8 +44,10 @@ namespace MaverickFresh
                 "F5 Balanced | F6 Smooth | F7 Aggressive | F8 Direct Debug\n" +
                 "Mouse Aim = desired flight attitude | W/S = elevator override | A/D = roll | Q/E = rudder\n" +
                 "Shift/Ctrl = throttle | C/Alt hold = free look | RMB = zoom\n" +
-                "CAS: F designate | Tab cycle target | 1/2 secondary | 3 missile | 4 bomb | Mouse0 gun | Space secondary\n" +
-                "TGP: T display | O mode | IJKL slew | 5/6 zoom | R lock | G push designation\n" +
+                // Air-to-ground is frozen: the CAS and TGP key rows are gone rather than reworded,
+                // because a help overlay that lists a key is telling the player the key does something.
+                // Those commands are inert and are NOT repurposed for A2A in this phase.
+                "Air-to-ground (CAS / TGP / bombs / rockets / gun): " + MavCombatScopePolicy.DormantLabel + "\n" +
                 "Physical AI: F11 on/off | F3 mode | F4 reward log | F9 flight CSV\n" +
                 "H = hide this help", style);
         }
