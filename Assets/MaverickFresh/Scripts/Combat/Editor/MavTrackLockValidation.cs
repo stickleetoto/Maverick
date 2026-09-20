@@ -1175,8 +1175,10 @@ namespace MaverickFresh.Combat.EditorTools
                        && view.authoritativeLockState == MavLockState.Locked,
                        "L-065c", "the default withholds the authoritative lock from consumers without erasing it",
                        report, ref passed, ref failed);
-                Record(!view.legacyDisagreesWithAuthoritative,
-                       "L-065d", "with the migration not in effect there is no disagreement to report",
+                // The switch does not decide whether disagreement can be SEEN. Legacy holds 22, the
+                // authority holds 24, and that is a conflict whichever of them currently wins.
+                Record(view.legacyDisagreesWithAuthoritative,
+                       "L-065d", "disagreement is reported while the default is still legacy",
                        report, ref passed, ref failed);
 
                 // THE OPT-IN. Deliberate, and it is the whole of the change when it happens.
@@ -1187,7 +1189,7 @@ namespace MaverickFresh.Combat.EditorTools
                        "L-066", "opting in makes the authoritative lock outrank all three legacy authorities",
                        report, ref passed, ref failed);
                 Record(view.legacyDisagreesWithAuthoritative,
-                       "L-066b", "the migration signal becomes meaningful only once the move is in effect",
+                       "L-066b", "and the same disagreement is still reported once the move is in effect",
                        report, ref passed, ref failed);
 
                 // AND BACK. Reversible at one field, not by reverting code.
@@ -1197,8 +1199,8 @@ namespace MaverickFresh.Combat.EditorTools
                 Record(view.PrimaryTrackId == 22 && view.PrimarySourceName == "legacy-sensor-stt",
                        "L-066c", "turning the switch back off restores legacy behavior exactly",
                        report, ref passed, ref failed);
-                Record(!view.legacyDisagreesWithAuthoritative && view.authoritativeLockTrackId == 24,
-                       "L-066d", "the switch is reversible in both directions and loses nothing either way",
+                Record(view.legacyDisagreesWithAuthoritative && view.authoritativeLockTrackId == 24,
+                       "L-066d", "the switch is reversible in both directions and loses neither the lock nor the disagreement",
                        report, ref passed, ref failed);
             }
             finally { Object.DestroyImmediate(host); }

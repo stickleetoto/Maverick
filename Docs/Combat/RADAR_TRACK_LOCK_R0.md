@@ -197,6 +197,10 @@ change behavior in every case the authoritative lock has not taken over.
 `legacyDisagreesWithAuthoritative` is the signal that says when that is no longer so: while it stays
 false, the legacy authorities are agreeing with the new one and can be retired with evidence.
 
+> As shipped in this phase that signal was computed only while `preferAuthoritativeLock` was on, which made
+> the criterion above satisfiable by an uncomputed field. Corrected in Lock Authority Migration Prep R0 —
+> see `LOCK_AUTHORITY_MIGRATION_PREP_R0.md` §1. The criterion stands; it is now non-vacuous.
+
 `PublishLegacyLockStates` was added rather than widening `PublishSensorLock` and friends, because
 those have consumers and assertions already and TargetTrack Core R0 is closed and passing.
 

@@ -102,6 +102,10 @@ property, already fail-closed, so this is an interface widening with no behavior
 
 ## 7. A finding: the view's disagreement flag is dead while the migration is in progress
 
+> Fixed in Lock Authority Migration Prep R0 — see `LOCK_AUTHORITY_MIGRATION_PREP_R0.md` §1. Left here in
+> the present tense as the record of what this phase found; the workaround it describes is still in place,
+> now for a different reason (the field is a snapshot, the presenter reads live state).
+
 `MavEngagementView.legacyDisagreesWithAuthoritative` is only computed while `preferAuthoritativeLock` is
 **on**. This phase deliberately leaves it **off** — so that flag is always false for exactly as long as the
 migration is under way, which is precisely when disagreement is worth watching.
@@ -243,6 +247,12 @@ with no authority leaves the HUD bound to nothing and presenting nothing.
 ## 9.1 Known debt
 
 Carried deliberately out of this phase, not fixed here.
+
+> **Resolved in Lock Authority Migration Prep R0.** The gate on `preferAuthoritativeLock` was removed from
+> the disagreement computation, so the field now reports whether the claims differ regardless of which one
+> wins precedence. See `LOCK_AUTHORITY_MIGRATION_PREP_R0.md` §1. `C-012c` was updated there: it now asserts
+> the view's field and this phase's workaround agree, rather than asserting the field stays off. The rest of
+> this section is the record of the debt as it stood.
 
 **`MavEngagementView.legacyDisagreesWithAuthoritative` is not yet a usable migration-evidence signal.**
 It is only computed while `preferAuthoritativeLock` is `true`, and the migration plan keeps that `false`

@@ -142,12 +142,17 @@ namespace MaverickFresh
         /// <summary>
         /// Whether the authoritative lock points at a different track than some legacy authority does.
         ///
-        /// Derived here rather than read from MavEngagementView.legacyDisagreesWithAuthoritative, and the
-        /// reason matters: that field is only computed while preferAuthoritativeLock is ON, and this phase
-        /// deliberately leaves it OFF. Reading it would make the disagreement signal silently dead for
-        /// exactly as long as the migration is in progress - which is precisely when it is worth
-        /// watching. Comparing the published ids directly costs nothing and works whichever answer
-        /// currently wins.
+        /// Derived here rather than read from MavEngagementView.legacyDisagreesWithAuthoritative. That
+        /// field was once computed only while preferAuthoritativeLock was ON - dead for the whole of the
+        /// migration - which is why this was written to compare the published ids directly. The view's
+        /// field has since been corrected and the two now answer the same question, asserted in the
+        /// migration-prep suite.
+        ///
+        /// It is still derived here, for a reason that outlives that defect: the view's field is a
+        /// snapshot, only as fresh as the last RefreshDisagreement call, while this reads the authority's
+        /// live committed lock at the moment the panel is drawn. A presenter that showed DISAGREE one
+        /// frame late would be reporting the publisher's cadence, not the engagement. Costs nothing, and
+        /// keeps the presenter pure.
         /// </summary>
         public static bool AuthoritativeDisagreesWithLegacy(IMavTrackLockAuthority authority, MavEngagementView view)
         {
