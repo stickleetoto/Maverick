@@ -1,5 +1,6 @@
-using UnityEngine;
+using MaverickFresh.Combat;
 using UnityEngine.UI;
+using UnityEngine;
 
 namespace MaverickFresh
 {
@@ -111,6 +112,13 @@ namespace MaverickFresh
 
         private void Awake()
         {
+            if (!IsPodAllowed)
+            {
+                ForceDormant();
+                enabled = false;
+                return;
+            }
+
             Resolve();
             EnsurePodMount();
             EnsureCameraAndTexture();
@@ -122,6 +130,16 @@ namespace MaverickFresh
 
         private void OnEnable()
         {
+            // Unity skips OnEnable when Awake disabled the component, so this covers the other route in:
+            // something re-enabling the pod later. Without it, EnsureCameraAndTexture below would allocate
+            // a render texture and a camera for a system that is frozen.
+            if (!IsPodAllowed)
+            {
+                ForceDormant();
+                enabled = false;
+                return;
+            }
+
             Resolve();
             EnsurePodMount();
             EnsureCameraAndTexture();
@@ -136,6 +154,13 @@ namespace MaverickFresh
 
         private void Start()
         {
+            if (!IsPodAllowed)
+            {
+                ForceDormant();
+                enabled = false;
+                return;
+            }
+
             if (forceOffOnStart)
                 ApplyStartupDisplayState();
         }
@@ -150,8 +175,31 @@ namespace MaverickFresh
             }
         }
 
+        /// <summary>
+        /// Whether the pod may run at all.
+        ///
+        /// A2G is frozen, so it may not. Asked at every entry rather than once, because the pod's lock and
+        /// designation-push methods are public and callable directly - and because two flight systems read
+        /// <see cref="displayMode"/> to decide whether the pod has taken over the view, so it has to be
+        /// reliably Off rather than merely unattended.
+        /// </summary>
+        public bool IsPodAllowed
+        {
+            get { return MavCombatScopePolicy.AirToGroundAllowed; }
+        }
+
         private void Update()
         {
+            if (!IsPodAllowed)
+            {
+                // Force the state two flight systems read, then stop. MavMouseFlightRig and
+                // MavInstructorController both ask displayMode whether the pod owns the view; leaving that
+                // at whatever a scene serialized would hand camera authority to a dormant system.
+                ForceDormant();
+                enabled = false;
+                return;
+            }
+
             Resolve();
             EnsurePodMount();
             EnsureCameraAndTexture();
@@ -313,6 +361,12 @@ namespace MaverickFresh
 
         public void SetPip(bool enabled)
         {
+            if (!IsPodAllowed)
+            {
+                ForceDormant();
+                return;
+            }
+
             allowFullscreenMode = false;
             displayMode = enabled ? MavTargetingPodDisplayMode.PictureInPicture : MavTargetingPodDisplayMode.Off;
             status = enabled ? "pip" : "off";
@@ -321,6 +375,12 @@ namespace MaverickFresh
 
         public void SetFocus(bool enabled)
         {
+            if (!IsPodAllowed)
+            {
+                ForceDormant();
+                return;
+            }
+
             if (enabled)
             {
                 pipBeforeFocus = displayMode == MavTargetingPodDisplayMode.PictureInPicture;
@@ -360,8 +420,34 @@ namespace MaverickFresh
             status = "boresight";
         }
 
+        /// <summary>
+        /// The pod's dormant state: display off, no lock, nothing designated, and a status that names why.
+        ///
+        /// Written rather than merely left alone, because a scene can serialize `displayMode` and `isLocked`
+        /// to anything. A frozen pod that still reported Fullscreen would take the camera; one that still
+        /// reported isLocked would show LOCK on a developer panel and be projected into the engagement view
+        /// as a legacy authority that is supposedly dormant.
+        /// </summary>
+        private void ForceDormant()
+        {
+            displayMode = MavTargetingPodDisplayMode.Off;
+            isLocked = false;
+            lockedToTarget = false;
+            lockedTarget = null;
+            hasLookPoint = false;
+            status = "a2g_frozen";
+        }
+
         public void ToggleLock()
         {
+            // A2G frozen: no target lock, and - the case the track vocabulary deliberately cannot express -
+            // no bare point lock either.
+            if (!IsPodAllowed)
+            {
+                ForceDormant();
+                return;
+            }
+
             if (isLocked)
             {
                 isLocked = false;
@@ -396,6 +482,12 @@ namespace MaverickFresh
 
         public void PushDesignationToCAS()
         {
+            if (!IsPodAllowed)
+            {
+                status = "push_designation" + MavCombatScopePolicy.FrozenEventSuffix;
+                return;
+            }
+
             if (casTargeting == null)
             {
                 status = "no_cas_targeting";

@@ -1,3 +1,4 @@
+using MaverickFresh.Combat;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -275,7 +276,16 @@ namespace MaverickFresh
             targetDistance = toTarget.magnitude;
             targetAngle = Vector3.Angle(transform.forward, toTarget);
 
-            if (allowAutoDesignate && casTargeting != null)
+            // A2G frozen: the AI is no longer a CAS designation writer.
+            //
+            // This guard has to be HERE, not inside MavCASTargetingSystem. The AI writes those four fields
+            // DIRECTLY - they are public, and no guard inside the designator can intercept a field
+            // assignment. It is the one A2G activation path that the designator's own barriers cannot
+            // close, which is why section 10 calls it out separately.
+            //
+            // AI targeting is not redesigned here. When FAM/AI A2A target commands arrive they will go
+            // through the authoritative track/lock command path, not through this.
+            if (allowAutoDesignate && casTargeting != null && MavCombatScopePolicy.AirToGroundAllowed)
             {
                 casTargeting.designatedTarget = casTarget;
                 casTargeting.designatedPoint = casTarget.transform.position;
@@ -310,7 +320,10 @@ namespace MaverickFresh
                 lastDecision = "cas_attack";
             }
 
-            if (allowAutoFire && wantsFire && casWeapons != null && Time.time >= nextFireTime)
+            // And no longer an A2G release path. TryFireSelected already fails closed, but stopping here
+            // keeps the AI from selecting a weapon and recording a fire decision that never happened.
+            if (allowAutoFire && wantsFire && casWeapons != null && Time.time >= nextFireTime
+                && MavCombatScopePolicy.AirToGroundAllowed)
             {
                 casWeapons.selectedWeapon = preferredCASWeapon;
                 casWeapons.TryFireSelected();

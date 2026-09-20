@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MaverickFresh.Combat;
 using UnityEngine;
 
 namespace MaverickFresh
@@ -39,13 +40,43 @@ namespace MaverickFresh
         private float nextScanTime;
         private int cycleIndex = -1;
 
+        /// <summary>
+        /// Whether this designator may act at all.
+        ///
+        /// A2G is frozen, so it may not. Consulted by every entry point rather than once in Awake, because
+        /// the public designation methods are callable directly - by the pod, by the AI, by a test - and a
+        /// disabled component's methods still run when something holds a reference to it. Disabling is the
+        /// convenience; refusing at each entry is the barrier.
+        /// </summary>
+        public bool IsDesignationAllowed
+        {
+            get { return MavCombatScopePolicy.AirToGroundAllowed; }
+        }
+
         private void Awake()
         {
+            if (!IsDesignationAllowed)
+            {
+                // Dormant, not deleted. Its state is left at its zero values so nothing downstream reads a
+                // half-populated designation, and the component switches itself off so its Update never
+                // costs anything.
+                ClearDesignation();
+                status = "a2g_frozen";
+                enabled = false;
+                return;
+            }
+
             Resolve();
         }
 
         private void Update()
         {
+            if (!IsDesignationAllowed)
+            {
+                enabled = false;
+                return;
+            }
+
             Resolve();
 
             if (Time.time >= nextScanTime)
@@ -120,6 +151,11 @@ namespace MaverickFresh
         {
             hasAimGroundPoint = false;
 
+            // A2G frozen: no bare ground point is resolved, so DesignateCandidateOrPoint has nothing to
+            // fall back to even if something calls it directly.
+            if (!IsDesignationAllowed)
+                return;
+
             if (!allowRaycastGroundPoint || playerCamera == null)
                 return;
 
@@ -135,6 +171,14 @@ namespace MaverickFresh
 
         public bool DesignateCandidateOrPoint()
         {
+            // A2G frozen. Fails closed and says so, rather than returning false with a status that reads
+            // like an ordinary miss - "designate_failed" would suggest there was nothing to designate.
+            if (!IsDesignationAllowed)
+            {
+                status = "designate" + MavCombatScopePolicy.FrozenEventSuffix;
+                return false;
+            }
+
             if (candidateTarget != null)
             {
                 designatedTarget = candidateTarget;
@@ -159,6 +203,12 @@ namespace MaverickFresh
 
         public void CycleTarget()
         {
+            if (!IsDesignationAllowed)
+            {
+                status = "cycle" + MavCombatScopePolicy.FrozenEventSuffix;
+                return;
+            }
+
             ScanTargets();
 
             if (targets.Count == 0)

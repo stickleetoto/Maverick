@@ -262,14 +262,12 @@ namespace MaverickFresh
                     "AIM MouseAim  + Boresight  VV Velocity  . Cursor\n" +
                     (recorder != null ? $"REC {(recorder.isRecording ? "ON" : "OFF")} SAMPLES {recorder.samplesWritten}  " : "") +
                     (aiPilot != null ? $"AI {aiPilot.mode} {aiPilot.aiState}\n" : "\n") +
-                    (casWeapons != null ? $"CAS PRIMARY Gun  SECONDARY {casWeapons.selectedSecondaryWeapon}  GUN {casWeapons.gunAmmo} RKT {casWeapons.rocketAmmo} BOMB {casWeapons.bombAmmo} PGM {casWeapons.precisionAmmo} MSL {casWeapons.missileAmmo} KILL {casWeapons.destroyedCount}\n" : "") +
-                    (casTargeting != null ? $"TGT {(casTargeting.designatedTarget != null ? casTargeting.designatedTarget.displayName : casTargeting.candidateTarget != null ? "CAND:" + casTargeting.candidateTarget.displayName : casTargeting.status)}\n" : "") +
-                    (targetingPod != null ? $"TGP {targetingPod.displayMode} {(targetingPod.isLocked ? "LOCK" : "SEARCH")} FOV {targetingPod.fov:0.0}\n" : "") +
+                    LegacyAirToGroundDebugHudLines() +
                     TrackHudLine() +
                     AuthoritativeLockDebugHudLine() +
                     (physicalAI != null ? $"PAI {(physicalAI.aiEnabled ? "ON" : "OFF")} {physicalAI.mode} {physicalAI.aiState}  F11 Toggle F3 Mode\n" : "") +
                     (rewardLogger != null ? $"RWD {(rewardLogger.isRecording ? "REC" : "OFF")} {rewardLogger.totalReward:0.00} F4 Log\n" : "") +
-                    "Mouse aim | Mouse0 neon gun | Space missile/secondary | G gear | 1/2 secondary | W/S pitch | A/D roll | Shift/Ctrl throttle";
+                    "Mouse aim | G gear | W/S pitch | A/D roll | Shift/Ctrl throttle";
                 height = 294f;
             }
             else
@@ -284,14 +282,63 @@ namespace MaverickFresh
                     ShortGearHudLine() +
                     ShortTvcHudLine() +
                     TvcHudLine() +
-                    (casWeapons != null ? $"GUN {casWeapons.gunAmmo}  SEC {casWeapons.selectedSecondaryWeapon}  RKT {casWeapons.rocketAmmo}  BOMB {casWeapons.bombAmmo}  MSL {casWeapons.missileAmmo}\n" : "") +
-                    (targetingPod != null ? $"TGP {targetingPod.displayMode} {(targetingPod.isLocked ? "LOCK" : "SEARCH")}\n" : "") +
                     AuthoritativeLockHudLine() +
-                    "F2 debug | F12 HUD | Mouse0 neon gun | Space missile/secondary | G gear | W/S pitch | A/D roll";
+                    "F2 debug | F12 HUD | G gear | W/S pitch | A/D roll";
                 height = 144f;
             }
 
             GUI.Box(new Rect(10, 10, 620, height), text, panel);
+        }
+
+        /// <summary>
+        /// The dormant A2G readouts, for the developer panel only, and never without the label.
+        ///
+        /// WHY THEY ARE STILL SHOWN. Combat is A2A-first and air-to-ground is frozen, not deleted. If an
+        /// aircraft still carries these components from scene or prefab data, a developer needs to be able
+        /// to see that - a freeze that hid its own evidence would be unverifiable from inside the game.
+        ///
+        /// WHY THE LABEL IS NOT OPTIONAL. An unlabelled `TGP LOCK` line is indistinguishable from a live
+        /// lock, and that is exactly the reading this phase exists to prevent. Every line here carries the
+        /// dormant marker, so dormant state is never presented as gameplay authority. Each line also states
+        /// whether the barrier is holding, which is the thing actually worth knowing.
+        ///
+        /// Returns nothing at all when the components are absent, which is the normal case now: the CAS
+        /// bootstrap installs none of them.
+        /// </summary>
+        private string LegacyAirToGroundDebugHudLines()
+        {
+            if (casWeapons == null && casTargeting == null && targetingPod == null)
+                return "";
+
+            string label = "[" + MavCombatScopePolicy.DormantLabel + "] ";
+            string lines = "";
+
+            if (casWeapons != null)
+            {
+                lines += label + $"CAS STORES gun {casWeapons.gunAmmo} rkt {casWeapons.rocketAmmo} "
+                       + $"bomb {casWeapons.bombAmmo} pgm {casWeapons.precisionAmmo} msl {casWeapons.missileAmmo}"
+                       + $"  release {(casWeapons.IsWeaponReleaseAllowed ? "ALLOWED" : "BLOCKED")}"
+                       + $"  last {casWeapons.lastEvent}\n";
+            }
+
+            if (casTargeting != null)
+            {
+                string designation = casTargeting.designatedTarget != null
+                    ? casTargeting.designatedTarget.displayName
+                    : casTargeting.hasDesignatedPoint ? "point" : "none";
+                lines += label + $"CAS DESIGNATION {designation}"
+                       + $"  writes {(casTargeting.IsDesignationAllowed ? "ALLOWED" : "BLOCKED")}"
+                       + $"  status {casTargeting.status}\n";
+            }
+
+            if (targetingPod != null)
+            {
+                lines += label + $"TGP {targetingPod.displayMode}"
+                       + $"  lock {(targetingPod.isLocked ? "held" : "none")}"
+                       + $"  pod {(targetingPod.IsPodAllowed ? "ALLOWED" : "BLOCKED")}\n";
+            }
+
+            return lines;
         }
 
         /// <summary>
