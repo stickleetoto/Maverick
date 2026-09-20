@@ -438,8 +438,12 @@ namespace MaverickFresh.Combat.EditorTools
                 Record(MavLockHudPresentation.FormatDebugLine(auth, view).Contains("DISAGREE"),
                        "C-012b", "disagreement is surfaced in the developer presentation",
                        report, ref passed, ref failed);
-                Record(!view.legacyDisagreesWithAuthoritative,
-                       "C-012c", "and it is visible even though the view's own flag stays off with the legacy default",
+                // The view's own flag used to stay off here, because it was gated on
+                // preferAuthoritativeLock; the HUD derived disagreement itself to work around that. The
+                // gate is gone, so the workaround and the view must now agree.
+                Record(view.legacyDisagreesWithAuthoritative
+                       == MavLockHudPresentation.AuthoritativeDisagreesWithLegacy(auth, view),
+                       "C-012c", "and the view's own flag agrees with what the consumer derived",
                        report, ref passed, ref failed);
 
                 // Agreement clears it.

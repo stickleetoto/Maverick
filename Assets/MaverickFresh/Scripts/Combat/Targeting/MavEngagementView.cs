@@ -103,11 +103,22 @@ namespace MaverickFresh.Combat.Targeting
         /// <summary>
         /// True when a legacy authority claims a different track than the authoritative lock.
         ///
-        /// The migration signal. While this is false in practice, the legacy authorities are agreeing
-        /// with the new one and can be retired with confidence; while it is true, something still
-        /// disagrees and deleting the legacy path would change behavior.
+        /// The migration signal, and the evidence for retiring the legacy owners: while this stays false
+        /// in practice, the legacy authorities are agreeing with the new one and can be removed without
+        /// changing behavior; while it is true, something still disagrees and deleting the legacy path
+        /// would change what the aircraft does.
+        ///
+        /// INDEPENDENT OF <see cref="preferAuthoritativeLock"/>, because precedence and disagreement are
+        /// different questions. The switch decides which answer consumers get; this says whether the two
+        /// answers differ. It was originally computed only while the switch was ON, which made it
+        /// unobservable during the one period it is for - the pre-switch window when the evidence is
+        /// gathered - so the signal could only confirm a move that had already been made.
+        ///
+        /// DIAGNOSTIC ONLY. Reading or raising it selects nothing, locks nothing, creates no track and
+        /// does not touch <see cref="PrimaryTrackId"/>. Recomputed by <see cref="RefreshDisagreement"/>,
+        /// so it reports the last evaluated state rather than watching the authority continuously.
         /// </summary>
-        [Tooltip("A legacy authority claims a different track than the authoritative lock.")]
+        [Tooltip("A legacy authority claims a different track than the authoritative lock. Diagnostic.")]
         public bool legacyDisagreesWithAuthoritative;
 
         [Header("Disagreement")]
@@ -236,8 +247,21 @@ namespace MaverickFresh.Combat.Targeting
             authoritiesDisagree = disagree;
 
             // Migration signal: does anything legacy still claim a different track than the authority?
+            //
+            // Deliberately NOT gated on preferAuthoritativeLock. Precedence and disagreement are two
+            // different questions: the switch decides WHICH answer consumers get, this field reports
+            // WHETHER the two available answers differ. Gating it on the switch made it computable only
+            // once the move it was meant to justify had already happened - dead for exactly the period
+            // it exists for, the pre-switch window in which the legacy owners still run and the
+            // evidence for retiring them is being collected.
+            //
+            // A zero authoritative id means no committed lock. The publisher is the lock authority
+            // itself, publishing LockedTrackId, which is 0 unless a lock is actually held - so there is
+            // nothing for legacy to disagree WITH, and absence is not conflict. A zero legacy id is a
+            // claim of nothing, for the same reason: an authority that is not claiming anything is not
+            // contradicting one that is.
             bool legacyDisagrees = false;
-            if (preferAuthoritativeLock && authoritativeLockTrackId != 0)
+            if (authoritativeLockTrackId != 0)
             {
                 if (designatedTrackId != 0 && designatedTrackId != authoritativeLockTrackId)
                     legacyDisagrees = true;
