@@ -50,6 +50,11 @@ namespace MaverickFresh.FlightDynamics.F15
             double rarud = Math.Abs(rudderDeg / DegPerRad);
             double dstbr = surface.symmetricStabilatorDeg / DegPerRad;
 
+            // F15-AUDIT-006 (OPEN, MEDIUM): both smoothing functions are verified to be exact
+            // smooth steps from -1 to +1 (see MavF15BaumannTranscriptionValidation [T3]), but
+            // WHICH width belongs to WHICH channel cannot be checked from the code alone. The
+            // present assignment - +-5 deg on the CY basic term, +-1 deg on Cl and Cn - is the
+            // transcription as received and needs the Appendix C listing to confirm.
             double epa02Small = BetaSignSmall(betaDeg);
             double epa02Large = BetaSignLarge(betaDeg);
 
@@ -129,8 +134,19 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (0.15415649 * ral * rabet * dstbr)
                 + (0.14829547 * ral * ral * rabet * rabet)
                 - (0.11605031 * ral * ral * rabet * dstbr)
+
+                // F15-AUDIT-003 (OPEN, HIGH): the next two lines carry the SAME monomial
+                // ral^2*dstbr^2 with two different coefficients. A repeated monomial in a
+                // transcribed polynomial listing is the signature of a dropped exponent during
+                // OCR, so one of these two is probably not ral^2*dstbr^2 in Davison Appendix C.
+                // The pair contributes up to ~9.4e-3 to Cn at alpha=57 deg / dstab=-20 deg,
+                // which is the same order as Cn itself there.
+                // The numbers are left EXACTLY as transcribed: correcting a suspected OCR fault
+                // without the source scan would replace a known unknown with an invented value.
+                // Resolving this requires Davison AFIT/GAE/ENY/92M-01 Appendix C (CMN1 listing).
                 - (0.06290678 * ral * ral * dstbr * dstbr)
                 - (0.01404857 * ral * ral * dstbr * dstbr)
+
                 + (0.07225609 * rabet)
                 - (0.08567087 * rabet * rabet)
                 + (0.01184674 * Pow(rabet, 3))
@@ -349,7 +365,12 @@ namespace MaverickFresh.FlightDynamics.F15
             const double betaMin = -0.0872665;
             const double betaMax = 0.1745329;
 
-            if (ral < alphaMin || rbeta < betaMin || rbeta > betaMax)
+            // BOTH alpha bounds are enforced. CompactSupportShape only vanishes INSIDE its
+            // declared interval: outside it the (u^2-1)^2 window grows instead of decaying, so
+            // omitting the upper alpha test turns a bounded 0.164 bump into an unbounded ramp
+            // (CY reached -237 at alpha=179 deg before F15-AUDIT-001 was fixed). Beta already
+            // had both tests; alpha had only the lower one.
+            if (ral < alphaMin || ral > alphaMax || rbeta < betaMin || rbeta > betaMax)
                 return 0.0;
 
             const double amplitude = 0.164;
@@ -525,6 +546,10 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (0.01859168 * Pow(ral, 8))
                 + (0.0002587 * ral * dstbr)
                 - (0.00018546 * ral * dstbr * rbeta)
+                // F15-AUDIT-004 (OPEN, LOW): this rbeta term and the +0.0000461872*rbeta term
+                // below share one monomial. Unlike F15-AUDIT-003 this is plausible as two
+                // separately grouped source lines, and the net effect is ~1% of the leading
+                // constant, so it is recorded rather than treated as a likely fault.
                 - (0.00000517304 * rbeta)
                 - (0.00102718 * ral * rbeta)
                 - (0.0000689379 * rbeta * dstbr)
@@ -644,6 +669,10 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (0.00561241 * Pow(ral, 4))
                 - (0.00634392 * Pow(ral, 5))
                 + (0.00193323 * Pow(ral, 6))
+                // F15-AUDIT-007 (OPEN, INFO): these two aileron-magnitude coefficients are ~1e-17,
+                // i.e. ~14 orders below the leading term. Whatever the source digits are, the
+                // terms are numerically inert at any realistic aileron deflection, so a
+                // transcription fault here cannot change Cn. Recorded for completeness only.
                 - (2.05815e-17 * ral * daila)
                 + (3.794816e-17 * Pow(daila, 3));
         }
@@ -655,7 +684,9 @@ namespace MaverickFresh.FlightDynamics.F15
             const double betaMin = -0.174532;
             const double betaMax = 0.34906;
 
-            if (ral < alphaMin || rbeta < betaMin || rbeta > betaMax)
+            // See HighAlphaAsymmetricSideForce: the upper alpha bound is part of the declared
+            // compact support, not an optimisation. F15-AUDIT-001.
+            if (ral < alphaMin || ral > alphaMax || rbeta < betaMin || rbeta > betaMax)
                 return 0.0;
 
             const double amplitude = 0.034;

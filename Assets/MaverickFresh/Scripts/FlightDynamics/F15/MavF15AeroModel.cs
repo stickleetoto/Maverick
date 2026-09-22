@@ -60,6 +60,10 @@ namespace MaverickFresh.FlightDynamics.F15
         [Header("Debug")]
         public bool debugRefused;
         public bool debugAtFixedSourceCondition;
+
+        [Tooltip("True when alpha/beta are inside the span of breakpoints the transcribed routine itself declares. NOT a claimed F-15 validity envelope - see MavF15BaumannMach06Domain.")]
+        public bool debugInsideTranscribedSpan;
+
         public bool debugLongitudinalOnly;
         public bool debugSixAxisResearch;
         public string debugStatus = "not evaluated";
@@ -91,6 +95,7 @@ namespace MaverickFresh.FlightDynamics.F15
         {
             debugRefused = false;
             debugAtFixedSourceCondition = false;
+            debugInsideTranscribedSpan = false;
             debugLongitudinalOnly = false;
             debugSixAxisResearch = false;
             debugPHat = 0f;
@@ -124,6 +129,21 @@ namespace MaverickFresh.FlightDynamics.F15
 
             if (!debugAtFixedSourceCondition)
                 return Refuse(conditionReason);
+
+            // F15-AUDIT-002: Mach and altitude were already fail-closed, alpha and beta were not.
+            // The research fits are 6th- to 9th-order polynomials and diverge outside the span
+            // the transcription itself declares - Cm reaches -730 at alpha=180 deg, which the
+            // finiteness check below cannot see. Refuse instead of publishing it.
+            string spanReason;
+            debugInsideTranscribedSpan =
+                MavF15BaumannMach06Domain.IsInsideTranscribedSpan(
+                    state.alphaRad,
+                    state.betaRad,
+                    out spanReason
+                );
+
+            if (!debugInsideTranscribedSpan)
+                return Refuse(spanReason);
 
             // The research fit owns its own reference geometry. It is deliberately
             // separate from the exact NASA 836 profile, whose S/cbar remain unresolved.

@@ -49,6 +49,14 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (0.10114579 * dstbr * dstbr);
 
             // The source explicitly calls this conversion a curve-fitting artifact.
+            //
+            // F15-AUDIT-008 (CLOSED, transcription corroborated): the divisor looks like a stray
+            // rad->deg conversion, but it is required. The drag-polar fit below carries
+            // +499, -1.45e4 and +2.13e6 coefficients on the 2nd/3rd/4th powers, which only
+            // produce sane drag for an argument of order 1e-2. CFZ itself is order 1 (about
+            // 0.95 at alpha=15 deg), and feeding it in undivided would put ~1.7e6 into the
+            // quartic term. Dividing by 57.29578 yields 0.0166 there and CFX_low = 0.253.
+            // The divisor and the polar coefficients are therefore mutually consistent.
             double clArtifact = cfz / LiftFitArtifactDivisor;
 
             double cfxLow =
@@ -66,6 +74,11 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (1.34148193 * Pow(ral, 4))
                 + (0.20978902 * dstbr)
                 + (0.30604211 * dstbr * dstbr)
+                // F15-AUDIT-005 (OPEN, LOW): a second bare constant alongside the 0.0267297
+                // leading constant. This reads naturally as a separate source increment line
+                // (CFX2 = CFX2 + 0.09833617) rather than an OCR fault, and CFX stays positive
+                // across the whole transcribed alpha range either way, so it is recorded, not
+                // altered. Appendix C CFX2 listing would settle it.
                 + 0.09833617;
 
             double cfx = BlendLowHighAoaDrag(ral, cfxLow, cfxHigh);
