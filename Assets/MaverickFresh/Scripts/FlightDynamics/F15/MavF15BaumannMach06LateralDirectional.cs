@@ -337,7 +337,7 @@ namespace MaverickFresh.FlightDynamics.F15
                 - (0.01412258 * ral * Pow(dstbr, 3))
                 - (0.00081776 * dstbr)
                 + (0.00404354 * dstbr * dstbr)
-                + (0.00212189 * Pow(dstbr, 3))
+                - (0.00212189 * Pow(dstbr, 3))
                 + (0.00655063 * Pow(dstbr, 4))
                 + (0.03341584 * Pow(dstbr, 5));
         }
