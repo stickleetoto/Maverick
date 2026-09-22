@@ -12,9 +12,15 @@ namespace MaverickFresh.FlightDynamics.F15
 
         /// <summary>
         /// AFIT/Baumann fixed-condition research fit. Cross-validation only.
-        /// Currently implements the longitudinal coefficient subset.
+        /// Longitudinal CX/CZ/Cm slice only.
         /// </summary>
-        BaumannMach06LongitudinalResearch = 1
+        BaumannMach06LongitudinalResearch = 1,
+
+        /// <summary>
+        /// AFIT/Baumann fixed-condition research fit with the transcribed
+        /// lateral-directional CY/Cl/Cn channels added.
+        /// </summary>
+        BaumannMach06SixAxisResearch = 2
     }
 
     /// <summary>
@@ -23,8 +29,8 @@ namespace MaverickFresh.FlightDynamics.F15
     /// Default behavior is intentionally zero coefficients because the exact NASA 836
     /// baseline coefficient database is still unavailable.
     ///
-    /// A separately tagged AFIT/Baumann research model can be enabled explicitly for
-    /// coefficient work. It is hard-gated to its single published Mach/altitude
+    /// Separately tagged AFIT/Baumann research modes can be enabled explicitly for
+    /// coefficient work. They are hard-gated to the single published Mach/altitude
     /// condition and must never be presented as the NASA 836 target model.
     ///
     /// Like the F-16 bridge, this component returns coefficients only. MavSixDoFBody
@@ -40,6 +46,13 @@ namespace MaverickFresh.FlightDynamics.F15
         [Tooltip("Explicit opt-in required because the Baumann model is CROSS-VALIDATION only, not the exact NASA 836 target.")]
         public bool allowCrossValidationResearchModel;
 
+        [Header("F-15 Research Surface Adapter")]
+        [Tooltip("The Appendix C routine carries differential tail as its own state. Until the F-15 control path exposes that channel, the default adapter uses the documented DTALD = 0.3 * DAILD relation. Enable only for research/debug injection.")]
+        public bool useIndependentDifferentialTailResearchInput;
+
+        [Tooltip("Research/debug differential-tail state in source degrees. Ignored unless the independent-input toggle is enabled.")]
+        public float independentDifferentialTailResearchDeg;
+
         [Header("Numerics")]
         [Min(0.1f)]
         public float minimumRateNormalizationSpeedMps = 1f;
@@ -48,14 +61,20 @@ namespace MaverickFresh.FlightDynamics.F15
         public bool debugRefused;
         public bool debugAtFixedSourceCondition;
         public bool debugLongitudinalOnly;
+        public bool debugSixAxisResearch;
         public string debugStatus = "not evaluated";
+        public float debugPHat;
         public float debugQHat;
+        public float debugRHat;
+        public float debugDifferentialTailUsedDeg;
         public MavAeroCoefficients debugLastCoefficients;
 
         private void Reset()
         {
             sourceMode = MavF15AeroSourceMode.ExactNasa836Unavailable;
             allowCrossValidationResearchModel = false;
+            useIndependentDifferentialTailResearchInput = false;
+            independentDifferentialTailResearchDeg = 0f;
             referenceGeometry = new MavAeroReferenceGeometry();
         }
 
@@ -73,7 +92,11 @@ namespace MaverickFresh.FlightDynamics.F15
             debugRefused = false;
             debugAtFixedSourceCondition = false;
             debugLongitudinalOnly = false;
+            debugSixAxisResearch = false;
+            debugPHat = 0f;
             debugQHat = 0f;
+            debugRHat = 0f;
+            debugDifferentialTailUsedDeg = 0f;
             debugLastCoefficients = MavAeroCoefficients.Zero;
 
             if (sourceMode == MavF15AeroSourceMode.ExactNasa836Unavailable)
@@ -110,20 +133,71 @@ namespace MaverickFresh.FlightDynamics.F15
             float speed = state.trueAirspeedMps;
             if (speed >= minimumRateNormalizationSpeedMps)
             {
+                float halfInverseSpeed = 0.5f / speed;
+                debugPHat =
+                    state.aeroBodyRatesRadSec.x
+                    * referenceGeometry.wingSpanM
+                    * halfInverseSpeed;
                 debugQHat =
                     state.aeroBodyRatesRadSec.y
                     * referenceGeometry.meanAerodynamicChordM
-                    / (2f * speed);
+                    * halfInverseSpeed;
+                debugRHat =
+                    state.aeroBodyRatesRadSec.z
+                    * referenceGeometry.wingSpanM
+                    * halfInverseSpeed;
             }
 
-            debugLongitudinalOnly = true;
-            debugLastCoefficients =
+            MavF15BaumannSurfaceState surface =
+                MavF15BaumannSurfaceState.FromCommonInput(
+                    input,
+                    useIndependentDifferentialTailResearchInput,
+                    independentDifferentialTailResearchDeg
+                );
+            debugDifferentialTailUsedDeg = surface.differentialTailDeg;
+
+            MavAeroCoefficients longitudinal =
                 MavF15BaumannMach06Longitudinal.Evaluate(
                     state.alphaRad,
-                    input.elevatorDeg,
+                    surface.symmetricStabilatorDeg,
                     debugQHat
                 );
 
+            if (sourceMode == MavF15AeroSourceMode.BaumannMach06LongitudinalResearch)
+            {
+                debugLongitudinalOnly = true;
+                debugLastCoefficients = longitudinal;
+                return ValidateAndPublish(
+                    conditionReason,
+                    "LONGITUDINAL ONLY"
+                );
+            }
+
+            MavAeroCoefficients lateral =
+                MavF15BaumannMach06LateralDirectional.Evaluate(
+                    state.alphaRad,
+                    state.betaRad,
+                    surface,
+                    debugPHat,
+                    debugRHat
+                );
+
+            debugSixAxisResearch = true;
+            debugLastCoefficients = longitudinal;
+            debugLastCoefficients.cy = lateral.cy;
+            debugLastCoefficients.cl = lateral.cl;
+            debugLastCoefficients.cn = lateral.cn;
+
+            return ValidateAndPublish(
+                conditionReason,
+                "SIX-AXIS RESEARCH"
+            );
+        }
+
+        private MavAeroCoefficients ValidateAndPublish(
+            string conditionReason,
+            string modeLabel)
+        {
             if (!IsFinite(debugLastCoefficients))
             {
                 return Refuse(
@@ -133,7 +207,9 @@ namespace MaverickFresh.FlightDynamics.F15
 
             debugStatus =
                 MavF15BaumannMach06Reference.ModelId
-                + " / LONGITUDINAL ONLY / "
+                + " / "
+                + modeLabel
+                + " / "
                 + conditionReason;
             return debugLastCoefficients;
         }
