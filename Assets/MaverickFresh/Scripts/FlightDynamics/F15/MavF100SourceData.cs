@@ -380,12 +380,51 @@ namespace MaverickFresh.FlightDynamics.F15
         /// <summary>
         /// The gross-thrust axis normalizer of TP-1373 figures 6(b) and 6(d), 111.2 kN.
         ///
-        /// NOT a thrust rating, and specifically NOT the design maximum net thrust that figure 17
-        /// is normalized by. 111.2 kN is 25 000 lbf to four figures, which is what a round plot
-        /// scale looks like; the text never calls it a design or maximum value. Recorded so that
-        /// nobody reaches for it later as the missing normalizer.
+        /// **This must never be used as the design maximum net thrust of figure 17.** It is a
+        /// plot scale. See <see cref="AxisNormalizerIsNotTheDesignMaximum"/> for the full reason;
+        /// the short version is that it is the wrong quantity twice over - gross where figure 17
+        /// is net, and nominal where figure 17's normalizer is a design point.
         /// </summary>
         public const float GrossThrustAxisNormalizerN = 111200f;
+
+        /// <summary>
+        /// Why 111.2 kN cannot stand in for the missing design maximum net thrust.
+        ///
+        /// Recorded at length because it is the single most inviting wrong turn available here:
+        /// the pack contains exactly one round thrust number, and the deck is short by exactly one
+        /// scalar. They are not the same scalar.
+        ///
+        /// 1. **Gross, not net.** TP-1373 figure 6(b) was re-read from the page image: its
+        ///    abscissa is "F_g, percent of 111.2 kN", with F_g defined in the symbol list as
+        ///    "gross thrust, kN". Figure 17's ordinate is NET thrust. Between them sits the ram
+        ///    drag, which at the conditions TP-1373 actually tested is a large fraction of the
+        ///    gross thrust, not a correction.
+        ///
+        /// 2. **Nominal, not a design point.** The user reports that NASA TP-1228 states 111 kN
+        ///    (25 000 lbf) to be an arbitrarily chosen nominal CORRECTED gross-thrust
+        ///    normalization value. TP-1228 is not in this repository and that statement has not
+        ///    been verified here - it is carried on the user's authority, in the same way the
+        ///    R3 roll-damper figure is. It is consistent with what TP-1373's own page shows: the
+        ///    text never calls 111.2 kN a design, maximum or rated value, and 25 000 lbf is what
+        ///    a round plot scale looks like.
+        ///
+        /// 3. **Possibly a third quantity again.** TP-1373's axis is plain F_g; the reported
+        ///    TP-1228 usage is CORRECTED gross thrust, F_g/delta. If both are right then the same
+        ///    round number is serving as a scale for two different quantities in two different
+        ///    reports, which is exactly what a nominal normalizer does and exactly what a physical
+        ///    rating does not.
+        ///
+        /// Using it anyway would rescale all 63 digitized points by a number chosen for the
+        /// convenience of an axis, and every result downstream would look sourced.
+        /// </summary>
+        public const string AxisNormalizerIsNotTheDesignMaximum =
+            "111.2 kN is TP-1373's plot-axis scale for GROSS thrust (figure 6(b), verified from "
+            + "the page image: 'F_g, percent of 111.2 kN'), and is reported by the user to be "
+            + "described in TP-1228 as an arbitrarily chosen nominal CORRECTED gross-thrust "
+            + "normalization - a statement not verified in this repository, since TP-1228 is not "
+            + "held here. Figure 17's normalizer is design maximum NET thrust at a specific "
+            + "design point. Wrong thrust quantity, and a nominal scale rather than a design "
+            + "value. Equivalence would have to be proven from a source, not assumed.";
 
         // ------------------------------------------------- TP-1373 nozzle mode schedule
 

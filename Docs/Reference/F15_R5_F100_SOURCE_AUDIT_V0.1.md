@@ -73,7 +73,8 @@ exact-target and was frozen in an earlier pass; no *performance* field reaches t
 | Idle / max-AB / supersonic-minimum PLA | TP-1034 | printed p. 11 | PW-100(3) | deg | printed prose | CompatibleSupport | implemented as named constants |
 | Military PLA = 73° | TM X-3261 | printed p. 6 | PW-100(1) | deg | printed prose | CompatibleSupport | implemented **separately** — see §5 |
 | Design corrected airflow 98.4 kg/s | TP-1373 | figs. 6(a),6(c); p. 12 text | series 2 7/8 | kg/s | printed axis normalizer | CompatibleSupport | recorded, not yet used |
-| Gross-thrust axis normalizer 111.2 kN | TP-1373 | figs. 6(b),6(d) | series 2 7/8 | N | printed axis scale | **not engine data** | recorded explicitly so it is not mistaken for the missing design maximum |
+| Gross-thrust axis normalizer 111.2 kN | TP-1373 | figs. 6(b),6(d) | series 2 7/8 | N | printed axis scale | **not engine data** | recorded with a prohibition — see §6a |
+| TP-1069 / TP-1228 test matrices (16 conditions) | TP-1373 | **table 3, printed p. 9** | series 2 7/8 | Mach, m, K | printed table | CompatibleSupport | implemented as `MavF100DimensionalAnchor.Engine059Conditions` / `Engine063Conditions` |
 | Flight envelope actually flown | TP-1782 | printed p. 1 | series 2 7/8, engine 059 LEFT | Mach, m | printed prose | CrossValidationOnly | recorded; never used as a source envelope |
 | SGTM/GGM agreement ±3 % | TP-1782 | printed pp. 1, 17 | series 2 7/8 | percent | printed prose | CrossValidationOnly | recorded as an oracle bound |
 | Design parameters (inertias, volumes, cp, bleeds, HVF) | TM X-3261 tab. I p. 53; TP-1034 tab. I | both | SI | printed table | CompatibleSupport | **not implemented** — see §7 |
@@ -163,6 +164,100 @@ was left alone.
 
 ---
 
+## 6a. 111.2 kN must not become the design-maximum denominator
+
+The pack contains exactly one round thrust number, and the deck is short by exactly one scalar.
+They are not the same scalar, and the temptation to join them is the most inviting wrong turn
+available here. Three reasons, in order of how easy they are to check:
+
+1. **It is gross thrust, where figure 17 is net.** TP-1373 figure 6(b) was re-read from the page
+   image: the abscissa reads `F_g, percent of 111.2 kN`, with `F_g` defined in the symbol list as
+   "gross thrust, kN" — plain `F_g`, with no `δ`. Between gross and net sits the ram drag, which at
+   every condition TP-1373 tested is a large fraction of the gross thrust, not a correction.
+
+2. **It is a nominal scale, not a design point.** The user reports that **NASA TP-1228 states
+   111 kN (25 000 lbf) to be an arbitrarily chosen nominal *corrected* gross-thrust normalization
+   value.** TP-1228 is not held in this repository and that statement is **not verified here** —
+   it is carried on the user's authority, in the same way the R3 roll-damper figure is. It is
+   consistent with what TP-1373's own page shows: the text never calls 111.2 kN a design, maximum
+   or rated value.
+
+3. **The two reported usages are not even the same quantity.** TP-1373's axis is uncorrected
+   `F_g`; the reported TP-1228 usage is *corrected* gross thrust, `F_g/δ`. If both are right, the
+   same round number serves as a scale for two different quantities in two different reports —
+   which is what a nominal normalizer does and what a physical rating does not.
+
+`[E17]` asserts the prohibition, and asserts that the TP-1228 statement is stored as unverified.
+
+---
+
+## 6b. The sea-level-static anchor — sound mechanism, does not close
+
+A better route to the missing denominator exists in principle, and was investigated rather than
+assumed.
+
+### The mechanism is correct
+
+Ram drag is `20.041 · w₂ · M₀ · √T₀`, so at `M₀ = 0` it is **identically zero** — not small, zero,
+with no airflow value required. Gross thrust and uninstalled net thrust are therefore the same
+number at a static condition. TP-1034 figure 17(a) is sea level, Mach 0, and reaches exactly 1.0 at
+PLA 130, which is how its normalizer is *defined*. So:
+
+> design maximum net thrust = uninstalled net thrust at SLS max augmentation = **gross thrust at
+> SLS max augmentation**
+
+That is a real result. It converts the blocker from "a normalizer nobody published" into
+"sea-level-static maximum-augmentation gross thrust" — a far more findable quantity, and one that
+engine test reports routinely contain.
+
+### It fails at the first of three gates
+
+**Gate 1 — no static point exists in the candidate sources. This is where the chain actually
+breaks.** TP-1069 and TP-1228 are **altitude** facility calibrations. Their complete test matrices
+are reproduced in TP-1373 **table 3, printed p. 9**, and figure 4 on the same page plots them:
+
+| engine | report | conditions | lowest Mach | lowest altitude |
+|---|---|---|---|---|
+| P680059 | TP-1069 | 8 | **0.80** | 4 020 m |
+| P680063 | TP-1228 | 8 | **0.80** | 4 020 m |
+
+Neither report contains a sea-level-static point. Neither can supply this anchor at all. The
+matrices are transcribed into `MavF100DimensionalAnchor` and `[E18]` *searches* them for a static
+condition rather than asserting their absence, so the conclusion survives someone editing them.
+
+**Gate 2 — at their actual conditions the identity is unavailable.** At Mach 0.80 ram drag is
+large, so converting a measured gross thrust to net needs absolute engine airflow at that
+condition — which TP-1373 publishes only as calibration *percentages* against the absent
+manufacturer deck. And the result would be net thrust at 4 020 m / Mach 0.80, a condition figure 17
+does not plot at all: its subsonic panels are 0, 3.048, 9.144 and 13.72 km. There would be nothing
+to anchor *to*.
+
+**Gate 3 — the engine builds are not shown to be the same.** TP-1373 printed p. 4 records that the
+calibration engines are prototype series 2 7/8: series 2 cores, a series 3 fan, "control schedule
+differences from both the series 2 and 3 engines", and series 2 actuated divergent nozzles where
+series 3 engines have free-floating ones. Nozzle actuation and control schedule are precisely what
+set maximum augmented gross thrust.
+
+And the designation schemes do not meet. **Neither TP-1034 nor TM X-3261 uses the word "series"
+anywhere** — checked across both full texts. Nothing in the pack relates the "(1)" and "(3)"
+designations of the simulation reports to the "series 2 / 2 7/8 / 3" designations of the
+calibration reports. Equivalence cannot be proven from these four documents even in principle,
+because no document relates the two naming schemes.
+
+### What was implemented instead
+
+`MavF100DimensionalAnchor.DesignMaximumNetThrustFromStaticGross` encodes all three gates as
+executable refusals: a candidate measured off-static is refused, a value not labelled gross is
+refused, and an equivalence claim without a named proving source is refused. `[E18]` also asserts
+the **positive** case — with all three gates satisfied the anchor does close — so the refusals are
+demonstrably the evidence failing rather than the code being unable to proceed.
+
+`MavF100DimensionalGrossThrustDataset` is where TP-1069/TP-1228 dimensional gross thrust would
+live, kept structurally separate from the normalized net model. It is empty: those reports are not
+held, and TP-1373 reports their results only as percentages against a deck that is also absent.
+
+---
+
 ## 7. Why the TM X-3261 / TP-1034 engine model was not ported
 
 Both reports print a complete, transient-capable engine model: mass and energy storage, fluid
@@ -243,13 +338,16 @@ thrust equation printed immediately above it is not.
 
 ## 10. Highest-value missing sources, ranked
 
-1. **Design maximum net thrust for the F100-PW-100(3)**, from a P&W status/specification deck or an
-   installed-thrust report that states it. This single scalar converts an implemented, tested,
-   envelope-checked characteristic into dimensional thrust. Nothing else in this list comes close.
-2. **NASA TP-1069** (engine P680059 calibration) and **NASA TP-1228** (P680063 altitude
-   calibration) — cited as refs. 1 and 2 of TP-1373. These are the facility reports whose data
-   TP-1373 only summarises as percentages, and they are the most likely public source of absolute
-   gross thrust and airflow at stated conditions.
+1. **Design maximum net thrust for the F100-PW-100(3)** — or, equivalently per §6b, that build's
+   **sea-level-static maximum-augmentation gross thrust**, which is the same number and is far
+   more likely to be printed somewhere. A P&W status/specification deck, or any F100-PW-100(3)
+   sea-level test report. This single scalar converts an implemented, tested, envelope-checked
+   characteristic into dimensional thrust. Nothing else in this list comes close.
+2. **NASA TP-1069** (P680059) and **NASA TP-1228** (P680063) — refs. 1 and 2 of TP-1373. These
+   hold the absolute gross thrust and airflow that TP-1373 only summarises as percentages, and
+   they would populate `MavF100DimensionalGrossThrustDataset` as a **separate** dataset. Note
+   what they cannot do: per §6b their test matrices contain no static point, so they cannot
+   supply the design-maximum denominator however completely they are read.
 3. **NASA TP-1482** — the altitude-facility SGTM evaluation, ref. 7 of TP-1782, and the document in
    which the SGTM coefficients were developed.
 4. **Component maps in tabular form** for either build, which would make the printed engine model

@@ -128,7 +128,23 @@ impression that thrust is one step away when it is two. `[E14]` asserts each blo
 and that a scale declared **without a citation** or with a non-positive value is still refused —
 that being precisely how an invented number would enter a sourced deck.
 
-### Do not close the scale with a general-specification F100 figure
+### Two specific numbers that must not be used to close it
+
+**111.2 kN.** TP-1373's plot-axis scale for gross thrust, and reported by the user to be described
+in TP-1228 as an arbitrarily chosen nominal *corrected* gross-thrust normalization. Wrong thrust
+quantity, and a nominal scale rather than a design value. `[E17]` holds the prohibition, and records
+the TP-1228 statement as unverified here since that report is not held. Full reasoning in §6a of the
+source audit.
+
+**Any thrust measured on engines P680059 or P680063.** There is a sound route from a static gross
+thrust to this denominator — ram drag is identically zero at Mach 0, so gross and uninstalled net
+coincide, and figure 17(a) is a static panel. But the two calibration reports are *altitude*
+calibrations whose test matrices, reproduced in TP-1373 table 3, contain **no static point** at all;
+the lowest condition either engine ran is Mach 0.80 at 4 020 m. The chain fails before configuration
+compatibility is even reached. §6b of the source audit works through all three gates;
+`MavF100DimensionalAnchor` encodes them as executable refusals.
+
+### Do not close the scale with a general-specification F100 figure either
 
 A published "F100-PW-100 sea-level static thrust" number from a spec sheet would be a different
 engine build, at a different rating, on a different installation, and quite possibly installed
@@ -143,12 +159,12 @@ Run in **Unity 6000.3.16f1 headless** through `MavFdmValidationBatchAdapter`.
 
 | suite | result |
 |---|---|
-| `MavF15PropulsionValidation` | **92 passed, 0 failed** (was 27) |
+| `MavF15PropulsionValidation` | **111 passed, 0 failed** (was 27) |
 | `MavF15BaumannTranscriptionValidation` | **28 passed, 0 failed** |
 | `MavF15ControlPathValidation` | **79 passed, 0 failed** |
-| **total** | **199 passed, 0 failed** |
+| **total** | **218 passed, 0 failed** |
 
-310 runtime scripts compile with 0 errors.
+311 runtime scripts compile with 0 errors.
 
 New sections, covering every item the R5 brief's §9 lists:
 
@@ -164,6 +180,9 @@ New sections, covering every item the R5 brief's §9 lists:
 | `[E14]` | the deck refuses to produce a force, and each blocker blocks alone |
 | `[E15]` | propulsion writes no Rigidbody; aero sources add no engine thrust |
 | `[E16]` | TP-1782 stays cross-validation only and is not standing in as the source envelope |
+| `[E17]` | 111.2 kN is a plot scale and cannot become the design-maximum denominator |
+| `[E18]` | the sea-level-static anchor: mechanism sound, three gates, fails at the first |
+| `[E19]` | normalized net and dimensional gross remain separate datasets |
 
 **NOT RUN:** Unity play mode; any flight, trim or trajectory test; any comparison against TP-1782
 flight data (there is no dimensional thrust to compare, and TP-1782 publishes only percentages).
@@ -183,9 +202,13 @@ not attached: attaching it would change nothing today, and leaving it unattached
 
 ## 7. Next highest-value missing source
 
-**The design maximum net thrust of the F100-PW-100(3)** — one scalar. Most likely recoverable from
-**NASA TP-1069** or **NASA TP-1228** (the facility calibration reports for engines P680059 and
-P680063, cited as refs. 1 and 2 of TP-1373), which contain the absolute thrust data that TP-1373
-only summarises as percentages.
+**The design maximum net thrust of the F100-PW-100(3)** — one scalar — or, equivalently, that
+build's **sea-level-static maximum-augmentation gross thrust**, which §6b of the source audit
+shows is the same number and is far more likely to be printed. A P&W status/specification deck,
+or any F100-PW-100(3) sea-level test report.
+
+**Not** TP-1069 or TP-1228. Those are worth having — they would populate the dimensional
+gross-thrust dataset — but their test matrices contain no static point, so they cannot supply
+this denominator however completely they are read.
 
 Full ranking in §10 of the source audit.

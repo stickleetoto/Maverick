@@ -27,6 +27,9 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///  [E14] the thrust deck refuses to produce a force, and says why twice over
     ///  [E15] propulsion writes no Rigidbody, and the aero model adds no engine thrust
     ///  [E16] TP-1782 stays cross-validation only
+    ///  [E17] 111.2 kN is a plot scale and cannot become the missing design maximum
+    ///  [E18] the sea-level-static anchor: sound mechanism, three gates, fails at the first
+    ///  [E19] normalized net and dimensional gross remain separate datasets
     ///
     /// These run on the installation profile and its static factories - production code, no
     /// GameObject, no Rigidbody, no play-mode session.
@@ -57,6 +60,9 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateDeckRefusesThrust(report, ref passed, ref failed);
             ValidatePropulsionOwnership(report, ref passed, ref failed);
             ValidateCrossValidationOnly(report, ref passed, ref failed);
+            ValidateAxisNormalizerIsNotTheScale(report, ref passed, ref failed);
+            ValidateStaticAnchorDoesNotClose(report, ref passed, ref failed);
+            ValidateDatasetsStaySeparate(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -1073,6 +1079,213 @@ namespace MaverickFresh.FlightDynamics.Validation
                 MavF100SourceData.CalibrationEngineBuild.Contains("2 7/8"),
                 "the calibration engines are recorded as prototype series 2 7/8, the build both"
                 + " TP-1373 and TP-1782 describe",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E17]
+
+        private static void ValidateAxisNormalizerIsNotTheScale(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E17] 111.2 kN is a plot scale, not the missing design maximum");
+
+            Record(
+                MavF100SourceData.GrossThrustAxisNormalizerN == 111200f,
+                "TP-1373's axis normalizer is recorded as 111.2 kN",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.AxisNormalizerIsNotTheDesignMaximum.Contains("GROSS")
+                && MavF100SourceData.AxisNormalizerIsNotTheDesignMaximum.Contains("NET"),
+                "and recorded with the reason it cannot be the denominator: it is gross thrust"
+                + " where figure 17 is net",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.AxisNormalizerIsNotTheDesignMaximum.Contains("TP-1228")
+                && MavF100SourceData.AxisNormalizerIsNotTheDesignMaximum.Contains("not verified"),
+                "the reported TP-1228 statement that it is an arbitrary nominal normalization is"
+                + " carried as UNVERIFIED here, since TP-1228 is not held in this repository",
+                report, ref passed, ref failed);
+
+            // The decisive structural check: the deck must not be reachable by handing it the
+            // axis scale. The scale is a plain float, so nothing stops someone assigning it -
+            // but the deck still demands a citation, and "it was the only round number" is not one.
+            string withAxisScale = MavF100ThrustDeck.DescribeBlockers(
+                true, MavF100SourceData.GrossThrustAxisNormalizerN, string.Empty,
+                MavF100PowerLeverConvention.LinearBetweenSourcedEndpoints("fixture"));
+
+            Record(
+                withAxisScale.Contains("SCALE"),
+                "declaring 111.2 kN as the scale with no citation is still refused by the deck",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E18]
+
+        private static void ValidateStaticAnchorDoesNotClose(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E18] The sea-level-static anchor, and why it does not close");
+
+            // The mechanism itself is sound and worth asserting: ram drag is EXACTLY zero at M0=0,
+            // so gross and uninstalled net coincide there. This is what makes the anchor idea
+            // right in principle.
+            MavF100ThrustValue dragAtRest =
+                MavF100ThrustSemantics.RamDragN(100f, 0f, 288.15f);
+
+            Record(
+                dragAtRest.valid && dragAtRest.newtons == 0f,
+                "ram drag is identically zero at Mach 0 - so at a static condition gross thrust"
+                + " and uninstalled net thrust are the same number, with no airflow needed",
+                report, ref passed, ref failed);
+
+            // Gate 1. Neither calibration report has a static point, and this searches for one.
+            MavF100CalibrationCondition[] e059 = MavF100DimensionalAnchor.Engine059Conditions;
+            MavF100CalibrationCondition[] e063 = MavF100DimensionalAnchor.Engine063Conditions;
+
+            Record(e059.Length == 8 && e063.Length == 8,
+                "both TP-1069 and TP-1228 test matrices are transcribed from TP-1373 table 3"
+                + " (8 conditions each)",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavF100DimensionalAnchor.HasStaticCondition(e059)
+                && !MavF100DimensionalAnchor.HasStaticCondition(e063),
+                "NEITHER report contains a sea-level-static condition, so neither can supply the"
+                + " anchor at all - this is the gate the chain actually fails at",
+                report, ref passed, ref failed);
+
+            float lowest059 = MavF100DimensionalAnchor.LowestMach(e059);
+            float lowest063 = MavF100DimensionalAnchor.LowestMach(e063);
+
+            Record(
+                Mathf.Abs(lowest059 - 0.80f) <= 1e-5f && Mathf.Abs(lowest063 - 0.80f) <= 1e-5f,
+                "the lowest condition either engine ran is Mach " + lowest059.ToString("0.00")
+                + " - they are ALTITUDE facility calibrations, not sea-level tests",
+                report, ref passed, ref failed);
+
+            // Gate 1 enforced in code: a candidate measured off-static is refused.
+            MavF100ThrustValue candidate = MavF100ThrustValue.Of(
+                111200f, MavF100ThrustQuantity.GrossThrust,
+                MavF100SourceClass.CompatibleSupport, "fixture");
+
+            MavF100ThrustValue atMach08 =
+                MavF100DimensionalAnchor.DesignMaximumNetThrustFromStaticGross(
+                    candidate, 0.80f,
+                    MavF100ConfigurationEquivalence.Unproven);
+
+            Record(!atMach08.valid && atMach08.reason.Contains("static"),
+                "a gross thrust measured at Mach 0.80 is refused as an anchor: ram drag there is"
+                + " non-zero and cannot be removed without absolute airflow",
+                report, ref passed, ref failed);
+
+            // Gate 2: the value must actually be gross thrust.
+            MavF100ThrustValue netCandidate = MavF100ThrustValue.Of(
+                111200f, MavF100ThrustQuantity.UninstalledNetThrust,
+                MavF100SourceClass.CompatibleSupport, "fixture");
+
+            Record(
+                !MavF100DimensionalAnchor.DesignMaximumNetThrustFromStaticGross(
+                    netCandidate, 0f,
+                    MavF100ConfigurationEquivalence.Unproven).valid,
+                "and a value not labelled GROSS is refused even at a static condition",
+                report, ref passed, ref failed);
+
+            // Gate 3: configuration equivalence, unproven and refused.
+            MavF100ThrustValue atStaticUnproven =
+                MavF100DimensionalAnchor.DesignMaximumNetThrustFromStaticGross(
+                    candidate, 0f,
+                    MavF100ConfigurationEquivalence.Unproven);
+
+            Record(
+                !atStaticUnproven.valid && atStaticUnproven.reason.Contains("equivalence"),
+                "even a genuine static gross thrust is refused while equivalence to the"
+                + " F100-PW-100(3) is unproven - series 2 7/8 differs in core, control schedules"
+                + " and nozzle actuation, and no source relates the two designation schemes",
+                report, ref passed, ref failed);
+
+            MavF100ConfigurationEquivalence claimedWithoutSource =
+                new MavF100ConfigurationEquivalence();
+            claimedWithoutSource.proven = true;
+            claimedWithoutSource.provingSource = string.Empty;
+
+            Record(
+                !MavF100DimensionalAnchor.DesignMaximumNetThrustFromStaticGross(
+                    candidate, 0f, claimedWithoutSource).valid,
+                "claiming equivalence without naming a proving source does not count",
+                report, ref passed, ref failed);
+
+            // And the positive case, so the gate is known to be a gate and not a wall.
+            MavF100ConfigurationEquivalence proven = new MavF100ConfigurationEquivalence();
+            proven.proven = true;
+            proven.provingSource = "fixture: hypothetical equivalence source";
+
+            MavF100ThrustValue closed =
+                MavF100DimensionalAnchor.DesignMaximumNetThrustFromStaticGross(
+                    candidate, 0f, proven);
+
+            Record(
+                closed.valid
+                && closed.quantity == MavF100ThrustQuantity.UninstalledNetThrust
+                && closed.newtons == 111200f
+                && closed.sourceClass == MavF100SourceClass.CompatibleSupport,
+                "with all three gates satisfied the anchor does close, yielding uninstalled NET"
+                + " thrust at compatible-support grade - so the refusals above are the evidence"
+                + " failing, not the code",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E19]
+
+        private static void ValidateDatasetsStaySeparate(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E19] Normalized net and dimensional gross stay separate datasets");
+
+            Record(
+                !MavF100DimensionalGrossThrustDataset.Available,
+                "the dimensional gross-thrust dataset is empty: "
+                + "TP-1069 and TP-1228 are not held here",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100DimensionalGrossThrustDataset.UnavailableReason.Contains("CCD 1088-2.0"),
+                "and the reason names why TP-1373 cannot substitute - it reports their results"
+                + " only as percentages against a deck that is also absent",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100DimensionalGrossThrustDataset.Quantity
+                    == MavF100ThrustQuantity.GrossThrust,
+                "the dimensional dataset is GROSS thrust",
+                report, ref passed, ref failed);
+
+            MavF100NetThrustFractionResult normalized =
+                MavF100NormalizedNetThrustModel.Evaluate(0f, 0f, 130f);
+
+            Record(
+                normalized.quantity == MavF100ThrustQuantity.UninstalledNetThrust,
+                "while the normalized model is uninstalled NET thrust - different quantity,"
+                + " different engine build, and dimensionless",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100DimensionalGrossThrustDataset.EngineBuild.Contains("2 7/8")
+                && MavF100SourceData.NormalizedThrustEngineBuild.Contains("(3)"),
+                "the two datasets name different engine builds: "
+                + MavF100DimensionalGrossThrustDataset.EngineBuild + " vs "
+                + MavF100SourceData.NormalizedThrustEngineBuild,
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100DimensionalGrossThrustDataset.SourceClass
+                    == MavF100SourceClass.CompatibleSupport,
+                "both are compatible support; neither is exact-target, and being compatible"
+                + " support does not make them compatible with EACH OTHER",
                 report, ref passed, ref failed);
         }
 
