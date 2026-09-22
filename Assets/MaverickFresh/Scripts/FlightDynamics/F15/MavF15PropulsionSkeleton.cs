@@ -38,6 +38,19 @@ namespace MaverickFresh.FlightDynamics.F15
         /// </summary>
         public static MavEngineProfile CreateUnfrozenEngineProfile()
         {
+            return CreateUnfrozenEngineProfile(null);
+        }
+
+        /// <summary>
+        /// As above, with an optional dimensional thrust deck.
+        ///
+        /// A deck does NOT by itself make the profile authoritative. Provenance stays Unavailable
+        /// until a deck is accepted for the F100-PW-100 on NASA 836 specifically, because a deck
+        /// for another engine build, attached to this identity, would look exactly like a sourced
+        /// one from every call site.
+        /// </summary>
+        public static MavEngineProfile CreateUnfrozenEngineProfile(MavThrustDeckBase thrustDeck)
+        {
             MavEngineProfile profile = MavEngineProfile.CreateInMemory(EngineProfileId);
 
             profile.displayName =
@@ -61,8 +74,9 @@ namespace MaverickFresh.FlightDynamics.F15
             profile.powerDynamicsProvenance = MavEngineDataProvenance.Unavailable;
             profile.augmentation = MavEngineAugmentationSemantics.Unavailable;
 
-            // No exact-target thrust deck: dimensional thrust is exactly zero.
-            profile.thrustDeck = null;
+            // No exact-target thrust deck: dimensional thrust is exactly zero unless a caller
+            // explicitly supplies one, and supplying one does not upgrade the provenance above.
+            profile.thrustDeck = thrustDeck;
 
             profile.sourceEnvelope = MavEngineSourceEnvelope.Undeclared;
             profile.fuelFlow = MavEngineFuelFlowCapability.Unavailable;
@@ -77,7 +91,18 @@ namespace MaverickFresh.FlightDynamics.F15
         /// </summary>
         public static MavPropulsionInstallationProfile CreateTwinSkeleton()
         {
-            MavEngineProfile shared = CreateUnfrozenEngineProfile();
+            return CreateTwinSkeleton(null);
+        }
+
+        /// <summary>
+        /// As above, with an optional shared thrust deck. Both slots share ONE profile object and
+        /// therefore one deck, while each keeps its own runtime state - which is exactly the
+        /// twin-engine property that matters: one engine model, two engines.
+        /// </summary>
+        public static MavPropulsionInstallationProfile CreateTwinSkeleton(
+            MavThrustDeckBase thrustDeck)
+        {
+            MavEngineProfile shared = CreateUnfrozenEngineProfile(thrustDeck);
 
             MavEngineInstallation left = new MavEngineInstallation();
             left.slotId = 0;
