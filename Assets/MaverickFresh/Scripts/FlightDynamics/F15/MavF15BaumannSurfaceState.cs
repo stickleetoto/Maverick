@@ -25,6 +25,28 @@ namespace MaverickFresh.FlightDynamics.F15
         public float differentialTailDeg;
         public float rudderDeg;
 
+        /// <summary>
+        /// Preferred path: the F-15 actuator already owns a real differential-stabilator
+        /// position, so the research bridge is not needed and the DTALD = 0.3 * DAILD relation
+        /// is not applied. What the aircraft's surfaces are actually doing goes straight into
+        /// the research routine's arguments.
+        /// </summary>
+        public static MavF15BaumannSurfaceState FromPhysicalSurfaceState(
+            MavF15SurfaceState physical)
+        {
+            MavF15BaumannSurfaceState state = new MavF15BaumannSurfaceState();
+            state.symmetricStabilatorDeg = physical.symmetricStabilatorDeg;
+            state.aileronDeg = physical.aileronDeg;
+            state.differentialTailDeg = physical.differentialStabilatorDeg;
+            state.rudderDeg = physical.rudderDeg;
+            return state;
+        }
+
+        /// <summary>
+        /// Fallback path for a rig with no F-15 actuator bound: the shared input has no
+        /// differential-tail field, so the sourced research relation stands in for one. This is a
+        /// research-model bridge, not F-15 behaviour.
+        /// </summary>
         public static MavF15BaumannSurfaceState FromCommonInput(
             MavControlInput input,
             bool useIndependentDifferentialTail,

@@ -46,8 +46,12 @@ namespace MaverickFresh.FlightDynamics.F15
         [Tooltip("Explicit opt-in required because the Baumann model is CROSS-VALIDATION only, not the exact NASA 836 target.")]
         public bool allowCrossValidationResearchModel;
 
-        [Header("F-15 Research Surface Adapter")]
-        [Tooltip("The Appendix C routine carries differential tail as its own state. Until the F-15 control path exposes that channel, the default adapter uses the documented DTALD = 0.3 * DAILD relation. Enable only for research/debug injection.")]
+        [Header("F-15 Surface State Source")]
+        [Tooltip("The actuator that owns actual F-15 surface positions, including differential stabilator. Resolved from this GameObject when left empty. When one is bound it is ALWAYS preferred over the research adapter below.")]
+        public MavF15ControlActuator surfaceOwner;
+
+        [Header("F-15 Research Surface Adapter (fallback only)")]
+        [Tooltip("Used ONLY when no actuator is bound. The Appendix C routine carries differential tail as its own state; with no owner for that channel the adapter falls back to the documented DTALD = 0.3 * DAILD research relation. Enable this to inject a differential tail for research/debug instead.")]
         public bool useIndependentDifferentialTailResearchInput;
 
         [Tooltip("Research/debug differential-tail state in source degrees. Ignored unless the independent-input toggle is enabled.")]
@@ -66,6 +70,10 @@ namespace MaverickFresh.FlightDynamics.F15
 
         public bool debugLongitudinalOnly;
         public bool debugSixAxisResearch;
+
+        [Tooltip("Where the surface positions fed to the aerodynamic routine came from: the actuator that owns them, or the research fallback adapter.")]
+        public string debugSurfaceSource = "not evaluated";
+
         public string debugStatus = "not evaluated";
         public float debugPHat;
         public float debugQHat;
@@ -102,6 +110,7 @@ namespace MaverickFresh.FlightDynamics.F15
             debugQHat = 0f;
             debugRHat = 0f;
             debugDifferentialTailUsedDeg = 0f;
+            debugSurfaceSource = "not evaluated";
             debugLastCoefficients = MavAeroCoefficients.Zero;
 
             if (sourceMode == MavF15AeroSourceMode.ExactNasa836Unavailable)
@@ -168,12 +177,7 @@ namespace MaverickFresh.FlightDynamics.F15
                     * halfInverseSpeed;
             }
 
-            MavF15BaumannSurfaceState surface =
-                MavF15BaumannSurfaceState.FromCommonInput(
-                    input,
-                    useIndependentDifferentialTailResearchInput,
-                    independentDifferentialTailResearchDeg
-                );
+            MavF15BaumannSurfaceState surface = ResolveSurfaceState(input);
             debugDifferentialTailUsedDeg = surface.differentialTailDeg;
 
             MavAeroCoefficients longitudinal =
@@ -212,6 +216,45 @@ namespace MaverickFresh.FlightDynamics.F15
                 conditionReason,
                 "SIX-AXIS RESEARCH"
             );
+        }
+
+        /// <summary>
+        /// Where the surface positions fed to the research routine come from.
+        ///
+        /// The actuator is preferred whenever one is bound, because it is the declared owner of
+        /// actual surface state and it carries a real differential-stabilator channel. Only when
+        /// no actuator is present does this fall back to expanding the shared input through the
+        /// AFIT research relation DTALD = 0.3 * DAILD, and the fallback says so in the status
+        /// string so a research bridge is never mistaken for a measured surface position.
+        /// </summary>
+        private MavF15BaumannSurfaceState ResolveSurfaceState(MavControlInput input)
+        {
+            ResolveActuator();
+
+            if (surfaceOwner != null)
+            {
+                debugSurfaceSource = "actuator (owns differential stabilator)";
+                return MavF15BaumannSurfaceState.FromPhysicalSurfaceState(
+                    surfaceOwner.ActualF15SurfaceState
+                );
+            }
+
+            debugSurfaceSource =
+                useIndependentDifferentialTailResearchInput
+                    ? "no actuator bound; shared input + injected research differential tail"
+                    : "no actuator bound; shared input + AFIT research relation DTALD = 0.3*DAILD";
+
+            return MavF15BaumannSurfaceState.FromCommonInput(
+                input,
+                useIndependentDifferentialTailResearchInput,
+                independentDifferentialTailResearchDeg
+            );
+        }
+
+        private void ResolveActuator()
+        {
+            if (surfaceOwner == null)
+                surfaceOwner = GetComponent<MavF15ControlActuator>();
         }
 
         private MavAeroCoefficients ValidateAndPublish(
