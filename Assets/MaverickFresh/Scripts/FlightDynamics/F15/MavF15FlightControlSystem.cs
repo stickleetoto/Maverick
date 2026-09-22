@@ -87,7 +87,94 @@ namespace MaverickFresh.FlightDynamics.F15
         AileronRudderInterconnect = 6,
 
         /// <summary>High-AOA roll-damper washout.</summary>
-        HighAoaRollDamperWashout = 7
+        HighAoaRollDamperWashout = 7,
+
+        /// <summary>Stall inhibitor / AoA limiter acting on the pitch axis.</summary>
+        StallInhibitor = 8,
+
+        /// <summary>Turn coordination: rudder from the kinematically required yaw rate.</summary>
+        TurnCoordination = 9,
+
+        /// <summary>Roll-rate to yaw crossfeed. Distinct from ARI, which is fed by roll COMMAND.</summary>
+        RollToYawCrossfeed = 10
+    }
+
+    /// <summary>
+    /// Which body of evidence an F-15 control-law configuration is drawing on.
+    ///
+    /// The mode is not decoration and it is not a preset. It declares a PROVENANCE FLOOR, and the
+    /// law refuses to run any gain that sits below the floor its mode declares. That is what stops
+    /// a preproduction F-15 No. 8 schedule and an exact NASA 836 value being averaged, mixed, or
+    /// quietly co-resident in one configuration - which is the specific failure this project keeps
+    /// guarding against.
+    /// </summary>
+    public enum MavF15FcsMode
+    {
+        /// <summary>
+        /// The exact NASA 836 control system is not available. Only Authoritative gains may run,
+        /// and none exist, so the law outputs neutral. This is the default and the current state.
+        /// </summary>
+        ExactNasa836Unavailable = 0,
+
+        /// <summary>
+        /// F-15-family evidence, principally NASA TM-72861. Accepts PublicReference and above.
+        ///
+        /// TM-72861's test aircraft was F-15 No. 8, a preproduction airframe later modified toward
+        /// production standard, so its numbers are strong F-15-family evidence whose configuration
+        /// match to NASA 836 is unproven. A law in this mode must never be described as the
+        /// NASA 836 FCS.
+        /// </summary>
+        F15FamilyReference = 1,
+
+        /// <summary>
+        /// AFIT research lineage. Accepts CrossValidationOnly and above, which is what pairs with
+        /// the Baumann M=0.6 research aerodynamic model. Research only.
+        /// </summary>
+        AFITResearch = 2
+    }
+
+    public static class MavF15FcsModes
+    {
+        /// <summary>
+        /// The lowest provenance grade a gain may carry and still be allowed to run in this mode.
+        /// </summary>
+        public static MavEngineDataProvenance ProvenanceFloor(MavF15FcsMode mode)
+        {
+            switch (mode)
+            {
+                case MavF15FcsMode.ExactNasa836Unavailable:
+                    return MavEngineDataProvenance.Authoritative;
+                case MavF15FcsMode.F15FamilyReference:
+                    return MavEngineDataProvenance.PublicReference;
+                default:
+                    return MavEngineDataProvenance.CrossValidationOnly;
+            }
+        }
+
+        /// <summary>
+        /// True when a gain of this provenance is admissible in this mode. Unavailable is never
+        /// admissible: it is the absence of a number, not a low grade of one.
+        /// </summary>
+        public static bool Admits(MavF15FcsMode mode, MavEngineDataProvenance provenance)
+        {
+            if (provenance == MavEngineDataProvenance.Unavailable)
+                return false;
+
+            return provenance >= ProvenanceFloor(mode);
+        }
+
+        public static string Describe(MavF15FcsMode mode)
+        {
+            switch (mode)
+            {
+                case MavF15FcsMode.ExactNasa836Unavailable:
+                    return "exact NASA 836 FCS unavailable; only Authoritative gains may run";
+                case MavF15FcsMode.F15FamilyReference:
+                    return "F-15-family reference (TM-72861 lineage); NOT NASA 836 authority";
+                default:
+                    return "AFIT research; cross-validation only";
+            }
+        }
     }
 
     /// <summary>
@@ -134,12 +221,23 @@ namespace MaverickFresh.FlightDynamics.F15
         [Tooltip("Rudder degrees per degree of commanded aileron.")]
         public MavF15ControlGain ariRudderPerAileron;
 
-        [Header("High-AOA roll-damper washout")]
-        [Tooltip("Alpha at which roll-rate feedback begins washing out, degrees.")]
-        public MavF15ControlGain rollDamperWashoutStartAlphaDeg;
+        [Header("Stall inhibitor / AoA limiter")]
+        [Tooltip("Alpha beyond which the inhibitor commands nose-down, degrees.")]
+        public MavF15ControlGain stallInhibitorAlphaThresholdDeg;
 
-        [Tooltip("Alpha at which roll-rate feedback is fully washed out, degrees.")]
-        public MavF15ControlGain rollDamperWashoutEndAlphaDeg;
+        [Tooltip("Stabilator degrees of nose-down authority per degree of alpha beyond the threshold.")]
+        public MavF15ControlGain stallInhibitorDegPerDegAlpha;
+
+        [Header("Turn coordination and crossfeeds")]
+        [Tooltip("Rudder degrees per rad/s of yaw-rate error against the coordinated-turn value.")]
+        public MavF15ControlGain turnCoordinationDegPerRadSec;
+
+        [Tooltip("Rudder degrees per rad/s of ROLL RATE. Distinct from the ARI, which is fed by roll command.")]
+        public MavF15ControlGain rollRateToYawCrossfeedDegPerRadSec;
+
+        [Header("High-AOA roll-damper washout")]
+        [Tooltip("Washout schedule with its own provenance and declared curve shape. See MavF15RollDamperSchedule - an endpoint alone is not a schedule.")]
+        public MavF15RollDamperSchedule rollDamperWashout;
 
         public MavF15ControlGain Get(MavF15FcsStage stage)
         {
@@ -159,8 +257,17 @@ namespace MaverickFresh.FlightDynamics.F15
                     return yawRateFeedbackDegPerRadSec;
                 case MavF15FcsStage.AileronRudderInterconnect:
                     return ariRudderPerAileron;
+                case MavF15FcsStage.StallInhibitor:
+                    return stallInhibitorDegPerDegAlpha;
+                case MavF15FcsStage.TurnCoordination:
+                    return turnCoordinationDegPerRadSec;
+                case MavF15FcsStage.RollToYawCrossfeed:
+                    return rollRateToYawCrossfeedDegPerRadSec;
                 default:
-                    return rollDamperWashoutStartAlphaDeg;
+                    // HighAoaRollDamperWashout is a schedule, not a scalar gain. It has no
+                    // MavF15ControlGain to return, so callers must ask StageAvailable instead.
+                    return MavF15ControlGain.Unavailable(
+                        "the washout is a MavF15RollDamperSchedule, not a scalar gain");
             }
         }
 
@@ -193,11 +300,13 @@ namespace MaverickFresh.FlightDynamics.F15
                         || normalLoadFactorFeedbackDegPerG.Available;
 
                 case MavF15FcsStage.HighAoaRollDamperWashout:
-                    // A washout needs both ends of its ramp, and they must be ordered.
-                    return rollDamperWashoutStartAlphaDeg.Available
-                        && rollDamperWashoutEndAlphaDeg.Available
-                        && rollDamperWashoutEndAlphaDeg.value
-                           > rollDamperWashoutStartAlphaDeg.value;
+                    return rollDamperWashout.Available;
+
+                case MavF15FcsStage.StallInhibitor:
+                    // The inhibitor needs a threshold AND an authority gradient; either alone
+                    // cannot produce a command.
+                    return stallInhibitorAlphaThresholdDeg.Available
+                        && stallInhibitorDegPerDegAlpha.Available;
 
                 default:
                     return Get(stage).Available;
@@ -223,9 +332,76 @@ namespace MaverickFresh.FlightDynamics.F15
                     && rollRateFeedbackDegPerRadSec.IsExactTargetAuthority
                     && yawRateFeedbackDegPerRadSec.IsExactTargetAuthority
                     && ariRudderPerAileron.IsExactTargetAuthority
-                    && rollDamperWashoutStartAlphaDeg.IsExactTargetAuthority
-                    && rollDamperWashoutEndAlphaDeg.IsExactTargetAuthority;
+                    && stallInhibitorAlphaThresholdDeg.IsExactTargetAuthority
+                    && stallInhibitorDegPerDegAlpha.IsExactTargetAuthority
+                    && turnCoordinationDegPerRadSec.IsExactTargetAuthority
+                    && rollRateToYawCrossfeedDegPerRadSec.IsExactTargetAuthority
+                    && rollDamperWashout.provenance == MavEngineDataProvenance.Authoritative;
             }
+        }
+
+        /// <summary>
+        /// Every scalar gain in the set, for whole-set checks.
+        /// </summary>
+        public MavF15ControlGain[] AllGains()
+        {
+            return new[]
+            {
+                pitchStickToStabilatorDegPerUnit,
+                rollStickToAileronDegPerUnit,
+                rollStickToDifferentialStabilatorDegPerUnit,
+                pedalToRudderDegPerUnit,
+                pitchRatioChanger,
+                rollRatioChanger,
+                pitchRateFeedbackDegPerRadSec,
+                normalLoadFactorFeedbackDegPerG,
+                rollRateFeedbackDegPerRadSec,
+                yawRateFeedbackDegPerRadSec,
+                ariRudderPerAileron,
+                stallInhibitorAlphaThresholdDeg,
+                stallInhibitorDegPerDegAlpha,
+                turnCoordinationDegPerRadSec,
+                rollRateToYawCrossfeedDegPerRadSec
+            };
+        }
+
+        /// <summary>
+        /// Whether every DECLARED gain is admissible in this mode.
+        ///
+        /// This is the anti-mixing check. A configuration that pairs an Authoritative NASA 836
+        /// gain with a preproduction TM-72861 one is not "mostly sourced", it is two aircraft
+        /// averaged together, and the mode floor makes that refusable rather than merely
+        /// regrettable. Unavailable gains are ignored here - an absent number is not a mixed one,
+        /// it simply means its stage will not run.
+        /// </summary>
+        public bool IsConsistentWith(MavF15FcsMode mode, out string reason)
+        {
+            MavF15ControlGain[] gains = AllGains();
+            for (int i = 0; i < gains.Length; i++)
+            {
+                if (gains[i].provenance == MavEngineDataProvenance.Unavailable)
+                    continue;
+
+                if (!MavF15FcsModes.Admits(mode, gains[i].provenance))
+                {
+                    reason = "a gain graded " + gains[i].provenance
+                             + " is below the " + MavF15FcsModes.ProvenanceFloor(mode)
+                             + " floor declared by mode " + mode;
+                    return false;
+                }
+            }
+
+            if (rollDamperWashout.provenance != MavEngineDataProvenance.Unavailable
+                && !MavF15FcsModes.Admits(mode, rollDamperWashout.provenance))
+            {
+                reason = "the roll-damper washout schedule is graded "
+                         + rollDamperWashout.provenance + ", below the "
+                         + MavF15FcsModes.ProvenanceFloor(mode) + " floor for mode " + mode;
+                return false;
+            }
+
+            reason = "OK";
+            return true;
         }
 
         /// <summary>
@@ -258,10 +434,15 @@ namespace MaverickFresh.FlightDynamics.F15
                 yawRateFeedbackDegPerRadSec = MavF15ControlGain.Unavailable(cas),
                 ariRudderPerAileron = MavF15ControlGain.Unavailable(
                     "UNAVAILABLE: ARI schedule not recovered for NASA 836."),
-                rollDamperWashoutStartAlphaDeg = MavF15ControlGain.Unavailable(
-                    "UNAVAILABLE: high-AOA roll-damper washout schedule not recovered for NASA 836."),
-                rollDamperWashoutEndAlphaDeg = MavF15ControlGain.Unavailable(
-                    "UNAVAILABLE: high-AOA roll-damper washout schedule not recovered for NASA 836.")
+                stallInhibitorAlphaThresholdDeg = MavF15ControlGain.Unavailable(
+                    "UNAVAILABLE: stall-inhibitor alpha threshold not recovered for NASA 836."),
+                stallInhibitorDegPerDegAlpha = MavF15ControlGain.Unavailable(
+                    "UNAVAILABLE: stall-inhibitor authority gradient not recovered for NASA 836."),
+                turnCoordinationDegPerRadSec = MavF15ControlGain.Unavailable(
+                    "UNAVAILABLE: turn-coordination gain not recovered for NASA 836."),
+                rollRateToYawCrossfeedDegPerRadSec = MavF15ControlGain.Unavailable(
+                    "UNAVAILABLE: roll-to-yaw crossfeed gain not recovered for NASA 836."),
+                rollDamperWashout = MavF15RollDamperSchedule.Unavailable()
             };
         }
     }

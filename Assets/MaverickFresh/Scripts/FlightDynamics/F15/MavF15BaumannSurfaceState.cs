@@ -32,13 +32,14 @@ namespace MaverickFresh.FlightDynamics.F15
         /// the research routine's arguments.
         /// </summary>
         public static MavF15BaumannSurfaceState FromPhysicalSurfaceState(
-            MavF15SurfaceState physical)
+            MavF15ActualSurfaceState physical)
         {
+            MavF15SurfaceState c = physical.channels;
             MavF15BaumannSurfaceState state = new MavF15BaumannSurfaceState();
-            state.symmetricStabilatorDeg = physical.symmetricStabilatorDeg;
-            state.aileronDeg = physical.aileronDeg;
-            state.differentialTailDeg = physical.differentialStabilatorDeg;
-            state.rudderDeg = physical.rudderDeg;
+            state.symmetricStabilatorDeg = c.symmetricStabilatorDeg;
+            state.aileronDeg = c.aileronDeg;
+            state.differentialTailDeg = c.differentialStabilatorDeg;
+            state.rudderDeg = c.rudderDeg;
             return state;
         }
 

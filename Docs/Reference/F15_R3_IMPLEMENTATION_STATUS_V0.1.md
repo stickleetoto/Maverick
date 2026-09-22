@@ -197,9 +197,13 @@ simulated host.
 | suite | result | evidence |
 |---|---|---|
 | `MavF15BaumannTranscriptionValidation.RunAll` | **28 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
-| `MavF15ControlPathValidation.RunAll` | **41 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
+| `MavF15ControlPathValidation.RunAll` | **79 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
 | `MavF15PropulsionValidation.RunAll` | **27 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
-| **total** | **96 passed, 0 failed** | |
+| **total** | **134 passed, 0 failed** | |
+
+> The control-path suite grew from 41 to 79 checks in the R3 FCS pass. See
+> **`F15_R3_FCS_IMPLEMENTATION_STATUS_V0.1.md`** for the control-system layer, which supersedes
+> the FCS parts of §2 Phase 2 below.
 
 The whole project also compiles clean in the editor, and separately all 304 runtime scripts compile
 with **0 errors** under Unity's Roslyn outside the editor.

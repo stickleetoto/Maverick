@@ -38,8 +38,8 @@ namespace MaverickFresh.FlightDynamics.F15
         public MavSixDoFBody sixDoFBody;
 
         [Header("Commanded Surface Deflection (F-15 physical channels)")]
-        [Tooltip("What the control law is asking for. This is a REQUEST, not a position - the actual state is published separately and is the only one the aerodynamic model may read.")]
-        public MavF15SurfaceState requested;
+        [Tooltip("What the control law is asking for. A REQUEST, not a position - the actual state is published separately and is the only one the aerodynamic model may read.")]
+        public MavF15RequestedSurfaceState requested;
 
         [Range(0f, 1f)]
         public float requestedThrottle01;
@@ -49,8 +49,8 @@ namespace MaverickFresh.FlightDynamics.F15
         public MavF15SurfaceLimits limits = MavF15SurfaceLimits.UnavailableExactTarget();
 
         [Header("Debug / Actual Surface State")]
-        [Tooltip("What the aircraft's surfaces are actually doing. Owned here, read-only everywhere else.")]
-        public MavF15SurfaceState actualF15Surfaces;
+        [Tooltip("What the aircraft's surfaces are actually doing. Owned here, read-only everywhere else. Only this component may construct a MavF15ActualSurfaceState.")]
+        public MavF15ActualSurfaceState actualF15Surfaces;
 
         [Tooltip("The same state projected onto the shared contract, plus throttle. Differential stabilator is NOT represented here and must be read from actualF15Surfaces.")]
         public MavControlInput actual;
@@ -86,8 +86,12 @@ namespace MaverickFresh.FlightDynamics.F15
         /// The four-channel physical state. Consumers that need differential stabilator - which
         /// means any real F-15 aerodynamic model - must read this rather than
         /// <see cref="ActualSurfaceState"/>.
+        ///
+        /// The return type is deliberately not <see cref="MavF15RequestedSurfaceState"/>: they
+        /// carry the same four numbers, and keeping them as distinct types is what makes handing
+        /// a request to the aerodynamic model a compile error rather than a quiet bug.
         /// </summary>
-        public MavF15SurfaceState ActualF15SurfaceState
+        public MavF15ActualSurfaceState ActualF15SurfaceState
         {
             get { return actualF15Surfaces; }
         }
@@ -110,13 +114,13 @@ namespace MaverickFresh.FlightDynamics.F15
         public override void SetCommand(MavControlInput command)
         {
             requestedThrottle01 = Mathf.Clamp01(command.throttle01);
-            requested.symmetricStabilatorDeg = command.elevatorDeg;
-            requested.aileronDeg = command.aileronDeg;
-            requested.rudderDeg = command.rudderDeg;
+            requested.channels.symmetricStabilatorDeg = command.elevatorDeg;
+            requested.channels.aileronDeg = command.aileronDeg;
+            requested.channels.rudderDeg = command.rudderDeg;
         }
 
         /// <summary>F-15-native entry point: a control law states all four channels explicitly.</summary>
-        public void SetF15Command(MavF15SurfaceState command, float throttle01)
+        public void SetF15Command(MavF15RequestedSurfaceState command, float throttle01)
         {
             requested = command;
             requestedThrottle01 = Mathf.Clamp01(throttle01);
@@ -132,7 +136,7 @@ namespace MaverickFresh.FlightDynamics.F15
         public void SnapToBoundedCommand()
         {
             bool refused;
-            actualF15Surfaces = BoundCommand(out refused);
+            actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(BoundCommand(out refused));
             Publish();
         }
 
@@ -140,7 +144,8 @@ namespace MaverickFresh.FlightDynamics.F15
         {
             bool refused;
             MavF15SurfaceState bounded = BoundCommand(out refused);
-            actualF15Surfaces = StepChannels(actualF15Surfaces, bounded, limits, deltaTime);
+            actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(
+                StepChannels(actualF15Surfaces.channels, bounded, limits, deltaTime));
         }
 
         /// <summary>
@@ -190,7 +195,7 @@ namespace MaverickFresh.FlightDynamics.F15
 
         private MavF15SurfaceState BoundCommand(out bool anyRefused)
         {
-            MavF15SurfaceState source = requested;
+            MavF15SurfaceState source = requested.channels;
             if (!source.IsFinite())
             {
                 // A non-finite request is a fault upstream. Holding the last good position would
@@ -239,9 +244,9 @@ namespace MaverickFresh.FlightDynamics.F15
             actual = new MavControlInput
             {
                 throttle01 = requestedThrottle01,
-                elevatorDeg = actualF15Surfaces.symmetricStabilatorDeg,
-                aileronDeg = actualF15Surfaces.aileronDeg,
-                rudderDeg = actualF15Surfaces.rudderDeg,
+                elevatorDeg = actualF15Surfaces.channels.symmetricStabilatorDeg,
+                aileronDeg = actualF15Surfaces.channels.aileronDeg,
+                rudderDeg = actualF15Surfaces.channels.rudderDeg,
                 leadingEdgeFlapDeg = 0f
             };
 
