@@ -183,20 +183,28 @@ Runtime ownership migration (Legacy / Shadow / F15Replacement) was **not** attem
 
 ### RUN
 
-| suite | result |
-|---|---|
-| `MavF15BaumannTranscriptionValidation.RunAll` | **25 passed, 0 failed** |
-| `MavF15ControlPathValidation.RunAll` | **41 passed, 0 failed** |
-| full-project compile, 304 runtime scripts, Unity 6000.3.16f1 Roslyn | **0 errors** |
+All three suites were executed **inside Unity 6000.3.16f1**, headless, through the project's own
+`MavFdmValidationBatchAdapter` (`-batchmode -fdmMode sync`). These are real engine runs, not a
+simulated host.
 
-Method: every runtime script compiled with Unity's own Roslyn against Unity's managed assemblies,
-then the validation entry points invoked on the resulting assembly from a .NET 8 host. Both suites
-are pure static math over `MavAeroCoefficients`, `Mathf` and `Math`, so they execute faithfully
-outside the engine.
+| suite | result | evidence |
+|---|---|---|
+| `MavF15BaumannTranscriptionValidation.RunAll` | **25 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
+| `MavF15ControlPathValidation.RunAll` | **41 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
+| `MavF15PropulsionValidation.RunAll` | **27 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
+| **total** | **93 passed, 0 failed** | |
 
-`MavF15PropulsionValidation.RunAll` cannot run that way — `MavEngineProfile` is a
-`ScriptableObject`, so it needs the real Unity runtime. It was run through the project's own
-headless batch adapter instead; the result is recorded in §9.
+The whole project also compiles clean in the editor, and separately all 304 runtime scripts compile
+with **0 errors** under Unity's Roslyn outside the editor.
+
+To reproduce any one of them:
+
+```bash
+"D:/unitys/6000.3.16f1/Editor/Unity.exe" -batchmode -quit -nographics   -projectPath "E:/unity project/Maverick"   -executeMethod MaverickFresh.FlightDynamics.EditorTools.MavFdmValidationBatchAdapter.RunBatch   -fdmSuite f15-controlpath -fdmMode sync   -fdmType MavF15ControlPathValidation -fdmMethod RunAll   -fdmOut result.json -logFile unity.log
+```
+
+Note that `MavF15PropulsionValidation` can *only* run this way: `MavEngineProfile` is a
+`ScriptableObject`, so it needs the real Unity runtime.
 
 ### NOT RUN
 

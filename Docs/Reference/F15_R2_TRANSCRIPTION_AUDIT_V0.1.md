@@ -259,11 +259,9 @@ transcription corroborates itself. Closed on internal evidence; noted in code.
 
 **RUN.** `MavF15BaumannTranscriptionValidation.RunAll` — **25 passed, 0 failed**, 2026-09-22.
 
-Method: all 298 runtime scripts compiled with Unity 6000.3.16f1's own Roslyn
-(`Editor/Data/DotNetSdkRoslyn/csc.dll`) against Unity's managed assemblies — **0 errors** —
-and the validation entry point then invoked on the resulting assembly from a .NET 8 host. The
-fixtures are pure static math over `MavAeroCoefficients`, `Mathf` and `Math`, so they execute
-faithfully outside the engine.
+Executed inside Unity 6000.3.16f1, headless, through the project's own
+`MavFdmValidationBatchAdapter` (`-batchmode -fdmMode sync`), which reported
+`FDM_VALIDATION_RESULT_V1` status PASS. The whole project compiles clean in the editor.
 
 **NOT RUN:**
 
