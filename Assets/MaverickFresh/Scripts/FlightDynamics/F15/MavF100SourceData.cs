@@ -1,0 +1,446 @@
+using UnityEngine;
+
+namespace MaverickFresh.FlightDynamics.F15
+{
+    /// <summary>
+    /// How an F100 quantity relates to the exact target, NASA F-15B 836.
+    ///
+    /// The R5 source pack deliberately spans three authority levels and they must not be
+    /// collapsed. The engine IDENTITY of NASA 836 is exact-target; that does not make every
+    /// F100-PW-100-family number exact-target performance data for it.
+    ///
+    /// These names are the R5 brief's vocabulary. They map onto the repository's single
+    /// provenance enum, <see cref="MavEngineDataProvenance"/>, rather than introducing a second
+    /// competing scale - one vocabulary is what makes "the worst field wins" checkable.
+    /// </summary>
+    public enum MavF100SourceClass
+    {
+        /// <summary>No accepted public source. Not usable as engine data.</summary>
+        Unavailable = 0,
+
+        /// <summary>
+        /// An oracle, not a value source: a result that can CHECK an implementation but must
+        /// never be read back into one. TP-1782's flight comparison is the case in point.
+        /// </summary>
+        CrossValidationOnly = 1,
+
+        /// <summary>
+        /// A real F100 source whose engine build is not proven equivalent to NASA 836's:
+        /// the PW-100(3) model, or the prototype series 2 7/8 test engines.
+        /// </summary>
+        CompatibleSupport = 2,
+
+        /// <summary>Accepted for the F100-PW-100 as installed on NASA F-15B 836 specifically.</summary>
+        AuthoritativeExactTarget = 3
+    }
+
+    /// <summary>
+    /// What a thrust number actually MEANS. Mixing these silently is the classic way to get a
+    /// number that is wrong by tens of kilonewtons while looking entirely plausible.
+    ///
+    /// TP-1373 and TP-1782 are about GROSS thrust throughout. TM X-3261 and TP-1034 compute both,
+    /// and print the transformation between them. Nothing in Maverick may convert between the two
+    /// except through <see cref="MavF100ThrustSemantics"/>, which carries the sourced equation.
+    /// </summary>
+    public enum MavF100ThrustQuantity
+    {
+        Unspecified = 0,
+
+        /// <summary>Nozzle gross thrust: the exhaust stream only, with no inlet momentum debit.</summary>
+        GrossThrust = 1,
+
+        /// <summary>Inlet momentum drag, w2 * V0. Positive magnitude; subtracted from gross.</summary>
+        RamDrag = 2,
+
+        /// <summary>Gross thrust minus ram drag, with no airframe installation effects applied.</summary>
+        UninstalledNetThrust = 3,
+
+        /// <summary>
+        /// Net thrust after airframe installation effects (inlet spillage, bleed, nozzle/boattail
+        /// interference). NOTHING in the R5 pack closes these for NASA 836.
+        /// </summary>
+        InstalledNetThrust = 4
+    }
+
+    /// <summary>
+    /// One documented engine operating point from NASA TP-1034 figure 17: a flight condition and
+    /// the net-thrust characteristic measured across power lever angle at that condition.
+    ///
+    /// The ordinate is a FRACTION of design maximum net thrust, not a force. The figure's own axis
+    /// says so, and TP-1034 never prints the value of that normalizer anywhere - see
+    /// <see cref="MavF100SourceData.DesignMaximumNetThrust"/>.
+    /// </summary>
+    public struct MavF100OperatingPointCurve
+    {
+        /// <summary>Panel letter within figure 17, so any number here can be traced to a page.</summary>
+        public string panel;
+
+        public float altitudeM;
+        public float mach;
+
+        /// <summary>Power lever angle in degrees, strictly ascending.</summary>
+        public float[] powerLeverAngleDeg;
+
+        /// <summary>Net thrust as a fraction of design maximum net thrust, one per PLA breakpoint.</summary>
+        public float[] netThrustFraction;
+
+        public int Count
+        {
+            get { return powerLeverAngleDeg == null ? 0 : powerLeverAngleDeg.Length; }
+        }
+    }
+
+    /// <summary>
+    /// A scalar that the sources define but never print. Carries its own declared flag because
+    /// zero is a legal force and "nobody published it" is not zero.
+    /// </summary>
+    public struct MavF100DeclaredScalar
+    {
+        public bool declared;
+        public float value;
+        public MavF100SourceClass sourceClass;
+        public string citation;
+
+        public static MavF100DeclaredScalar Undeclared(string whyNot)
+        {
+            MavF100DeclaredScalar s = new MavF100DeclaredScalar();
+            s.declared = false;
+            s.value = 0f;
+            s.sourceClass = MavF100SourceClass.Unavailable;
+            s.citation = whyNot;
+            return s;
+        }
+    }
+
+    /// <summary>
+    /// EXTRACTED SOURCE DATA for the Pratt &amp; Whitney F100-PW-100 family, from the four NASA
+    /// documents in the R5 source pack. Data only: no evaluation, no interpolation, no policy.
+    /// Everything that DOES something with these numbers lives in
+    /// <see cref="MavF100NormalizedNetThrustModel"/> and its siblings, which is the separation the
+    /// R5 brief requires for digitized figure data.
+    ///
+    /// THE ONE FACT THAT SHAPES EVERYTHING ELSE
+    /// ----------------------------------------
+    /// Across all four documents there is NO absolute thrust value for a flight condition and
+    /// power setting. Every thrust result in the pack is either a fraction of an unpublished
+    /// normalizer or a percentage difference against a proprietary manufacturer deck:
+    ///
+    ///   - TP-1034 figure 17 plots "fraction of design maximum net thrust" and never states the
+    ///     design maximum.
+    ///   - TP-1373 plots percent error against P&amp;W CCD 1088-2.0, a deck we do not have, and
+    ///     normalizes its axes by 111.2 kN and 98.4 kg/sec.
+    ///   - TM X-3261 prints complete thrust EQUATIONS, but they are driven by component maps that
+    ///     the report supplies as graphs and that its FORTRAN reads from data cards.
+    ///   - TP-1782 publishes only percentage agreement between two calculation methods, and
+    ///     withholds the SGTM coefficients entirely.
+    ///
+    /// So the SHAPE of F100 net thrust over the F-15 envelope is recoverable and is recorded here.
+    /// The SCALE is not, and is recorded as undeclared. See
+    /// Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md.
+    /// </summary>
+    public static class MavF100SourceData
+    {
+        // ------------------------------------------------------------------ identity
+
+        public const string EngineIdentity = "Pratt & Whitney F100-PW-100";
+
+        public const string TargetAircraftConfiguration =
+            "NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100";
+
+        /// <summary>
+        /// The engine build that figure 17 actually describes. NOT the target build.
+        ///
+        /// TP-1034 is explicitly the F100-PW-100(3): "It features improved fan performance over
+        /// the earlier F100-PW-100(1) version" (printed p. 2). Its component maps, augmentor
+        /// efficiency, duct pressure drop and nozzle coefficients were all regenerated for that
+        /// build. Reading its thrust characteristic as NASA 836's would be exactly the silent
+        /// substitution the R5 brief forbids.
+        /// </summary>
+        public const string NormalizedThrustEngineBuild = "F100-PW-100(3)";
+
+        /// <summary>
+        /// The engine build that TP-1373 and TP-1782 describe. Also NOT the target build.
+        ///
+        /// TP-1373 printed p. 4: prototype series 2 7/8 - series 2 core, series 3 improved
+        /// stability fan with recessed splitter, control schedule differences from BOTH series 2
+        /// and series 3, and series 2 actuated divergent nozzles where series 3 engines have
+        /// free-floating ones. TP-1782 printed p. 4 adds the plain statement that "the results are
+        /// not totally representative of production F100 engines".
+        /// </summary>
+        public const string CalibrationEngineBuild =
+            "F100 prototype series 2 7/8 (engines P680059, P680063)";
+
+        // ------------------------------------------------------- the missing normalizer
+
+        /// <summary>
+        /// Design maximum net thrust: the force that every number in <see cref="NetThrustCurves"/>
+        /// is a fraction OF. It is the single scalar standing between this deck and dimensional
+        /// thrust, and no document in the pack prints it.
+        ///
+        /// Its definition is nevertheless pinned precisely by the data: figure 17(a) reaches
+        /// exactly 1.0 at sea level, Mach 0, PLA 130 deg (maximum augmentation), so the normalizer
+        /// is uninstalled net thrust at the sea-level static maximum-augmentation design point.
+        ///
+        /// DO NOT fill this in from a general-specification F100 figure. Such a number would be
+        /// for a different engine build, at a different rating, on a different installation, and
+        /// it would silently rescale every operating point in this file.
+        /// </summary>
+        public static MavF100DeclaredScalar DesignMaximumNetThrust
+        {
+            get
+            {
+                return MavF100DeclaredScalar.Undeclared(
+                    "UNAVAILABLE: design maximum net thrust is the normalizer of NASA TP-1034 "
+                    + "figure 17 and is not printed in TP-1034, TM X-3261, TP-1373 or TP-1782. "
+                    + "Definition is fixed: uninstalled net thrust at sea level, Mach 0, "
+                    + "PLA 130 deg. Closing it needs the P&W F100 status/spec deck or an "
+                    + "installed-thrust report that states it.");
+            }
+        }
+
+        // --------------------------------------------------- TP-1034 figure 17 curves
+
+        public const string NetThrustCurveCitation =
+            "NASA TP-1034, figure 17, printed pp. 64-65 (PDF pp. 68-69): open-loop hybrid "
+            + "steady-state net thrust at standard-day conditions, F100-PW-100(3). "
+            + "Ordinate: fraction of design maximum net thrust. Abscissa: corresponding power "
+            + "lever angle, deg. DIGITIZED from the page image - not printed table values.";
+
+        /// <summary>
+        /// Digitization tolerance, in fraction-of-design-maximum units.
+        ///
+        /// Not a source number: the accuracy of reading the plotted markers. It is bounded by an
+        /// independent check the figure supplies for free - panel (a) at PLA 130 must be exactly
+        /// 1.0 by the definition of the normalizer, and this digitization reads 1.004 there.
+        /// </summary>
+        public const float NetThrustDigitizationTolerance = 0.01f;
+
+        /// <summary>
+        /// The seven documented operating points of TP-1034 figure 17.
+        ///
+        /// Values are the HYBRID simulation markers (open circles), which are discrete and
+        /// therefore locatable exactly. The solid baseline-digital curve was NOT digitized;
+        /// TP-1034 printed p. 13 records that the two differ by up to 9 percent of design maximum
+        /// thrust at the supersonic augmented conditions, which is the honest error bar on
+        /// treating these markers as the manufacturer's predicted performance.
+        ///
+        /// A fresh array each call: this is source data, and a shared mutable array would let one
+        /// caller edit the source out from under every other.
+        /// </summary>
+        public static MavF100OperatingPointCurve[] NetThrustCurves
+        {
+            get
+            {
+                return new MavF100OperatingPointCurve[]
+                {
+                    Curve("17(a)", 0f, 0.00f,
+                        new float[] { 20.0f, 24.4f, 30.2f, 39.7f, 50.1f, 59.8f, 70.2f, 83.4f, 100.0f, 110.1f, 120.0f, 129.8f },
+                        new float[] { 0.050f, 0.095f, 0.133f, 0.233f, 0.314f, 0.395f, 0.470f, 0.628f, 0.705f, 0.840f, 0.943f, 1.004f }),
+
+                    Curve("17(b)", 3048f, 0.90f,
+                        new float[] { 20.0f, 23.6f, 29.6f, 39.4f, 49.6f, 59.6f, 69.5f, 82.9f, 99.9f, 109.9f, 119.8f, 129.8f },
+                        new float[] { -0.018f, 0.033f, 0.093f, 0.142f, 0.193f, 0.251f, 0.301f, 0.458f, 0.560f, 0.742f, 0.884f, 0.964f }),
+
+                    Curve("17(c)", 9144f, 0.90f,
+                        new float[] { 20.0f, 23.9f, 30.1f, 39.9f, 50.2f, 60.0f, 70.2f, 83.5f, 100.3f, 110.4f, 120.6f, 130.5f },
+                        new float[] { 0.017f, 0.017f, 0.046f, 0.094f, 0.136f, 0.177f, 0.206f, 0.243f, 0.299f, 0.397f, 0.477f, 0.519f }),
+
+                    Curve("17(d)", 13720f, 0.90f,
+                        new float[] { 20.0f, 23.7f, 29.8f, 39.8f, 49.8f, 59.6f, 69.6f, 82.6f, 99.6f, 109.3f, 119.3f, 129.5f },
+                        new float[] { 0.049f, 0.049f, 0.049f, 0.048f, 0.078f, 0.100f, 0.116f, 0.128f, 0.159f, 0.211f, 0.254f, 0.274f }),
+
+                    Curve("17(e)", 6096f, 1.80f,
+                        new float[] { 83.0f, 100.0f, 110.1f, 120.1f, 130.0f },
+                        new float[] { 0.438f, 0.597f, 0.916f, 1.175f, 1.338f }),
+
+                    Curve("17(f)", 12190f, 2.20f,
+                        new float[] { 82.9f, 100.0f, 110.0f, 120.0f, 129.9f },
+                        new float[] { 0.263f, 0.429f, 0.606f, 0.797f, 0.898f }),
+
+                    Curve("17(g)", 17830f, 2.15f,
+                        new float[] { 82.9f, 99.9f, 110.0f, 120.1f, 130.1f },
+                        new float[] { 0.106f, 0.154f, 0.245f, 0.317f, 0.357f })
+                };
+            }
+        }
+
+        private static MavF100OperatingPointCurve Curve(
+            string panel, float altitudeM, float mach, float[] pla, float[] fraction)
+        {
+            MavF100OperatingPointCurve c = new MavF100OperatingPointCurve();
+            c.panel = panel;
+            c.altitudeM = altitudeM;
+            c.mach = mach;
+            c.powerLeverAngleDeg = pla;
+            c.netThrustFraction = fraction;
+            return c;
+        }
+
+        // ------------------------------------------------------------ power lever angle
+
+        /// <summary>
+        /// Minimum power lever angle at the three subsonic conditions below 10 km, TP-1034
+        /// printed p. 11: "the idle setting was 20 deg".
+        /// </summary>
+        public const float IdlePowerLeverAngleDegLowAltitude = 20f;
+
+        /// <summary>
+        /// Minimum power lever angle at 13.72 km / Mach 0.9, TP-1034 printed p. 11:
+        /// "For the 13.72 km/M n = 0.9 condition, the idle setting was 30 deg."
+        ///
+        /// Recorded because it disagrees with the abscissa of figure 17(d), whose leftmost markers
+        /// digitize at about 20, 24 and 30 deg. The figure's own axis is labelled "CORRESPONDING
+        /// power lever angle", i.e. the PLA matching the set of control variables rather than a
+        /// commanded detent, which is the most likely explanation. Not resolved here, and nothing
+        /// depends on resolving it.
+        /// </summary>
+        public const float IdlePowerLeverAngleDegHighAltitude = 30f;
+
+        /// <summary>
+        /// Maximum-augmentation power lever angle, TP-1034 printed p. 11: "the maximum thrust
+        /// setting of 130 deg".
+        /// </summary>
+        public const float MaximumAugmentationPowerLeverAngleDeg = 130f;
+
+        /// <summary>
+        /// Lowest power lever angle permitted at the supersonic conditions, TP-1034 printed p. 11:
+        /// "For the three supersonic conditions, power settings lower than 83 deg were not
+        /// permitted." Consistent with the EEC minimum-airflow schedule of TP-1373 printed p. 5.
+        /// </summary>
+        public const float SupersonicMinimumPowerLeverAngleDeg = 83f;
+
+        /// <summary>
+        /// Military power lever angle per NASA TM X-3261 printed p. 6: "the sea-level, static,
+        /// military-power (PLA = 73 deg) condition".
+        ///
+        /// KEPT SEPARATE from TP-1034's 83 deg on purpose. TP-1034 treats 83 deg as the top of
+        /// non-augmented operation, and figure 17(a) shows its augmentation plateau there. The two
+        /// reports evidently do not share a power lever convention. Averaging them, or picking
+        /// one, would be inventing a third convention that neither document supports.
+        /// </summary>
+        public const float MilitaryPowerLeverAngleDegTmX3261 = 73f;
+
+        // --------------------------------------------------------- inlet recovery (B1-B5)
+
+        /// <summary>
+        /// Supersonic total-pressure recovery coefficient, NASA TM X-3261 equation (B3):
+        /// eta = 1.0 - 0.075 * (M0 - 1.0)^1.35 for M0 &gt; 1.0, and 1.0 otherwise.
+        ///
+        /// Confirmed character by character against the Appendix C FORTRAN listing, which prints
+        /// ETA0 = 1.0 - .075*(M0-1.)**1.35, so the garbled equation glyphs in the scanned page are
+        /// not load-bearing.
+        ///
+        /// This is TM X-3261's phrase "a steady-state representation of a TYPICAL inlet recovery",
+        /// which is the standard reference schedule - it is NOT a measurement of the F-15 inlet,
+        /// still less of NASA 836's, and the F-15 has a variable-geometry inlet this ignores
+        /// entirely.
+        /// </summary>
+        public const float SupersonicRecoveryCoefficient = 0.075f;
+
+        public const float SupersonicRecoveryExponent = 1.35f;
+
+        public const string InletRecoveryCitation =
+            "NASA TM X-3261, equations (B1)-(B5), printed p. 13, cross-checked against the "
+            + "appendix C FORTRAN listing. Described in the source as a TYPICAL inlet recovery, "
+            + "not as F-15 or NASA 836 inlet data.";
+
+        // ------------------------------------------------------------- ram drag (B52/B56)
+
+        /// <summary>
+        /// Ram-drag coefficient of NASA TM X-3261 equation (B52) and NASA TP-1034 equation (B56):
+        ///
+        ///     F_net = F_gross - 20.041 * w2 * M0 * sqrt(T0)
+        ///
+        /// with thrust in newtons, airflow in kg/sec and temperature in kelvin, per the symbol
+        /// lists of both reports.
+        ///
+        /// The constant is not empirical: 20.041 is sqrt(gamma * R) for air, sqrt(1.4 * 287.05)
+        /// = 20.047, so the term is just w2 * V0 written with the local speed of sound expanded.
+        /// That identity is why this equation can be implemented with confidence while the gross
+        /// thrust equation beside it cannot - that one needs the component maps.
+        /// </summary>
+        public const float RamDragCoefficient = 20.041f;
+
+        public const string RamDragCitation =
+            "NASA TM X-3261 eq. (B52), printed p. 22; NASA TP-1034 eq. (B56), printed p. 21. "
+            + "Coefficient verified as sqrt(gamma*R) for air.";
+
+        // --------------------------------------------------------- TP-1373 normalizers
+
+        /// <summary>
+        /// Design corrected airflow, 98.4 kg/sec. TP-1373 plots corrected airflow as "percent of
+        /// 98.4 kg/sec" (figures 6(a), 6(c)) and refers to that axis as percent of DESIGN
+        /// corrected airflow (printed p. 12), so the number is the engine's design value and not
+        /// merely a drawing convenience.
+        ///
+        /// Prototype series 2 7/8 engines. CompatibleSupport, not exact-target.
+        /// </summary>
+        public const float DesignCorrectedAirflowKgPerSec = 98.4f;
+
+        /// <summary>
+        /// The gross-thrust axis normalizer of TP-1373 figures 6(b) and 6(d), 111.2 kN.
+        ///
+        /// NOT a thrust rating, and specifically NOT the design maximum net thrust that figure 17
+        /// is normalized by. 111.2 kN is 25 000 lbf to four figures, which is what a round plot
+        /// scale looks like; the text never calls it a design or maximum value. Recorded so that
+        /// nobody reaches for it later as the missing normalizer.
+        /// </summary>
+        public const float GrossThrustAxisNormalizerN = 111200f;
+
+        // ------------------------------------------------- TP-1373 nozzle mode schedule
+
+        /// <summary>
+        /// Free-stream Mach number selecting the nozzle area-ratio schedule, TP-1373 printed p. 7:
+        /// "the low mode schedule is used for M0 &lt; 1.1, and the high mode schedule is used for
+        /// M0 &gt; 1.1". TP-1782 printed p. 11 independently confirms that the divergent area ratio
+        /// is scheduled on nozzle throat area and free-stream Mach number.
+        /// </summary>
+        public const float NozzleAreaRatioModeSwitchMach = 1.1f;
+
+        // --------------------------------------------- TP-1373 EEC minimum-power schedule
+
+        /// <summary>
+        /// Mach number below which the EEC permits idle power, TP-1373 printed p. 5: "Below Mach
+        /// 0.90 the EEC allows engine operating power lever angle to go idle."
+        /// </summary>
+        public const float EecIdlePermittedBelowMach = 0.90f;
+
+        /// <summary>
+        /// Mach number at which the EEC minimum reaches intermediate power, TP-1373 printed p. 5:
+        /// "The minimum allowable value increases linearly with Mach number to intermediate power
+        /// at a Mach number of 1.4. It remains constant at this level for higher Mach numbers."
+        ///
+        /// The whole schedule is printed prose - both endpoints, the interpolation law between
+        /// them, and the behaviour above. That is rare in this pack and is why it can be
+        /// implemented as written.
+        /// </summary>
+        public const float EecIntermediateFloorMach = 1.4f;
+
+        public const string EecMinimumPowerCitation =
+            "NASA TP-1373, printed p. 5. Prototype series 2 7/8 control schedules, which the same "
+            + "page notes differ from both series 2 and series 3 production engines.";
+
+        // ------------------------------------------------------ TP-1782 cross-validation
+
+        public const float FlightValidationMinMach = 0.6f;
+        public const float FlightValidationMaxMach = 1.5f;
+        public const float FlightValidationMinAltitudeM = 6000f;
+        public const float FlightValidationMaxAltitudeM = 13700f;
+
+        /// <summary>
+        /// Agreement between the simplified gross thrust model and the gas generator method in
+        /// flight, TP-1782 concluding remarks: "the two methods of gross thrust calculation agreed
+        /// within +/-3 percent" over 66 evaluation points.
+        ///
+        /// This bounds the AGREEMENT OF TWO CALCULATIONS, not the error of either against truth,
+        /// and it is about GROSS thrust. It is an oracle only.
+        /// </summary>
+        public const float FlightMethodAgreementPercent = 3f;
+
+        public const string FlightValidationCitation =
+            "NASA TP-1782, printed pp. 1 and 17. Engine P680059 installed in the LEFT engine "
+            + "position of an F-15; only that engine was flown. CROSS-VALIDATION ONLY: the report "
+            + "publishes percentage agreement, and withholds the SGTM coefficients K1, K2, E "
+            + "and Cv entirely.";
+    }
+}

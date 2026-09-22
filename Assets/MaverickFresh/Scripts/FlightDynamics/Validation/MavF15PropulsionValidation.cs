@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using UnityEngine;
 using MaverickFresh.FlightDynamics.F15;
@@ -15,6 +17,16 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   [E4] the engine-out trap: undeclared geometry gives zero yaw, and the gate catches it
     ///   [E5] the F-16 engine law is not inherited by the F-15
     ///   [E6] attaching a deck does not upgrade provenance
+    ///   [E7] the digitized TP-1034 figure 17 data is structurally sound and self-consistent
+    ///   [E8] source-point regression: every digitized point comes back out unchanged
+    ///   [E9] source envelope enforcement, and zero silent extrapolation
+    ///  [E10] finite outputs across a sweep, and refusal of non-finite inputs
+    ///  [E11] gross / ram drag / net thrust are separate quantities and cannot be confused
+    ///  [E12] the two fully-printed control schedules, and the inlet recovery equation
+    ///  [E13] augmentation boundaries are only as sharp as the source makes them
+    ///  [E14] the thrust deck refuses to produce a force, and says why twice over
+    ///  [E15] propulsion writes no Rigidbody, and the aero model adds no engine thrust
+    ///  [E16] TP-1782 stays cross-validation only
     ///
     /// These run on the installation profile and its static factories - production code, no
     /// GameObject, no Rigidbody, no play-mode session.
@@ -26,7 +38,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             passed = 0;
             failed = 0;
             StringBuilder report = new StringBuilder(4096);
-            report.AppendLine("F-15 Twin F100-PW-100 Installation Validation");
+            report.AppendLine("F-15 Twin F100-PW-100 Propulsion Validation");
             report.AppendLine("=============================================");
 
             ValidateTwinIdentity(report, ref passed, ref failed);
@@ -35,6 +47,16 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateGeometryBlocksLiveFlight(report, ref passed, ref failed);
             ValidateEngineOutTrap(report, ref passed, ref failed);
             ValidateNoF16EngineLaw(report, ref passed, ref failed);
+            ValidateDigitizedSourceData(report, ref passed, ref failed);
+            ValidateSourcePointRegression(report, ref passed, ref failed);
+            ValidateEnvelopeEnforcement(report, ref passed, ref failed);
+            ValidateFiniteOutputs(report, ref passed, ref failed);
+            ValidateGrossNetSeparation(report, ref passed, ref failed);
+            ValidateSourcedSchedules(report, ref passed, ref failed);
+            ValidateAugmentationBoundaries(report, ref passed, ref failed);
+            ValidateDeckRefusesThrust(report, ref passed, ref failed);
+            ValidatePropulsionOwnership(report, ref passed, ref failed);
+            ValidateCrossValidationOnly(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -291,6 +313,806 @@ namespace MaverickFresh.FlightDynamics.Validation
                 "supplying a deck does not upgrade engine provenance - acceptance for the"
                 + " F100-PW-100 on NASA 836 is a separate decision from attachment",
                 report, ref passed, ref failed);
+        }
+
+        // ---------------------------------------------------------------- [E7]
+
+        private static void ValidateDigitizedSourceData(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E7] Digitized TP-1034 figure 17 data");
+
+            MavF100OperatingPointCurve[] curves = MavF100SourceData.NetThrustCurves;
+
+            Record(curves.Length == 7,
+                "all seven documented operating points are present",
+                report, ref passed, ref failed);
+
+            bool lengthsMatch = true;
+            bool ascending = true;
+            bool finite = true;
+            int totalPoints = 0;
+
+            for (int i = 0; i < curves.Length; i++)
+            {
+                MavF100OperatingPointCurve c = curves[i];
+
+                if (c.powerLeverAngleDeg == null || c.netThrustFraction == null
+                    || c.powerLeverAngleDeg.Length != c.netThrustFraction.Length
+                    || c.powerLeverAngleDeg.Length < 2)
+                {
+                    lengthsMatch = false;
+                    continue;
+                }
+
+                totalPoints += c.Count;
+
+                for (int k = 1; k < c.Count; k++)
+                {
+                    if (!(c.powerLeverAngleDeg[k] > c.powerLeverAngleDeg[k - 1]))
+                        ascending = false;
+                }
+
+                for (int k = 0; k < c.Count; k++)
+                {
+                    if (float.IsNaN(c.netThrustFraction[k])
+                        || float.IsInfinity(c.netThrustFraction[k])
+                        || float.IsNaN(c.powerLeverAngleDeg[k])
+                        || float.IsInfinity(c.powerLeverAngleDeg[k]))
+                    {
+                        finite = false;
+                    }
+                }
+            }
+
+            Record(lengthsMatch,
+                "every curve pairs each power lever angle with exactly one thrust fraction",
+                report, ref passed, ref failed);
+
+            Record(ascending,
+                "power lever angle is strictly ascending in every curve, which interpolation needs",
+                report, ref passed, ref failed);
+
+            Record(finite,
+                "all " + totalPoints + " digitized values are finite",
+                report, ref passed, ref failed);
+
+            // Distinct conditions, or two of them would match the same query.
+            bool distinct = true;
+            for (int i = 0; i < curves.Length; i++)
+            {
+                for (int j = i + 1; j < curves.Length; j++)
+                {
+                    bool sameAltitude = Mathf.Abs(curves[i].altitudeM - curves[j].altitudeM)
+                        <= MavF100NormalizedNetThrustModel.ConditionMatchAltitudeToleranceM;
+                    bool sameMach = Mathf.Abs(curves[i].mach - curves[j].mach)
+                        <= MavF100NormalizedNetThrustModel.ConditionMatchMachTolerance;
+
+                    if (sameAltitude && sameMach)
+                        distinct = false;
+                }
+            }
+
+            Record(distinct,
+                "no two operating points fall inside one another's match tolerance,"
+                + " so a query can never be answered by the wrong condition",
+                report, ref passed, ref failed);
+
+            // The figure supplies its own accuracy check for free. Panel (a) is sea level,
+            // Mach 0, and its normalizer is defined as net thrust at maximum augmentation
+            // there - so the last point of panel (a) must be exactly 1.0. Anything else is
+            // digitization error, and this measures it.
+            MavF100OperatingPointCurve slStatic = curves[0];
+            float atMaxAugmentation = slStatic.netThrustFraction[slStatic.Count - 1];
+            float normalizerError = Mathf.Abs(atMaxAugmentation - 1f);
+
+            Record(
+                slStatic.panel == "17(a)" && Mathf.Approximately(slStatic.mach, 0f),
+                "the self-check uses panel 17(a), sea level and Mach 0, which defines the normalizer",
+                report, ref passed, ref failed);
+
+            Record(
+                normalizerError <= MavF100SourceData.NetThrustDigitizationTolerance,
+                "digitization error at the defining point is " + normalizerError.ToString("0.0000")
+                + ", within the stated tolerance of "
+                + MavF100SourceData.NetThrustDigitizationTolerance
+                + " - the figure's own definition bounds the reading accuracy",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.NetThrustCurves[0].netThrustFraction
+                    != MavF100SourceData.NetThrustCurves[0].netThrustFraction,
+                "each read of the source data returns fresh arrays, so no caller can edit"
+                + " the source out from under another",
+                report, ref passed, ref failed);
+        }
+
+        // ---------------------------------------------------------------- [E8]
+
+        private static void ValidateSourcePointRegression(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E8] Source-point regression fixtures");
+
+            MavF100OperatingPointCurve[] curves = MavF100SourceData.NetThrustCurves;
+
+            int checkedPoints = 0;
+            int mismatches = 0;
+            string firstMismatch = string.Empty;
+
+            for (int i = 0; i < curves.Length; i++)
+            {
+                MavF100OperatingPointCurve c = curves[i];
+
+                for (int k = 0; k < c.Count; k++)
+                {
+                    MavF100NetThrustFractionResult r = MavF100NormalizedNetThrustModel.Evaluate(
+                        c.altitudeM, c.mach, c.powerLeverAngleDeg[k]);
+
+                    checkedPoints++;
+
+                    bool ok = r.support == MavF100ThrustSupport.Supported
+                        && r.panel == c.panel
+                        && Mathf.Abs(r.netThrustFraction - c.netThrustFraction[k]) <= 1e-5f
+                        && r.quantity == MavF100ThrustQuantity.UninstalledNetThrust;
+
+                    if (!ok)
+                    {
+                        mismatches++;
+                        if (firstMismatch.Length == 0)
+                        {
+                            firstMismatch = c.panel + " at PLA " + c.powerLeverAngleDeg[k]
+                                + ": got " + r.netThrustFraction + " (" + r.support + ")";
+                        }
+                    }
+                }
+            }
+
+            Record(checkedPoints == 63,
+                "every digitized point is covered by a fixture (" + checkedPoints + " points)",
+                report, ref passed, ref failed);
+
+            Record(mismatches == 0,
+                "every digitized point evaluates back to its own value, on its own panel,"
+                + " labelled as uninstalled NET thrust"
+                + (mismatches == 0 ? "" : "; first mismatch: " + firstMismatch),
+                report, ref passed, ref failed);
+
+            // Interpolation between two breakpoints must land between their values, or the
+            // curve is not the one the figure draws.
+            MavF100OperatingPointCurve sl = curves[0];
+            float midPla = 0.5f * (sl.powerLeverAngleDeg[4] + sl.powerLeverAngleDeg[5]);
+            MavF100NetThrustFractionResult mid =
+                MavF100NormalizedNetThrustModel.Evaluate(sl.altitudeM, sl.mach, midPla);
+
+            Record(
+                mid.support == MavF100ThrustSupport.Supported
+                && mid.netThrustFraction > sl.netThrustFraction[4]
+                && mid.netThrustFraction < sl.netThrustFraction[5],
+                "interpolation along power lever angle stays between its two breakpoints -"
+                + " the source draws a continuous curve there, so this value is supported",
+                report, ref passed, ref failed);
+        }
+
+        // ---------------------------------------------------------------- [E9]
+
+        private static void ValidateEnvelopeEnforcement(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E9] Source envelope enforcement, zero silent extrapolation");
+
+            // A condition squarely between two documented points. Plausible, entirely undocumented.
+            MavF100NetThrustFractionResult between =
+                MavF100NormalizedNetThrustModel.Evaluate(6000f, 0.9f, 100f);
+
+            Record(between.support == MavF100ThrustSupport.OutsideSourceSupport,
+                "6 km at Mach 0.9 sits between documented points and is refused,"
+                + " not interpolated across scattered test conditions",
+                report, ref passed, ref failed);
+
+            Record(!between.HasNumber && between.netThrustFraction == 0f,
+                "a refused query carries no number at all",
+                report, ref passed, ref failed);
+
+            Record(between.sourceClass == MavF100SourceClass.Unavailable,
+                "and its source class is Unavailable, so nothing downstream can grade it higher",
+                report, ref passed, ref failed);
+
+            // Right at the edge of the match tolerance, and just past it.
+            MavF100NetThrustFractionResult justInside =
+                MavF100NormalizedNetThrustModel.Evaluate(
+                    9144f + MavF100NormalizedNetThrustModel.ConditionMatchAltitudeToleranceM - 1f,
+                    0.9f, 100f);
+
+            MavF100NetThrustFractionResult justOutside =
+                MavF100NormalizedNetThrustModel.Evaluate(
+                    9144f + MavF100NormalizedNetThrustModel.ConditionMatchAltitudeToleranceM + 1f,
+                    0.9f, 100f);
+
+            Record(justInside.support == MavF100ThrustSupport.Supported,
+                "inside the altitude match tolerance the documented point still answers",
+                report, ref passed, ref failed);
+
+            Record(justOutside.support == MavF100ThrustSupport.OutsideSourceSupport,
+                "one metre past it, the source no longer speaks and neither does the model",
+                report, ref passed, ref failed);
+
+            // Off the Mach axis by more than the tolerance.
+            Record(
+                MavF100NormalizedNetThrustModel.Evaluate(9144f, 0.95f, 100f).support
+                    == MavF100ThrustSupport.OutsideSourceSupport,
+                "Mach 0.95 at 9.144 km is outside the Mach match tolerance and is refused",
+                report, ref passed, ref failed);
+
+            // Power lever excursions clamp, and say so, and never extrapolate.
+            MavF100OperatingPointCurve[] curves = MavF100SourceData.NetThrustCurves;
+            MavF100OperatingPointCurve supersonic = curves[4];
+
+            MavF100NetThrustFractionResult belowRange =
+                MavF100NormalizedNetThrustModel.Evaluate(
+                    supersonic.altitudeM, supersonic.mach, 20f);
+
+            Record(
+                belowRange.support == MavF100ThrustSupport.PowerLeverClampedToTestedRange,
+                "PLA 20 deg at a supersonic point is reported as CLAMPED -"
+                + " TP-1034 never tested below 83 deg there",
+                report, ref passed, ref failed);
+
+            Record(
+                Mathf.Abs(belowRange.netThrustFraction - supersonic.netThrustFraction[0]) <= 1e-5f,
+                "and the clamped value is the tested endpoint exactly, not an extrapolation of it",
+                report, ref passed, ref failed);
+
+            MavF100NetThrustFractionResult aboveRange =
+                MavF100NormalizedNetThrustModel.Evaluate(
+                    supersonic.altitudeM, supersonic.mach, 200f);
+
+            Record(
+                aboveRange.support == MavF100ThrustSupport.PowerLeverClampedToTestedRange
+                && Mathf.Abs(aboveRange.netThrustFraction
+                    - supersonic.netThrustFraction[supersonic.Count - 1]) <= 1e-5f,
+                "PLA 200 deg clamps to the maximum tested setting rather than running off the curve",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100NormalizedNetThrustModel.DescribeSourceEnvelope().Contains("17(g)"),
+                "the envelope describes itself, naming every panel it came from",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E10]
+
+        private static void ValidateFiniteOutputs(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E10] Finite outputs, and refusal of non-finite inputs");
+
+            MavF100OperatingPointCurve[] curves = MavF100SourceData.NetThrustCurves;
+
+            int evaluated = 0;
+            bool allFinite = true;
+            bool allBounded = true;
+
+            for (int i = 0; i < curves.Length; i++)
+            {
+                for (float pla = 0f; pla <= 200f; pla += 5f)
+                {
+                    MavF100NetThrustFractionResult r = MavF100NormalizedNetThrustModel.Evaluate(
+                        curves[i].altitudeM, curves[i].mach, pla);
+
+                    evaluated++;
+
+                    if (float.IsNaN(r.netThrustFraction) || float.IsInfinity(r.netThrustFraction))
+                        allFinite = false;
+
+                    // Figure 17 peaks at 1.338 (panel e). Nothing may exceed the data's own range.
+                    if (r.netThrustFraction < -0.5f || r.netThrustFraction > 1.5f)
+                        allBounded = false;
+                }
+            }
+
+            Record(allFinite,
+                "all " + evaluated + " sweep evaluations are finite",
+                report, ref passed, ref failed);
+
+            Record(allBounded,
+                "and every one stays inside the range the figure itself spans",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100NormalizedNetThrustModel.Evaluate(float.NaN, 0.9f, 100f).support
+                    == MavF100ThrustSupport.NotEvaluated,
+                "a NaN altitude is refused outright rather than propagated",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100NormalizedNetThrustModel.Evaluate(9144f, float.PositiveInfinity, 100f)
+                    .support == MavF100ThrustSupport.NotEvaluated,
+                "an infinite Mach number is refused outright",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100NormalizedNetThrustModel.Evaluate(9144f, 0.9f, float.NaN).support
+                    == MavF100ThrustSupport.NotEvaluated,
+                "a NaN power lever angle is refused outright",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E11]
+
+        private static void ValidateGrossNetSeparation(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E11] Gross, ram drag and net thrust stay separate quantities");
+
+            // Ram drag against the printed equation, computed independently here.
+            const float airflow = 100f;
+            const float mach = 0.9f;
+            const float temperature = 288.15f;
+
+            MavF100ThrustValue drag = MavF100ThrustSemantics.RamDragN(airflow, mach, temperature);
+            float expected = MavF100SourceData.RamDragCoefficient
+                * airflow * mach * Mathf.Sqrt(temperature);
+
+            Record(drag.valid && Mathf.Abs(drag.newtons - expected) <= 1e-2f,
+                "ram drag reproduces 20.041*w2*M0*sqrt(T0) from TM X-3261 (B52) / TP-1034 (B56)",
+                report, ref passed, ref failed);
+
+            Record(drag.quantity == MavF100ThrustQuantity.RamDrag,
+                "and it is labelled as ram drag, not as a thrust",
+                report, ref passed, ref failed);
+
+            // The coefficient is sqrt(gamma*R) for air. If someone ever "tidies" it, this fails.
+            float sqrtGammaR = Mathf.Sqrt(1.4f * 287.05f);
+            Record(
+                Mathf.Abs(MavF100SourceData.RamDragCoefficient - sqrtGammaR) < 0.01f,
+                "the printed coefficient is sqrt(gamma*R) for air to within 0.01 ("
+                + sqrtGammaR.ToString("0.000") + "), which is why the term is w2*V0",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100ThrustSemantics.RamDragN(airflow, 0f, temperature).newtons == 0f,
+                "ram drag is exactly zero at Mach 0, as the equation requires",
+                report, ref passed, ref failed);
+
+            // A net value must not be handed to the gross-to-net transform.
+            MavF100ThrustValue net = MavF100ThrustValue.Of(
+                50000f, MavF100ThrustQuantity.UninstalledNetThrust,
+                MavF100SourceClass.CompatibleSupport, "test fixture");
+
+            MavF100ThrustValue doubleSubtracted =
+                MavF100ThrustSemantics.NetFromGross(net, airflow, mach, temperature);
+
+            Record(!doubleSubtracted.valid,
+                "applying the ram-drag transform to a NET value is refused -"
+                + " that mistake subtracts the inlet momentum twice and looks entirely plausible",
+                report, ref passed, ref failed);
+
+            MavF100ThrustValue gross = MavF100ThrustValue.Of(
+                80000f, MavF100ThrustQuantity.GrossThrust,
+                MavF100SourceClass.CompatibleSupport, "test fixture");
+
+            MavF100ThrustValue converted =
+                MavF100ThrustSemantics.NetFromGross(gross, airflow, mach, temperature);
+
+            Record(
+                converted.valid
+                && converted.quantity == MavF100ThrustQuantity.UninstalledNetThrust
+                && Mathf.Abs(converted.newtons - (80000f - expected)) <= 1e-2f,
+                "a gross value converts to UNINSTALLED net thrust, never to installed thrust",
+                report, ref passed, ref failed);
+
+            // Provenance cannot be laundered upward by passing through the equation.
+            MavF100ThrustValue weakGross = MavF100ThrustValue.Of(
+                80000f, MavF100ThrustQuantity.GrossThrust,
+                MavF100SourceClass.CrossValidationOnly, "oracle only");
+
+            Record(
+                MavF100ThrustSemantics.NetFromGross(weakGross, airflow, mach, temperature)
+                    .sourceClass == MavF100SourceClass.CrossValidationOnly,
+                "a cross-validation-only gross thrust stays cross-validation-only after conversion",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavF100ThrustSemantics.RamDragN(airflow, mach, -1f).valid
+                && !MavF100ThrustSemantics.RamDragN(-1f, mach, temperature).valid
+                && !MavF100ThrustSemantics.RamDragN(float.NaN, mach, temperature).valid,
+                "negative airflow, non-positive temperature and NaN are refused rather than"
+                + " returned as a zero that reads like a physical result",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.GrossThrustAxisNormalizerN == 111200f,
+                "TP-1373's 111.2 kN axis normalizer is recorded as an axis scale (25 000 lbf),"
+                + " kept where nobody will mistake it for the missing design maximum",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E12]
+
+        private static void ValidateSourcedSchedules(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E12] The fully-printed schedules, and inlet recovery");
+
+            // EEC minimum power schedule, TP-1373 printed p. 5.
+            Record(
+                MavF100EngineControlSchedules.MinimumPowerFractionOfIntermediate(0.5f) == 0f
+                && MavF100EngineControlSchedules.MinimumPowerFractionOfIntermediate(0.89f) == 0f,
+                "below Mach 0.90 the EEC permits idle, so the minimum power fraction is zero",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100EngineControlSchedules.MinimumPowerFractionOfIntermediate(1.4f) == 1f
+                && MavF100EngineControlSchedules.MinimumPowerFractionOfIntermediate(2.5f) == 1f,
+                "at and above Mach 1.4 the minimum is intermediate power and stays there",
+                report, ref passed, ref failed);
+
+            float atMidpoint =
+                MavF100EngineControlSchedules.MinimumPowerFractionOfIntermediate(1.15f);
+
+            Record(Mathf.Abs(atMidpoint - 0.5f) <= 1e-5f,
+                "and it rises LINEARLY between them - Mach 1.15 is exactly half way",
+                report, ref passed, ref failed);
+
+            bool monotone = true;
+            float previous = -1f;
+            for (float m = 0f; m <= 2.5f; m += 0.01f)
+            {
+                float v = MavF100EngineControlSchedules.MinimumPowerFractionOfIntermediate(m);
+                if (v < previous - 1e-6f)
+                    monotone = false;
+                previous = v;
+            }
+
+            Record(monotone,
+                "the schedule never decreases with Mach number",
+                report, ref passed, ref failed);
+
+            // Nozzle area-ratio mode, TP-1373 printed p. 7.
+            Record(
+                !MavF100EngineControlSchedules.IsHighModeNozzleSchedule(1.0f)
+                && MavF100EngineControlSchedules.IsHighModeNozzleSchedule(1.2f),
+                "the nozzle area-ratio schedule switches to high mode above Mach 1.1",
+                report, ref passed, ref failed);
+
+            // Inlet recovery, TM X-3261 (B3).
+            Record(
+                MavF100InletRecovery.TotalPressureRecovery(0.8f) == 1f
+                && MavF100InletRecovery.TotalPressureRecovery(1.0f) == 1f,
+                "inlet total-pressure recovery is unity at and below Mach 1",
+                report, ref passed, ref failed);
+
+            float atMach2 = MavF100InletRecovery.TotalPressureRecovery(2f);
+            Record(
+                Mathf.Abs(atMach2 - (1f - 0.075f)) <= 1e-5f,
+                "at Mach 2 it is 1 - 0.075*(1)^1.35 = 0.925, straight from (B3)",
+                report, ref passed, ref failed);
+
+            bool recoveryFalls = true;
+            float last = 1.1f;
+            for (float m = 1.0f; m <= 2.5f; m += 0.05f)
+            {
+                float r = MavF100InletRecovery.TotalPressureRecovery(m);
+                if (r > last + 1e-6f || r <= 0f || r > 1f)
+                    recoveryFalls = false;
+                last = r;
+            }
+
+            Record(recoveryFalls,
+                "and it falls monotonically, staying inside (0, 1] across the supersonic range",
+                report, ref passed, ref failed);
+
+            Record(
+                Mathf.Abs(MavF100InletRecovery.FanFaceTotalTemperatureRatio(1f) - 1.2f) <= 1e-5f
+                && Mathf.Abs(MavF100InletRecovery.FanFaceTotalPressureRatio(0f) - 1f) <= 1e-5f,
+                "fan-face stagnation ratios match (B4)/(B5): 1.2 at Mach 1, unity at rest",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E13]
+
+        private static void ValidateAugmentationBoundaries(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E13] Augmentation boundaries are only as sharp as the source");
+
+            MavEngineProfile profile = MavF15PropulsionSkeleton.CreateUnfrozenEngineProfile();
+
+            Record(
+                profile.augmentation == MavEngineAugmentationSemantics.Unavailable,
+                "augmentation semantics stay Unavailable: no source gives a burner-light"
+                + " condition or an augmentor transition law for this engine",
+                report, ref passed, ref failed);
+
+            // The data DOES span augmented operation - it just cannot say where it begins.
+            MavF100OperatingPointCurve sl = MavF100SourceData.NetThrustCurves[0];
+
+            Record(
+                sl.powerLeverAngleDeg[sl.Count - 1]
+                    >= MavF100SourceData.MaximumAugmentationPowerLeverAngleDeg - 1f,
+                "the sea-level curve does reach the maximum augmentation lever angle of "
+                + MavF100SourceData.MaximumAugmentationPowerLeverAngleDeg + " deg",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.MilitaryPowerLeverAngleDegTmX3261
+                    != MavF100SourceData.SupersonicMinimumPowerLeverAngleDeg,
+                "TM X-3261's military lever angle (73 deg) and TP-1034's non-augmented ceiling"
+                + " (83 deg) are kept as two separate constants - the reports do not share a"
+                + " power lever convention and neither was averaged away",
+                report, ref passed, ref failed);
+
+            // Thrust rises across the augmented range: the plateau is a real feature of the data.
+            MavF100NetThrustFractionResult atMilitary =
+                MavF100NormalizedNetThrustModel.Evaluate(0f, 0f, 83.4f);
+            MavF100NetThrustFractionResult atMaximum =
+                MavF100NormalizedNetThrustModel.Evaluate(0f, 0f, 129.8f);
+
+            Record(
+                atMilitary.HasNumber && atMaximum.HasNumber
+                && atMaximum.netThrustFraction > atMilitary.netThrustFraction,
+                "and augmented thrust exceeds non-augmented thrust at sea level, "
+                + atMilitary.netThrustFraction.ToString("0.000") + " to "
+                + atMaximum.netThrustFraction.ToString("0.000"),
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.NormalizedThrustEngineBuild == "F100-PW-100(3)",
+                "the augmented characteristic is labelled F100-PW-100(3), not silently promoted"
+                + " to the F100-PW-100 target build",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E14]
+
+        private static void ValidateDeckRefusesThrust(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E14] The thrust deck refuses to produce a force");
+
+            Record(
+                !MavF100SourceData.DesignMaximumNetThrust.declared,
+                "design maximum net thrust - the normalizer of figure 17 - is undeclared",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.DesignMaximumNetThrust.sourceClass
+                    == MavF100SourceClass.Unavailable,
+                "and its source class is Unavailable, so no caller can grade it upward",
+                report, ref passed, ref failed);
+
+            string bothMissing = MavF100ThrustDeck.DescribeBlockers(
+                false, 0f, string.Empty, MavF100PowerLeverConvention.Undeclared);
+
+            Record(
+                bothMissing.Contains("SCALE") && bothMissing.Contains("POWER LEVER"),
+                "the default deck reports BOTH blockers together, so closing one does not"
+                + " suggest thrust is a single step away when it is two",
+                report, ref passed, ref failed);
+
+            string scaleOnly = MavF100ThrustDeck.DescribeBlockers(
+                true, 100000f, "fixture citation", MavF100PowerLeverConvention.Undeclared);
+
+            Record(
+                !scaleOnly.Contains("SCALE") && scaleOnly.Contains("POWER LEVER"),
+                "declaring the scale alone leaves the power lever convention blocking",
+                report, ref passed, ref failed);
+
+            string leverOnly = MavF100ThrustDeck.DescribeBlockers(
+                false, 0f, string.Empty,
+                MavF100PowerLeverConvention.LinearBetweenSourcedEndpoints("fixture"));
+
+            Record(
+                leverOnly.Contains("SCALE") && !leverOnly.Contains("POWER LEVER"),
+                "and declaring the convention alone leaves the scale blocking",
+                report, ref passed, ref failed);
+
+            string uncited = MavF100ThrustDeck.DescribeBlockers(
+                true, 100000f, string.Empty,
+                MavF100PowerLeverConvention.LinearBetweenSourcedEndpoints("fixture"));
+
+            Record(
+                uncited.Contains("SCALE"),
+                "a scale declared with no citation is still refused - that is exactly how an"
+                + " invented number would enter a sourced deck",
+                report, ref passed, ref failed);
+
+            string nonPositive = MavF100ThrustDeck.DescribeBlockers(
+                true, 0f, "fixture citation",
+                MavF100PowerLeverConvention.LinearBetweenSourcedEndpoints("fixture"));
+
+            Record(
+                nonPositive.Contains("SCALE"),
+                "so is a non-positive one",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavThrustDeckBase.IsPolicyAcceptableForLiveFlight(
+                    MavThrustDataAuthority.Unavailable,
+                    MavEnvelopeExcursionPolicy.RejectUnsupportedState),
+                "and even with a refusing excursion policy, unavailable thrust data is not"
+                + " acceptable for live flight",
+                report, ref passed, ref failed);
+
+            // The sourced half still works. That is the point of separating them.
+            Record(
+                MavF100NormalizedNetThrustModel.Evaluate(9144f, 0.9f, 130.5f).HasNumber,
+                "while the normalized characteristic itself evaluates normally - the blocked"
+                + " work is blocked, the rest is done",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E15]
+
+        private static void ValidatePropulsionOwnership(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E15] Propulsion writes no Rigidbody; aero adds no thrust");
+
+            string root = ResolveFlightDynamicsRoot();
+
+            if (root == null)
+            {
+                Record(true,
+                    "SKIPPED: flight-dynamics sources are not present (player build)",
+                    report, ref passed, ref failed);
+                return;
+            }
+
+            MavOwnershipScanResult scan = MavFlightDynamicsOwnershipScan.Scan(root);
+
+            if (!scan.sourcesAvailable)
+            {
+                Record(true,
+                    "SKIPPED: flight-dynamics sources are not readable",
+                    report, ref passed, ref failed);
+                return;
+            }
+
+            List<string> propulsionViolations = new List<string>();
+            if (scan.violations != null)
+            {
+                for (int i = 0; i < scan.violations.Count; i++)
+                {
+                    string v = scan.violations[i];
+                    if (v.Contains("Propulsion") || v.Contains("Engine") || v.Contains("F100"))
+                        propulsionViolations.Add(v);
+                }
+            }
+
+            Record(propulsionViolations.Count == 0,
+                "no propulsion or engine source applies a force, torque or velocity write ("
+                + scan.filesScanned + " FDM files scanned)"
+                + (propulsionViolations.Count == 0
+                    ? ""
+                    : "; first: " + propulsionViolations[0]),
+                report, ref passed, ref failed);
+
+            // The other direction: the aerodynamic model must not quietly grow a thrust term.
+            string[] aeroFiles = Directory.GetFiles(root, "*Aero*.cs", SearchOption.AllDirectories);
+            System.Array.Sort(aeroFiles, System.StringComparer.Ordinal);
+
+            List<string> aeroThrust = new List<string>();
+            for (int i = 0; i < aeroFiles.Length; i++)
+            {
+                string text = File.ReadAllText(aeroFiles[i]);
+                string name = Path.GetFileName(aeroFiles[i]);
+
+                if (text.Contains("MavThrustDeck") || text.Contains("thrustN")
+                    || text.Contains("MavPropulsiveLoads") || text.Contains("MavF100"))
+                {
+                    aeroThrust.Add(name);
+                }
+            }
+
+            Record(aeroThrust.Count == 0,
+                "no aerodynamic source references a thrust deck, a thrust force or propulsive"
+                + " loads (" + aeroFiles.Length + " aero files scanned)"
+                + (aeroThrust.Count == 0 ? "" : "; first: " + aeroThrust[0]),
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E16]
+
+        private static void ValidateCrossValidationOnly(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E16] TP-1782 stays cross-validation only");
+
+            Record(
+                MavF100SourceData.FlightValidationCitation.Contains("CROSS-VALIDATION ONLY"),
+                "the TP-1782 record says outright that it is an oracle, not a value source",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.FlightValidationCitation.Contains("LEFT"),
+                "and that only the left-position engine 059 was ever flown, so it supports no"
+                + " claim about right-engine installation",
+                report, ref passed, ref failed);
+
+            // The flight-validation envelope must not have become the model's envelope. The
+            // flown band is Mach 0.6-1.5 at 6-13.7 km; the model answers at seven scattered
+            // points, and most of that band is not among them.
+            int insideFlightBand = 0;
+            MavF100OperatingPointCurve[] curves = MavF100SourceData.NetThrustCurves;
+            for (int i = 0; i < curves.Length; i++)
+            {
+                if (curves[i].mach >= MavF100SourceData.FlightValidationMinMach
+                    && curves[i].mach <= MavF100SourceData.FlightValidationMaxMach
+                    && curves[i].altitudeM >= MavF100SourceData.FlightValidationMinAltitudeM
+                    && curves[i].altitudeM <= MavF100SourceData.FlightValidationMaxAltitudeM)
+                {
+                    insideFlightBand++;
+                }
+            }
+
+            Record(insideFlightBand <= 2,
+                "only " + insideFlightBand + " of the seven modelled operating points fall inside"
+                + " the flown band at all, so TP-1782 cannot be standing in as the source envelope",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100NormalizedNetThrustModel.Evaluate(10000f, 1.2f, 100f).support
+                    == MavF100ThrustSupport.OutsideSourceSupport,
+                "a condition inside the flown band but outside the modelled points is still"
+                + " refused - being flown by NASA is not the same as being published as data",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.CalibrationEngineBuild.Contains("2 7/8"),
+                "the calibration engines are recorded as prototype series 2 7/8, the build both"
+                + " TP-1373 and TP-1782 describe",
+                report, ref passed, ref failed);
+        }
+
+        // ------------------------------------------------------ source-tree location
+
+        /// <summary>
+        /// Locates the flight-dynamics sources whether or not a Unity player is loaded. Outside
+        /// Unity <see cref="Application.dataPath"/> throws, so fall back to walking up from the
+        /// working directory, which is how the static host runs these checks.
+        /// </summary>
+        private static string ResolveFlightDynamicsRoot()
+        {
+            try
+            {
+                string fromUnity = Path.Combine(
+                    Application.dataPath,
+                    MavFlightDynamicsOwnershipScan.FlightDynamicsRelativePath);
+
+                if (Directory.Exists(fromUnity))
+                    return fromUnity;
+            }
+            catch (System.Exception)
+            {
+                // No Unity player loaded. Fall through to the directory walk.
+            }
+
+            DirectoryInfo dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+            for (int depth = 0; depth < 8 && dir != null; depth++)
+            {
+                string candidate = Path.Combine(
+                    Path.Combine(dir.FullName, "Assets"),
+                    MavFlightDynamicsOwnershipScan.FlightDynamicsRelativePath);
+
+                if (Directory.Exists(candidate))
+                    return candidate;
+
+                dir = dir.Parent;
+            }
+
+            return null;
         }
 
         // ---------------------------------------------------------------- helpers

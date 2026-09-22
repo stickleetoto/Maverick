@@ -107,9 +107,13 @@ namespace MaverickFresh.FlightDynamics.F15
             {
                 gaps.AppendLine(
                     "THRUST: no dimensional deck. Dimensional thrust is exactly 0 N. "
-                    + "Closing this needs an F100-PW-100 thrust deck matched to the NASA 836 "
-                    + "installation - NASA TP-1373, TM-X-3261 and TP-1034 are the candidate "
-                    + "source set, with engine-build differences kept explicit.");
+                    + "That candidate source set - NASA TM X-3261, TP-1034, TP-1373 and "
+                    + "TP-1782 - has now been read in full (R5). It supplies the SHAPE of "
+                    + "F100 net thrust over the whole envelope, implemented and tested as "
+                    + "MavF100NormalizedNetThrustModel, and no absolute thrust value "
+                    + "anywhere. What is missing is one scalar: the design maximum net "
+                    + "thrust that TP-1034 figure 17 is normalized by. See "
+                    + "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md.");
             }
 
             int undeclaredGeometry = 0;
@@ -134,10 +138,17 @@ namespace MaverickFresh.FlightDynamics.F15
             gaps.AppendLine(
                 "TRANSIENTS: no sourced spool/transient law. The profile selects "
                 + "InstantNoSourcedTransient, which is declared rather than modelled. The F-16 "
-                + "Garza/Morelli law describes a different engine and is not applicable.");
+                + "Garza/Morelli law describes a different engine and is not applicable. "
+                + "TM X-3261 and TP-1034 do print transient models and real rotor inertias, "
+                + "but their torque terms come from component maps published only as graphs, "
+                + "so no time constant follows from what is printed.");
 
             gaps.AppendLine(
-                "INLET / FUEL: no inlet-recovery schedule and no fuel-flow map. "
+                "INLET / FUEL: fuel flow is an INPUT to every model in the R5 source pack and "
+                + "never the output of a published schedule, so it stays unavailable. Inlet "
+                + "total-pressure recovery now exists as MavF100InletRecovery, but it is "
+                + "TM X-3261's TYPICAL recovery schedule and not a measurement of the F-15's "
+                + "variable-geometry inlet, still less of NASA 836's. "
                 + "NASA CR-144866 covers inlet/engine integration context for this airframe.");
 
             return gaps.ToString();
