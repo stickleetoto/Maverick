@@ -261,6 +261,12 @@ namespace MaverickFresh.FlightDynamics.F15
             // Crossfed from the COMMANDED roll, not from the augmented aileron position: the ARI
             // exists to coordinate the pilot's roll demand, and feeding it the damper's output
             // would close an unintended loop through the roll axis.
+            //
+            // OPEN MODELLING QUESTION: this takes the raw mechanical roll command, so the ARI is
+            // NOT scaled by the roll ratio changer. Whether the real F-15 crossfeeds before or
+            // after RRAD is not established by any source in this repository. The choice is
+            // visible here rather than buried, and it has no numeric consequence today because
+            // both gains are Unavailable. DN-1180.01-238-458 Rev. D would settle it.
             if (schedules.StageAvailable(MavF15FcsStage.AileronRudderInterconnect))
             {
                 float commandedAileronDeg =
