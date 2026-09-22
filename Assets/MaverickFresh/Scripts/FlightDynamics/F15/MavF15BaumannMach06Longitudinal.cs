@@ -50,13 +50,13 @@ namespace MaverickFresh.FlightDynamics.F15
 
             // The source explicitly calls this conversion a curve-fitting artifact.
             //
-            // F15-AUDIT-008 (CLOSED, transcription corroborated): the divisor looks like a stray
-            // rad->deg conversion, but it is required. The drag-polar fit below carries
-            // +499, -1.45e4 and +2.13e6 coefficients on the 2nd/3rd/4th powers, which only
-            // produce sane drag for an argument of order 1e-2. CFZ itself is order 1 (about
-            // 0.95 at alpha=15 deg), and feeding it in undivided would put ~1.7e6 into the
-            // quartic term. Dividing by 57.29578 yields 0.0166 there and CFX_low = 0.253.
-            // The divisor and the polar coefficients are therefore mutually consistent.
+            // F15-AUDIT-008 (CLOSED - SOURCE-CONFIRMED). The divisor looks like a stray
+            // rad->deg conversion. It is not. Davison Appendix C, printed page 130, has the
+            // statement verbatim as "CL=CFZ1/57.29578", followed by the source's own
+            // explanation: the curve fit took every independent variable in radians, and for
+            // CFX1 one of those variables was not an angle but a dimensionless coefficient.
+            // The divisor is that artifact, and the polar coefficients below only produce sane
+            // drag for an argument of this scale.
             double clArtifact = cfz / LiftFitArtifactDivisor;
 
             double cfxLow =
@@ -74,12 +74,16 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (1.34148193 * Pow(ral, 4))
                 + (0.20978902 * dstbr)
                 + (0.30604211 * dstbr * dstbr)
-                // F15-AUDIT-005 (OPEN, LOW): a second bare constant alongside the 0.0267297
-                // leading constant. This reads naturally as a separate source increment line
-                // (CFX2 = CFX2 + 0.09833617) rather than an OCR fault, and CFX stays positive
-                // across the whole transcribed alpha range either way, so it is recorded, not
-                // altered. Appendix C CFX2 listing would settle it.
-                + 0.09833617;
+                // F15-AUDIT-005 (CLOSED) + F15-AUDIT-010 (CORRECTED).
+                //
+                // The second bare constant is real: Davison Appendix C, printed page 130, ends
+                // the CFX2 statement with a trailing "+0.09833517" after the DSTBR**2 term. So
+                // the duplicated-constant shape was NOT an OCR artifact.
+                //
+                // The digit was wrong, though: the source reads 0.0983 *5* 17, not 0.0983 *6* 17.
+                // Confirmed at 12x on the page image - the glyph has the flat top bar and open
+                // upper-left of a 5, where the adjacent 3s and a 6 are plainly different.
+                + 0.09833517;
 
             double cfx = BlendLowHighAoaDrag(ral, cfxLow, cfxHigh);
 

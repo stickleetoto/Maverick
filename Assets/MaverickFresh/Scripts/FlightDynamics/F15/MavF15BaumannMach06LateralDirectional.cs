@@ -26,6 +26,17 @@ namespace MaverickFresh.FlightDynamics.F15
     {
         private const double DegPerRad = 57.2957795131;
 
+        /// <summary>
+        /// Upper alpha bound of the compact support shared by both high-alpha asymmetric terms
+        /// (source RALY2 and RALN2, both "90.0/DEGRAD"; Davison Appendix C printed pages 133
+        /// and 139).
+        ///
+        /// Public because MavF15BaumannMach06Domain derives its own upper bound from it. The
+        /// source does NOT test this bound - see HighAlphaAsymmetricSideForce - so the domain
+        /// gate is what actually stops the terms diverging, and the two must not drift apart.
+        /// </summary>
+        public const double CompactSupportAlphaMaxDeg = 90.0;
+
         private const double DifferentialTailFlex = 0.975;
         private const double SideForceRudderFlex = 0.89;
         private const double RollRudderFlex = 0.85;
@@ -50,11 +61,16 @@ namespace MaverickFresh.FlightDynamics.F15
             double rarud = Math.Abs(rudderDeg / DegPerRad);
             double dstbr = surface.symmetricStabilatorDeg / DegPerRad;
 
-            // F15-AUDIT-006 (OPEN, MEDIUM): both smoothing functions are verified to be exact
-            // smooth steps from -1 to +1 (see MavF15BaumannTranscriptionValidation [T3]), but
-            // WHICH width belongs to WHICH channel cannot be checked from the code alone. The
-            // present assignment - +-5 deg on the CY basic term, +-1 deg on Cl and Cn - is the
-            // transcription as received and needs the Appendix C listing to confirm.
+            // F15-AUDIT-006 (CLOSED - SOURCE-CONFIRMED). Davison Appendix C defines BOTH
+            // multipliers on printed page 129 - EPA02S as a smooth step over +-1 deg and EPA02L
+            // over +-5 deg - and each assembly statement names the one it uses:
+            //
+            //     printed p134:  CFY = (CFY1*EPA02L) + ...
+            //     printed p136:  CML = (CML1*EPA02S) + ...
+            //     printed p140:  CMN = (CMN1*EPA02S) + ...
+            //
+            // The wide band belongs to side force and the narrow band to both moments, which is
+            // what this transcription already did. BETA is in DEGREES in both, as here.
             double epa02Small = BetaSignSmall(betaDeg);
             double epa02Large = BetaSignLarge(betaDeg);
 
@@ -135,15 +151,18 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (0.14829547 * ral * ral * rabet * rabet)
                 - (0.11605031 * ral * ral * rabet * dstbr)
 
-                // F15-AUDIT-003 (OPEN, HIGH): the next two lines carry the SAME monomial
-                // ral^2*dstbr^2 with two different coefficients. A repeated monomial in a
-                // transcribed polynomial listing is the signature of a dropped exponent during
-                // OCR, so one of these two is probably not ral^2*dstbr^2 in Davison Appendix C.
-                // The pair contributes up to ~9.4e-3 to Cn at alpha=57 deg / dstab=-20 deg,
-                // which is the same order as Cn itself there.
-                // The numbers are left EXACTLY as transcribed: correcting a suspected OCR fault
-                // without the source scan would replace a known unknown with an invented value.
-                // Resolving this requires Davison AFIT/GAE/ENY/92M-01 Appendix C (CMN1 listing).
+                // F15-AUDIT-003 (CLOSED - SOURCE-CONFIRMED, NOT AN OCR FAULT).
+                //
+                // The next two lines carry the SAME monomial ral^2*dstbr^2 with two different
+                // coefficients, which looked exactly like an exponent lost to OCR. It is not.
+                // Davison Appendix C, printed page 137, prints both lines, consecutively:
+                //
+                //     +-(0.06290678*(RAL**2)*(DSTBR**2))
+                //     +-(0.01404857*(RAL**2)*(DSTBR**2))
+                //
+                // Read at 10x on the page image. Both are kept exactly as the source has them;
+                // combining them into -0.07695535 would be arithmetically identical but would
+                // erase the evidence that the duplication is the source's own.
                 - (0.06290678 * ral * ral * dstbr * dstbr)
                 - (0.01404857 * ral * ral * dstbr * dstbr)
 
@@ -287,7 +306,12 @@ namespace MaverickFresh.FlightDynamics.F15
                     + (0.00062122 * ral)
                     + (0.00260729 * ral * ral)
                     + (0.00745739 * Pow(ral, 3))
-                    - (0.03656114 * Pow(ral, 4))
+                    // F15-AUDIT-009 (CORRECTED): was 0.03656114. Davison Appendix C, printed
+                    // page 132, reads "-(0.0365611*(RAL**4))" - seven decimals, not eight. The
+                    // trailing 4 was introduced in transcription. Read at 5x on the page image;
+                    // the surrounding coefficients on the same line carry eight decimals, which
+                    // is what made the short one easy to pad.
+                    - (0.0365611 * Pow(ral, 4))
                     - (0.04532683 * Pow(ral, 5))
                     + (0.20674845 * Pow(ral, 6))
                     - (0.13264434 * Pow(ral, 7))
@@ -360,17 +384,30 @@ namespace MaverickFresh.FlightDynamics.F15
 
         private static double HighAlphaAsymmetricSideForce(double ral, double rbeta)
         {
-            const double alphaMin = 0.6108652;
-            double alphaMax = 90.0 / DegPerRad;
-            const double betaMin = -0.0872665;
-            const double betaMax = 0.1745329;
+            const double alphaMin = 0.6108652;                          // source RALY1
+            double alphaMax = CompactSupportAlphaMaxDeg / DegPerRad;     // source RALY2
+            const double betaMin = -0.0872665;                          // source RBETY1
+            const double betaMax = 0.1745329;                           // source RBETY2
 
-            // BOTH alpha bounds are enforced. CompactSupportShape only vanishes INSIDE its
-            // declared interval: outside it the (u^2-1)^2 window grows instead of decaying, so
-            // omitting the upper alpha test turns a bounded 0.164 bump into an unbounded ramp
-            // (CY reached -237 at alpha=179 deg before F15-AUDIT-001 was fixed). Beta already
-            // had both tests; alpha had only the lower one.
-            if (ral < alphaMin || ral > alphaMax || rbeta < betaMin || rbeta > betaMax)
+            // F15-AUDIT-001 (REOPENED, then WITHDRAWN - see the audit document).
+            //
+            // An earlier pass added an upper-alpha test here, reasoning that a compact-support
+            // term must vanish outside its own interval. Davison Appendix C, printed page 134,
+            // shows that the source does NOT have one:
+            //
+            //     IF (RAL .LT. 0.6108652) THEN CYRB=0.0 / GOTO 500 / ENDIF
+            //     IF ((RBETA .LT. -0.0872665) .OR. (RBETA .GT. 0.1745329)) THEN ...
+            //
+            // Beta is guarded on both sides; alpha only from below. The original transcription
+            // was therefore FAITHFUL and the added guard was a silent deviation from source in
+            // a file whose whole purpose is faithful transcription. It is removed.
+            //
+            // The divergence above 90 deg is real - CY reaches -237 at alpha=179 deg - but it
+            // belongs to the source, so it is bounded where Maverick's own additions belong:
+            // MavF15BaumannMach06Domain, which refuses alpha outside [-4, 90] deg. That gate's
+            // upper bound is load-bearing for exactly this reason and is tied to alphaMax here
+            // by fixture [T5].
+            if (ral < alphaMin || rbeta < betaMin || rbeta > betaMax)
                 return 0.0;
 
             const double amplitude = 0.164;
@@ -546,10 +583,10 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (0.01859168 * Pow(ral, 8))
                 + (0.0002587 * ral * dstbr)
                 - (0.00018546 * ral * dstbr * rbeta)
-                // F15-AUDIT-004 (OPEN, LOW): this rbeta term and the +0.0000461872*rbeta term
-                // below share one monomial. Unlike F15-AUDIT-003 this is plausible as two
-                // separately grouped source lines, and the net effect is ~1% of the leading
-                // constant, so it is recorded rather than treated as a likely fault.
+                // F15-AUDIT-004 (CLOSED - SOURCE-CONFIRMED). This rbeta term and the
+                // +0.0000461872*rbeta term below share one monomial, and Davison Appendix C,
+                // printed page 138, prints both, several lines apart in the same statement.
+                // Kept as the source has them.
                 - (0.00000517304 * rbeta)
                 - (0.00102718 * ral * rbeta)
                 - (0.0000689379 * rbeta * dstbr)
@@ -669,24 +706,30 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (0.00561241 * Pow(ral, 4))
                 - (0.00634392 * Pow(ral, 5))
                 + (0.00193323 * Pow(ral, 6))
-                // F15-AUDIT-007 (OPEN, INFO): these two aileron-magnitude coefficients are ~1e-17,
-                // i.e. ~14 orders below the leading term. Whatever the source digits are, the
-                // terms are numerically inert at any realistic aileron deflection, so a
-                // transcription fault here cannot change Cn. Recorded for completeness only.
+                // F15-AUDIT-007 (CLOSED - SOURCE-CONFIRMED). Davison Appendix C, printed page
+                // 139, prints these as "-(2.05815E-17*(RAL*DAILA))+(3.794816E-17*(DAILA**3))".
+                // The exponents really are E-17, so the terms are numerically inert at any
+                // realistic aileron deflection - that is the source's behaviour, not a fault.
                 - (2.05815e-17 * ral * daila)
                 + (3.794816e-17 * Pow(daila, 3));
         }
 
         private static double HighAlphaAsymmetricYawingMoment(double ral, double rbeta)
         {
-            const double alphaMin = 0.69813;
-            double alphaMax = 90.0 / DegPerRad;
-            const double betaMin = -0.174532;
-            const double betaMax = 0.34906;
+            const double alphaMin = 0.69813;                            // source RALN1
+            double alphaMax = CompactSupportAlphaMaxDeg / DegPerRad;     // source RALN2
+            const double betaMin = -0.174532;                           // source RBETN1
+            const double betaMax = 0.34906;                             // source RBETN2
 
-            // See HighAlphaAsymmetricSideForce: the upper alpha bound is part of the declared
-            // compact support, not an optimisation. F15-AUDIT-001.
-            if (ral < alphaMin || ral > alphaMax || rbeta < betaMin || rbeta > betaMax)
+            // As in HighAlphaAsymmetricSideForce, the source guards beta on both sides and alpha
+            // only from below. Davison Appendix C, printed page 140:
+            //
+            //     IF (RAL .LT. 0.69813) THEN CNRB=0.0 / GOTO 1000 / ENDIF
+            //     IF ((RBETA .LT. -0.174532) .OR. (RBETA .GT. 0.34906)) THEN ...
+            //
+            // F15-AUDIT-001 withdrawn; alphaMax stays declared because the domain gate is
+            // derived from it, but it is not tested here.
+            if (ral < alphaMin || rbeta < betaMin || rbeta > betaMax)
                 return 0.0;
 
             const double amplitude = 0.034;

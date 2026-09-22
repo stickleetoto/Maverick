@@ -37,25 +37,32 @@ policy, not a gap in the implementation.
 
 ### Phase 1 — R2 transcription audit and domain gate  (`cea9b9a`)
 
-The coefficient-by-coefficient comparison against Davison Appendix C is **BLOCKED**: no source
-scan is in the repository. A structural audit was done instead, and found two defects, both in
-the Unity code around the data rather than in the data.
+Run before the source was available. A structural audit stood in for the
+coefficient-by-coefficient comparison, and added `MavF15BaumannMach06Domain` (**F15-AUDIT-002**)
+because the 6th- to 9th-order fits diverge rather than degrade outside their fitted region —
+**Cm reaches −730 at α=180°**, which the finiteness check cannot see. That gate stands and is
+now better justified than when it was written.
 
-- **F15-AUDIT-001 (fixed)** — the two high-alpha asymmetric terms guarded beta on both sides but
-  alpha only from below, so past their declared 90° `alphaMax` the compact-support window grew
-  instead of decaying: a term meant to peak at 0.164 reached **−237 at 179°**, sign reversed, and
-  the finiteness check could not see it.
-- **F15-AUDIT-002 (fixed)** — no alpha/beta domain gate existed. These are 6th- to 9th-order fits
-  that diverge rather than degrade outside their fitted region; **Cm reaches −730 at α=180°**.
-  `MavF15BaumannMach06Domain` now refuses outside the span of breakpoints the routine itself
-  declares, and documents that this is a transcription-derived bound, not an aerodynamic validity
-  envelope the sources never published.
+It also reported **F15-AUDIT-001** as a defect and "fixed" it. Phase 4 showed that was wrong.
 
-Five transcription questions remain open and are marked at the exact lines. Full detail, including
-what would close each one, is in **`F15_R2_TRANSCRIPTION_AUDIT_V0.1.md`**.
+### Phase 4 — source-verified transcription audit  (this commit)
 
-**No transcribed coefficient was changed.** The only executable edit in either transcription file
-is the two alpha guards.
+Davison AFIT/GAE/ENY/92M-01 Appendix C was supplied as original page images, so the blocked audit
+was completed: **34 coefficient families, ~330 numeric literals**, verified symbol by symbol
+against the scans at up to 22× magnification.
+
+- **2 corrections**, both single wrong digits with negligible numerical effect
+  (F15-AUDIT-009, F15-AUDIT-010).
+- **6 previously-suspicious items resolved as source-confirmed** — including the duplicated CMN1
+  monomial, which is genuinely printed twice in the source, and the EPA02S/EPA02L assignment,
+  which the transcription already had right.
+- **F15-AUDIT-001 withdrawn.** The source guards those terms only from below; the transcription
+  was faithful and Phase 1's added guard was a silent deviation from source. It has been removed,
+  and the domain gate's 90° bound is now documented as load-bearing.
+- **2 residual ambiguities** from physical scan damage, both consistent with the transcribed
+  digit, neither changed.
+
+Full per-symbol table with page references in **`F15_R2_TRANSCRIPTION_AUDIT_V0.1.md`** (rev V0.2).
 
 ### Phase 2 — F-15 surface-state and control-path ownership  (`060cef7`)
 
@@ -189,10 +196,10 @@ simulated host.
 
 | suite | result | evidence |
 |---|---|---|
-| `MavF15BaumannTranscriptionValidation.RunAll` | **25 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
+| `MavF15BaumannTranscriptionValidation.RunAll` | **28 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
 | `MavF15ControlPathValidation.RunAll` | **41 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
 | `MavF15PropulsionValidation.RunAll` | **27 passed, 0 failed** | `FDM_VALIDATION_RESULT_V1` status PASS |
-| **total** | **93 passed, 0 failed** | |
+| **total** | **96 passed, 0 failed** | |
 
 The whole project also compiles clean in the editor, and separately all 304 runtime scripts compile
 with **0 errors** under Unity's Roslyn outside the editor.
@@ -212,8 +219,8 @@ Note that `MavF15PropulsionValidation` can *only* run this way: `MavEngineProfil
   exercised by this work.
 - **Any flight, trim or trajectory test.** There is nothing to fly: with no sourced gearing the
   control law outputs neutral and with no deck the engines produce no thrust.
-- **Any comparison against AFIT source plots or tables.** The scans are unavailable — this is the
-  blocker, not an omission.
+- **Any comparison against AFIT source PLOTS or flight-test tables.** The Appendix C code listing
+  is now verified, but that is a transcription check, not a behavioural one.
 
 A pass on the fixtures means *internally consistent and structurally sound*. It does not mean
 *verified against the source*.
@@ -244,8 +251,8 @@ Ranked by how much each source unlocks.
 
 | # | source | unblocks |
 |---|---|---|
-| 1 | **Davison, AFIT/GAE/ENY/92M-01, Appendix C** (page images, not OCR) | closes all five open transcription questions; lets the research model be trusted rather than merely structurally sound |
-| 2 | **MDC A4172 Part II** — *F/TF-15 Stability Derivatives, Mass and Inertia Characteristics* | the exact NASA 836 coefficient database, `S` and `c̄`; would make the exact-target profile valid and everything downstream live-capable |
+| ~~1~~ | ~~Davison AFIT/GAE/ENY/92M-01 Appendix C~~ | **SUPPLIED AND CLOSED** — see the audit document |
+| 1 | **MDC A4172 Part II** — *F/TF-15 Stability Derivatives, Mass and Inertia Characteristics* | the exact NASA 836 coefficient database, `S` and `c̄`; would make the exact-target profile valid and everything downstream live-capable. **Now the top blocker.** |
 | 3 | **DN-1180.01-238-458 Rev. D** — *F-15 Flight Control System Description* | mechanical gearing, PRAD/RRAD, CAS gains, ARI, limiters, actuator travel and rates — the entire `MavF15ControlLawSchedules` set at once |
 | 4 | **NASA TP-1373 / TM-X-3261 / TP-1034** | an F100-PW-100 thrust deck; would need engine-build differences kept explicit |
 | 5 | **NASA 836 engine installation geometry** (any configuration-matched source) | mount coordinates and thrust-line offsets; without it engine-out yaw stays unmodelled and `r × F` stays zero by absence |
@@ -259,10 +266,11 @@ body of already-implemented code in this branch from "candidate transcription" t
 
 ## 10. Recommended next action
 
-Supply **Davison Appendix C as page images**. Every open item in the transcription audit is a
-question about a character OCR is most likely to have damaged — an exponent, a sign, a leading
-digit — so OCR text cannot settle it.
+Davison Appendix C is closed. The top blocker is now **MDC A4172 Part II**, which carries the
+exact NASA 836 coefficient database along with `S` and `c̄` — the two values that currently keep
+the exact-target profile invalid and therefore keep everything downstream from going live.
 
-Until then the useful work is sourcing, not coding. The architecture is ahead of the data, which
-is the correct place for it to be, and further implementation would mostly consist of inventing
-numbers to fill it.
+The position is otherwise unchanged: the architecture is ahead of the data, which is the correct
+place for it to be, and further implementation would mostly consist of inventing numbers to fill
+it. Verifying the Baumann transcription raised confidence in the research model; it did not move
+the research model any closer to being NASA 836.

@@ -8,19 +8,26 @@ namespace MaverickFresh.FlightDynamics.Validation
     /// <summary>
     /// Deterministic transcription checks for the AFIT/Baumann F-15 research aerodynamic model.
     ///
-    /// PURPOSE AND LIMIT
-    /// -----------------
-    /// The original scans (Davison AFIT/GAE/ENY/92M-01 Appendix C, Nolan AFIT/GAE/ENY/92J-02) are
-    /// NOT in this repository, so no check here can confirm that a transcribed digit matches the
-    /// page. What these checks CAN do is exercise the structural properties a correct
-    /// transcription must have and that a mistyped digit, a dropped exponent, a swapped sign or a
-    /// mangled breakpoint would almost certainly break:
+    /// STATUS
+    /// ------
+    /// The source is now available and every implemented coefficient, sign, exponent, threshold
+    /// and multiplier has been verified against the original page images of Davison,
+    /// AFIT/GAE/ENY/92M-01, Appendix C (printed pages 121-140). Two transcription errors were
+    /// found and corrected; see Docs/Reference/F15_R2_TRANSCRIPTION_AUDIT_V0.1.md for the
+    /// per-symbol table, the page references and the two residual glyph ambiguities.
+    ///
+    /// These fixtures therefore serve two purposes now: they pin the corrected digits so a
+    /// regression cannot quietly reinstate the old ones, and they keep exercising the structural
+    /// properties that a future edit could break.
     ///
     ///   [T1] every piecewise segment joins its neighbour continuously (16 breakpoints)
     ///   [T2] the 20-30 deg drag transition hands over smoothly at both ends
     ///   [T3] both beta smoothing functions are exact smooth steps from -1 to +1
-    ///   [T4] the compact-support bump reaches exactly its declared amplitude at the star point
-    ///   [T5] the compact-support bump vanishes outside BOTH alpha bounds  (F15-AUDIT-001)
+    ///        (source EPA02S over +-1 deg and EPA02L over +-5 deg)
+    ///   [T4] the compact-support bump reaches its declared amplitude at the star point
+    ///  [T4b] SOURCE-DIGIT regressions for F15-AUDIT-009 and F15-AUDIT-010
+    ///   [T5] the transcription still diverges above 90 deg, because the SOURCE has no upper
+    ///        alpha guard, and the domain gate is what bounds it  (F15-AUDIT-001 withdrawn)
     ///   [T6] zero sideslip with neutral surfaces and rates gives zero lateral coefficients,
     ///        below the alpha where the source's asymmetric departure terms switch on
     ///   [T7] coefficients are antisymmetric in beta where the asymmetric terms are inactive
@@ -30,10 +37,8 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///        refuses outside it                                          (F15-AUDIT-002)
     ///  [T11] the routine returns coefficients only - no thrust term leaks into CX or Cm
     ///
-    /// A pass here means "internally consistent and structurally sound". It does not mean
-    /// "verified against the source". Items F15-AUDIT-003 through 007 in
-    /// Docs/Reference/F15_R2_TRANSCRIPTION_AUDIT_V0.1.md are NOT decidable by these checks and
-    /// stay open until the PDFs are supplied.
+    /// Verification against the source is recorded in the audit document, not here: a fixture
+    /// can only check what the code does, never what the page says.
     ///
     /// Pure static math. No GameObject, Rigidbody, scene or play-mode session is touched.
     /// </summary>
@@ -52,8 +57,8 @@ namespace MaverickFresh.FlightDynamics.Validation
             StringBuilder report = new StringBuilder(8192);
             report.AppendLine("F-15 Baumann Research Aero - Transcription Structure Validation");
             report.AppendLine("===============================================================");
-            report.AppendLine("Source scans NOT available in-repo. These are internal-consistency");
-            report.AppendLine("checks only - see F15_R2_TRANSCRIPTION_AUDIT_V0.1.md.");
+            report.AppendLine("Verified against Davison AFIT/GAE/ENY/92M-01 Appendix C page images");
+            report.AppendLine("(printed pp.121-140). See F15_R2_TRANSCRIPTION_AUDIT_V0.1.md.");
 
             ValidatePiecewiseContinuity(report, ref passed, ref failed);
             ValidateDragTransition(report, ref passed, ref failed);
@@ -388,51 +393,98 @@ namespace MaverickFresh.FlightDynamics.Validation
                 report, ref passed, ref failed
             );
 
-            // [T5] F15-AUDIT-001 regression. Above the declared alphaMax of 90 deg the bump must
-            // be gone. Before the fix the (u^2-1)^2 window grew without bound and CY reached
-            // -237 at alpha=179 deg. Anything of that order here means the guard was lost again.
-            float worstAbove = 0f;
-            float worstAlphaDeg = 0f;
-            for (float alphaDeg = 90.5f; alphaDeg <= 179f; alphaDeg += 0.5f)
-            {
-                MavAeroCoefficients c =
-                    MavF15BaumannMach06LateralDirectional.Evaluate(
-                        alphaDeg / DegPerRad, betaStarRad, Neutral(), 0f, 0f);
+            // [T4b] SOURCE-DIGIT regressions for the two corrections found in the
+            // 2026-09-22 page-image audit.
+            //
+            // MavAeroCoefficients is float, so an absolute tolerance against a double-precision
+            // recomputation is not reachable. These instead ask the only question that matters:
+            // is the production value closer to the CORRECTED source digit than to the one it
+            // replaced? That is discriminating, and it stays valid whatever the float noise is.
 
-                // Isolate the asymmetric channel's signature: it is the only term that would
-                // produce a contribution of order 1 or more in CY here.
-                if (Mathf.Abs(c.cy) > worstAbove)
-                {
-                    worstAbove = Mathf.Abs(c.cy);
-                    worstAlphaDeg = alphaDeg;
-                }
-            }
+            // F15-AUDIT-009: CYDAD RAL**4 is 0.0365611 (Appendix C printed p132), not 0.03656114.
+            const double a30 = 30.0 / 57.2957795131;
+            double cydadActual = SideForceAileronDerivativeAt(a30);
+            double cydadBase =
+                -0.00020812
+                + (0.00062122 * a30)
+                + (0.00260729 * a30 * a30)
+                + (0.00745739 * System.Math.Pow(a30, 3))
+                - (0.04532683 * System.Math.Pow(a30, 5))
+                + (0.20674845 * System.Math.Pow(a30, 6))
+                - (0.13264434 * System.Math.Pow(a30, 7))
+                - (0.00193383 * System.Math.Pow(a30, 8));
 
-            // The base CFY1 polynomial alone still diverges above 90 deg - that is F15-AUDIT-002,
-            // handled by the domain gate, not here. What [T5] asserts is that the asymmetric bump
-            // is no longer ADDING to it: with the guard restored this sweep peaks near 182, which
-            // is the base polynomial by itself. Without the guard the bump contributed a further
-            // -237 at alpha=179 deg on top of that.
+            double cydadCorrected = cydadBase - (0.0365611 * System.Math.Pow(a30, 4));
+            double cydadPrevious = cydadBase - (0.03656114 * System.Math.Pow(a30, 4));
+
+            double cydadToCorrected = System.Math.Abs(cydadActual - cydadCorrected);
+            double cydadToPrevious = System.Math.Abs(cydadActual - cydadPrevious);
+
             Record(
-                worstAbove < 250f,
-                "asymmetric bump is switched off above its declared 90 deg alphaMax"
-                + " (residual base-polynomial |CY| peaks at " + worstAbove.ToString("F1")
-                + " at " + worstAlphaDeg.ToString("F1") + " deg, which the domain gate refuses)",
+                cydadToCorrected < cydadToPrevious,
+                "CYDAD at alpha=30 deg sits on the CORRECTED 0.0365611, not the previous"
+                + " 0.03656114 (distance " + cydadToCorrected.ToString("E2")
+                + " vs " + cydadToPrevious.ToString("E2") + ") - F15-AUDIT-009",
                 report, ref passed, ref failed
             );
 
-            // And it must be off immediately above the bound, not merely small far away.
-            MavAeroCoefficients justInside =
-                MavF15BaumannMach06LateralDirectional.Evaluate(
-                    89.9f / DegPerRad, betaStarRad, Neutral(), 0f, 0f);
-            MavAeroCoefficients justOutside =
-                MavF15BaumannMach06LateralDirectional.Evaluate(
-                    90.1f / DegPerRad, betaStarRad, Neutral(), 0f, 0f);
+            // F15-AUDIT-010: CFX2 trailing constant is 0.09833517 (printed p130), not
+            // 0.09833617. Probed at 40 deg, above the blend, where CFX is CFX2 alone.
+            double cfxActual = RecoverCfx(40f / DegPerRad);
+            const double a40 = 40.0 / 57.2957795131;
+            double cfxBase =
+                0.0267297
+                - (0.10646919 * a40)
+                + (5.39836337 * a40 * a40)
+                - (5.0086893 * System.Math.Pow(a40, 3))
+                + (1.34148193 * System.Math.Pow(a40, 4));
+
+            double cfxToCorrected = System.Math.Abs(cfxActual - (cfxBase + 0.09833517));
+            double cfxToPrevious = System.Math.Abs(cfxActual - (cfxBase + 0.09833617));
 
             Record(
-                Mathf.Abs(justOutside.cy - justInside.cy) < 0.05f,
-                "no step discontinuity at the 90 deg support boundary"
-                + " (the bump has already decayed to zero there)",
+                cfxToCorrected < cfxToPrevious,
+                "CFX at alpha=40 deg sits on the CORRECTED 0.09833517, not the previous"
+                + " 0.09833617 (distance " + cfxToCorrected.ToString("E2")
+                + " vs " + cfxToPrevious.ToString("E2") + ") - F15-AUDIT-010",
+                report, ref passed, ref failed
+            );
+
+            // [T5] SOURCE-FIDELITY regression, replacing the earlier F15-AUDIT-001 guard test.
+            //
+            // Davison Appendix C guards these two terms only from BELOW (printed pages 134 and
+            // 140). An earlier pass added an upper-alpha guard on the reasoning that a
+            // compact-support term must vanish outside its interval; the source disagrees, so
+            // the guard was withdrawn and the divergence is now bounded by the domain gate
+            // instead. These checks hold that arrangement in place from both ends.
+            float aboveBound = MavF15BaumannMach06Domain.SourceAlphaMaxDeg + 5f;
+            MavAeroCoefficients beyond =
+                MavF15BaumannMach06LateralDirectional.Evaluate(
+                    aboveBound / DegPerRad, betaStarRad, Neutral(), 0f, 0f);
+
+            Record(
+                Mathf.Abs(beyond.cy) > 0.1f,
+                "the transcription still DIVERGES above 90 deg (|CY|="
+                + Mathf.Abs(beyond.cy).ToString("F3") + " at " + aboveBound.ToString("F0")
+                + " deg) - the source has no upper-alpha guard and we do not add one",
+                report, ref passed, ref failed
+            );
+
+            string beyondReason;
+            Record(
+                !MavF15BaumannMach06Domain.IsInsideTranscribedSpan(
+                    aboveBound / DegPerRad, betaStarRad, out beyondReason),
+                "...and the domain gate refuses exactly that state, so the divergence is"
+                + " unreachable in production",
+                report, ref passed, ref failed
+            );
+
+            // The gate's upper bound and the terms' own compact-support alphaMax must stay
+            // equal. If someone raises the gate, this fails before the fiction ships.
+            Record(
+                Mathf.Approximately(MavF15BaumannMach06Domain.SourceAlphaMaxDeg, 90f),
+                "the domain gate's upper alpha bound is still the terms' declared 90 deg"
+                + " compact-support alphaMax - this bound is load-bearing",
                 report, ref passed, ref failed
             );
         }
@@ -746,6 +798,27 @@ namespace MaverickFresh.FlightDynamics.Validation
         {
             MavAeroCoefficients c = EvaluateNeutral(alphaRad);
             return (c.cx * Math.Sin(alphaRad)) - (c.cz * Math.Cos(alphaRad));
+        }
+
+        /// <summary>
+        /// Recovers CYDAD, the side-force-due-to-aileron derivative, through the public entry
+        /// point.
+        ///
+        /// At beta=0 both beta multipliers evaluate to exactly zero, so the CFY1 basic term
+        /// drops out; with rates and every other surface at zero, and alpha below the 35 deg
+        /// asymmetric-term threshold, CY reduces to CYDAD*DAILD exactly. One degree of aileron
+        /// therefore reads CYDAD straight off.
+        /// </summary>
+        private static double SideForceAileronDerivativeAt(double alphaRad)
+        {
+            MavF15BaumannSurfaceState surface = Neutral();
+            surface.aileronDeg = 1f;
+
+            MavAeroCoefficients c =
+                MavF15BaumannMach06LateralDirectional.Evaluate(
+                    (float)alphaRad, 0f, surface, 0f, 0f);
+
+            return c.cy;
         }
 
         /// <summary>

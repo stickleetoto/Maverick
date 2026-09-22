@@ -50,8 +50,16 @@ namespace MaverickFresh.FlightDynamics.F15
         /// Highest alpha breakpoint anywhere in the transcription: the compact-support alphaMax
         /// shared by both high-alpha asymmetric terms. Nothing in the routine declares behaviour
         /// above it.
+        ///
+        /// LOAD-BEARING. The source routine guards those two terms only from BELOW - verified
+        /// against Davison Appendix C, printed pages 134 and 140 - so above 90 degrees their
+        /// compact-support window grows instead of decaying and CY runs to -237 by 179 degrees.
+        /// The transcription reproduces that faithfully, which means THIS BOUND is the only
+        /// thing standing between the research model and a fictitious coefficient. Raising it
+        /// re-enables the divergence. Fixture [T5] ties it to the terms' own alphaMax.
         /// </summary>
-        public const float SourceAlphaMaxDeg = 90.0f;
+        public const float SourceAlphaMaxDeg =
+            (float)MavF15BaumannMach06LateralDirectional.CompactSupportAlphaMaxDeg;
 
         /// <summary>
         /// Largest beta MAGNITUDE appearing in any transcribed breakpoint: the +0.34906 rad
