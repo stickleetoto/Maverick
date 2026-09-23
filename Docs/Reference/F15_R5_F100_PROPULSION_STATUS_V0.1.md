@@ -28,7 +28,7 @@ not move. Closing the scale is a declaration of one scalar, not a rewrite.
 | augmented thrust | **SOURCE-BACKED (shape only)** | TP-1034 fig. 17, PLA 83–130°, all 7 conditions |
 | Mach dependence | **SOURCE-BACKED (at 7 points only)** | Mach 0, 0.9, 1.8, 2.15, 2.2. No interpolation between them |
 | altitude dependence | **SOURCE-BACKED (at 7 points only)** | 0, 3.048, 6.096, 9.144, 12.19, 13.72, 17.83 km |
-| **absolute thrust scale** | **BLOCKED** | design maximum net thrust is printed in none of the four documents |
+| **absolute thrust scale** | **BLOCKED** | design maximum net thrust printed nowhere. Bounded above at ~22 400 lbf by §6c of the audit; two candidate values investigated and rejected |
 | airflow | **UNAVAILABLE** (one datum recorded) | design corrected airflow 98.4 kg/s from TP-1373; no schedule, no map |
 | fuel flow | **UNAVAILABLE** | an *input* to every model in the pack, never an output of a published schedule |
 | transient / spool dynamics | **BLOCKED** | rotor inertias printed; turbine and fan torque come from unpublished maps, so no time constant follows |
@@ -128,7 +128,14 @@ impression that thrust is one step away when it is two. `[E14]` asserts each blo
 and that a scale declared **without a citation** or with a non-positive value is still refused —
 that being precisely how an invented number would enter a sourced deck.
 
-### Two specific numbers that must not be used to close it
+### Three specific numbers that must not be used to close it
+
+**30 000 lbf (133.45 kN).** TP-1034 appendix C printed p. 28 gives `FN=Y12; FN=FN*30000.;
+FNSI=FN*4.4482E-3` — a genuine printed dimensional thrust scale that the first pass of this audit
+missed. It is the **full-scale factor of a `SCALED FRACTION` DAC channel**, not a design value, and
+it provably cannot be the figure 17 normalizer: the channel's type cannot exceed 1.0, while figure
+17 plots up to 1.338. It does yield a derived **upper bound** on the design maximum of about
+22 400 lbf. §6c of the source audit has the full trace; `[E20]` holds it.
 
 **111.2 kN.** TP-1373's plot-axis scale for gross thrust, and reported by the user to be described
 in TP-1228 as an arbitrarily chosen nominal *corrected* gross-thrust normalization. Wrong thrust
@@ -159,10 +166,10 @@ Run in **Unity 6000.3.16f1 headless** through `MavFdmValidationBatchAdapter`.
 
 | suite | result |
 |---|---|
-| `MavF15PropulsionValidation` | **111 passed, 0 failed** (was 27) |
+| `MavF15PropulsionValidation` | **121 passed, 0 failed** (was 27) |
 | `MavF15BaumannTranscriptionValidation` | **28 passed, 0 failed** |
 | `MavF15ControlPathValidation` | **79 passed, 0 failed** |
-| **total** | **218 passed, 0 failed** |
+| **total** | **228 passed, 0 failed** |
 
 311 runtime scripts compile with 0 errors.
 
@@ -183,6 +190,7 @@ New sections, covering every item the R5 brief's §9 lists:
 | `[E17]` | 111.2 kN is a plot scale and cannot become the design-maximum denominator |
 | `[E18]` | the sea-level-static anchor: mechanism sound, three gates, fails at the first |
 | `[E19]` | normalized net and dimensional gross remain separate datasets |
+| `[E20]` | the TP-1034 30 000 lbf channel scale, and why it is not the normalizer |
 
 **NOT RUN:** Unity play mode; any flight, trim or trajectory test; any comparison against TP-1782
 flight data (there is no dimensional thrust to compare, and TP-1782 publishes only percentages).

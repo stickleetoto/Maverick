@@ -121,9 +121,16 @@ namespace MaverickFresh.FlightDynamics.F15
     ///
     /// THE ONE FACT THAT SHAPES EVERYTHING ELSE
     /// ----------------------------------------
-    /// Across all four documents there is NO absolute thrust value for a flight condition and
-    /// power setting. Every thrust result in the pack is either a fraction of an unpublished
+    /// Across all four documents there is no absolute thrust value FOR A FLIGHT CONDITION AND
+    /// POWER SETTING. Every thrust RESULT in the pack is either a fraction of an unpublished
     /// normalizer or a percentage difference against a proprietary manufacturer deck:
+    ///
+    /// That wording is deliberately narrower than it first was. An earlier revision of this file
+    /// said there was no absolute thrust value anywhere in the pack, and that was wrong: TP-1034
+    /// appendix C prints a dimensional thrust SCALE, 30 000 lbf, as the full-scale factor of the
+    /// simulation's net-thrust channel. See <see cref="SimulationNetThrustChannelFullScaleLbf"/>.
+    /// It is not the figure 17 normalizer - it is larger, and provably so - but it is a real
+    /// printed dimensional thrust fact and the audit now records it as one.
     ///
     ///   - TP-1034 figure 17 plots "fraction of design maximum net thrust" and never states the
     ///     design maximum.
@@ -193,8 +200,126 @@ namespace MaverickFresh.FlightDynamics.F15
                     "UNAVAILABLE: design maximum net thrust is the normalizer of NASA TP-1034 "
                     + "figure 17 and is not printed in TP-1034, TM X-3261, TP-1373 or TP-1782. "
                     + "Definition is fixed: uninstalled net thrust at sea level, Mach 0, "
-                    + "PLA 130 deg. Closing it needs the P&W F100 status/spec deck or an "
-                    + "installed-thrust report that states it.");
+                    + "PLA 130 deg. Two candidate values have been investigated and both "
+                    + "rejected: TP-1373's 111.2 kN axis scale (wrong thrust quantity - see "
+                    + "AxisNormalizerIsNotTheDesignMaximum) and TP-1034's 30 000 lbf simulation "
+                    + "channel scale (a SCALED FRACTION full scale, provably larger than the "
+                    + "normalizer - see Y12IsNotTheFigure17Normalizer). The second does yield a "
+                    + "derived upper bound of about 22 400 lbf. Closing it needs the P&W F100 "
+                    + "status/spec deck or a sea-level test report for the (3) build.");
+            }
+        }
+
+        // ------------------------------------ TP-1034 appendix C: the Y12 thrust channel
+
+        /// <summary>
+        /// Full-scale factor of the net-thrust channel in the TP-1034 hybrid simulation, in lbf.
+        ///
+        /// NASA TP-1034 appendix C, FORTRAN listing, printed p. 28, verified from the page image
+        /// at 6x against neighbouring digits on the same page:
+        ///
+        ///     FN=Y12
+        ///     FN=FN*30000.
+        ///     FNSI=FN*4.4482E-3
+        ///
+        /// with the symbol list defining FN as uninstalled net thrust in lbf and FNSI the same in
+        /// kN. NASA TM X-3261's appendix C carries the identical block, so the two reports agree.
+        ///
+        /// THIS IS A MACHINE SCALE FACTOR, NOT A DESIGN VALUE. See
+        /// <see cref="Y12IsNotTheFigure17Normalizer"/> before using it for anything.
+        /// </summary>
+        public const float SimulationNetThrustChannelFullScaleLbf = 30000f;
+
+        /// <summary>Exact pound-force to newton conversion, for the SI form of the channel scale.</summary>
+        public const double PoundForceToNewton = 4.4482216152605;
+
+        /// <summary>
+        /// The same full scale in newtons, 133.45 kN. The source's own constant, 4.4482E-3,
+        /// converts to kN and agrees to five figures.
+        /// </summary>
+        public const float SimulationNetThrustChannelFullScaleN =
+            (float)(SimulationNetThrustChannelFullScaleLbf * PoundForceToNewton);
+
+        public const string Y12ChannelCitation =
+            "NASA TP-1034 appendix C, printed p. 28 (PDF p. 32): FN=Y12; FN=FN*30000.; "
+            + "FNSI=FN*4.4482E-3. Y12 is declared a DAC SCALED FRACTION on printed p. 25 and is "
+            + "computed on printed p. 26 as the net thrust expression, gross terms less FRD (ram "
+            + "drag) less the pressure-area term, rescaled by /.349335.";
+
+        /// <summary>
+        /// Why the 30 000 lbf channel scale is NOT the design maximum net thrust that figure 17
+        /// is normalized by - which is the question that matters, since the two would otherwise
+        /// look interchangeable.
+        ///
+        /// 1. **Y12 is a SCALED FRACTION.** TP-1034 appendix C printed p. 25 declares it among
+        ///    the DAC variables as such. That is the EAI hybrid fixed-point fractional type: the
+        ///    value lives in [-1, 1) and cannot represent anything outside it. So the largest net
+        ///    thrust this simulation can even express is 30 000 lbf, at Y12 = 1.
+        ///
+        /// 2. **Figure 17 goes to 1.338.** Panel (e), 6.096 km at Mach 1.8, maximum augmentation.
+        ///    If figure 17's normalizer were the channel's full scale, that point would require
+        ///    Y12 = 1.338, which the type cannot hold. The plotted markers are this simulation's
+        ///    own output and the steady-state printout derives from the same channel, so every
+        ///    hybrid thrust value in the report passed through Y12. Therefore the figure's
+        ///    normalizer is a SMALLER number than the channel scale, and the two are not the same
+        ///    quantity.
+        ///
+        /// 3. **Every scale factor in that block is a round headroom value.** The clearest case is
+        ///    on the same page: PLA=PLA*150., where the documented maximum power lever angle is
+        ///    130 degrees (printed p. 11). Also XNL and XNH at 15 000 rpm against corrected fan
+        ///    speeds that TP-1373 shows peaking near 11 000, T4 at 4 000, T41 at 3 000, WF7 at 20,
+        ///    WA2 at 450. These are analog scaling constants chosen round and safely above the
+        ///    expected maximum - which is what makes 30 000 an unsurprising choice and a
+        ///    misleading one to read as a rating.
+        ///
+        /// So this constant is recorded as a simulation-output fact and is deliberately NOT
+        /// applied to <see cref="NetThrustCurves"/>.
+        /// </summary>
+        public const string Y12IsNotTheFigure17Normalizer =
+            "Y12 is declared SCALED FRACTION (TP-1034 appendix C, printed p. 25), so it lives in "
+            + "[-1, 1) and 30 000 lbf is the largest net thrust the simulation can express. "
+            + "Figure 17 panel (e) plots 1.338 of its own normalizer, which the channel could not "
+            + "carry if that normalizer were the channel scale. The figure's design maximum is "
+            + "therefore strictly smaller than 30 000 lbf, and the two are different quantities.";
+
+        /// <summary>
+        /// An upper bound on the design maximum net thrust, DERIVED rather than printed.
+        ///
+        /// If the largest value figure 17 plots is 1.338 of the design maximum D, and that thrust
+        /// had to pass through a channel whose full scale is 30 000 lbf and whose type cannot
+        /// exceed 1.0, then:
+        ///
+        ///     1.338 * D &lt;= 30 000 lbf   =&gt;   D &lt;= 22 422 lbf  (99.7 kN)
+        ///
+        /// This is the first quantitative constraint on the missing scalar, and it is worth having:
+        /// it rules out 25 000 lbf / 111.2 kN independently of every other argument against that
+        /// number.
+        ///
+        /// It is a BOUND, not a value, and it rests on three things being true together: the
+        /// digitized 1.338 (measured here, +/-0.01), the SCALED FRACTION range (printed), and the
+        /// plotted hybrid markers having come through Y12 (strongly implied, since the report's
+        /// own steady-state thrust printout is FN = Y12 * 30000). It is graded
+        /// <see cref="MavF100SourceClass.CrossValidationOnly"/> because it is an inference from
+        /// printed facts rather than a printed fact, and nothing computes with it.
+        /// </summary>
+        public static float DesignMaximumNetThrustUpperBoundLbf
+        {
+            get
+            {
+                float peak = 0f;
+                MavF100OperatingPointCurve[] curves = NetThrustCurves;
+                for (int i = 0; i < curves.Length; i++)
+                {
+                    for (int k = 0; k < curves[i].Count; k++)
+                    {
+                        if (curves[i].netThrustFraction[k] > peak)
+                            peak = curves[i].netThrustFraction[k];
+                    }
+                }
+
+                return peak > 0f
+                    ? SimulationNetThrustChannelFullScaleLbf / peak
+                    : float.NaN;
             }
         }
 

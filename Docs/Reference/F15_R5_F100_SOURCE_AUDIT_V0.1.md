@@ -1,6 +1,6 @@
 # F-15 R5 — F100-PW-100 source audit
 
-**Status:** V0.1, complete for the four documents supplied in `F100_R5_CLAUDE_SOURCE_PACK.zip`.
+**Status:** V0.2, complete for the four documents supplied in `F100_R5_CLAUDE_SOURCE_PACK.zip`.
 **Target aircraft:** `NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100`
 **Target engine:** Pratt & Whitney F100-PW-100 × 2.
 
@@ -14,6 +14,13 @@ consequential half.
 
 **No absolute thrust value for any flight condition and power setting appears anywhere in the four
 documents.**
+
+> **Correction, V0.2.** An earlier revision said there was no absolute thrust value *anywhere* in
+> the pack. That was too strong. TP-1034 appendix C prints a dimensional thrust **scale** —
+> 30 000 lbf — as the full-scale factor of the simulation's net-thrust channel. It is not a
+> thrust at a condition, and §6c shows it is provably *not* the figure 17 normalizer, but it is a
+> real printed dimensional fact and this audit missed it on the first pass. The statement above
+> is now scoped to thrust **results**.
 
 Every thrust result in the pack is either a fraction of an unpublished normalizer or a percentage
 difference against a proprietary manufacturer deck that is not included:
@@ -78,6 +85,7 @@ exact-target and was frozen in an earlier pass; no *performance* field reaches t
 | Flight envelope actually flown | TP-1782 | printed p. 1 | series 2 7/8, engine 059 LEFT | Mach, m | printed prose | CrossValidationOnly | recorded; never used as a source envelope |
 | SGTM/GGM agreement ±3 % | TP-1782 | printed pp. 1, 17 | series 2 7/8 | percent | printed prose | CrossValidationOnly | recorded as an oracle bound |
 | Design parameters (inertias, volumes, cp, bleeds, HVF) | TM X-3261 tab. I p. 53; TP-1034 tab. I | both | SI | printed table | CompatibleSupport | **not implemented** — see §7 |
+| **Net-thrust channel full scale, 30 000 lbf** | TP-1034 | **appendix C, printed p. 28**; Y12 declared p. 25, computed p. 26 | PW-100(3) | lbf / kN | printed FORTRAN constant | CompatibleSupport | recorded as a simulation-output fact; **not** applied to the deck — see §6c |
 
 ---
 
@@ -258,6 +266,75 @@ held, and TP-1373 reports their results only as percentages against a deck that 
 
 ---
 
+## 6c. TP-1034 appendix C prints a thrust scale — and it is not the normalizer
+
+The first pass through appendix C stopped once it was clear the component maps were read from data
+cards, and never reached the output-scaling block. That was a gap. Printed **p. 28** contains:
+
+```fortran
+FN=Y12
+FN=FN*30000.
+FNSI=FN*4.4482E-3
+```
+
+with the symbol list defining `FN` as uninstalled net thrust in lbf and `FNSI` the same in kN.
+**NASA TM X-3261's appendix C carries the identical block**, so the two reports agree.
+
+### The digit was verified, because it matters
+
+Read from the page image at 6×. The leading digit is **3**: it matches the `3` of `T41=T41*3000.`
+on the same page at the same magnification, and differs from the `2` and the `5` of
+`WPLPT=WPLPT*2 5*.29326` two lines above. There are **four** trailing zeros, one more than
+`T41*3000.`. The value is **30 000**, not 25 000.
+
+`30 000 lbf = 133.45 kN`, using the source's own `4.4482E-3` to kN. Not 111.2 kN.
+
+### Y12 traced
+
+| step | source | what it establishes |
+|---|---|---|
+| `SCALED FRACTION Y0,Y1,...,Y12` | appendix C, printed **p. 25** | Y12 is a **DAC channel** of EAI fixed-point fractional type — it lives in `[-1, 1)` |
+| `Y12=((X15*SSQRT(...)+X14))/.69633S-FRD-(AE*(.20000S*V3-PE))/.42933S)/.349335` | appendix C, printed **p. 26** | Y12 is net thrust: gross terms, less `FRD` (ram drag), less the pressure-area term, rescaled onto the channel |
+| `FN=Y12; FN=FN*30000.` | appendix C, printed **p. 28** | 30 000 lbf is the value of `FN` at `Y12 = 1` — the channel's **full scale** |
+
+### Why the full scale is not the design maximum
+
+**It cannot be.** Y12 is a `SCALED FRACTION`, so the largest net thrust the simulation can
+*represent* is 30 000 lbf. Figure 17 panel (e) — 6.096 km, Mach 1.8, maximum augmentation — plots
+**1.338** of its own normalizer. If that normalizer were the channel's full scale, the point would
+require `Y12 = 1.338`, which the type cannot hold. The plotted markers are this simulation's own
+output, and the report's steady-state thrust printout derives from the same channel, so every hybrid
+thrust value in TP-1034 passed through Y12.
+
+Supporting pattern: every scale factor in that block is a round headroom value rather than a design
+value. The clearest case is on the same page — `PLA=PLA*150.`, where the documented maximum power
+lever angle is **130°** (printed p. 11). Likewise `XNL`/`XNH` at 15 000 rpm against corrected fan
+speeds that TP-1373 shows peaking near 11 000, `T4` at 4 000, `T41` at 3 000, `WF7` at 20, `WA2` at
+450.
+
+### What this does buy: an upper bound
+
+If figure 17's peak is `1.338 × D` and that thrust had to fit a channel whose full scale is 30 000
+lbf:
+
+> `1.338 · D ≤ 30 000 lbf`  ⇒  **`D ≤ 22 422 lbf` (99.7 kN)**
+
+This is the first quantitative constraint on the missing scalar. It is a **bound, not a value**, and
+it rests on three things holding together: the digitized 1.338 (±0.01, measured here), the
+`SCALED FRACTION` range (printed), and the plotted hybrid markers having come through Y12 (strongly
+implied by the printout deriving from it). Graded `CrossValidationOnly` — an inference from printed
+facts rather than a printed fact — and nothing computes with it.
+
+It also **independently rules out 25 000 lbf / 111.2 kN**, since 25 000 > 22 422.
+
+### Action taken
+
+Per the instruction's own fallback: the 30 000 lbf scaling is recorded as a separately documented
+TP-1034 simulation-output fact, and is **not** applied to the 63-point deck. The design maximum
+stays undeclared and the deck still produces no newtons. `[E20]` covers all of this.
+
+---
+
 ## 7. Why the TM X-3261 / TP-1034 engine model was not ported
 
 Both reports print a complete, transient-capable engine model: mass and energy storage, fluid
@@ -319,7 +396,10 @@ thrust equation printed immediately above it is not.
 ## 9. What these four documents do not contain
 
 1. **Design maximum net thrust** — the normalizer of figure 17. Its definition is pinned exactly
-   (uninstalled net thrust at sea level, Mach 0, PLA 130°); its value is printed nowhere.
+   (uninstalled net thrust at sea level, Mach 0, PLA 130°); its value is printed nowhere. Two
+   candidates have now been investigated and both rejected — TP-1373's 111.2 kN axis scale (§6a)
+   and TP-1034's 30 000 lbf channel scale (§6c). The second yields a derived upper bound of about
+   22 400 lbf.
 2. **Component performance maps as numbers** — published only as graphs, read from data cards.
 3. **SGTM coefficients** K1, K2, E, Cv — TP-1782 names them and withholds all four.
 4. **The P&W decks themselves** — CCD 1015, CCD 1103-1.0, CCD 1088-2.0 are all cited, none supplied.

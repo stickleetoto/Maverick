@@ -30,6 +30,7 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///  [E17] 111.2 kN is a plot scale and cannot become the missing design maximum
     ///  [E18] the sea-level-static anchor: sound mechanism, three gates, fails at the first
     ///  [E19] normalized net and dimensional gross remain separate datasets
+    ///  [E20] TP-1034 appendix C prints a 30 000 lbf channel scale - and it is not the normalizer
     ///
     /// These run on the installation profile and its static factories - production code, no
     /// GameObject, no Rigidbody, no play-mode session.
@@ -63,6 +64,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateAxisNormalizerIsNotTheScale(report, ref passed, ref failed);
             ValidateStaticAnchorDoesNotClose(report, ref passed, ref failed);
             ValidateDatasetsStaySeparate(report, ref passed, ref failed);
+            ValidateY12ChannelScale(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -1286,6 +1288,102 @@ namespace MaverickFresh.FlightDynamics.Validation
                     == MavF100SourceClass.CompatibleSupport,
                 "both are compatible support; neither is exact-target, and being compatible"
                 + " support does not make them compatible with EACH OTHER",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E20]
+
+        private static void ValidateY12ChannelScale(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E20] The TP-1034 Y12 net-thrust channel scale");
+
+            Record(
+                MavF100SourceData.SimulationNetThrustChannelFullScaleLbf == 30000f,
+                "TP-1034 appendix C printed p. 28 gives FN=FN*30000. - verified from the page"
+                + " image at 6x, the leading digit matching the 3 of T41=T41*3000. on the same"
+                + " page and differing from the 2 and 5 of WPLPT=WPLPT*2 5*.29326",
+                report, ref passed, ref failed);
+
+            // The source prints its own SI conversion; ours must agree with it.
+            float viaSourceConstant =
+                MavF100SourceData.SimulationNetThrustChannelFullScaleLbf * 4.4482e-3f * 1000f;
+
+            Record(
+                Mathf.Abs(MavF100SourceData.SimulationNetThrustChannelFullScaleN
+                    - viaSourceConstant) < 10f,
+                "and the SI form agrees with the source's own FNSI=FN*4.4482E-3 to within 10 N: "
+                + (MavF100SourceData.SimulationNetThrustChannelFullScaleN * 0.001f).ToString("0.000")
+                + " kN",
+                report, ref passed, ref failed);
+
+            Record(
+                Mathf.Abs(MavF100SourceData.SimulationNetThrustChannelFullScaleN - 133446.6f)
+                    < 5f,
+                "30 000 lbf is 133.45 kN, not 111.2 kN - the channel scale and TP-1373's axis"
+                + " normalizer are different numbers as well as different quantities",
+                report, ref passed, ref failed);
+
+            // The decisive structural check, and the reason the scale is not applied.
+            float peak = 0f;
+            MavF100OperatingPointCurve[] curves = MavF100SourceData.NetThrustCurves;
+            for (int i = 0; i < curves.Length; i++)
+            {
+                for (int k = 0; k < curves[i].Count; k++)
+                {
+                    if (curves[i].netThrustFraction[k] > peak)
+                        peak = curves[i].netThrustFraction[k];
+                }
+            }
+
+            Record(peak > 1f,
+                "figure 17 plots up to " + peak.ToString("0.000")
+                + " of its own normalizer - above 1.0, which a SCALED FRACTION channel cannot"
+                + " represent",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.Y12IsNotTheFigure17Normalizer.Contains("SCALED FRACTION"),
+                "so Y12's full scale is recorded as NOT the figure 17 normalizer, on the grounds"
+                + " of the SCALED FRACTION declaration on printed p. 25",
+                report, ref passed, ref failed);
+
+            // The derived bound. A bound, not a value - nothing computes with it.
+            float bound = MavF100SourceData.DesignMaximumNetThrustUpperBoundLbf;
+
+            Record(
+                bound > 0f && bound < MavF100SourceData.SimulationNetThrustChannelFullScaleLbf,
+                "the derived upper bound on the design maximum is "
+                + bound.ToString("0") + " lbf, strictly below the 30 000 lbf channel scale",
+                report, ref passed, ref failed);
+
+            Record(
+                bound < 25000f,
+                "and it falls below 25 000 lbf, so it independently rules out 111.2 kN as the"
+                + " design maximum as well",
+                report, ref passed, ref failed);
+
+            // The whole point: none of this dimensionalizes the deck.
+            Record(
+                !MavF100SourceData.DesignMaximumNetThrust.declared,
+                "the design maximum net thrust remains UNDECLARED - a channel full scale is not"
+                + " a design value, and the 63 points stay dimensionless",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.DesignMaximumNetThrust.citation.Contains("30 000 lbf"),
+                "with the investigated-and-rejected candidate named in the blocker text, so the"
+                + " next reader does not re-run this search",
+                report, ref passed, ref failed);
+
+            MavF100NetThrustFractionResult slsMax =
+                MavF100NormalizedNetThrustModel.Evaluate(0f, 0f, 129.8f);
+
+            Record(
+                slsMax.HasNumber && Mathf.Abs(slsMax.netThrustFraction - 1.004f) < 0.01f,
+                "and the sea-level maximum-augmentation point is still a FRACTION, "
+                + slsMax.netThrustFraction.ToString("0.000") + ", not a force",
                 report, ref passed, ref failed);
         }
 
