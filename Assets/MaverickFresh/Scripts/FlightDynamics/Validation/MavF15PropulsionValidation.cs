@@ -36,6 +36,9 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///  [E23] PW-100(3) and prototype 2 7/8 data cannot silently mix
     ///  [E24] the NASA 836 approximate thrust anchor, and its approximation metadata
     ///  [E25] the ~22.4 klbf bound belongs to TP-1034 and is not a NASA 836 limit
+    ///  [E26] a serial number is not a configuration - the P680063 chronology
+    ///  [E27] same designation is not same performance deck
+    ///  [E28] NASA 836 engine sub-configuration is unknown, and the gate stays shut
     ///
     /// These run on the installation profile and its static factories - production code, no
     /// GameObject, no Rigidbody, no play-mode session.
@@ -75,6 +78,9 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateEngineFamilySeparation(report, ref passed, ref failed);
             ValidateNasa836ApproximateAnchor(report, ref passed, ref failed);
             ValidateBoundScope(report, ref passed, ref failed);
+            ValidateConfigurationLineage(report, ref passed, ref failed);
+            ValidateEquivalenceDimensions(report, ref passed, ref failed);
+            ValidateNasa836SubConfiguration(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -1220,9 +1226,10 @@ namespace MaverickFresh.FlightDynamics.Validation
                 report, ref passed, ref failed);
 
             MavF100ConfigurationEquivalence claimedWithoutSource =
-                new MavF100ConfigurationEquivalence();
-            claimedWithoutSource.proven = true;
-            claimedWithoutSource.provingSource = string.Empty;
+                MavF100ConfigurationEquivalence.Proving(
+                    MavF100EquivalenceDimension.SameGasPath
+                    | MavF100EquivalenceDimension.SameControlSchedule,
+                    string.Empty);
 
             Record(
                 !MavF100DimensionalAnchor.DesignMaximumNetThrustFromStaticGross(
@@ -1231,9 +1238,10 @@ namespace MaverickFresh.FlightDynamics.Validation
                 report, ref passed, ref failed);
 
             // And the positive case, so the gate is known to be a gate and not a wall.
-            MavF100ConfigurationEquivalence proven = new MavF100ConfigurationEquivalence();
-            proven.proven = true;
-            proven.provingSource = "fixture: hypothetical equivalence source";
+            MavF100ConfigurationEquivalence proven = MavF100ConfigurationEquivalence.Proving(
+                MavF100EquivalenceDimension.SameGasPath
+                | MavF100EquivalenceDimension.SameControlSchedule,
+                "fixture: hypothetical equivalence source");
 
             MavF100ThrustValue closed =
                 MavF100DimensionalAnchor.DesignMaximumNetThrustFromStaticGross(
@@ -1573,9 +1581,10 @@ namespace MaverickFresh.FlightDynamics.Validation
             grossAnchor.quantityName = "fixture gross";
             grossAnchor.quantity = MavF100ThrustQuantity.GrossThrust;
 
-            MavF100ConfigurationEquivalence proven = new MavF100ConfigurationEquivalence();
-            proven.proven = true;
-            proven.provingSource = "fixture equivalence source";
+            MavF100ConfigurationEquivalence proven = MavF100ConfigurationEquivalence.Proving(
+                MavF100EquivalenceDimension.SameGasPath
+                | MavF100EquivalenceDimension.SameControlSchedule,
+                "fixture equivalence source");
 
             MavF100PathCombination mismatch = MavF100PathSeparation.DimensionalizeForTarget(
                 research, grossAnchor, proven);
@@ -1594,27 +1603,32 @@ namespace MaverickFresh.FlightDynamics.Validation
                 + "otherwise the product is one engine's thrust shape wearing another's identity",
                 report, ref passed, ref failed);
 
-            // The positive case, so the barrier is known to be a gate rather than a wall.
-            MavF100PathCombination allowed = MavF100PathSeparation.DimensionalizeForTarget(
-                research, netAnchor, proven);
+            // The gate is ordered, and each condition is separately satisfiable. With everything
+            // else met, exactly ONE refusal remains - which shows the earlier ones were real
+            // conditions rather than decoration, and names the single outstanding evidence gap.
+            MavF100PathCombination everythingElseMet =
+                MavF100PathSeparation.DimensionalizeForTarget(research, netAnchor, proven);
 
             Record(
-                allowed.permitted
-                && Mathf.Abs(allowed.newtons
-                    - research.netThrustFraction * netAnchor.newtons) < 1f,
-                "with every condition met the combination is permitted and multiplies correctly",
+                !everythingElseMet.permitted
+                && everythingElseMet.reason.Contains("sub-configuration is unknown"),
+                "with a usable anchor, matching quantities and full equivalence claimed, the ONLY "
+                + "remaining refusal is NASA 836's unknown engine sub-configuration - one "
+                + "outstanding evidence gap, not a blanket refusal",
                 report, ref passed, ref failed);
 
             Record(
-                allowed.sourceClass == MavF100SourceClass.CompatibleSupport,
-                "and the product is CompatibleSupport, NOT exact-target: an exact-target anchor "
-                + "scales a research characteristic, it does not promote one",
+                !everythingElseMet.reason.Contains("quantity mismatch")
+                && !everythingElseMet.reason.Contains("no usable NASA-836 anchor"),
+                "and the earlier conditions no longer appear in the reason, so they were cleared "
+                + "rather than masked",
                 report, ref passed, ref failed);
 
             Record(
-                allowed.precision == MavF100ValuePrecision.Approximate,
-                "nor sharper - an approximate anchor yields an approximate product, because "
-                + "multiplying an approximation by an exact fraction does not sharpen it",
+                everythingElseMet.newtons == 0f
+                && everythingElseMet.sourceClass == MavF100SourceClass.Unavailable
+                && everythingElseMet.precision == MavF100ValuePrecision.Unspecified,
+                "a refused combination carries no number, no grade and no precision",
                 report, ref passed, ref failed);
 
             // The headline regression the follow-up asks for: the real NASA 836 anchor, on its
@@ -1679,9 +1693,10 @@ namespace MaverickFresh.FlightDynamics.Validation
                 "and data with no declared family combines with nothing at all",
                 report, ref passed, ref failed);
 
-            MavF100ConfigurationEquivalence proven = new MavF100ConfigurationEquivalence();
-            proven.proven = true;
-            proven.provingSource = "fixture equivalence source";
+            MavF100ConfigurationEquivalence proven = MavF100ConfigurationEquivalence.Proving(
+                MavF100EquivalenceDimension.SameGasPath
+                | MavF100EquivalenceDimension.SameControlSchedule,
+                "fixture equivalence source");
 
             Record(
                 MavF100EngineFamilies.MayCombine(
@@ -1830,6 +1845,301 @@ namespace MaverickFresh.FlightDynamics.Validation
                 && MavF100SourceData.SimulationNetThrustChannelFullScaleLbf > nasa836,
                 "and the 30 000 lbf channel scale sits above both, consistent with being a "
                 + "headroom scale rather than any engine's rating",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E26]
+
+        private static void ValidateConfigurationLineage(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E26] A serial number is not a configuration");
+
+            MavF100ConfigurationPhase[] lineage =
+                MavF100ConfigurationLineage.Engine063Lineage;
+
+            Record(lineage.Length >= 5,
+                "P680063's lineage is recorded as " + lineage.Length + " phases, not one dataset "
+                + "- NASA's own retrospective says it flew in four major configurations",
+                report, ref passed, ref failed);
+
+            bool sameSerial = true;
+            for (int i = 0; i < lineage.Length; i++)
+            {
+                if (lineage[i].engineSerial != "P680063")
+                    sameSerial = false;
+            }
+
+            Record(sameSerial,
+                "every phase carries the SAME serial number - which is exactly why the serial "
+                + "cannot stand in for the configuration",
+                report, ref passed, ref failed);
+
+            bool ascending = true;
+            for (int i = 1; i < lineage.Length; i++)
+            {
+                if (lineage[i].fromYear < lineage[i - 1].fromYear)
+                    ascending = false;
+            }
+
+            Record(ascending,
+                "phases are in chronological order, so configuration date can travel with a datum",
+                report, ref passed, ref failed);
+
+            // The calibration era: 1977, 2-7/8, and NOT relabellable as F100(3).
+            MavF100ConfigurationPhase calibration;
+            bool foundCalibration = MavF100ConfigurationLineage.TryGetPhase(
+                lineage, 1977, out calibration);
+
+            Record(
+                foundCalibration
+                && calibration.designation.Contains("2-7/8")
+                && calibration.engineFamily
+                    == MavF100EngineFamily.PrototypeSeries2And7Eighths,
+                "the 1977 altitude-calibration phase is F100-PW-100(2-7/8) - the configuration "
+                + "behind TP-1069, TP-1228, TP-1373 and TP-1782",
+                report, ref passed, ref failed);
+
+            Record(
+                calibration.equivalenceToProductionF100Dash3
+                    == MavF100EquivalenceDimension.None,
+                "and it proves NO equivalence dimension to the production F100(3): "
+                + "2-7/8 calibration-era data cannot be relabelled F100(3)",
+                report, ref passed, ref failed);
+
+            // The 1980 rebuild: F100(3) designation and gas path, but NOT the control.
+            MavF100ConfigurationPhase rebuilt;
+            bool foundRebuilt = MavF100ConfigurationLineage.TryGetPhase(
+                lineage, 1982, out rebuilt);
+
+            Record(
+                foundRebuilt && rebuilt.fromYear == 1980
+                && rebuilt.engineFamily == MavF100EngineFamily.Pw100SimulationLineage,
+                "the 1980 rebuild moves P680063 into the PW-100 simulation lineage family",
+                report, ref passed, ref failed);
+
+            Record(
+                (rebuilt.equivalenceToProductionF100Dash3
+                    & MavF100EquivalenceDimension.SameDesignation) != 0
+                && (rebuilt.equivalenceToProductionF100Dash3
+                    & MavF100EquivalenceDimension.SameGasPath) != 0,
+                "carrying F100(3) DESIGNATION and GAS PATH - TM-84908 printed p. 4: 'updated to "
+                + "an F100(3) production engine configuration prior to the DEEC installation'",
+                report, ref passed, ref failed);
+
+            Record(
+                (rebuilt.equivalenceToProductionF100Dash3
+                    & MavF100EquivalenceDimension.SameControlSchedule) == 0,
+                "but NOT the control schedule: the DEEC replaced the production supervisory EEC "
+                + "and hydromechanical unified fuel control outright. Same designation, same gas "
+                + "path, categorically different control",
+                report, ref passed, ref failed);
+
+            Record(
+                (rebuilt.equivalenceToProductionF100Dash3
+                    & MavF100EquivalenceDimension.SamePerformanceDeck) == 0,
+                "and NOT the performance deck - no source claims one predicts both",
+                report, ref passed, ref failed);
+
+            // The EMD era, and its thrust figure.
+            MavF100ConfigurationPhase late;
+            MavF100ConfigurationLineage.TryGetPhase(lineage, 1993, out late);
+
+            Record(
+                late.designation.Contains("EMD"),
+                "by 1993 the same serial is an F100 EMD engine: EMD fan, single-crystal turbine "
+                + "blades and vanes, 16-segment augmentor, overhauled increased-life core",
+                report, ref passed, ref failed);
+
+            Record(
+                late.equivalenceToProductionF100Dash3
+                    == MavF100EquivalenceDimension.None,
+                "which proves no equivalence to production F100(3) at all - so the 'more than "
+                + MavF100ConfigurationLineage.Engine063EmdEraThrustLbf.ToString("0")
+                + " lb of thrust' figure cannot become a baseline PW-100(3) anchor",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100ConfigurationLineage.Engine063EmdEraThrustWarning.Contains("EMD")
+                && MavF100ConfigurationLineage.Engine063EmdEraThrustWarning.Contains("never a baseline"),
+                "and the warning is recorded alongside the number rather than left to memory",
+                report, ref passed, ref failed);
+
+            // A year before the first phase has no configuration - no nearest-match guessing.
+            MavF100ConfigurationPhase tooEarly;
+            Record(
+                !MavF100ConfigurationLineage.TryGetPhase(lineage, 1970, out tooEarly),
+                "a year before the first recorded phase yields NO configuration rather than the "
+                + "nearest one - guessing a configuration is the error this type exists to prevent",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E27]
+
+        private static void ValidateEquivalenceDimensions(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E27] Same designation is not same performance deck");
+
+            // Designation alone proves nothing transferable.
+            MavF100ConfigurationEquivalence designationOnly =
+                MavF100ConfigurationEquivalence.Proving(
+                    MavF100EquivalenceDimension.SameDesignation,
+                    "fixture: designation match only");
+
+            Record(designationOnly.IsUsable,
+                "an equivalence claim naming one dimension and a source is well-formed",
+                report, ref passed, ref failed);
+
+            Record(
+                !designationOnly.Covers(
+                    MavF100EngineFamilies.RequiredForCharacteristicTransfer),
+                "but SameDesignation alone does not cover what a thrust-versus-PLA characteristic "
+                + "needs (" + MavF100EngineFamilies.RequiredForCharacteristicTransfer + ")",
+                report, ref passed, ref failed);
+
+            // The real P680063 case: designation + gas path, still short.
+            MavF100ConfigurationEquivalence gasPathOnly =
+                MavF100ConfigurationEquivalence.Proving(
+                    MavF100EquivalenceDimension.SameDesignation
+                    | MavF100EquivalenceDimension.SameGasPath,
+                    "Burcham et al. / TM-84908: P680063 rebuilt to the F100(3) gas path");
+
+            Record(
+                !gasPathOnly.Covers(
+                    MavF100EngineFamilies.RequiredForCharacteristicTransfer),
+                "designation PLUS gas path is still short - "
+                + gasPathOnly.DescribeShortfall(
+                    MavF100EngineFamilies.RequiredForCharacteristicTransfer),
+                report, ref passed, ref failed);
+
+            Record(
+                gasPathOnly.DescribeShortfall(
+                    MavF100EngineFamilies.RequiredForCharacteristicTransfer)
+                    .Contains("SameControlSchedule"),
+                "and the shortfall names the missing dimension rather than saying 'not equivalent'",
+                report, ref passed, ref failed);
+
+            // No source, no claim.
+            MavF100ConfigurationEquivalence noSource =
+                MavF100ConfigurationEquivalence.Proving(
+                    MavF100EquivalenceDimension.SameGasPath
+                    | MavF100EquivalenceDimension.SameControlSchedule,
+                    string.Empty);
+
+            Record(!noSource.IsUsable && !noSource.Covers(
+                    MavF100EquivalenceDimension.SameGasPath),
+                "dimensions claimed without a named source count for nothing",
+                report, ref passed, ref failed);
+
+            // Cross-family combination needs the full requirement.
+            Record(
+                !MavF100EngineFamilies.MayCombine(
+                    MavF100EngineFamily.PrototypeSeries2And7Eighths,
+                    MavF100EngineFamily.Pw100SimulationLineage,
+                    gasPathOnly),
+                "so 2-7/8 data still may not combine with the PW-100 simulation lineage on a "
+                + "gas-path claim alone",
+                report, ref passed, ref failed);
+
+            MavF100ConfigurationEquivalence full =
+                MavF100ConfigurationEquivalence.Proving(
+                    MavF100EquivalenceDimension.SameGasPath
+                    | MavF100EquivalenceDimension.SameControlSchedule,
+                    "fixture: full equivalence source");
+
+            Record(
+                MavF100EngineFamilies.MayCombine(
+                    MavF100EngineFamily.PrototypeSeries2And7Eighths,
+                    MavF100EngineFamily.Pw100SimulationLineage, full),
+                "while gas path AND control schedule, with a source, does open the combination",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E28]
+
+        private static void ValidateNasa836SubConfiguration(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E28] NASA 836's engine sub-configuration is unknown");
+
+            Record(
+                !MavF100Nasa836EngineEvidence.SubConfigurationKnown,
+                "NO public source was located naming the sub-configuration of 836's installed "
+                + "F100-PW-100 engines - (1), (2), 2-7/8 or production (3) is not established",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100Nasa836EngineEvidence.SubConfigurationSearchResult
+                    .Contains("Production year is not evidence"),
+                "and the record states that aircraft production year was not used as a "
+                + "substitute for it",
+                report, ref passed, ref failed);
+
+            // The identity chain is multi-source and says so.
+            Record(
+                MavF100Nasa836EngineEvidence.TailNumberIdentity.Contains("74-0141")
+                && MavF100Nasa836EngineEvidence.TailNumberIdentity.Contains("20160006705"),
+                "tail 836 = USAF 74-0141 is carried with its own citation",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100Nasa836EngineEvidence.PftfToTailLink.Contains("20100001729"),
+                "and the PFTF-to-tail-836 link is a SEPARATE citation - NASA/TM-2005-213670, "
+                + "which supplies the 23 500 lbf figure, never names the tail number itself",
+                report, ref passed, ref failed);
+
+            // The re-engine, which bounds the epoch of every 836 thrust figure.
+            Record(
+                MavF100Nasa836EngineEvidence.ReEngineToPw220EYear == 2014,
+                "836 was re-engined to F100-PW-220E in 2014",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100Nasa836EngineEvidence.ReEngineNote.Contains("24,000 lb")
+                && MavF100Nasa836EngineEvidence.ReEngineNote.Contains("PW-220E"),
+                "so a '24,000 lb thrust class' figure quoted for 836 may describe the PW-220E, "
+                + "not the PW-100 of the frozen target - configuration date travels with 836 "
+                + "figures too",
+                report, ref passed, ref failed);
+
+            // And the gate stays shut, for two independent reasons.
+            MavF100NetThrustFractionResult research =
+                MavF100NormalizedNetThrustModel.Evaluate(0f, 0f, 129.8f);
+
+            MavF100ConfigurationEquivalence full =
+                MavF100ConfigurationEquivalence.Proving(
+                    MavF100EquivalenceDimension.SameGasPath
+                    | MavF100EquivalenceDimension.SameControlSchedule,
+                    "fixture: hypothetical full equivalence");
+
+            MavF100PathCombination withFullEquivalence =
+                MavF100PathSeparation.DimensionalizeForTarget(
+                    research,
+                    MavF100Nasa836TargetPropulsion.Anchors[0],
+                    full);
+
+            Record(
+                !withFullEquivalence.permitted
+                && withFullEquivalence.reason.Contains("sub-configuration is unknown"),
+                "even with full equivalence claimed, the gate REFUSES: 836's installed "
+                + "sub-configuration is unknown, so there is nothing for the equivalence to be "
+                + "an equivalence TO",
+                report, ref passed, ref failed);
+
+            MavF100PathCombination withoutEquivalence =
+                MavF100PathSeparation.DimensionalizeForTarget(
+                    research,
+                    MavF100Nasa836TargetPropulsion.Anchors[0],
+                    MavF100ConfigurationEquivalence.Unproven);
+
+            Record(
+                !withoutEquivalence.permitted && withoutEquivalence.newtons == 0f,
+                "and without it, refused on the equivalence shortfall first - two independent "
+                + "reasons the figure-17 gate cannot move",
                 report, ref passed, ref failed);
         }
 

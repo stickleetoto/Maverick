@@ -1,6 +1,6 @@
 # F-15 R5 — F100-PW-100 propulsion implementation status
 
-**Status:** V0.3.
+**Status:** V0.4.
 **Target aircraft:** `NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100`
 **Target engine:** Pratt & Whitney F100-PW-100 × 2.
 **Source audit:** `F15_R5_F100_SOURCE_AUDIT_V0.1.md` — read that first; this document assumes it.
@@ -174,6 +174,57 @@ thrust term.
 
 ---
 
+
+---
+
+## 3c. The equivalence gate, dimension by dimension
+
+`MavF100ConfigurationEquivalence` is no longer a boolean. It carries four independent flags, because
+the P680063 lineage proves they come apart:
+
+| dimension | post-1980 P680063 vs production F100(3) |
+|---|---|
+| `SameDesignation` | **proven** — TM-84908 p. 4 |
+| `SameGasPath` | **proven** — "updated to an F100(3) production engine configuration"; parts list in Burcham p. 4 |
+| `SameControlSchedule` | **NOT proven** — it ran a DEEC, which replaced the production EEC and unified fuel control |
+| `SamePerformanceDeck` | **NOT proven** — nothing claims one deck predicts both |
+
+`RequiredForCharacteristicTransfer` = `SameGasPath | SameControlSchedule`. The gas path sets what
+the engine *can* do; the control sets what it *does* at a given power lever angle, which is exactly
+what figure 17 plots. Designation alone is never enough.
+
+### Can the figure-17 gate move at all?
+
+**No — for two independent reasons, and neither is close to being resolved.**
+
+1. **The equivalence needed is not established.** The best available bridge reaches designation and
+   gas path. Control schedule is positively contradicted for the one engine whose chronology is
+   documented, and no source addresses the production-F100(3)-to-836 relationship at all.
+2. **NASA 836's own installed sub-configuration is unknown.** Even a perfect equivalence proof
+   would have nothing to be an equivalence *to*. `MavF100Nasa836EngineEvidence.SubConfigurationKnown`
+   is `false`, and the gate checks it separately.
+
+`[E28]` asserts both, including that with everything else satisfied the sub-configuration refusal is
+the *only* one remaining — so the earlier conditions are real conditions, not decoration.
+
+---
+
+## 3d. Configuration date travels with every datum
+
+`MavF100ConfigurationLineage` records P680063's six phases. Three consequences the code enforces:
+
+- **1977 / 2-7/8 calibration data cannot be relabelled F100(3).** That phase proves no equivalence
+  dimension at all. TP-1069, TP-1228, TP-1373 and TP-1782 all describe that configuration.
+- **Post-1980 P680063 may carry F100(3) lineage** — designation and gas path, and no further.
+- **">27 000 lbf" is 1993 EMD-era data** (EMD fan, single-crystal turbine blades and vanes,
+  16-segment augmentor, overhauled increased-life core) and is never a baseline PW-100(3) anchor.
+
+The same rule now applies to path C: **836 was re-engined to F100-PW-220E in 2014**, so any "24 000
+lb thrust class" figure for that tail may describe a different engine model. The frozen target is
+the pre-Quiet-Spike PW-100 baseline, which the 2005 and 2010 sources sit inside.
+
+---
+
 ## 4. The two blockers, and why both are reported together
 
 `MavF100ThrustDeck.Evaluate` returns `Unavailable` and zero thrust, every time, naming:
@@ -233,12 +284,12 @@ Run in **Unity 6000.3.16f1 headless** through `MavFdmValidationBatchAdapter`.
 
 | suite | result |
 |---|---|
-| `MavF15PropulsionValidation` | **170 passed, 0 failed** (was 27) |
+| `MavF15PropulsionValidation` | **198 passed, 0 failed** (was 27) |
 | `MavF15BaumannTranscriptionValidation` | **28 passed, 0 failed** |
 | `MavF15ControlPathValidation` | **79 passed, 0 failed** |
-| **total** | **277 passed, 0 failed** |
+| **total** | **305 passed, 0 failed** |
 
-313 runtime scripts compile with 0 errors.
+314 runtime scripts compile with 0 errors.
 
 New sections, covering every item the R5 brief's §9 lists:
 
@@ -263,6 +314,9 @@ New sections, covering every item the R5 brief's §9 lists:
 | `[E23]` | PW-100(3) and prototype 2 7/8 data cannot silently mix |
 | `[E24]` | the NASA 836 approximate anchor, with its approximation metadata preserved |
 | `[E25]` | the ~22.4 klbf bound belongs to TP-1034 and is not a NASA 836 limit |
+| `[E26]` | a serial number is not a configuration — the P680063 chronology |
+| `[E27]` | same designation is not same performance deck |
+| `[E28]` | NASA 836's engine sub-configuration is unknown, and the gate stays shut |
 
 **NOT RUN:** Unity play mode; any flight, trim or trajectory test; any comparison against TP-1782
 flight data (there is no dimensional thrust to compare, and TP-1782 publishes only percentages).

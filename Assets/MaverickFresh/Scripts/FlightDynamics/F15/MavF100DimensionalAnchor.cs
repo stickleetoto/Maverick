@@ -21,18 +21,19 @@ namespace MaverickFresh.FlightDynamics.F15
     }
 
     /// <summary>
-    /// Whether the two engine builds in the R5 pack have been shown to be the same engine.
+    /// What a source has actually proven about two engine configurations being the same.
     ///
-    /// Exists as a type rather than a comment because it gates an arithmetic operation: multiplying
-    /// TP-1034's normalized net thrust by a dimensional thrust measured on engines 059/063 asserts
-    /// that the two builds produce the same thrust, and that assertion has to be made by somebody
-    /// who can point at a source.
+    /// Deliberately NOT one boolean. "Equivalent" hides which KIND of sameness was shown, and the
+    /// kinds are independent: P680063 after 1980 carried the F100(3) designation and an F100(3)
+    /// gas path while running a DEEC that replaced the production control outright. A caller
+    /// transferring a thrust-versus-power-lever curve needs the control schedule; one transferring
+    /// a gas-path efficiency might not.
     /// </summary>
     public struct MavF100ConfigurationEquivalence
     {
-        public bool proven;
+        public MavF100EquivalenceDimension provenDimensions;
 
-        /// <summary>The source that proves it. Required non-empty before <see cref="proven"/> counts.</summary>
+        /// <summary>The source that proves them. Required non-empty, or nothing counts.</summary>
         public string provingSource;
 
         public static MavF100ConfigurationEquivalence Unproven
@@ -40,9 +41,40 @@ namespace MaverickFresh.FlightDynamics.F15
             get { return new MavF100ConfigurationEquivalence(); }
         }
 
+        public static MavF100ConfigurationEquivalence Proving(
+            MavF100EquivalenceDimension dimensions, string source)
+        {
+            MavF100ConfigurationEquivalence e = new MavF100ConfigurationEquivalence();
+            e.provenDimensions = dimensions;
+            e.provingSource = source;
+            return e;
+        }
+
+        /// <summary>True when at least one dimension is proven AND a source is named.</summary>
         public bool IsUsable
         {
-            get { return proven && !string.IsNullOrEmpty(provingSource); }
+            get
+            {
+                return provenDimensions != MavF100EquivalenceDimension.None
+                    && !string.IsNullOrEmpty(provingSource);
+            }
+        }
+
+        /// <summary>True when every dimension in <paramref name="required"/> is proven.</summary>
+        public bool Covers(MavF100EquivalenceDimension required)
+        {
+            return IsUsable && (provenDimensions & required) == required;
+        }
+
+        public string DescribeShortfall(MavF100EquivalenceDimension required)
+        {
+            if (!IsUsable)
+                return "no equivalence dimension proven by a named source";
+
+            MavF100EquivalenceDimension missing = required & ~provenDimensions;
+            return missing == MavF100EquivalenceDimension.None
+                ? "nothing missing"
+                : "not proven: " + missing;
         }
     }
 
@@ -252,8 +284,12 @@ namespace MaverickFresh.FlightDynamics.F15
                     + "condition is Mach 0.80 at 4 020 m.");
             }
 
-            // Gate 3: the builds have to be the same engine, said by a source.
-            if (!equivalenceToPw100Dash3.IsUsable)
+            // Gate 3: the builds have to be the same engine in the ways that matter for a
+            // thrust value at a stated power setting - gas path AND control schedule, since
+            // the control is what sets what the engine does at maximum augmentation.
+            if (!equivalenceToPw100Dash3.Covers(
+                    MavF100EquivalenceDimension.SameGasPath
+                    | MavF100EquivalenceDimension.SameControlSchedule))
             {
                 return MavF100ThrustValue.Invalid(
                     "configuration equivalence to the F100-PW-100(3) of TP-1034 is not proven. "
@@ -261,7 +297,10 @@ namespace MaverickFresh.FlightDynamics.F15
                     + "2 7/8 with series 2 cores, control schedules differing from both series 2 "
                     + "and series 3, and series 2 actuated divergent nozzles - and no document in "
                     + "the pack relates the (1)/(3) designations to the series designations at "
-                    + "all. A proving source must be named.");
+                    + "all. A proving source must be named. "
+                    + equivalenceToPw100Dash3.DescribeShortfall(
+                        MavF100EquivalenceDimension.SameGasPath
+                        | MavF100EquivalenceDimension.SameControlSchedule));
             }
 
             return MavF100ThrustValue.Of(

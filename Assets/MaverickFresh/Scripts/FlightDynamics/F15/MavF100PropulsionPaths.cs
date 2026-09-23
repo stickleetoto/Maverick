@@ -331,13 +331,25 @@ namespace MaverickFresh.FlightDynamics.F15
                     + "would be one engine's thrust shape wearing another's exact identity.");
             }
 
-            if (!equivalence.IsUsable)
+            if (!equivalence.Covers(
+                    MavF100EngineFamilies.RequiredForCharacteristicTransfer))
             {
                 return MavF100PathCombination.Refused(
                     "configuration equivalence between the "
                     + MavF100SourceData.NormalizedThrustEngineBuild
-                    + " research build and the NASA 836 target build is not proven by a named "
-                    + "source.");
+                    + " research build and the NASA 836 target build is not established for the "
+                    + "quantity being transferred - "
+                    + equivalence.DescribeShortfall(
+                        MavF100EngineFamilies.RequiredForCharacteristicTransfer));
+            }
+
+            // Even with equivalence claimed, the target's own installed sub-configuration has to
+            // be known, or there is nothing for the equivalence to be an equivalence TO.
+            if (!MavF100Nasa836EngineEvidence.SubConfigurationKnown)
+            {
+                return MavF100PathCombination.Refused(
+                    "NASA 836's installed engine sub-configuration is unknown. "
+                    + MavF100Nasa836EngineEvidence.SubConfigurationSearchResult);
             }
 
             MavF100PathCombination result = new MavF100PathCombination();

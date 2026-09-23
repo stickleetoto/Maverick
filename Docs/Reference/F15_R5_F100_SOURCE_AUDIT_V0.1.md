@@ -1,6 +1,6 @@
 # F-15 R5 — F100-PW-100 source audit
 
-**Status:** V0.4. The four documents supplied in `F100_R5_CLAUDE_SOURCE_PACK.zip`, plus NASA
+**Status:** V0.5. The four documents supplied in `F100_R5_CLAUDE_SOURCE_PACK.zip`, plus NASA
 TP-1056 and three NASA F-15B reports retrieved from NTRS and read here.
 **Target aircraft:** `NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100`
 **Target engine:** Pratt & Whitney F100-PW-100 × 2.
@@ -67,6 +67,8 @@ exact-target and was frozen in an earlier pass; no *performance* field reaches t
 | TP-1782 | same series 2 7/8 engines | "the results are not totally representative of production F100 engines" (printed p. 4) |
 | TP-1056 | F100-PW-100**(3)** | follow-on on the same CCD 1103-1.0 lineage; retrieved from NTRS and read — §6d |
 | TM-2005-213670 and other F-15B reports | F100-PW-100 **on NASA F-15B 836** | the exact target aircraft; publishes an approximate SLS thrust — §6e |
+| Burcham et al. 19990064011; TM-84908 | P680063 across **four configurations** | the configuration chronology — §6f |
+| NTRS 20160006705; 20100001729 | NASA 836 airframe and engines | tail identity, PFTF link, 2014 re-engine — §6g |
 
 ---
 
@@ -427,6 +429,108 @@ installed-aircraft engine figure. If anything, the two failing to fit is further
 must not be treated as the same thing — applied across families the bound would "prove" a
 published NASA figure impossible. `MavF100EngineFamilies.BoundAppliesTo` enforces the scope and
 `[E25]` asserts it.
+
+---
+
+## 6f. The configuration-equivalence bridge — how far public sources close it
+
+Two more primary sources were retrieved from NTRS and read here:
+
+- **Burcham, Conners and Maxwell**, *Flight Research Using F100 Engine P680063 in the NASA F-15
+  Airplane* (NTRS 19990064011, public)
+- **NASA TM-84908**, *Airstart performance of a digital electronic engine control system in an
+  F-15 airplane* (NTRS 19830013932, public)
+
+### P680063 configuration chronology
+
+NASA's own retrospective states that P680063 "has flown in four major configurations". The same
+serial spans 1972 to 1994 and ends producing more than 27 000 lbf.
+
+| from | designation | what changed | source |
+|---|---|---|---|
+| 1972 | F100-PW-100**(2)** | as manufactured, serial range P680050–P680084; USAF Combined Test Force | Burcham p. 2 |
+| 1974 | F100-PW-100**(2-7/8)** | rebuilt with improved fan (bulged inner diameter) and control system; one of four | Burcham p. 2 |
+| **1977** | F100-PW-100(2-7/8) | **altitude calibration at NASA Lewis PSL with P680059** — the configuration behind TP-1069, TP-1228, TP-1373, TP-1782 | Burcham p. 3 |
+| **1980** | **F100-PW-100(3) w/ DEEC** | P&W modified it to represent the **gas path of the production F100(3)**: compressor 7th/8th-stage disk and blades, 13th-stage disk, combustor, fuel nozzles, turbine 1st/2nd-stage disks, 3rd/4th-stage disk and blades, nozzle divergent actuator. Plus DEEC and "partial swirl" augmentor | Burcham p. 4; TM-84908 p. 4 |
+| 1985 | F100 **EMD** | EMD fan, single-crystal turbine blades and vanes, 16-segment augmentor | Burcham p. 7 |
+| 1990 | F100 EMD, overhauled | new increased-life core; "little deterioration and better-than-average performance" | Burcham pp. 8–9 |
+
+**The calibration data this project relies on is 1977 / 2-7/8 data.** It is not F100(3) data and
+cannot be relabelled as such.
+
+### The bridge, dimension by dimension
+
+TM-84908 printed p. 4 is the strongest statement available: *"It had been updated to an F100(3)
+production engine configuration prior to the DEEC installation."* Burcham printed p. 4 says the
+intent was "to have the engine represent the gas path of the production F100(3) engine" by
+incorporating "many production F100(3) parts".
+
+| dimension | post-1980 P680063 vs production F100(3) | evidence |
+|---|---|---|
+| **SameDesignation** | **YES** | TM-84908 p. 4; Burcham figure 8 caption calls it "F100(3) CONFIGURATION" |
+| **SameGasPath** | **YES** (source-stated intent plus a parts list) | Burcham p. 4; TM-84908 p. 4 |
+| **SameControlSchedule** | **NO** | the engine ran a **DEEC**, which TM-84908 says "replaces the functions of the supervisory electronic engine control and hydromechanical unified fuel control on the standard F100 engine". Burcham figure 8 plots "Standard F100 UFC-EEC" against "F100 DEEC phase 2/3/4" as different things |
+| **SamePerformanceDeck** | **NO** | nothing states it. TP-1034's characteristic comes from CCD1103-1.0; no source ties modified-P680063 measurements to that deck |
+
+So a defensible statement is available, and it is narrower than it first looks:
+
+> Post-1980 P680063 and the production F100(3) share a **designation** and, by the modifying
+> organisation's own account, a **gas path**. They do **not** share a control system, and no source
+> claims a common performance deck.
+
+**Same designation, same gas path, categorically different control.** That is exactly why
+`MavF100EquivalenceDimension` is a flags enum rather than a boolean, and why
+`RequiredForCharacteristicTransfer` is gas path **and** control schedule — the gas path sets what
+the engine can do, the control sets what it does at a given power lever angle, which is what
+figure 17 plots.
+
+### This bridge does not reach NASA 836 in any case
+
+Worth stating plainly: the P680063 story runs on NASA F-15 **#2 (71-0281)** and **#8 (71-0287)**.
+Neither is 74-0141. And TP-1034's figure 17 is the **CCD1103-1.0 simulation of production
+F100-PW-100(3)**, not a measurement of P680063 in any configuration. The chronology establishes
+that a particular test engine was brought into the F100(3) production family; it says nothing about
+which build is bolted to tail 836.
+
+---
+
+## 6g. NASA 836's engine sub-configuration — searched, not found
+
+**Result: NO public source located.**
+
+Searched NTRS for tail 836, USAF serial 74-0141, F-15B PFTF and Quiet Spike aircraft descriptions,
+the F-15B capability briefings, and the engine-configuration vocabulary (BOM, production
+configuration, UFC/EEC, nozzle configuration, engine change). The F-15B reports describe the
+airframe and quote a thrust figure; **none describes the engine build.** Whether 836's
+F100-PW-100 engines were (1), (2), 2-7/8 or production (3) is not established by anything found.
+Aircraft production year is not evidence of engine sub-configuration and was not used as such.
+
+### What the search did establish
+
+**Tail identity.** NTRS 20160006705, *F-15B 836 Supersonic Research Testbed Capabilities* (NASA
+Armstrong, January 2016): "F-15B (74-0141), Obtained in 1993 from Hawaii ANG".
+
+**A re-engine that bounds every 836 thrust figure.** The same briefing states: "Two **F100-PW-220E**
+engines — upgraded in **2014** — **24,000 lb thrust class** — Digital engine control."
+
+That matters directly. A "24,000 lb" figure quoted for tail 836 may describe the **PW-220E**, a
+different engine model entirely. The frozen target is the *pre-Quiet-Spike F100-PW-100 baseline*
+(Quiet Spike flew 2006–07), so the PW-100 era is the right epoch and 2014-and-later figures are
+out of scope for it — but **configuration date has to travel with 836 figures too**, not only with
+P680063 data.
+
+### The 23 500 lbf identity chain is multi-source
+
+**NASA/TM-2005-213670 never names tail 836 or 74-0141.** It says "the F-15B airplane" and discusses
+the PFTF. The chain therefore takes two sources and is recorded as two:
+
+| link | source |
+|---|---|
+| **A.** The PFTF flies on the NASA F-15B, **tail number 836**, which "is powered by two Pratt & Whitney F100-PW-100 afterburning turbofan engines" | NTRS 20100001729 (2010) |
+| **B.** "The F-15B airplane is powered by two … F100-PW-100 turbofan engines that each produce an uninstalled, sea level static thrust of **approximately 23,500 lbf** in full afterburner" | NASA/TM-2005-213670 (2005) |
+
+Both are inside the PW-100 era and before the 2014 re-engine. The chain is not collapsed into a
+single-source claim.
 
 ---
 

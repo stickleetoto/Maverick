@@ -93,13 +93,39 @@ namespace MaverickFresh.FlightDynamics.F15
             MavF100EngineFamily b,
             MavF100ConfigurationEquivalence equivalence)
         {
+            return MayCombine(a, b, equivalence, RequiredForCharacteristicTransfer);
+        }
+
+        /// <summary>
+        /// The equivalence dimensions needed before a thrust-versus-power-lever characteristic may
+        /// be carried from one configuration to another.
+        ///
+        /// Gas path AND control schedule. The gas path sets what the engine can do; the control
+        /// sets what it actually does at a given lever angle, which is precisely what figure 17
+        /// plots. Designation alone is not enough, and the P680063 lineage is the proof: NASA
+        /// TM-84908 records it "updated to an F100(3) production engine configuration" while
+        /// running a DEEC that replaced the production control entirely.
+        ///
+        /// SamePerformanceDeck is not required, only because requiring it would be requiring the
+        /// answer. Where it IS proven, nothing further need be argued.
+        /// </summary>
+        public const MavF100EquivalenceDimension RequiredForCharacteristicTransfer =
+            MavF100EquivalenceDimension.SameGasPath
+            | MavF100EquivalenceDimension.SameControlSchedule;
+
+        public static bool MayCombine(
+            MavF100EngineFamily a,
+            MavF100EngineFamily b,
+            MavF100ConfigurationEquivalence equivalence,
+            MavF100EquivalenceDimension required)
+        {
             if (a == MavF100EngineFamily.Unspecified || b == MavF100EngineFamily.Unspecified)
                 return false;
 
             if (a == b)
                 return true;
 
-            return equivalence.IsUsable;
+            return equivalence.Covers(required);
         }
 
         /// <summary>
