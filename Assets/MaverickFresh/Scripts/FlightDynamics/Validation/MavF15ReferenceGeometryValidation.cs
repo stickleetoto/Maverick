@@ -21,6 +21,8 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   [G5] a moment reference is never a centre of gravity
     ///   [G6] coefficients are dimensionalized by one coherent reference set, never a mixture
     ///   [G7] valid geometry alone would not enable flight - the other gates stay closed
+    ///   [G8] every value carries BOTH a source lineage and a configuration scope, and no
+    ///        reproduction of an unheld McDonnell document can reach exact-target authority
     /// </summary>
     public static class MavF15ReferenceGeometryValidation
     {
@@ -48,6 +50,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateMomentReferenceIsNotCg(report, ref passed, ref failed);
             ValidateCoherentReferenceSet(report, ref passed, ref failed);
             ValidateOtherGatesStayClosed(report, ref passed, ref failed);
+            ValidateLineageAndScope(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -88,6 +91,10 @@ namespace MaverickFresh.FlightDynamics.Validation
                     factor = MavF15ReferenceGeometrySources.SquareFootToM2;
                 else if (c.sourceUnits == "ft")
                     factor = MavF15ReferenceGeometrySources.FootToM;
+                else if (c.sourceUnits == "in")
+                    factor = MavF15ReferenceGeometrySources.InchToM;
+                else if (c.sourceUnits == "m" || c.sourceUnits == "m^2")
+                    factor = 1f;
                 else
                 {
                     allConvert = false;
@@ -251,15 +258,21 @@ namespace MaverickFresh.FlightDynamics.Validation
 
             MavF15GeometryCandidate[] all = MavF15ReferenceGeometrySources.All;
 
+            // Matched by SI value, so 191.3 in, 4.86 m and 15.95 ft count as the familiar chord
+            // and 56.61 m^2 as the familiar area - whatever units a source happened to print.
+            float familiarAreaM2 = 608f * MavF15ReferenceGeometrySources.SquareFootToM2;
+            float familiarChordM = 15.94f * MavF15ReferenceGeometrySources.FootToM;
+
             int familiar = 0;
             bool noneAccepted = true;
             for (int i = 0; i < all.Length; i++)
             {
                 bool isFamiliar =
                     (all[i].quantity == MavF15GeometryQuantity.CoefficientReferenceArea
-                        && Mathf.Approximately(all[i].sourceValue, 608f))
-                    || (all[i].quantity == MavF15GeometryQuantity.CoefficientReferenceChord
-                        && Mathf.Approximately(all[i].sourceValue, 15.94f));
+                        && Mathf.Abs(all[i].siValue - familiarAreaM2) < 0.2f)
+                    || ((all[i].quantity == MavF15GeometryQuantity.CoefficientReferenceChord
+                            || all[i].quantity == MavF15GeometryQuantity.CgDatumMacLength)
+                        && Mathf.Abs(all[i].siValue - familiarChordM) < 0.01f);
 
                 if (!isFamiliar)
                     continue;
@@ -270,9 +283,10 @@ namespace MaverickFresh.FlightDynamics.Validation
                     noneAccepted = false;
             }
 
-            Record(familiar == 4 && noneAccepted,
-                "all " + familiar + " occurrences of 608 ft^2 or 15.94 ft in the audit are held "
-                + "WITHOUT exact-target authority",
+            Record(familiar >= 12 && noneAccepted,
+                "all " + familiar + " occurrences of the familiar area (~608 ft^2) or chord "
+                + "(~15.94 ft) in the audit, in whatever units printed, are held WITHOUT "
+                + "exact-target authority",
                 report, ref passed, ref failed);
 
             Record(
@@ -626,6 +640,175 @@ namespace MaverickFresh.FlightDynamics.Validation
                 "and the propulsion data provenance is still Unavailable",
                 report, ref passed, ref failed);
             UnityEngine.Object.DestroyImmediate(engine);
+        }
+
+        // ---------------------------------------------------------------- [G8]
+
+        private static void ValidateLineageAndScope(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[G8] Every value carries lineage AND scope; reproductions stay reproductions");
+
+            MavF15GeometryCandidate[] all = MavF15ReferenceGeometrySources.All;
+
+            bool bothAxes = true;
+            bool unspecifiedOnlyWhenEmpty = true;
+            for (int i = 0; i < all.Length; i++)
+            {
+                MavF15GeometryCandidate c = all[i];
+                bool carriesValue = c.sourceValue != 0f || c.siValue != 0f;
+
+                if (carriesValue
+                    && (c.lineage == MavF15SourceLineage.Unspecified
+                        || c.scope == MavF15ConfigurationScope.Unspecified))
+                    bothAxes = false;
+
+                if (c.lineage == MavF15SourceLineage.Unspecified
+                    && (carriesValue || c.authority != MavF15GeometryAuthority.Unavailable))
+                    unspecifiedOnlyWhenEmpty = false;
+            }
+
+            Record(bothAxes,
+                "every candidate that carries a number carries BOTH a source lineage and a "
+                + "configuration scope (" + all.Length + " candidates)",
+                report, ref passed, ref failed);
+
+            Record(unspecifiedOnlyWhenEmpty,
+                "an unspecified lineage appears only on an Unavailable candidate with no value",
+                report, ref passed, ref failed);
+
+            // Accepting authority is structurally tied to an original about 836 itself.
+            bool acceptedOnlyForOriginal836 = true;
+            bool noReproductionAccepted = true;
+            for (int i = 0; i < all.Length; i++)
+            {
+                MavF15GeometryCandidate c = all[i];
+                if (!c.AuthorityAcceptedForExactTarget)
+                    continue;
+
+                if (c.scope != MavF15ConfigurationScope.Exact836
+                    || c.lineage != MavF15SourceLineage.OriginalPrimary)
+                    acceptedOnlyForOriginal836 = false;
+
+                if (c.lineage == MavF15SourceLineage.PublicReproduction
+                    || c.lineage == MavF15SourceLineage.DerivedSimulator
+                    || c.lineage == MavF15SourceLineage.CurveFit
+                    || c.lineage == MavF15SourceLineage.CrossValidation)
+                    noReproductionAccepted = false;
+            }
+
+            Record(acceptedOnlyForOriginal836 && noReproductionAccepted,
+                "every accepted grade sits on an OriginalPrimary source scoped Exact836; no "
+                + "reproduction, simulator constant, curve fit or cross-check holds one",
+                report, ref passed, ref failed);
+
+            // MDC A4172 is not held, so nothing may claim to be read from it.
+            bool noA4172Original = true;
+            int a4172Reproductions = 0;
+            for (int i = 0; i < all.Length; i++)
+            {
+                MavF15GeometryCandidate c = all[i];
+                if (c.citation == null || !c.citation.Contains("A4172"))
+                    continue;
+
+                if (c.lineage == MavF15SourceLineage.OriginalPrimary)
+                    noA4172Original = false;
+                if (c.lineage == MavF15SourceLineage.PublicReproduction)
+                    a4172Reproductions++;
+            }
+
+            Record(
+                !MavF15McDonnellSources.MdcA4172OriginalHeld
+                && !MavF15McDonnellSources.Dn1180OriginalHeld
+                && noA4172Original && a4172Reproductions > 0,
+                "neither MDC A4172 nor DN-1180 is held; the " + a4172Reproductions
+                + " candidates citing A4172 are PublicReproduction, none OriginalPrimary",
+                report, ref passed, ref failed);
+
+            MavF15GeometryCandidate aro10Area = Find(all, "ARO10_S");
+            Record(
+                aro10Area.citation.Contains("PDF p.91")
+                && !aro10Area.citation.Contains("not located"),
+                "the research model's SREF = 608 is now cited to the page that prints it, "
+                + "replacing the earlier 'not located' note",
+                report, ref passed, ref failed);
+
+            // Geometric vs normalizing area, printed side by side.
+            MavF15GeometryCandidate reference = Find(all, "A4172REPRO_BAUMANN_S_REFERENCE");
+            MavF15GeometryCandidate actual = Find(all, "A4172REPRO_BAUMANN_AREA_ACTUAL");
+            Record(
+                actual.quantity == MavF15GeometryQuantity.PhysicalWingArea
+                && !actual.IsCoefficientReference
+                && reference.referenceSetId == actual.referenceSetId
+                && reference.sourceValue - actual.sourceValue > 8f,
+                "one table, two areas: reference 608.00 ft^2 and actual 599.39 ft^2 - the "
+                + "geometric area is not the normalizing area",
+                report, ref passed, ref failed);
+
+            // The F-15A-D %MAC equation, checked against the two independent NASA stations.
+            float lemac = MavF15ReferenceGeometrySources.FamilyCgDatumLeadingEdgeFsIn;
+            float mac = MavF15ReferenceGeometrySources.FamilyCgDatumMacIn;
+            float pftfStation = lemac + 0.28f * mac;
+            float momentReferencePercent =
+                100f * (MavF15ReferenceGeometrySources.Nf15b837MomentReferenceFsIn - lemac) / mac;
+            float afitCgPercent =
+                100f * (MavF15ReferenceGeometrySources.AfitTableCgStationFsIn - lemac) / mac;
+            float aro10Percent =
+                100f * MavF15ReferenceGeometrySources.Aro10MomentReferenceFractionCbar;
+
+            Record(
+                Mathf.Abs(pftfStation
+                    - MavF15ReferenceGeometrySources.Nasa836PftfAnalysisCgFuselageStationIn)
+                    < 0.05f
+                && Mathf.Abs(momentReferencePercent - aro10Percent) < 0.02f
+                && Mathf.Abs(afitCgPercent - aro10Percent) < 0.01f,
+                "cross-check: the F-15A-D equation puts 836's 28 % MAC at FS "
+                + pftfStation.ToString("0.00") + " (printed 561.7), 837's moment reference at "
+                + momentReferencePercent.ToString("0.00") + " % MAC and the AFIT table's "
+                + "reference station at " + afitCgPercent.ToString("0.00")
+                + " % MAC (ARO10: 25.65) - four sources, one datum",
+                report, ref passed, ref failed);
+
+            MavAeroReferenceGeometry exact = MavF15ReferenceData.CreateExactTargetGeometry();
+            Record(
+                Find(all, "A4172REPRO_CG_DATUM_MAC").authority
+                    == MavF15GeometryAuthority.F15FamilySupport
+                && Find(all, "NASA836_PFTF_CG_FAMILY_CONSISTENCY").lineage
+                    == MavF15SourceLineage.CrossValidation
+                && exact.meanAerodynamicChordM == 0f && exact.wingAreaM2 == 0f
+                && exact.wingSpanM == 0f,
+                "and that agreement is recorded as family support and cross-validation - the "
+                + "exact-target S, cbar and reference b stay zero",
+                report, ref passed, ref failed);
+
+            // Even promoted, a CG-datum MAC could not fill the reference-chord slot.
+            MavF15GeometryCandidate[] fixture =
+            {
+                Synthetic(MavF15GeometryQuantity.CoefficientReferenceArea, SyntheticAreaFt2,
+                    "ft^2", MavF15GeometryAuthority.DirectExact836, SyntheticSet),
+                Synthetic(MavF15GeometryQuantity.CgDatumMacLength, SyntheticChordFt,
+                    "ft", MavF15GeometryAuthority.DirectExact836, SyntheticSet),
+                Synthetic(MavF15GeometryQuantity.CoefficientReferenceSpan, SyntheticSpanFt,
+                    "ft", MavF15GeometryAuthority.DirectExact836, SyntheticSet)
+            };
+            MavF15CoefficientReferenceSet set;
+            string reason;
+            Record(
+                !MavF15ReferenceGeometrySources.TrySelectReferenceSet(fixture, out set, out reason),
+                "a CG-datum MAC cannot stand in for the coefficient reference chord, even with "
+                + "exact-target authority: " + reason,
+                report, ref passed, ref failed);
+
+            // The public chord figures disagree in the last digit; none is silently preferred.
+            Record(
+                !Mathf.Approximately(MavF15ReferenceGeometrySources.BrumbaughChordFt,
+                    MavF15ReferenceGeometrySources.Aro10ReferenceChordFt)
+                && Find(all, "CR186019_CBAR").scope
+                    == MavF15ConfigurationScope.NotRepresentativeOfAnyAircraft,
+                "the AIAA challenge model's 15.95 ft differs from 15.94 ft, and that model is "
+                + "scoped as representing no particular aircraft, as its author states",
+                report, ref passed, ref failed);
         }
 
         // ---------------------------------------------------------------- helpers

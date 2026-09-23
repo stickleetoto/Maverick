@@ -216,10 +216,12 @@ rate, no travel limit. All `Unavailable`.
 | pedal → rudder gearing | MechanicalPath | DN-1180.01-238-458 Rev. D |
 | PRAD schedule | PitchRatioChanger | DN-1180.01-238-458 Rev. D / TM-72861 |
 | RRAD schedule | RollRatioChanger | DN-1180.01-238-458 Rev. D / TM-72861 |
-| pitch-rate feedback gain | PitchCas | TM-72861 (→ PublicReference) |
-| normal-acceleration feedback gain | PitchCas | TM-72861 (→ PublicReference) |
-| roll-rate feedback gain | RollCas | TM-72861 (→ PublicReference) |
-| yaw-rate feedback gain | YawCas | TM-72861 (→ PublicReference) |
+| pitch-rate feedback gain | PitchCas | DN-1180.01-238-458 Rev. D — ~~TM-72861~~ (see correction below) |
+| normal-acceleration feedback gain | PitchCas | DN-1180.01-238-458 Rev. D — ~~TM-72861~~ |
+| roll-rate feedback gain | RollCas | DN-1180.01-238-458 Rev. D — ~~TM-72861~~ |
+| yaw-rate feedback gain | YawCas | DN-1180.01-238-458 Rev. D — ~~TM-72861~~ |
+
+> **Correction (source-lineage pass).** Earlier revisions of this table named NASA TM-72861 as the source of the four CAS feedback gains. Read in full, its control-system appendix (pp.12–13) publishes the CAS **architecture and authorities** (pitch ±10°, yaw ±5°), the 0.3 differential-stabilator ratio, the 1.8°/cm pedal gearing and the ARI gradients (0.55 / 0.85), but **no numeric feedback gain**. The RRAD and ARI schedules are plots taken from AFFTC-TR-76-48. See `F15_DN1180_SOURCE_LINEAGE_V0.1.md`.
 | ARI gain/schedule | ARI | DN-1180.01-238-458 Rev. D |
 | roll-to-yaw crossfeed gain | RollToYawCrossfeed | DN-1180.01-238-458 Rev. D |
 | turn-coordination gain | TurnCoordination | DN-1180.01-238-458 Rev. D |
@@ -314,11 +316,13 @@ previous pass stand; no coefficient was retuned.
    of the nineteen unavailable data items in one document: all four gearings, both ratio changers,
    the ARI, both crossfeeds, the stall inhibitor, and the actuator travel/rate/servo set. **By far
    the highest-value item for this layer.**
-2. **NASA TM-72861.** Would supply the four CAS feedback gains at `PublicReference` grade —
-   immediately usable in `F15FamilyReference` mode, and never promotable to exact-target without
-   demonstrated equivalence to 836.
-3. **Davison thesis body (chapters, not Appendix C).** Would supply the roll-damper washout start
-   alpha and curve shape, making the 20.2° endpoint usable.
+2. ~~**NASA TM-72861.** Would supply the four CAS feedback gains at `PublicReference` grade.~~
+   **Withdrawn:** TM-72861 has been read in full and publishes no numeric feedback gain (`F15_DN1180_SOURCE_LINEAGE_V0.1.md` §6).
+   Its authority limits and gearings are recorded there at Preproduction scope, and are not wired.
+3. **Davison thesis body (chapters, not Appendix C).** *Acquired in the source-lineage pass* (DTIC
+   ADA256613). Figure 27 (printed p.68) shows a plateau of gain ≈5 falling linearly to zero at 20.2°. The
+   start alpha (≈7–8°) is readable **only from the plot**, and the gain units are unstated, so the stage
+   stays Unavailable (`F15_DN1180_SOURCE_LINEAGE_V0.1.md` §7).
 4. **`MDC A4172 Part II`.** Still the top blocker for the *aerodynamic* layer (`S`, `c̄`, the
    coefficient database) and a candidate for control travel limits.
 

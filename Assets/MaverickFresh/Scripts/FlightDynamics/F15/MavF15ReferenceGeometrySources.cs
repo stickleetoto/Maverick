@@ -62,7 +62,22 @@ namespace MaverickFresh.FlightDynamics.F15
         /// A centre-of-gravity location. NOT a moment reference: the two coincide only if a source
         /// says so, and the one NASA table that prints both shows them at different stations.
         /// </summary>
-        CenterOfGravityLocation = 5
+        CenterOfGravityLocation = 5,
+
+        /// <summary>
+        /// Actual (exposed or planform) wing area, as distinct from the theoretical/reference area
+        /// an aerodynamic model normalizes by. Baumann 1989 prints both: 608.00 and 599.39 ft^2.
+        /// </summary>
+        PhysicalWingArea = 6,
+
+        /// <summary>
+        /// The MAC length a %MAC centre-of-gravity statement is expressed in. A CG datum, not a
+        /// coefficient normalizer, even where the number coincides with one.
+        /// </summary>
+        CgDatumMacLength = 7,
+
+        /// <summary>The fuselage station of the MAC leading edge, for the same %MAC datum.</summary>
+        CgDatumLeadingEdgeMacStation = 8
     }
 
     /// <summary>One source-stated geometry value, with what it is and how far it may be trusted.</summary>
@@ -92,6 +107,16 @@ namespace MaverickFresh.FlightDynamics.F15
         public string citation;
         public MavF15GeometryAuthority authority;
         public string reason;
+
+        /// <summary>
+        /// How the number reached us. Carried beside <see cref="scope"/> because the authority
+        /// grade alone conflates the two: "Incompatible" says nothing about whether the value was
+        /// read from an original or from a thesis that says it came from one.
+        /// </summary>
+        public MavF15SourceLineage lineage;
+
+        /// <summary>Which aircraft configuration the number describes.</summary>
+        public MavF15ConfigurationScope scope;
 
         public bool IsCoefficientReference
         {
@@ -161,11 +186,20 @@ namespace MaverickFresh.FlightDynamics.F15
     /// F-15B with canards, F100-PW-229 engines and thrust-vectoring nozzles, and in the McAir
     /// ARO10 / 1988 F-15 aerobase lineage behind the AFIT research model. Neither is connected by
     /// any source to the model that describes 836.
+    ///
+    /// The source-lineage pass added the public reproductions attributed to MDC A4172 (AFIT
+    /// theses 1989-1992), the F-15A-D %MAC equation (AFIT 1991), NASA TM-72861's table 1 and
+    /// the AIAA Controls Design Challenge model. Every candidate now carries a
+    /// <see cref="MavF15SourceLineage"/> and a <see cref="MavF15ConfigurationScope"/> beside its
+    /// authority grade. None reaches an accepting grade: MDC A4172 itself is not held
+    /// (<see cref="MavF15McDonnellSources.MdcA4172OriginalHeld"/>), and no 836 source links to
+    /// any of these values. Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md.
     /// </summary>
     public static class MavF15ReferenceGeometrySources
     {
         public const float FootToM = 0.3048f;
         public const float SquareFootToM2 = 0.09290304f;
+        public const float InchToM = 0.0254f;
 
         public const string Nasa836Airframe =
             "NASA F-15B 836 / USAF 74-0141, production two-seat F-15B, two F100-PW-100";
@@ -251,18 +285,119 @@ namespace MaverickFresh.FlightDynamics.F15
             + "'MAC = MEAN AERODYNAMIC CHORD = 15.94 FEET = CWING'. Pages re-read this pass.";
 
         /// <summary>
-        /// The listing pages re-read in this pass name SREF (p.121, p.123) but do not print its
-        /// value. 608 ft^2 is carried from the R2 research-model transcription
-        /// (<see cref="MavF15BaumannMach06Reference.WingAreaFt2"/>) and was not re-located here.
+        /// Where SREF = 608 is printed. An earlier revision of this note said the value had not
+        /// been located on the listing pages re-read at the time. It has now: Davison's driver
+        /// program prints it directly beside BWING and CWING, under a comment that names the
+        /// source.
         /// </summary>
         public const string Aro10AreaProvenanceNote =
-            "SREF is named on listing pp.121/123 but its numeric value was not located in the "
-            + "pages re-read this pass; 608 ft^2 is carried from the R2 transcription.";
+            "SREF=608. printed in Davison's driver program, DTIC ADA256613 (Internet Archive "
+            + "DTIC mirror) PDF p.91 (printed p.81) and again p.124, beside BWING=42.8, "
+            + "CWING=15.94, under the comment 'DATA IS FROM MCAIR REPORT# A4172 AND "
+            + "AFFTC-TR-75-32'; also Baumann, DTIC ADA217366 PDF p.91.";
 
         public const float Aro10ReferenceSpanFt = 42.8f;
         public const float Aro10ReferenceChordFt = 15.94f;
         public const float Aro10ReferenceAreaFt2 = 608f;
         public const float Aro10MomentReferenceFractionCbar = 0.2565f;
+
+        // ---------------------------------------------------------------- A4172 reproductions
+
+        /// <summary>
+        /// Baumann, AFIT/GAE/ENY/89D-01 (DTIC ADA217366), Table VI p.72 (PDF p.87): wing
+        /// "Area (reference) 608.00 sq ft" and "Area (actual) 599.39 sq ft". Appendix A (PDF p.86)
+        /// says the values were "primarily obtained from Barth (12) but were verified wherever
+        /// possible (7)", where (7) is MDC A4172 Parts I and II, Rev. C, August 1976.
+        /// </summary>
+        public const string Baumann1989TableSetId = "BAUMANN_1989_AFIT_TABLE_VI";
+        public const float Baumann1989ReferenceAreaFt2 = 608f;
+        public const float Baumann1989ActualAreaFt2 = 599.39f;
+
+        public const string Baumann1989Citation =
+            "Baumann, AFIT/GAE/ENY/89D-01, DTIC ADA217366, Table VI 'Physical Characteristics of "
+            + "the F-15B Aircraft', printed p.72 (PDF p.87); attributed to Barth (AFIT 1987) and "
+            + "'verified wherever possible' against MDC A4172 Parts I and II Rev. C. Verified "
+            + "against the rendered page.";
+
+        /// <summary>
+        /// The same "Physical Characteristics of the F-15B" table printed by McDonnell 1990
+        /// (ADA230462 Table II, PDF p.83), Fero 1991 (ADA243969 Table IX, PDF p.119), Davison
+        /// 1992 (ADA256613, PDF p.87) and Nolan 1992 (ADA256438 Appendix A, PDF p.110): area
+        /// (theoretical) 608 sq ft, span 42.8 ft, MAC 191.3 in. McDonnell/Fero/Davison attribute
+        /// it to Beck (AFIT 1989) and MDC A4172; Nolan to "a McDonnell Douglas report on mass and
+        /// inertia characteristics".
+        /// </summary>
+        public const string AfitPhysicalTableSetId = "AFIT_1990_1992_F15B_PHYSICAL_TABLE";
+        public const float AfitTableAreaTheoreticalFt2 = 608f;
+        public const float AfitTableSpanFt = 42.8f;
+        public const float AfitTableMacIn = 191.3f;
+
+        /// <summary>
+        /// "C.G. Station X Direction 557.173 / Z Direction 116.173" in the same table (McDonnell
+        /// PDF p.84, Davison PDF p.88). By the F-15A-D equation that is 25.65 % MAC - the ARO10
+        /// moment reference - and it sits within 0.03 in (FS) and 0.13 in (WL) of NF-15B 837's
+        /// printed moment reference. In the ARO10 lineage the CG and the moment reference coincide
+        /// by construction ("the aero stability data was taken referenced to these CG
+        /// locations"); that is a property of that model, not of NASA 836.
+        /// </summary>
+        public const float AfitTableCgStationFsIn = 557.173f;
+        public const float AfitTableCgStationWlIn = 116.173f;
+
+        public const string AfitPhysicalTableCitation =
+            "McDonnell, AFIT/GAE/ENY/90D-16, DTIC ADA230462, Table II printed p.69 (PDF p.83), "
+            + "'obtained from Beck (7) and (23)', (23) = MDC A4172 Part II; identical table in "
+            + "Fero ADA243969 PDF p.119, Davison ADA256613 PDF p.87, Nolan ADA256438 PDF p.110. "
+            + "Verified against rendered pages (McDonnell, Nolan).";
+
+        /// <summary>
+        /// AFIT/GA/ENY/91D-1 (DTIC ADA244044) Appendix A, printed pp.47-48 (PDF pp.55-56):
+        /// "% MAC = (c.g. (inches) - 508.1) / 191.33 * 100", stated to be "used for all A through
+        /// D models of the F-15", beside the McDonnell F-15 reference datum figure cited to MDC
+        /// A4172 Part I Supplement 1 p.vii (FS 0.0 approx 116.3 in forward of the nose).
+        /// The equation itself carries no citation.
+        /// </summary>
+        public const string BallastThesisSetId = "AFIT_1991_ADA244044_PERCENT_MAC_EQUATION";
+        public const float FamilyCgDatumMacIn = 191.33f;
+        public const float FamilyCgDatumLeadingEdgeFsIn = 508.1f;
+
+        public const string BallastThesisCitation =
+            "AFIT/GA/ENY/91D-1, DTIC ADA244044, Appendix A printed p.47 (PDF p.55), equation (3), "
+            + "'used for all A through D models of the F-15'; datum figure 21 p.48 cited "
+            + "(7:vii) = MDC A4172 Part I Supplement 1, 4 Oct 1979. Verified against rendered "
+            + "pages.";
+
+        /// <summary>
+        /// NASA TM-72861 (NTRS 19790015808) table 1 "F-15 DIMENSIONS", p.15 (PDF p.17): wing
+        /// area (reference) 56.61 m^2, span 13.05 m, MAC 4.86 m. The report's test aircraft was F-15
+        /// No. 8, a preproduction airframe. 56.61 m^2 is 609.3 ft^2, not 608 - a 0.2 % difference
+        /// the report does not explain.
+        /// </summary>
+        public const string Tm72861SetId = "NASA_TM_72861_TABLE_1";
+        public const float Tm72861ReferenceAreaM2 = 56.61f;
+        public const float Tm72861SpanM = 13.05f;
+        public const float Tm72861MacM = 4.86f;
+
+        public const string Tm72861Citation =
+            "NASA TM-72861, Sisk & Matheny, May 1979, NTRS 19790015808, table 1 'F-15 "
+            + "DIMENSIONS' p.15 (PDF p.17); test aircraft F-15 No. 8, preproduction. Verified "
+            + "against the rendered page.";
+
+        /// <summary>
+        /// Brumbaugh, "An Aircraft Model for the AIAA Controls Design Challenge", NASA CR-186019
+        /// (NTRS 19920003846), table 1 p.4 (PDF p.8): S 608.0 ft^2, b 42.8 ft, cbar 15.95 ft. The
+        /// report says of its own model that it "is not completely representative of any
+        /// particular aircraft" and warns against "making any assumptions" from resemblances.
+        /// Note 15.95, not 15.94.
+        /// </summary>
+        public const string BrumbaughSetId = "NASA_CR_186019_TABLE_1";
+        public const float BrumbaughAreaFt2 = 608f;
+        public const float BrumbaughSpanFt = 42.8f;
+        public const float BrumbaughChordFt = 15.95f;
+
+        public const string BrumbaughCitation =
+            "Brumbaugh, NASA CR-186019 / AIAA 91-2631, NTRS 19920003846, table 1 p.4 (PDF p.8); "
+            + "model declared not representative of any particular aircraft. Verified against the "
+            + "rendered page.";
 
         // ---------------------------------------------------------------- candidates
 
@@ -282,6 +417,7 @@ namespace MaverickFresh.FlightDynamics.F15
                         + "AIAA 2001-3303 p.6; NASA/TM-2006-213675 p.18; 836 identity via "
                         + "NASA/TM-2008-214634 p.6.",
                         MavF15GeometryAuthority.DirectExact836,
+                        MavF15SourceLineage.OriginalPrimary, MavF15ConfigurationScope.Exact836,
                         "Stated for the 836 airframe, as an overall dimension beside length and "
                         + "height. Physical geometry: exact, and still not a coefficient "
                         + "reference span."),
@@ -293,6 +429,7 @@ namespace MaverickFresh.FlightDynamics.F15
                         + "TM-2006-213674, NTRS 20070032807, TM-2008-214634, TM-4782 and "
                         + "further 836 reports - see the audit document.",
                         MavF15GeometryAuthority.Unavailable,
+                        MavF15SourceLineage.Unspecified, MavF15ConfigurationScope.Exact836,
                         "No 836 source prints a reference area, and none names the reference "
                         + "dimensions of the baseline aerodynamic model it updates."),
 
@@ -301,6 +438,7 @@ namespace MaverickFresh.FlightDynamics.F15
                         0f, "ft", 0f, null, Nasa836Airframe,
                         "As NASA836_S. TM-2012-215978 p.6 defines 'MAC' only as a symbol.",
                         MavF15GeometryAuthority.Unavailable,
+                        MavF15SourceLineage.Unspecified, MavF15ConfigurationScope.Exact836,
                         "MAC is used as the unit of CG position (26.34 % MAC) but its length is "
                         + "never printed."),
 
@@ -309,6 +447,7 @@ namespace MaverickFresh.FlightDynamics.F15
                         0f, "ft", 0f, null, Nasa836Airframe,
                         "As NASA836_S.",
                         MavF15GeometryAuthority.Unavailable,
+                        MavF15SourceLineage.Unspecified, MavF15ConfigurationScope.Exact836,
                         "Only the physical span is printed; no source states the span the "
                         + "baseline model normalizes p, r, Cl and Cn by."),
 
@@ -317,6 +456,7 @@ namespace MaverickFresh.FlightDynamics.F15
                         0f, "", 0f, null, Nasa836Airframe,
                         "As NASA836_S.",
                         MavF15GeometryAuthority.Unavailable,
+                        MavF15SourceLineage.Unspecified, MavF15ConfigurationScope.Exact836,
                         "No moment reference location is printed for the 836 model."),
 
                     Candidate(
@@ -324,6 +464,7 @@ namespace MaverickFresh.FlightDynamics.F15
                         MavF15MassReference.XcgPercentMac, "% MAC", 0f, null, Nasa836Airframe,
                         "NASA/TM-2012-215978 p.8 table 1, baseline column.",
                         MavF15GeometryAuthority.DirectExact836,
+                        MavF15SourceLineage.OriginalPrimary, MavF15ConfigurationScope.Exact836,
                         "A CG location, exact for the mass state. Not a moment reference, and "
                         + "not locatable in length units without cbar and the leading-edge MAC "
                         + "station."),
@@ -334,6 +475,7 @@ namespace MaverickFresh.FlightDynamics.F15
                         Nasa836Airframe,
                         "AIAA 2001-3303 p.12; PFTF on tail 836 per NTRS 20100001729 p.1.",
                         MavF15GeometryAuthority.DirectExact836,
+                        MavF15SourceLineage.OriginalPrimary, MavF15ConfigurationScope.Exact836,
                         "The CG of one CFD analysis. One equation in two unknowns - it does not "
                         + "determine cbar - and it is not a moment reference."),
 
@@ -343,6 +485,8 @@ namespace MaverickFresh.FlightDynamics.F15
                         Nf15b837ReferenceAreaFt2, "ft^2", Nf15b837ReferenceAreaFt2 * SquareFootToM2,
                         Nf15b837ReferenceSetId, Nf15b837Airframe, Nf15b837Citation,
                         MavF15GeometryAuthority.Incompatible,
+                        MavF15SourceLineage.OriginalPrimary,
+                        MavF15ConfigurationScope.ResearchModified,
                         "A genuine coefficient reference area - for a different airframe and "
                         + "aerodynamic model: preproduction, canards, F100-PW-229, TV nozzles."),
 
@@ -351,6 +495,8 @@ namespace MaverickFresh.FlightDynamics.F15
                         Nf15b837ReferenceChordFt, "ft", Nf15b837ReferenceChordFt * FootToM,
                         Nf15b837ReferenceSetId, Nf15b837Airframe, Nf15b837Citation,
                         MavF15GeometryAuthority.Incompatible,
+                        MavF15SourceLineage.OriginalPrimary,
+                        MavF15ConfigurationScope.ResearchModified,
                         "As NF15B837_S."),
 
                     Candidate(
@@ -358,6 +504,8 @@ namespace MaverickFresh.FlightDynamics.F15
                         Nf15b837ReferenceSpanFt, "ft", Nf15b837ReferenceSpanFt * FootToM,
                         Nf15b837ReferenceSetId, Nf15b837Airframe, Nf15b837Citation,
                         MavF15GeometryAuthority.Incompatible,
+                        MavF15SourceLineage.OriginalPrimary,
+                        MavF15ConfigurationScope.ResearchModified,
                         "42.7 ft - neither the 42.8 ft printed for 836 nor the 42.83 ft on 837's "
                         + "own three-view. Reference spans are model-specific."),
 
@@ -367,6 +515,8 @@ namespace MaverickFresh.FlightDynamics.F15
                         "NF15B_837_NASA_TM_2003_212027_FIGURE_2", Nf15b837Airframe,
                         "NASA/TM-2003-212027 p.23 figure 2.",
                         MavF15GeometryAuthority.Incompatible,
+                        MavF15SourceLineage.OriginalPrimary,
+                        MavF15ConfigurationScope.ResearchModified,
                         "Physical, and a different airframe."),
 
                     Candidate(
@@ -375,15 +525,19 @@ namespace MaverickFresh.FlightDynamics.F15
                         Nf15b837MomentReferenceFsIn, "in (FS 557.2, WL 116.3, BL 0.0)", 0f,
                         Nf15b837ReferenceSetId, Nf15b837Airframe, Nf15b837Citation,
                         MavF15GeometryAuthority.Incompatible,
+                        MavF15SourceLineage.OriginalPrimary,
+                        MavF15ConfigurationScope.ResearchModified,
                         "Different airframe. Printed beside a CG of FS 560.40 - not the CG."),
 
-                    // --- ARO10 production-aerobase lineage
+                    // --- ARO10 production-aerobase lineage, as reproduced in the AFIT listings
                     Candidate(
                         "ARO10_S", MavF15GeometryQuantity.CoefficientReferenceArea,
                         Aro10ReferenceAreaFt2, "ft^2", Aro10ReferenceAreaFt2 * SquareFootToM2,
                         Aro10ReferenceSetId, Aro10Airframe,
                         Aro10Citation + " " + Aro10AreaProvenanceNote,
                         MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.DerivedSimulator,
+                        MavF15ConfigurationScope.ProductionF15Family,
                         "Production F-15 aerobase lineage. No source says NASA 836's baseline "
                         + "model uses it."),
 
@@ -392,6 +546,8 @@ namespace MaverickFresh.FlightDynamics.F15
                         Aro10ReferenceChordFt, "ft", Aro10ReferenceChordFt * FootToM,
                         Aro10ReferenceSetId, Aro10Airframe, Aro10Citation,
                         MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.DerivedSimulator,
+                        MavF15ConfigurationScope.ProductionF15Family,
                         "As ARO10_S."),
 
                     Candidate(
@@ -399,6 +555,8 @@ namespace MaverickFresh.FlightDynamics.F15
                         Aro10ReferenceSpanFt, "ft", Aro10ReferenceSpanFt * FootToM,
                         Aro10ReferenceSetId, Aro10Airframe, Aro10Citation,
                         MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.DerivedSimulator,
+                        MavF15ConfigurationScope.ProductionF15Family,
                         "Numerically equal to 836's physical span, which proves nothing about "
                         + "836's model: NF-15B 837 uses 42.7 ft."),
 
@@ -407,23 +565,172 @@ namespace MaverickFresh.FlightDynamics.F15
                         Aro10MomentReferenceFractionCbar, "fraction of cbar", 0f,
                         Aro10ReferenceSetId, Aro10Airframe, Aro10Citation,
                         MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.DerivedSimulator,
+                        MavF15ConfigurationScope.ProductionF15Family,
                         "The ARO10 listing calls these 'CG locations' the data was referenced "
                         + "to - a moment reference, for the production aerobase."),
+
+                    // --- public reproductions attributed to MDC A4172 (not held)
+                    Candidate(
+                        "A4172REPRO_BAUMANN_S_REFERENCE",
+                        MavF15GeometryQuantity.CoefficientReferenceArea,
+                        Baumann1989ReferenceAreaFt2, "ft^2",
+                        Baumann1989ReferenceAreaFt2 * SquareFootToM2,
+                        Baumann1989TableSetId, "F-15B (production family), clean",
+                        Baumann1989Citation,
+                        MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.PublicReproduction,
+                        MavF15ConfigurationScope.ProductionF15Family,
+                        "Printed 'Area (reference)'. A reproduction attributed partly to A4172 - "
+                        + "not A4172 itself - and no chain to NASA 836's model."),
+
+                    Candidate(
+                        "A4172REPRO_BAUMANN_AREA_ACTUAL", MavF15GeometryQuantity.PhysicalWingArea,
+                        Baumann1989ActualAreaFt2, "ft^2",
+                        Baumann1989ActualAreaFt2 * SquareFootToM2,
+                        Baumann1989TableSetId, "F-15B (production family), clean",
+                        Baumann1989Citation,
+                        MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.PublicReproduction,
+                        MavF15ConfigurationScope.ProductionF15Family,
+                        "Printed 'Area (actual)' in the same table as the 608 reference area: "
+                        + "the geometric area and the normalizing area are different numbers."),
+
+                    Candidate(
+                        "A4172REPRO_AFIT_TABLE_S_THEORETICAL",
+                        MavF15GeometryQuantity.CoefficientReferenceArea,
+                        AfitTableAreaTheoreticalFt2, "ft^2",
+                        AfitTableAreaTheoreticalFt2 * SquareFootToM2,
+                        AfitPhysicalTableSetId, "F-15B (production family)",
+                        AfitPhysicalTableCitation,
+                        MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.PublicReproduction,
+                        MavF15ConfigurationScope.ProductionF15Family,
+                        "Printed 'Area (Theoretical)'; the same theses' simulations use it as "
+                        + "SREF. Family reproduction, no chain to NASA 836's model."),
+
+                    Candidate(
+                        "A4172REPRO_AFIT_TABLE_MAC", MavF15GeometryQuantity.CoefficientReferenceChord,
+                        AfitTableMacIn, "in", AfitTableMacIn * InchToM,
+                        AfitPhysicalTableSetId, "F-15B (production family)",
+                        AfitPhysicalTableCitation,
+                        MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.PublicReproduction,
+                        MavF15ConfigurationScope.ProductionF15Family,
+                        "191.3 in = 15.94 ft, used as CWING in the same theses. Family "
+                        + "reproduction, no chain to NASA 836's model."),
+
+                    Candidate(
+                        "A4172REPRO_AFIT_TABLE_SPAN", MavF15GeometryQuantity.PhysicalWingSpan,
+                        AfitTableSpanFt, "ft", AfitTableSpanFt * FootToM,
+                        AfitPhysicalTableSetId, "F-15B (production family)",
+                        AfitPhysicalTableCitation,
+                        MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.PublicReproduction,
+                        MavF15ConfigurationScope.ProductionF15Family,
+                        "A physical-characteristics table span."),
+
+                    Candidate(
+                        "A4172REPRO_AFIT_TABLE_CG_STATION",
+                        MavF15GeometryQuantity.CenterOfGravityLocation,
+                        AfitTableCgStationFsIn, "in (FS 557.173, WL 116.173)", 0f,
+                        AfitPhysicalTableSetId, "F-15B (production family)",
+                        AfitPhysicalTableCitation,
+                        MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.PublicReproduction,
+                        MavF15ConfigurationScope.ProductionF15Family,
+                        "25.65 % MAC by the family equation - the ARO10 reference point, where "
+                        + "that model's CG and moment reference coincide by construction."),
+
+                    Candidate(
+                        "A4172REPRO_CG_DATUM_MAC", MavF15GeometryQuantity.CgDatumMacLength,
+                        FamilyCgDatumMacIn, "in", FamilyCgDatumMacIn * InchToM,
+                        BallastThesisSetId, "F-15A through D (stated)", BallastThesisCitation,
+                        MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.PublicReproduction,
+                        MavF15ConfigurationScope.ProductionF15Family,
+                        "The MAC a %MAC CG is expressed in, stated for all F-15A-D. A CG datum, "
+                        + "not a coefficient normalizer."),
+
+                    Candidate(
+                        "A4172REPRO_CG_DATUM_LEMAC_FS",
+                        MavF15GeometryQuantity.CgDatumLeadingEdgeMacStation,
+                        FamilyCgDatumLeadingEdgeFsIn, "in (FS)", 0f,
+                        BallastThesisSetId, "F-15A through D (stated)", BallastThesisCitation,
+                        MavF15GeometryAuthority.F15FamilySupport,
+                        MavF15SourceLineage.PublicReproduction,
+                        MavF15ConfigurationScope.ProductionF15Family,
+                        "Leading-edge MAC at FS 508.1 for the same datum."),
+
+                    // --- other public F-15 dimension tables
+                    Candidate(
+                        "TM72861_S_REFERENCE", MavF15GeometryQuantity.CoefficientReferenceArea,
+                        Tm72861ReferenceAreaM2, "m^2", Tm72861ReferenceAreaM2,
+                        Tm72861SetId, "F-15 No. 8, preproduction", Tm72861Citation,
+                        MavF15GeometryAuthority.CrossValidationOnly,
+                        MavF15SourceLineage.OriginalPrimary,
+                        MavF15ConfigurationScope.Preproduction,
+                        "56.61 m^2 = 609.3 ft^2, 0.2 % above 608. A preproduction test aircraft."),
+
+                    Candidate(
+                        "TM72861_SPAN", MavF15GeometryQuantity.PhysicalWingSpan,
+                        Tm72861SpanM, "m", Tm72861SpanM,
+                        Tm72861SetId, "F-15 No. 8, preproduction", Tm72861Citation,
+                        MavF15GeometryAuthority.CrossValidationOnly,
+                        MavF15SourceLineage.OriginalPrimary,
+                        MavF15ConfigurationScope.Preproduction,
+                        "Wing span 13.05 m (42.8 ft)."),
+
+                    Candidate(
+                        "TM72861_MAC", MavF15GeometryQuantity.CoefficientReferenceChord,
+                        Tm72861MacM, "m", Tm72861MacM,
+                        Tm72861SetId, "F-15 No. 8, preproduction", Tm72861Citation,
+                        MavF15GeometryAuthority.CrossValidationOnly,
+                        MavF15SourceLineage.OriginalPrimary,
+                        MavF15ConfigurationScope.Preproduction,
+                        "MAC 4.86 m (15.94 ft to the printed precision)."),
+
+                    Candidate(
+                        "CR186019_S", MavF15GeometryQuantity.CoefficientReferenceArea,
+                        BrumbaughAreaFt2, "ft^2", BrumbaughAreaFt2 * SquareFootToM2,
+                        BrumbaughSetId, "AIAA Controls Design Challenge model", BrumbaughCitation,
+                        MavF15GeometryAuthority.CrossValidationOnly,
+                        MavF15SourceLineage.DerivedSimulator,
+                        MavF15ConfigurationScope.NotRepresentativeOfAnyAircraft,
+                        "Its author says the model represents no particular aircraft."),
+
+                    Candidate(
+                        "CR186019_CBAR", MavF15GeometryQuantity.CoefficientReferenceChord,
+                        BrumbaughChordFt, "ft", BrumbaughChordFt * FootToM,
+                        BrumbaughSetId, "AIAA Controls Design Challenge model", BrumbaughCitation,
+                        MavF15GeometryAuthority.CrossValidationOnly,
+                        MavF15SourceLineage.DerivedSimulator,
+                        MavF15ConfigurationScope.NotRepresentativeOfAnyAircraft,
+                        "15.95 ft - a third distinct chord figure in public F-15-like material."),
+
+                    Candidate(
+                        "CR186019_B_REFERENCE", MavF15GeometryQuantity.CoefficientReferenceSpan,
+                        BrumbaughSpanFt, "ft", BrumbaughSpanFt * FootToM,
+                        BrumbaughSetId, "AIAA Controls Design Challenge model", BrumbaughCitation,
+                        MavF15GeometryAuthority.CrossValidationOnly,
+                        MavF15SourceLineage.DerivedSimulator,
+                        MavF15ConfigurationScope.NotRepresentativeOfAnyAircraft,
+                        "As CR186019_S."),
 
                     // --- the only cross-check between 836 and the family geometry
                     Candidate(
                         "NASA836_PFTF_CG_FAMILY_CONSISTENCY",
                         MavF15GeometryQuantity.CenterOfGravityLocation,
                         Nasa836PftfAnalysisCgFuselageStationIn, "in (FS)", 0f, null,
-                        "NASA 836 statement checked against NF-15B 837 and ARO10 values",
-                        "AIAA 2001-3303 p.12 with NASA/TM-2003-212027 table 1 and the ARO10 "
-                        + "listing p.123.",
+                        "NASA 836 statement checked against the F-15A-D %MAC equation",
+                        "AIAA 2001-3303 p.12 against DTIC ADA244044 equation (3).",
                         MavF15GeometryAuthority.CrossValidationOnly,
-                        "If 837's moment reference FS 557.2 sits at ARO10's 25.65 % of a "
-                        + "15.94-ft MAC, the leading-edge MAC is FS 508.14; 836's 28 % MAC at "
-                        + "FS 561.7 then implies FS 508.14 as well. Consistent to 0.01 in - and "
-                        + "still not a derivation: both premises are assumptions, and any "
-                        + "cbar satisfies 836's single equation with a suitable leading edge.")
+                        MavF15SourceLineage.CrossValidation,
+                        MavF15ConfigurationScope.ProductionF15Family,
+                        "The family equation puts 28 % MAC at FS 508.1 + 0.28 x 191.33 = 561.67, "
+                        + "and 836's PFTF analysis printed FS 561.7. Consistent, and still not a "
+                        + "link: no 836 source names its MAC, its leading edge, or the reference "
+                        + "chord of its aerodynamic model.")
                 };
             }
         }
@@ -571,7 +878,9 @@ namespace MaverickFresh.FlightDynamics.F15
             string id, MavF15GeometryQuantity quantity,
             float sourceValue, string sourceUnits, float siValue,
             string referenceSetId, string airframe, string citation,
-            MavF15GeometryAuthority authority, string reason)
+            MavF15GeometryAuthority authority,
+            MavF15SourceLineage lineage, MavF15ConfigurationScope scope,
+            string reason)
         {
             MavF15GeometryCandidate c = new MavF15GeometryCandidate();
             c.id = id;
@@ -583,6 +892,8 @@ namespace MaverickFresh.FlightDynamics.F15
             c.airframe = airframe;
             c.citation = citation;
             c.authority = authority;
+            c.lineage = lineage;
+            c.scope = scope;
             c.reason = reason;
             return c;
         }

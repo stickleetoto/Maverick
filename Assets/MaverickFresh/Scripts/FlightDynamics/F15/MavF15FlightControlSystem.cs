@@ -12,12 +12,21 @@ namespace MaverickFresh.FlightDynamics.F15
     /// something somebody typed in to make the aircraft fly? A gain that cannot answer must not
     /// be used, so <see cref="Available"/> is false until the answer is supplied.
     ///
-    /// NASA TM-72861 is the obvious near-term source for most of these, and it is genuinely good
-    /// evidence - but its test aircraft was F-15 No. 8, a preproduction airframe later modified
-    /// toward production standard. A gain taken from it is therefore
-    /// <see cref="MavEngineDataProvenance.PublicReference"/>, never Authoritative, until
+    /// NASA TM-72861 is genuinely good evidence - but its test aircraft was F-15 No. 8, a
+    /// preproduction airframe later modified toward production standard. A value taken from it is
+    /// therefore <see cref="MavEngineDataProvenance.PublicReference"/>, never Authoritative, until
     /// equivalence with NASA 836 is actually demonstrated. The type makes that distinction
     /// survivable across edits; a comment would not.
+    ///
+    /// CORRECTION (source-lineage pass). Earlier revisions called TM-72861 the source for "most
+    /// of these", including the four CAS feedback gains. Read in full, its control-system
+    /// appendix (pp.12-13) publishes architecture, authorities and a few gearings - pitch CAS
+    /// authority +/-10 deg, yaw CAS +/-5 deg, differential stabilator 0.3 deg per deg aileron,
+    /// rudder-to-pedal 1.8 deg/cm, ARI gradients 0.55 and 0.85 deg per deg - but NO numeric
+    /// pitch-rate, normal-acceleration, roll-rate or yaw-rate feedback gain. PRAD is described in
+    /// words only; the RRAD and ARI schedules are plots (figs. 20 and 23) reproduced from
+    /// AFFTC-TR-76-48. It does not derive from DN-1180.01-238-458, which it predates.
+    /// Docs/Reference/F15_DN1180_SOURCE_LINEAGE_V0.1.md.
     /// </summary>
     [Serializable]
     public struct MavF15ControlGain
@@ -415,8 +424,8 @@ namespace MaverickFresh.FlightDynamics.F15
                 + "DN-1180.01-238-458 Rev. D (F-15 Flight Control System Description) would close this.";
             const string cas =
                 "UNAVAILABLE: F-15 CAS gain not recovered for NASA 836. NASA TM-72861 carries "
-                + "F-15-family CAS architecture and gains, but for preproduction F-15 No. 8 - "
-                + "PublicReference at best until equivalence with 836 is demonstrated.";
+                + "F-15 CAS architecture and authority limits but no numeric feedback gain, for "
+                + "preproduction F-15 No. 8; DN-1180.01-238-458 Rev. D is not publicly held.";
 
             return new MavF15ControlLawSchedules
             {
