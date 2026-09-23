@@ -27,7 +27,7 @@ No R0/R0.5 frozen value was changed.
 | Quantity | Frozen raw value | Frozen SI / derived value | Status |
 |---|---:|---:|---|
 | Length, excluding air-data nose boom | 63.7 ft | 19.41576 m | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
-| Span | 42.8 ft | 13.04544 m | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
+| Span, **physical** | 42.8 ft | 13.04544 m | `FROZEN_DIRECT` / `FROZEN_DERIVED` — physical geometry only; not the coefficient reference span (`F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md` §5) |
 | Height | 18.7 ft | 5.69976 m | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
 | Fuel state | 8,000 lb | 3,628.73896 kg | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
 | Aircraft weight | 37,426 lb | 166,479.14217 N | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
@@ -152,12 +152,13 @@ were not recovered as verified public primary copies during this task. Therefore
 
 | Field | Current evidence | Status | Closure decision |
 |---|---|---|---|
-| Wing reference area `S` | 608 ft^2 appears repeatedly in government/NASA F-15 family material and AFIT work tracing to McDonnell data | `SUPPORTED_ONLY` | **not frozen**; exact NASA 836 reference-definition equivalence not proven |
+| Wing reference area `S` | 608 ft^2 appears repeatedly in government/NASA F-15 family material and AFIT work tracing to McDonnell data | `SUPPORTED_ONLY` | **not frozen**; exact NASA 836 reference-definition equivalence not proven. Audited: NASA printing = NF-15B 837 (TM-2003-212027) `INCOMPATIBLE`; ARO10 lineage `F15_FAMILY_SUPPORT`; 836 `UNAVAILABLE` |
+| Coefficient reference span `b` | ARO10 uses 42.8 ft; NF-15B 837 uses 42.7 ft; 836 prints only its 42.8-ft physical span | `UNAVAILABLE` | **not frozen**; reference spans are model-specific |
 | Mean aerodynamic chord `cbar` | 191.3 in appears in AFIT/USAF-derived F-15 material tracing to McDonnell source lineage | `SUPPORTED_ONLY` | **not frozen** |
 | Wing sweep | 45 deg repeatedly supported for F-15 A-D family | `SUPPORTED_ONLY` | **not frozen** as an exact-target numeric field |
 | Absolute aircraft datum | FS/WL/BL convention clearly used by NASA F-15 programs | `SUPPORTED_ONLY` | absolute origin/definition still `UNAVAILABLE` |
-| Aerodynamic moment reference | modified-aircraft reports expose F-15 reference stations, but not accepted for NASA 836 | `CROSS_VALIDATION_ONLY` | `UNAVAILABLE` for target |
-| CG-to-structural-datum mapping | 28% MAC -> FS 561.7 in same-airframe PFTF analysis | `SUPPORTED_ONLY` | not promoted |
+| Aerodynamic moment reference | modified-aircraft reports expose F-15 reference stations (NF-15B 837: FS 557.2 / WL 116.3 / BL 0.0, `INCOMPATIBLE`), but not accepted for NASA 836 | `CROSS_VALIDATION_ONLY` | `UNAVAILABLE` for target |
+| CG-to-structural-datum mapping | 28% MAC -> FS 561.7 in same-airframe PFTF analysis | `SUPPORTED_ONLY` | not promoted. A CG, not a moment reference; one equation in two unknowns. Consistent with the family chord to ~0.01 in, which is recorded as `CROSS_VALIDATION_ONLY` (audit §6) |
 | Engine station/datum relationship | no exact NASA 836 installation coordinates recovered | `UNAVAILABLE` | open |
 
 ## 5. Control gap matrix

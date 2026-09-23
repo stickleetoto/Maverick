@@ -27,7 +27,7 @@ Status vocabulary:
 | Later engine state | F100-PW-220E x2 after 2014 upgrade | NTRS 20160006705 | Same airframe, different time/config | High | **CROSS_VALIDATION_ONLY** |
 | Length | 63.7 ft, excluding air-data nose boom | NASA/TM-2006-213674 | DIRECT | High | **FROZEN** |
 | Length SI | 19.41576 m | conversion from 63.7 ft | DERIVED | High | **DERIVED** |
-| Span | 42.8 ft | NASA/TM-2006-213674 | DIRECT | High | **FROZEN** |
+| Span, **physical** (not the coefficient reference span — see `F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md`) | 42.8 ft | NASA/TM-2006-213674 | DIRECT | High | **FROZEN** |
 | Span SI | 13.04544 m | conversion from 42.8 ft | DERIVED | High | **DERIVED** |
 | Height | 18.7 ft | NASA/TM-2006-213674 | DIRECT | High | **FROZEN** |
 | Height SI | 5.69976 m | conversion from 18.7 ft | DERIVED | High | **DERIVED** |

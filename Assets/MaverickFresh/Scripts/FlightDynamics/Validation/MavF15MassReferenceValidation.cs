@@ -17,9 +17,15 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   [M0] all three table-1 columns match the source exactly
     ///   [M1] the frozen target selects BASELINE and cannot be satisfied by either spike state
     ///   [M2] SI values derive from the raw source values rather than being hand-copied
-    ///   [M3] the source inertia tensor is physically admissible
+    ///   [M3] the source inertia tensor is physically admissible - positive definite, and its
+    ///        PRINCIPAL moments (eigenvalues of the complete tensor, derived independently in the
+    ///        suite) satisfy the triangle inequalities
     ///   [M4] the Unity conversion is numerically consistent with the source tensor
     ///   [M5] the specific mislabelled tuple is pinned to QuietSpikeExtended forever
+    ///
+    /// [M3] was itself corrected once. It originally applied the triangle inequalities to the
+    /// body-axis diagonal and called that a principal-moment test, which it is only when Ixz is
+    /// zero. The baseline's Ixz is -5,070 slug-ft^2.
     /// </summary>
     public static class MavF15MassReferenceValidation
     {
@@ -262,12 +268,19 @@ namespace MaverickFresh.FlightDynamics.Validation
 
             bool allPositiveDefinite = true;
             bool allTriangle = true;
+            bool principalNeverLooser = true;
             for (int i = 0; i < all.Length; i++)
             {
                 if (!all[i].IsPositiveDefinite)
                     allPositiveDefinite = false;
-                if (!all[i].SatisfiesTriangleInequalities)
+                if (!all[i].SatisfiesPrincipalTriangleInequalities)
                     allTriangle = false;
+
+                // The smallest eigenvalue of the second-moment matrix can never exceed any of its
+                // diagonal entries, so the principal margin is never looser than the body-axis one.
+                if (all[i].TightestPrincipalTriangleMarginSlugFt2
+                    > BodyAxisTriangleMargin(all[i]) + 1e-6)
+                    principalNeverLooser = false;
             }
 
             Record(allPositiveDefinite,
@@ -276,17 +289,96 @@ namespace MaverickFresh.FlightDynamics.Validation
                 report, ref passed, ref failed);
 
             Record(allTriangle,
-                "and every column satisfies the rigid-body triangle inequalities - a check that "
-                + "usually catches a mistyped digit",
+                "and every column's PRINCIPAL moments satisfy the rigid-body triangle "
+                + "inequalities - evaluated on the eigenvalues of the complete tensor, not on the "
+                + "body-axis diagonal",
+                report, ref passed, ref failed);
+
+            Record(principalNeverLooser,
+                "for every column the principal margin is no looser than the body-axis margin, "
+                + "as the mathematics requires - which is why the body-axis figure could only ever "
+                + "overstate the margin",
                 report, ref passed, ref failed);
 
             MavF15MassStateReference baseline = MavF15Table1MassStates.Baseline;
 
-            // The baseline is the tightest of the three on Ixx + Iyy >= Izz, so state the margin.
-            float margin = baseline.ixxSlugFt2 + baseline.iyySlugFt2 - baseline.izzSlugFt2;
-            Record(margin > 0f,
-                "the baseline column's tightest triangle margin is "
-                + margin.ToString("0") + " slug-ft^2 (Ixx + Iyy - Izz), positive as required",
+            // Derive the baseline's principal moments INDEPENDENTLY of the struct: a general
+            // symmetric 3x3 eigen-solver on the full tensor, not the sparsity-aware closed form.
+            double[,] tensor = BodyTensor(baseline);
+            double[] independent = SymmetricEigenvaluesAscending(tensor);
+
+            double smallest, middle, largest;
+            baseline.GetPrincipalMomentsSlugFt2(out smallest, out middle, out largest);
+
+            bool eigenAgree =
+                RelativeClose(independent[0], smallest, 1e-9)
+                && RelativeClose(independent[1], middle, 1e-9)
+                && RelativeClose(independent[2], largest, 1e-9);
+
+            Record(eigenAgree,
+                "baseline principal moments, derived two independent ways from the source tensor: "
+                + independent[0].ToString("0.00") + " / " + independent[1].ToString("0.00")
+                + " / " + independent[2].ToString("0.00") + " slug-ft^2",
+                report, ref passed, ref failed);
+
+            // The eigenvalues must reproduce the tensor's three invariants.
+            double trace = tensor[0, 0] + tensor[1, 1] + tensor[2, 2];
+            double minors =
+                tensor[0, 0] * tensor[1, 1] + tensor[1, 1] * tensor[2, 2]
+                + tensor[0, 0] * tensor[2, 2] - tensor[0, 2] * tensor[0, 2];
+            double determinant = Determinant3(tensor);
+
+            bool invariantsHold =
+                RelativeClose(independent[0] + independent[1] + independent[2], trace, 1e-12)
+                && RelativeClose(
+                    independent[0] * independent[1] + independent[1] * independent[2]
+                    + independent[0] * independent[2], minors, 1e-9)
+                && RelativeClose(
+                    independent[0] * independent[1] * independent[2], determinant, 1e-9);
+
+            Record(invariantsHold,
+                "and they reproduce the tensor's trace, sum of principal minors and determinant",
+                report, ref passed, ref failed);
+
+            // Body Y is decoupled, so Iyy must survive as a principal moment untouched.
+            Record(RelativeClose(middle, baseline.iyySlugFt2, 1e-12),
+                "the decoupled body-Y moment Iyy is itself principal",
+                report, ref passed, ref failed);
+
+            double principalMargin = baseline.TightestPrincipalTriangleMarginSlugFt2;
+            double bodyAxisMargin = BodyAxisTriangleMargin(baseline);
+
+            Record(principalMargin > 0.0
+                && RelativeClose(
+                    principalMargin, independent[0] + independent[1] - independent[2], 1e-9),
+                "the baseline's tightest PRINCIPAL triangle margin is "
+                + principalMargin.ToString("0.00") + " slug-ft^2 (I1 + I2 - I3), positive as "
+                + "required",
+                report, ref passed, ref failed);
+
+            Record(principalMargin < bodyAxisMargin,
+                "which is SMALLER than the " + bodyAxisMargin.ToString("0")
+                + " slug-ft^2 the old body-axis check reported (Ixx + Iyy - Izz) - the body-axis "
+                + "diagonal is not the principal set when Ixz = "
+                + baseline.ixzSlugFt2.ToString("0"),
+                report, ref passed, ref failed);
+
+            // A tensor that the OLD check accepts and the correct one rejects. Positive definite,
+            // every body-axis triangle inequality satisfied, and still no physical body has it.
+            MavF15MassStateReference counterexample = new MavF15MassStateReference();
+            counterexample.ixxSlugFt2 = 10f;
+            counterexample.iyySlugFt2 = 20f;
+            counterexample.izzSlugFt2 = 25f;
+            counterexample.ixzSlugFt2 = -7f;
+
+            Record(
+                counterexample.IsPositiveDefinite
+                && BodyAxisTriangleMargin(counterexample) > 0.0
+                && !counterexample.SatisfiesPrincipalTriangleInequalities,
+                "pinned counterexample (10, 20, 25, Ixz -7): positive definite and passes every "
+                + "body-axis triangle inequality, yet its principal margin is "
+                + counterexample.TightestPrincipalTriangleMarginSlugFt2.ToString("0.000")
+                + " - the old check would have accepted a tensor no rigid body can have",
                 report, ref passed, ref failed);
         }
 
@@ -365,6 +457,25 @@ namespace MaverickFresh.FlightDynamics.Validation
                 Mathf.Abs(properties.massKg - MavF15MassReference.MassKg) < 1e-3f,
                 "and the mass carried into Unity is the derived baseline mass",
                 report, ref passed, ref failed);
+
+            // The Unity principal moments are the source principal moments, converted - so the
+            // triangle test in [M3] is a test of exactly what Unity receives.
+            double[] unitySorted = SortedAscending(
+                inertia.x / (double)MavF15MassReference.SlugFt2ToKgM2,
+                inertia.y / (double)MavF15MassReference.SlugFt2ToKgM2,
+                inertia.z / (double)MavF15MassReference.SlugFt2ToKgM2);
+
+            double smallest, middle, largest;
+            MavF15Table1MassStates.Baseline.GetPrincipalMomentsSlugFt2(
+                out smallest, out middle, out largest);
+
+            Record(
+                RelativeClose(unitySorted[0], smallest, 1e-4)
+                && RelativeClose(unitySorted[1], middle, 1e-4)
+                && RelativeClose(unitySorted[2], largest, 1e-4),
+                "the three moments Unity receives are the source tensor's principal moments, "
+                + "converted to kg m^2",
+                report, ref passed, ref failed);
         }
 
         // ---------------------------------------------------------------- [M5]
@@ -417,6 +528,80 @@ namespace MaverickFresh.FlightDynamics.Validation
         }
 
         // ---------------------------------------------------------------- helpers
+
+        /// <summary>
+        /// Ixx + Iyy - Izz on the BODY-AXIS diagonal: the check earlier revisions mislabelled as a
+        /// principal-moment test. Kept only so the suite can show how it differs.
+        /// </summary>
+        private static double BodyAxisTriangleMargin(MavF15MassStateReference s)
+        {
+            return (double)s.ixxSlugFt2 + s.iyySlugFt2 - s.izzSlugFt2;
+        }
+
+        /// <summary>The conventional aircraft body tensor [ Ixx 0 -Ixz ; 0 Iyy 0 ; -Ixz 0 Izz ].</summary>
+        private static double[,] BodyTensor(MavF15MassStateReference s)
+        {
+            double[,] m = new double[3, 3];
+            m[0, 0] = s.ixxSlugFt2;
+            m[1, 1] = s.iyySlugFt2;
+            m[2, 2] = s.izzSlugFt2;
+            m[0, 2] = -s.ixzSlugFt2;
+            m[2, 0] = -s.ixzSlugFt2;
+            return m;
+        }
+
+        private static double Determinant3(double[,] m)
+        {
+            return m[0, 0] * (m[1, 1] * m[2, 2] - m[1, 2] * m[2, 1])
+                - m[0, 1] * (m[1, 0] * m[2, 2] - m[1, 2] * m[2, 0])
+                + m[0, 2] * (m[1, 0] * m[2, 1] - m[1, 1] * m[2, 0]);
+        }
+
+        /// <summary>
+        /// Eigenvalues of a general real symmetric 3x3 matrix by the trigonometric closed form
+        /// (Smith, 1961). Deliberately makes no use of the inertia tensor's sparsity, so it is an
+        /// independent derivation rather than the struct's own arithmetic run twice.
+        /// </summary>
+        private static double[] SymmetricEigenvaluesAscending(double[,] a)
+        {
+            double p1 = a[0, 1] * a[0, 1] + a[0, 2] * a[0, 2] + a[1, 2] * a[1, 2];
+            double q = (a[0, 0] + a[1, 1] + a[2, 2]) / 3.0;
+            double p2 =
+                (a[0, 0] - q) * (a[0, 0] - q)
+                + (a[1, 1] - q) * (a[1, 1] - q)
+                + (a[2, 2] - q) * (a[2, 2] - q)
+                + 2.0 * p1;
+            double p = System.Math.Sqrt(p2 / 6.0);
+
+            double[,] b = new double[3, 3];
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                    b[i, j] = (a[i, j] - (i == j ? q : 0.0)) / p;
+
+            double r = Determinant3(b) / 2.0;
+            if (r < -1.0) r = -1.0;
+            if (r > 1.0) r = 1.0;
+            double phi = System.Math.Acos(r) / 3.0;
+
+            double largest = q + 2.0 * p * System.Math.Cos(phi);
+            double smallest = q + 2.0 * p * System.Math.Cos(phi + 2.0 * System.Math.PI / 3.0);
+            double middle = 3.0 * q - largest - smallest;
+
+            return SortedAscending(smallest, middle, largest);
+        }
+
+        private static double[] SortedAscending(double x, double y, double z)
+        {
+            double[] v = new double[] { x, y, z };
+            System.Array.Sort(v);
+            return v;
+        }
+
+        private static bool RelativeClose(double actual, double expected, double relativeTolerance)
+        {
+            double scale = System.Math.Max(1.0, System.Math.Abs(expected));
+            return System.Math.Abs(actual - expected) <= relativeTolerance * scale;
+        }
 
         private static void Record(
             bool condition, string label,

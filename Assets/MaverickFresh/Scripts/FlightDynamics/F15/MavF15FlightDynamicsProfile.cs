@@ -11,8 +11,10 @@ namespace MaverickFresh.FlightDynamics.F15
     ///
     /// Current state is intentionally FAIL-CLOSED:
     ///   - exact-target mass/CG/inertia are populated;
-    ///   - exact-target span and engine identity/count are populated;
-    ///   - exact-target S/cbar, coefficient envelope and physical hard stops remain unavailable;
+    ///   - exact-target engine identity/count are populated;
+    ///   - the exact-target coefficient reference set (S, cbar, reference b), coefficient
+    ///     envelope and physical hard stops remain unavailable. The physical wingspan is known
+    ///     but is not a coefficient reference span, so it is no longer placed in that field;
     ///   - therefore MavFlightDynamicsProfile.IsValid returns false on reference geometry.
     ///
     /// That is the desired R1 behaviour until the remaining NASA 836 reference-definition gaps close.
@@ -43,9 +45,9 @@ namespace MaverickFresh.FlightDynamics.F15
             profile.description =
                 "F15-R1 physics profile skeleton for "
                 + MavF15ReferenceData.TargetConfigurationId
-                + ". Exact mass/inertia and span are populated. Exact-target S/cbar, "
-                + "aerodynamic validity envelope and control hard stops remain unavailable, "
-                + "so the profile intentionally fails closed.";
+                + ". Exact mass/inertia are populated. The exact-target coefficient reference "
+                + "set (S, cbar, reference b), aerodynamic validity envelope and control hard "
+                + "stops remain unavailable, so the profile intentionally fails closed.";
 
             profile.referenceGeometry = MavF15ReferenceData.CreateExactTargetGeometry();
             profile.massProperties =

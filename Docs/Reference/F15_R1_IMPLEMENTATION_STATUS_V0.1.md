@@ -84,10 +84,10 @@ It supplies:
 
 - exact NASA 836 identity;
 - exact frozen mass/CG/inertia state;
-- exact frozen span;
+- ~~exact frozen span~~ — **corrected**: the physical 42.8-ft span is no longer placed in the coefficient reference geometry's span field, which now reads zero like `S` and `cbar` (`F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md` §5);
 - declared two-engine installation identity.
 
-It deliberately remains invalid because exact-target `S` and `cbar` are unresolved.
+It deliberately remains invalid because the exact-target coefficient reference set (`S`, `cbar`, reference `b`) is unavailable in the held primary sources.
 
 ### `MavF15ControlActuator.cs`
 
@@ -156,7 +156,7 @@ coefficient-reference or hard-stop equivalence questions.
 | common SixDoF architecture | REUSED |
 | two-engine architecture | REUSED |
 | exact engine variant identity | READY |
-| exact coefficient-reference S / cbar | BLOCKED |
+| exact coefficient-reference S / cbar / b / moment reference | BLOCKED — audited UNAVAILABLE in held primary sources |
 | exact aerodynamic coefficient model | BLOCKED |
 | exact hard stops / sign convention | BLOCKED |
 | exact actuator rates | BLOCKED |
