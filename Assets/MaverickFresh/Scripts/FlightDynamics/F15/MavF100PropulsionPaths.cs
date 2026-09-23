@@ -250,8 +250,11 @@ namespace MaverickFresh.FlightDynamics.F15
     ///
     /// The combination is arithmetically trivial - a fraction times a force - which is exactly the
     /// problem. Written as a bare multiplication somewhere in a call site it would be invisible.
-    /// Written here it has to pass four conditions, and it currently passes none of them, because
-    /// path B is empty.
+    /// Written here it has to pass every check in <see cref="DimensionalizeForTarget"/>, and today
+    /// it does not: path B now holds an approximate NASA-836 anchor, but no named source proves
+    /// build equivalence between the PW-100(3) research build and 836's engines, and 836's
+    /// installed sub-configuration is unknown. (An earlier revision of this comment said the gate
+    /// failed because path B was empty; that stopped being true when the anchor was added.)
     ///
     /// This generalises the barrier already standing between the normalized net characteristic and
     /// <see cref="MavF100DimensionalGrossThrustDataset"/>. Same rule, one rung up: research
@@ -276,16 +279,21 @@ namespace MaverickFresh.FlightDynamics.F15
         /// <summary>
         /// Turns a path-A normalized fraction into newtons using a path-B dimensional anchor.
         ///
-        /// Refuses unless all four hold:
+        /// Refuses unless all of these hold, checked in this order:
         ///   1. the normalized result actually carries a number;
         ///   2. the anchor is usable, and cites a NASA-836 source;
         ///   3. the anchor is the same thrust QUANTITY as the characteristic - a gross anchor
         ///      cannot scale a net characteristic;
-        ///   4. configuration equivalence between the research build and the target build is
-        ///      proven by a named source.
+        ///   4. the engine families may be combined under the supplied equivalence;
+        ///   5. that equivalence covers SameGasPath and SameControlSchedule, proven by a named
+        ///      source;
+        ///   6. NASA 836's installed engine sub-configuration is known.
         ///
-        /// Today nothing reaches condition 2, because
-        /// <see cref="MavF100Nasa836TargetPropulsion.Anchors"/> is empty.
+        /// Today <see cref="MavF100Nasa836TargetPropulsion.Anchors"/> holds an approximate anchor,
+        /// so condition 2 can pass. No source proves the equivalence needed for 4 and 5, and 6 is
+        /// false by record (<see cref="MavF100Nasa836EngineEvidence.SubConfigurationKnown"/>). An
+        /// earlier revision of this comment said condition 2 could not be reached because the
+        /// anchor list was empty; that is no longer the case.
         /// </summary>
         public static MavF100PathCombination DimensionalizeForTarget(
             MavF100NetThrustFractionResult researchCharacteristic,

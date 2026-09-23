@@ -66,6 +66,13 @@ Lineage × scope as in `MavF15SourceLineage`. **Nothing in this table is wired i
 | **Actuator rate / dynamics** | 24 deg/s all surfaces; first-order 20/(s+20) | CR-186019 p.4 | DerivedSimulator × NotRepresentativeOfAnyAircraft |
 | **Limiter schedules** | CAS variable limiter uses "dynamic pressure and angle of attack limit schedules". Not printed. | TM-72861 p.12 | OriginalPrimary × Preproduction |
 
+> **Addendum (V1 freeze).** This table missed an exact-scope source that was already held: **NASA 836's own simplified pitch, roll and yaw control models**, NASA/TM-2009-214651 figs. 3–5 (printed pp.26–27; repeated as TM-2012-215978 figs. 3–5). They are OriginalPrimary × **Exact836**, and structure only:
+> - pitch: PRAD fed by Pt/Ps and Pt − Ps; a mechanical path with a normal-acceleration gain and integrator; a CAS with stick gradient, prefilter, structural filter and integrator; a stall inhibitor on α and pitch rate; washed-out pitch rate blended with normal acceleration; gear-switched compensation;
+> - roll: RRAD fed by the symmetric-stabilator mechanical system and calibrated airspeed; a roll-rate CAS with α / calibrated-airspeed limiter schedules;
+> - yaw: a mechanical ARI **switched out above Mach 1.5**; a roll-yaw crossfeed (α × roll rate) **switched out above Mach 1.0**; yaw-rate and lateral-acceleration feedback through proportional-plus-integral to the CAS servo.
+>
+> No gain value is printed. The two Mach switch points are the only numbers.
+
 **The surface-travel rows disagree.** The stabilator limit appears as 15/−26, 15 up/29 down, +20/−30 and +15/−25, with unstated sign conventions and configurations. That disagreement is itself a reason not to promote any of them without the original.
 
 ---

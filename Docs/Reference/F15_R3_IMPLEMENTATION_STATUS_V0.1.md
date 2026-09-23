@@ -25,7 +25,7 @@ aircraft data**, so that is what was built.
 | FCS | full stage chain, per-stage gating | **none** — no gain recovered |
 | actuator | rate/travel owner, finite-rate path | **none** — actuator dynamics not sourced |
 | propulsion | twin installation, independent runtimes | **none** — no F100-PW-100 deck accepted |
-| profile | built, fail-closed | partial — mass/inertia/span frozen; S and c̄ missing |
+| profile | built, fail-closed | partial — mass/inertia frozen; coefficient reference S, c̄ and b missing (the 42.8-ft span is physical, recorded separately — later correction) |
 
 Every one of those "none" entries is a declared `Unavailable`, not a zero someone will mistake for
 a measurement. The aircraft cannot currently be flown. That is the intended outcome of the source
@@ -124,7 +124,7 @@ in the repository.
 Carried forward unchanged from R1:
 
 - mass, CG and inertia for the frozen mass state;
-- wing span;
+- physical wing span (not the coefficient reference span; corrected in the reference-geometry audit);
 - external dimensions;
 - engine count and variant identity (two F100-PW-100).
 
@@ -258,9 +258,9 @@ Ranked by how much each source unlocks.
 | ~~1~~ | ~~Davison AFIT/GAE/ENY/92M-01 Appendix C~~ | **SUPPLIED AND CLOSED** — see the audit document |
 | 1 | **MDC A4172 Part II** — *F/TF-15 Stability Derivatives, Mass and Inertia Characteristics* | the exact NASA 836 coefficient database, `S` and `c̄`; would make the exact-target profile valid and everything downstream live-capable. **Now the top blocker.** |
 | 3 | **DN-1180.01-238-458 Rev. D** — *F-15 Flight Control System Description* | mechanical gearing, PRAD/RRAD, CAS gains, ARI, limiters, actuator travel and rates — the entire `MavF15ControlLawSchedules` set at once |
-| 4 | **NASA TP-1373 / TM-X-3261 / TP-1034** | an F100-PW-100 thrust deck; would need engine-build differences kept explicit |
+| 4 | **NASA TP-1373 / TM-X-3261 / TP-1034** | ~~an F100-PW-100 thrust deck~~ — *read in R5: they give the thrust characteristic's shape, not its scale* (`F15_R5_F100_PROPULSION_STATUS_V0.1.md`) |
 | 5 | **NASA 836 engine installation geometry** (any configuration-matched source) | mount coordinates and thrust-line offsets; without it engine-out yaw stays unmodelled and `r × F` stays zero by absence |
-| 6 | **NASA TM-72861** | F-15-family FCS architecture and gains at `PublicReference` grade — useful immediately, but preproduction F-15 No. 8, so it cannot be promoted to exact-target authority without demonstrated equivalence |
+| 6 | **NASA TM-72861** | F-15 FCS architecture, CAS authorities and a few gearings — **no numeric feedback gains** (corrected; `F15_DN1180_SOURCE_LINEAGE_V0.1.md` §6). Preproduction F-15 No. 8, so never exact-target authority |
 | 7 | **Nolan II, AFIT/GAE/ENY/92J-02** | independent cross-check on the Davison transcription |
 
 Item 1 is the cheapest and the highest-value: it is one appendix, and it would convert the largest

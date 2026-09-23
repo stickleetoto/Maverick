@@ -23,12 +23,12 @@ not move. Closing the scale is a declaration of one scalar, not a rewrite.
 | field | status | source / provenance |
 |---|---|---|
 | engine identity | **SOURCE-BACKED** | F100-PW-100 × 2, frozen in an earlier pass. AuthoritativeExactTarget |
-| engine configuration represented | **SOURCE-BACKED** | F100-PW-100**(3)** for the thrust characteristic; prototype series 2 7/8 for the control schedules. Both CompatibleSupport, neither the target build |
+| engine configuration represented | **SOURCE-BACKED** | F100-PW-100**(3)** for the thrust characteristic (family A); prototype series 2 7/8 for the control schedules (family B). Held as **separate families and never combined**; both CompatibleSupport, neither the target build |
 | steady non-augmented thrust | **SOURCE-BACKED (shape only)** | TP-1034 fig. 17, PLA 20–83°, 4 subsonic conditions. Fraction of design max |
 | augmented thrust | **SOURCE-BACKED (shape only)** | TP-1034 fig. 17, PLA 83–130°, all 7 conditions |
 | Mach dependence | **SOURCE-BACKED (at 7 points only)** | Mach 0, 0.9, 1.8, 2.15, 2.2. No interpolation between them |
 | altitude dependence | **SOURCE-BACKED (at 7 points only)** | 0, 3.048, 6.096, 9.144, 12.19, 13.72, 17.83 km |
-| **absolute thrust scale** | **PUBLIC-SOURCE BLOCKED** | design maximum net thrust printed nowhere. reported classified in CP2903B (§6d). Bounded above at ~22 400 lbf by §6c; three candidate values investigated and rejected |
+| **absolute thrust scale** | **UNAVAILABLE IN HELD SOURCES** | design maximum net thrust printed in none of the held documents. The primary requirement specification, CP2903B, is classified (verified, TP-1056 p.8) — a *restricted primary specification* flag and a search hint, **not** a verdict that no public figure exists. Bounded above at ~22 400 lbf by §6c — a bound on the **TP-1034 normalizer only**, never a NASA 836 limit. Four candidate values investigated and rejected. *(An earlier revision labelled this PUBLIC-SOURCE BLOCKED; withdrawn.)* |
 | airflow | **UNAVAILABLE** (one datum recorded) | design corrected airflow 98.4 kg/s from TP-1373; no schedule, no map |
 | fuel flow | **UNAVAILABLE** | an *input* to every model in the pack, never an output of a published schedule |
 | transient / spool dynamics | **BLOCKED** | rotor inertias printed; turbine and fan torque come from unpublished maps, so no time constant follows |
@@ -78,7 +78,7 @@ R5 ends with three bodies of propulsion evidence that look adjacent and must not
 
 | | **A — PW-100 simulation lineage** | **B — prototype series 2 7/8** | **C — NASA F-15B 836 target** |
 |---|---|---|---|
-| engine build | F100-PW-100**(1)** (TM X-3261), **(3)** (TP-1034, TP-1056) | P680059 / P680063 | F100-PW-100 on 836 |
+| engine build | F100-PW-100**(1)** (TM X-3261), **(3)** (TP-1034, TP-1056) | P680059 / P680063 **in their 1977 2-7/8 configuration** — a serial is not a configuration (§3d) | F100-PW-100 on 836, sub-configuration unknown |
 | sources | TM X-3261, TP-1034, TP-1056 | TP-1373, TP-1782, TP-1069/1228 when supplied | NASA/TM-2005-213670 and other F-15B reports |
 | carries | figure-17 normalized characteristic, cycle equations, Y12 30 000 lbf machine scale, ~22.4 klbf derived bound | altitude calibrations, prototype control schedules and nozzle facts, F-15 flight cross-validation | engine identity; approximate SLS full-AB thrust |
 | dimensional? | **no** | would be — holds nothing yet | **yes, one approximate value** |

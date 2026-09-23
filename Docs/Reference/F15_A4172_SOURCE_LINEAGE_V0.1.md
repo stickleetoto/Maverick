@@ -187,12 +187,16 @@ That is strong family consistency, and it is enforced as `[G8]`. It still is not
 2. **The equation is uncited.** It sits inside an appendix whose datum figure is cited to A4172 Part I Supp. 1, but the equation itself carries no citation.
 3. **No 836 source names its MAC, its leading-edge station, or its model's reference dimensions.** 836's own statement is consistent with the family equation, which is what a family member would show. But consistency is not a link.
 
-**This needs your decision.** The narrowest defensible promotion is the **CG datum only**:
+**DECISION (final freeze pass): NOT PROMOTED.** The narrowest possible promotion would have been the **CG datum only**:
 - Accept "all A through D models" as covering production F-15B 74-0141.
 - That would let the Table-1 CG of 26.34 % MAC be placed at **FS 558.50**.
 - It would **not** close `S`, `c̄` or `b`.
 
-This pass does not make that promotion.
+It is **not** made, and the question is closed unless a primary source appears. The relation stays `PublicReproduction × ProductionF15Family` at `F15_FAMILY_SUPPORT`, and the derived 836 agreement stays `CROSS_VALIDATION_ONLY`. The reasons:
+- it is not the A4172 original;
+- the equation itself carries no upstream citation;
+- it would close only an absolute CG station, not `S`, `c̄`, reference `b` or the moment reference;
+- nothing in the runtime needs it today.
 
 ---
 
