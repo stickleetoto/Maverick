@@ -31,8 +31,11 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///  [E18] the sea-level-static anchor: sound mechanism, three gates, fails at the first
     ///  [E19] normalized net and dimensional gross remain separate datasets
     ///  [E20] TP-1034 appendix C prints a 30 000 lbf channel scale - and it is not the normalizer
-    ///  [E21] the normalizer is PUBLIC-SOURCE BLOCKED, not merely not-yet-found
+    ///  [E21] CP2903B is verified and restricted - but that is a search hint, not a verdict
     ///  [E22] the research characteristic and the NASA-836 target stay separate paths
+    ///  [E23] PW-100(3) and prototype 2 7/8 data cannot silently mix
+    ///  [E24] the NASA 836 approximate thrust anchor, and its approximation metadata
+    ///  [E25] the ~22.4 klbf bound belongs to TP-1034 and is not a NASA 836 limit
     ///
     /// These run on the installation profile and its static factories - production code, no
     /// GameObject, no Rigidbody, no play-mode session.
@@ -67,8 +70,11 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateStaticAnchorDoesNotClose(report, ref passed, ref failed);
             ValidateDatasetsStaySeparate(report, ref passed, ref failed);
             ValidateY12ChannelScale(report, ref passed, ref failed);
-            ValidatePublicSourceBlocked(report, ref passed, ref failed);
+            ValidateRestrictedSpecification(report, ref passed, ref failed);
             ValidatePathSeparation(report, ref passed, ref failed);
+            ValidateEngineFamilySeparation(report, ref passed, ref failed);
+            ValidateNasa836ApproximateAnchor(report, ref passed, ref failed);
+            ValidateBoundScope(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -1393,19 +1399,31 @@ namespace MaverickFresh.FlightDynamics.Validation
 
         // --------------------------------------------------------------- [E21]
 
-        private static void ValidatePublicSourceBlocked(
+        private static void ValidateRestrictedSpecification(
             StringBuilder report, ref int passed, ref int failed)
         {
             report.AppendLine();
-            report.AppendLine("[E21] The normalizer is public-source blocked, not merely unfound");
+            report.AppendLine("[E21] CP2903B verified and restricted - a search hint, not a verdict");
 
             MavF100DeclaredScalar scale = MavF100SourceData.DesignMaximumNetThrust;
 
             Record(
-                scale.blocker == MavF100BlockerKind.PublicSourceBlocked,
-                "the design maximum net thrust is classified PublicSourceBlocked - the reported "
-                + "CP2903B specification is not public, so following the NASA report chain "
-                + "further is not expected to close it",
+                scale.blocker == MavF100BlockerKind.UnavailableInHeldSources,
+                "the design maximum net thrust is UnavailableInHeldSources - absent from what is "
+                + "held, which says nothing about what some other public document may print",
+                report, ref passed, ref failed);
+
+            Record(
+                scale.restrictedPrimarySpecification,
+                "and it carries the restricted-primary-specification flag: TP-1056 printed p. 8 "
+                + "verifies that the F100 thrust REQUIREMENTS live in classified CP2903B",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.ClassifiedThrustSpecification.Contains("search hint, not a verdict"),
+                "recorded explicitly as a search hint rather than 'looking will not help' - a "
+                + "classified requirements document and a published performance figure are "
+                + "different documents, and NASA F-15B reports do publish the latter",
                 report, ref passed, ref failed);
 
             Record(
@@ -1415,10 +1433,10 @@ namespace MaverickFresh.FlightDynamics.Validation
                 report, ref passed, ref failed);
 
             Record(
-                MavF100SourceData.ClassifiedThrustSpecification.Contains("unverified here")
+                MavF100SourceData.ClassifiedThrustSpecification.Contains("VERIFIED")
                 && MavF100SourceData.ClassifiedThrustSpecification.Contains("CP2903B"),
-                "the CP2903B finding is recorded as UNVERIFIED here - it appears nowhere in the "
-                + "four documents held, and rests on the report of TP-1056 alone",
+                "the CP2903B finding is now VERIFIED from the primary source, NASA TP-1056 "
+                + "printed p. 8, retrieved from NTRS and read",
                 report, ref passed, ref failed);
 
             Record(
@@ -1427,12 +1445,17 @@ namespace MaverickFresh.FlightDynamics.Validation
                 + "filled by inference",
                 report, ref passed, ref failed);
 
-            // TP-1056's two useful findings do not depend on TP-1056, and the record says so.
             Record(
-                MavF100SourceData.Tp1056ReportedProvenance.Contains("NOT held")
-                && MavF100SourceData.Tp1056ReportedProvenance.Contains("TP-1034"),
-                "TP-1056 is recorded as not held, with findings 1 and 2 cited instead to "
-                + "TP-1034 printed pp. 3, 4 and 26, which are",
+                MavF100SourceData.Tp1056Citation.Contains("19770026225")
+                && MavF100SourceData.Tp1056Citation.Contains("p. 8"),
+                "TP-1056 is cited by NTRS document id and printed page",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.NetThrustComputedDigitally.Contains("DIGITAL"),
+                "and its printed p. 17 statement that net thrust is computed in the DIGITAL "
+                + "portion is recorded - which is what removes the plotting assumption from the "
+                + "derived bound",
                 report, ref passed, ref failed);
 
             // Finding 2 strengthens the Y12 argument: the ceiling binds at computation time.
@@ -1460,11 +1483,12 @@ namespace MaverickFresh.FlightDynamics.Validation
             report.AppendLine();
             report.AppendLine("[E22] Research characteristic and NASA-836 target stay separate");
 
-            // Path B is empty. That is the current, correct state.
+            // Path B now holds one approximate anchor. The barrier matters more, not less.
             Record(
-                !MavF100Nasa836TargetPropulsion.HasDimensionalAnchor,
-                "path B holds NO dimensional anchor: no NASA-836 source in this repository "
-                + "publishes a thrust, airflow, fuel flow or spool constant for 836's engines",
+                MavF100Nasa836TargetPropulsion.HasDimensionalAnchor
+                && MavF100Nasa836TargetPropulsion.Anchors[0].IsApproximate,
+                "path B holds exactly one dimensional anchor and it is APPROXIMATE - the "
+                + "separation now guards a live number rather than an empty set",
                 report, ref passed, ref failed);
 
             Record(
@@ -1522,13 +1546,11 @@ namespace MaverickFresh.FlightDynamics.Validation
                 research, empty, MavF100ConfigurationEquivalence.Unproven);
 
             Record(!noAnchor.permitted && noAnchor.newtons == 0f,
-                "but combining it with an absent target anchor is refused, and yields no number",
+                "but combining it with an unpopulated target anchor is refused, and yields no "
+                + "number",
                 report, ref passed, ref failed);
 
-            MavF100Nasa836TargetAnchor uncited = new MavF100Nasa836TargetAnchor();
-            uncited.quantityName = "fixture";
-            uncited.quantity = MavF100ThrustQuantity.UninstalledNetThrust;
-            uncited.newtons = 100000f;
+            MavF100Nasa836TargetAnchor uncited = MavF100Nasa836TargetPropulsion.Anchors[0];
             uncited.citation = string.Empty;
 
             Record(
@@ -1537,11 +1559,19 @@ namespace MaverickFresh.FlightDynamics.Validation
                 "an anchor with no NASA-836 citation is refused",
                 report, ref passed, ref failed);
 
-            MavF100Nasa836TargetAnchor grossAnchor = new MavF100Nasa836TargetAnchor();
+            MavF100Nasa836TargetAnchor noCondition = MavF100Nasa836TargetPropulsion.Anchors[0];
+            noCondition.condition = string.Empty;
+
+            Record(
+                !MavF100PathSeparation.DimensionalizeForTarget(
+                    research, noCondition, MavF100ConfigurationEquivalence.Unproven).permitted,
+                "and so is one with no stated operating condition - a thrust without a condition "
+                + "means nothing",
+                report, ref passed, ref failed);
+
+            MavF100Nasa836TargetAnchor grossAnchor = MavF100Nasa836TargetPropulsion.Anchors[0];
             grossAnchor.quantityName = "fixture gross";
             grossAnchor.quantity = MavF100ThrustQuantity.GrossThrust;
-            grossAnchor.newtons = 100000f;
-            grossAnchor.citation = "fixture NASA-836 source";
 
             MavF100ConfigurationEquivalence proven = new MavF100ConfigurationEquivalence();
             proven.proven = true;
@@ -1554,9 +1584,7 @@ namespace MaverickFresh.FlightDynamics.Validation
                 "a GROSS anchor cannot scale the NET characteristic, even with equivalence proven",
                 report, ref passed, ref failed);
 
-            MavF100Nasa836TargetAnchor netAnchor = grossAnchor;
-            netAnchor.quantity = MavF100ThrustQuantity.UninstalledNetThrust;
-            netAnchor.quantityName = "fixture net";
+            MavF100Nasa836TargetAnchor netAnchor = MavF100Nasa836TargetPropulsion.Anchors[0];
 
             MavF100PathCombination unproven = MavF100PathSeparation.DimensionalizeForTarget(
                 research, netAnchor, MavF100ConfigurationEquivalence.Unproven);
@@ -1581,6 +1609,227 @@ namespace MaverickFresh.FlightDynamics.Validation
                 allowed.sourceClass == MavF100SourceClass.CompatibleSupport,
                 "and the product is CompatibleSupport, NOT exact-target: an exact-target anchor "
                 + "scales a research characteristic, it does not promote one",
+                report, ref passed, ref failed);
+
+            Record(
+                allowed.precision == MavF100ValuePrecision.Approximate,
+                "nor sharper - an approximate anchor yields an approximate product, because "
+                + "multiplying an approximation by an exact fraction does not sharpen it",
+                report, ref passed, ref failed);
+
+            // The headline regression the follow-up asks for: the real NASA 836 anchor, on its
+            // own, cannot dimensionalize the research curve.
+            MavF100PathCombination realAnchorAlone =
+                MavF100PathSeparation.DimensionalizeForTarget(
+                    research,
+                    MavF100Nasa836TargetPropulsion.Anchors[0],
+                    MavF100ConfigurationEquivalence.Unproven);
+
+            Record(
+                !realAnchorAlone.permitted && realAnchorAlone.newtons == 0f,
+                "and the REAL NASA 836 anchor, alone, cannot dimensionalize the PW-100(3) curve: "
+                + "an exact-target aircraft figure is not a proof that the engine builds match",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E23]
+
+        private static void ValidateEngineFamilySeparation(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E23] PW-100(3) and prototype 2 7/8 data cannot silently mix");
+
+            MavF100ConfigurationEquivalence unproven = MavF100ConfigurationEquivalence.Unproven;
+
+            Record(
+                MavF100EngineFamilies.MayCombine(
+                    MavF100EngineFamily.Pw100SimulationLineage,
+                    MavF100EngineFamily.Pw100SimulationLineage, unproven),
+                "evidence may combine within one engine family without an equivalence proof",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavF100EngineFamilies.MayCombine(
+                    MavF100EngineFamily.Pw100SimulationLineage,
+                    MavF100EngineFamily.PrototypeSeries2And7Eighths, unproven),
+                "but the PW-100 simulation lineage and the prototype series 2 7/8 engines may NOT "
+                + "combine - TP-1373 p. 4 records different cores, control schedules and nozzle "
+                + "actuation, and nothing in the pack relates the (1)/(3) and series designations",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavF100EngineFamilies.MayCombine(
+                    MavF100EngineFamily.Pw100SimulationLineage,
+                    MavF100EngineFamily.Nasa836Target, unproven),
+                "nor may the simulation lineage combine with the NASA 836 target",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavF100EngineFamilies.MayCombine(
+                    MavF100EngineFamily.PrototypeSeries2And7Eighths,
+                    MavF100EngineFamily.Nasa836Target, unproven),
+                "nor the prototype engines with the NASA 836 target",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavF100EngineFamilies.MayCombine(
+                    MavF100EngineFamily.Unspecified,
+                    MavF100EngineFamily.Nasa836Target, unproven),
+                "and data with no declared family combines with nothing at all",
+                report, ref passed, ref failed);
+
+            MavF100ConfigurationEquivalence proven = new MavF100ConfigurationEquivalence();
+            proven.proven = true;
+            proven.provingSource = "fixture equivalence source";
+
+            Record(
+                MavF100EngineFamilies.MayCombine(
+                    MavF100EngineFamily.Pw100SimulationLineage,
+                    MavF100EngineFamily.PrototypeSeries2And7Eighths, proven),
+                "a named proving source is the only thing that opens a cross-family combination",
+                report, ref passed, ref failed);
+
+            // The families are named distinctly, so a reader can tell which engine a number is about.
+            Record(
+                MavF100EngineFamilies.Describe(MavF100EngineFamily.Pw100SimulationLineage)
+                    != MavF100EngineFamilies.Describe(
+                        MavF100EngineFamily.PrototypeSeries2And7Eighths),
+                "the two research families describe themselves differently: "
+                + MavF100EngineFamilies.Describe(MavF100EngineFamily.Pw100SimulationLineage)
+                + " vs "
+                + MavF100EngineFamilies.Describe(
+                    MavF100EngineFamily.PrototypeSeries2And7Eighths),
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E24]
+
+        private static void ValidateNasa836ApproximateAnchor(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E24] The NASA 836 approximate thrust anchor");
+
+            Record(
+                MavF100Nasa836TargetPropulsion.HasDimensionalAnchor,
+                "path B is no longer empty: NASA's own F-15B reports publish an approximate "
+                + "thrust for this aircraft's engines",
+                report, ref passed, ref failed);
+
+            MavF100Nasa836TargetAnchor[] anchors = MavF100Nasa836TargetPropulsion.Anchors;
+
+            Record(anchors.Length == 1 && anchors[0].IsUsable,
+                "exactly one anchor, and it is usable - citation, condition, precision and "
+                + "engine family all present",
+                report, ref passed, ref failed);
+
+            MavF100Nasa836TargetAnchor a = anchors[0];
+
+            Record(
+                Mathf.Abs(a.sourceValue - 23500f) < 1f && a.sourceUnits == "lbf",
+                "it carries the value in the units the source printed: 23 500 lbf",
+                report, ref passed, ref failed);
+
+            Record(
+                Mathf.Abs(a.newtons - 104533.2f) < 5f,
+                "and the derived SI value, " + (a.newtons * 0.001f).ToString("0.00")
+                + " kN - derived here, since TM-2005-213670 prints only lbf in that sentence",
+                report, ref passed, ref failed);
+
+            Record(
+                a.precision == MavF100ValuePrecision.Approximate && a.IsApproximate,
+                "the approximation metadata is preserved: the source says 'approximately', and "
+                + "an approximation that forgets it was one becomes a specification",
+                report, ref passed, ref failed);
+
+            Record(
+                a.quantity == MavF100ThrustQuantity.UninstalledNetThrust
+                && a.condition.Contains("static")
+                && a.condition.Contains("afterburner"),
+                "with its quantity and condition attached: uninstalled net thrust, "
+                + a.condition,
+                report, ref passed, ref failed);
+
+            Record(
+                a.engineFamily == MavF100EngineFamily.Nasa836Target
+                && a.targetIdentity == MavF100Nasa836TargetPropulsion.AircraftConfiguration,
+                "and it names the aircraft it is about",
+                report, ref passed, ref failed);
+
+            Record(
+                a.citation.Contains("TM-2005-213670") && a.citation.Contains("APPROXIMATE"),
+                "citation NASA/TM-2005-213670, flagged approximate in the citation itself",
+                report, ref passed, ref failed);
+
+            // An anchor is not a deck, and the record says so.
+            Record(
+                MavF100Nasa836TargetPropulsion.StillUnavailableReason.Contains("not a thrust deck"),
+                "one sea-level point is still not a thrust deck: no lapse, part power, airflow, "
+                + "fuel flow, spool dynamics or installation effects for this aircraft",
+                report, ref passed, ref failed);
+
+            // The conflicting NASA figure is recorded, with its arithmetic error.
+            Record(
+                MavF100Nasa836TargetPropulsion.ConflictingThrustFigure.Contains("25,000 lbf")
+                && MavF100Nasa836TargetPropulsion.ConflictingThrustFigure.Contains("111,206 N"),
+                "the conflicting 25 000 lbf figure from TM-2001-210395 / TM-2002-210736 is "
+                + "recorded, along with the fact that its own parenthetical (91,188 N) is "
+                + "arithmetically wrong",
+                report, ref passed, ref failed);
+
+            // Exact-target identity must not become an exact-target performance deck.
+            Record(
+                MavF100Nasa836TargetPropulsion.EngineIdentityClass
+                    == MavF100SourceClass.AuthoritativeExactTarget
+                && !MavF100SourceData.DesignMaximumNetThrust.declared,
+                "exact-target IDENTITY plus one approximate anchor does not make an exact-target "
+                + "performance deck - the research normalizer is still undeclared",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E25]
+
+        private static void ValidateBoundScope(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E25] The ~22.4 klbf bound belongs to TP-1034 only");
+
+            Record(
+                MavF100EngineFamilies.BoundAppliesTo(
+                    MavF100EngineFamily.Pw100SimulationLineage),
+                "the derived bound applies to the PW-100 simulation lineage, whose figure 17 "
+                + "normalizer it is about",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavF100EngineFamilies.BoundAppliesTo(MavF100EngineFamily.Nasa836Target),
+                "and NOT to NASA 836 - it is not an upper bound on that aircraft's engine thrust",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavF100EngineFamilies.BoundAppliesTo(
+                    MavF100EngineFamily.PrototypeSeries2And7Eighths),
+                "nor to the prototype series 2 7/8 engines",
+                report, ref passed, ref failed);
+
+            float bound = MavF100SourceData.DesignMaximumNetThrustUpperBoundLbf;
+            float nasa836 = MavF100Nasa836TargetPropulsion.ApproximateSlsFullAbThrustLbf;
+
+            Record(
+                nasa836 > bound,
+                "the NASA 836 figure (" + nasa836.ToString("0")
+                + " lbf) is ABOVE the bound (" + bound.ToString("0")
+                + " lbf) - which is exactly why the bound must not be carried across families: "
+                + "applied to 836 it would 'prove' a published NASA figure impossible",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.Y12IsNotTheFigure17Normalizer.Length > 0
+                && MavF100SourceData.SimulationNetThrustChannelFullScaleLbf > nasa836,
+                "and the 30 000 lbf channel scale sits above both, consistent with being a "
+                + "headroom scale rather than any engine's rating",
                 report, ref passed, ref failed);
         }
 

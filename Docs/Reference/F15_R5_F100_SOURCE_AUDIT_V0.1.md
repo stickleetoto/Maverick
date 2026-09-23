@@ -1,6 +1,7 @@
 # F-15 R5 — F100-PW-100 source audit
 
-**Status:** V0.3, complete for the four documents supplied in `F100_R5_CLAUDE_SOURCE_PACK.zip`.
+**Status:** V0.4. The four documents supplied in `F100_R5_CLAUDE_SOURCE_PACK.zip`, plus NASA
+TP-1056 and three NASA F-15B reports retrieved from NTRS and read here.
 **Target aircraft:** `NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100`
 **Target engine:** Pratt & Whitney F100-PW-100 × 2.
 
@@ -64,7 +65,8 @@ exact-target and was frozen in an earlier pass; no *performance* field reaches t
 | TP-1034 | **F100-PW-100(3)** | explicitly the improved-fan (3) build; maps, augmentor efficiency, duct loss and nozzle coefficients all regenerated (printed p. 2, p. 4) |
 | TP-1373 | prototype **series 2 7/8** | series 2 core + series 3 improved-stability fan, control schedules differing from **both** series 2 and 3, series 2 actuated divergent nozzles (printed p. 4) |
 | TP-1782 | same series 2 7/8 engines | "the results are not totally representative of production F100 engines" (printed p. 4) |
-| TP-1056 | *(not held)* | reported follow-on on the same PW-100(3) / CCD 1103-1.0 lineage — see §6d |
+| TP-1056 | F100-PW-100**(3)** | follow-on on the same CCD 1103-1.0 lineage; retrieved from NTRS and read — §6d |
+| TM-2005-213670 and other F-15B reports | F100-PW-100 **on NASA F-15B 836** | the exact target aircraft; publishes an approximate SLS thrust — §6e |
 
 ---
 
@@ -336,55 +338,95 @@ stays undeclared and the deck still produces no newtons. `[E20]` covers all of t
 
 ---
 
-## 6d. NASA TP-1056, and why the normalizer is PUBLIC-SOURCE BLOCKED
+## 6d. NASA TP-1056 — verified from the primary source
 
-**TP-1056 is not held in this repository.** Three findings were reported from it. Two of them turn
-out not to need TP-1056 at all, because TP-1034 states the same things in text that *is* held — and
-a claim corroborated by a source in hand is worth more than the same claim resting on a report
-nobody here can open. The third cannot be checked.
+**TP-1056 was retrieved from NASA NTRS (document 19770026225, distribution PUBLIC) and read here.**
+An earlier revision of this audit carried its findings as reported-but-unverified; they are now
+verified and that hedging is withdrawn.
 
-| reported finding | status here |
+| finding | verified at |
 |---|---|
-| 1. The real-time F100-PW-100(3) simulation is patterned after CCD 1103-1.0 | **CORROBORATED IN HAND.** TP-1034 printed p. 3: "modifications were made to elements of that model to match the performance of the F100-PW-100(3) engine as predicted by the corresponding digital simulation (CCD 1103-1.0)". Repeated on printed p. 6 and in the summary. Cited to TP-1034 |
-| 2. Engine net thrust is computed in the DIGITAL portion of the hybrid simulation | **CORROBORATED IN HAND.** TP-1034 printed p. 4 lists, among the digital-portion modifications, "auxiliary calculations such as the calculation of engine thrust and surge margins". Appendix C shows it directly — Y12 is computed in FORTRAN on printed p. 26. Cited to TP-1034 |
-| 3. F100 thrust and fuel-consumption requirements are in P&W specification **CP2903B**, which is **classified**; the public programme used CCD 1103-1.0 predicted performance instead | **NOT CORROBORATED.** "CP2903B" and "2903" appear nowhere in the four documents held. Rests on the report of TP-1056 alone |
+| The MVCS engine is the Pratt & Whitney F100-PW-100(3) | printed pp. 2, 7 |
+| The real-time hybrid simulation is patterned after CCD1103-1.0 | printed p. 17 |
+| **Net thrust is computed in the DIGITAL portion** of the hybrid computer | printed p. 17 |
+| Engine thrust and fuel-consumption **requirements are in F100 specification CP2903B**, and **those specifications are classified** | printed p. 8, checked against the page image |
+| For the public MVCS work, thrust and fuel goals were taken as equal to CCD1103-1.0 predicted performance | printed p. 8, same paragraph |
 
-### Finding 2 strengthens the Y12 argument
+Printed p. 17, verbatim: *"the digital computer was also used for computing the fan and compressor
+surge margins and the engine net thrust."*
 
-§6c derived an upper bound on the design maximum, and flagged one assumption: that figure 17's
-plotted hybrid markers passed through the scaled-fraction channel Y12. Finding 2 closes that gap
-from the other side. Net thrust is computed **in the digital portion**, and the appendix C listing
-shows the computation producing `Y12` — a `SCALED FRACTION`. So the ceiling binds where the value
-is *computed*, not merely where it is output to the analog machine. The bound no longer depends on
-how the figure was plotted.
+### This removes an assumption from the §6c bound
 
-### Finding 3 changes the classification, not the value
+§6c derived `D ≤ 22 422 lbf` and flagged one assumption: that figure 17's hybrid markers passed
+through the scaled-fraction channel Y12. Net thrust being computed **in the digital portion**, with
+TP-1034's appendix C showing that computation producing `Y12`, closes it from the other side. The
+ceiling binds where the value is **computed**, not merely where it is output, so the bound no longer
+depends on how the figure was plotted.
 
-If the F100 thrust requirements live in a classified specification, the public NASA report chain is
-not expected to close the absolute normalizer however far it is followed. That is a different
-statement from "not found yet", and it warrants a different label, because it changes what the next
-person should do.
+### What CP2903B does and does not establish
 
-The design maximum net thrust is therefore reclassified:
+It establishes that the primary *requirement* document for F100 thrust is restricted, and that even
+NASA's own public programme worked from CCD1103-1.0 predictions instead. That explains why the
+figure 17 normalizer is absent from this report chain.
 
-> **PUBLIC-SOURCE BLOCKED / UNAVAILABLE**
+**It does not establish that no unclassified source publishes an F100 thrust value.** A classified
+requirements specification and a published performance figure are different documents — and as
+§6e shows, NASA F-15B reports do publish the latter. The earlier "PUBLIC-SOURCE BLOCKED" label
+overstated the case and is withdrawn.
 
-— carried in code as `MavF100BlockerKind.PublicSourceBlocked`, distinct from `NotYetFound`. It
-reverts to merely not-found only if another **unclassified** primary source is shown to publish the
-figure explicitly.
+The missing scalar is classified in code as:
 
-**Nothing in this repository may reconstruct, estimate or infer CP2903B values.** A classified
-specification is not a gap to be filled by inference.
+> `MavF100BlockerKind.UnavailableInHeldSources` **+** `restrictedPrimarySpecification = true`
 
-### What is retained, and what each thing is
+— absent from what is held, with a search hint attached, and **no** encoding of "looking will not
+help". Public searching remains legitimate. **CP2903B itself must never be reconstructed,
+estimated or inferred from.**
 
-| value | what it is | grade |
-|---|---|---|
-| **30 000 lbf** (133.45 kN) | TP-1034 hybrid-computer net-thrust channel **full scale** | CompatibleSupport, printed fact |
-| **~22 422 lbf** (99.7 kN) | **Upper bound** on the figure 17 normalizer, derived from the digitized 1.338 peak and the scaled-fraction ceiling | CrossValidationOnly, derived |
-| design maximum net thrust | the actual normalizer | **PUBLIC-SOURCE BLOCKED / UNAVAILABLE** |
+---
 
-Neither of the first two is the design thrust, and neither is used as one.
+## 6e. NASA F-15B 836 publishes an approximate thrust — path C is not empty
+
+Retrieved from NTRS and read here.
+
+**NASA/TM-2005-213670** (H-2625), *Local Flow Conditions for Propulsion Experiments on the NASA
+F-15B Propulsion Flight Test Fixture*, NTRS 20050241960, public:
+
+> "The F-15B airplane is powered by two Pratt & Whitney (West Palm Beach, Florida) F100-PW-100
+> turbofan engines that each produce an uninstalled, sea level static thrust of approximately
+> **23,500 lbf** in full afterburner."
+
+That is an exact-target-**aircraft** datum: the right airplane, the right engines, a stated
+condition. It is **approximate**, and it is a descriptive figure in an airplane-description section,
+not a calibrated engine deck. 104 533 N is derived here — the report prints only lbf.
+
+### A conflicting NASA figure, recorded rather than discarded
+
+**NASA/TM-2001-210395** (AIAA 2001-3303) and **NASA/TM-2002-210736** both state, of the same
+aircraft:
+
+> "Each engine has an uninstalled, sea-level static thrust rating of approximately 25,000 lbf
+> (91,188 N)."
+
+**That sentence is internally inconsistent.** 25 000 lbf is 111 206 N; 91 188 N is 20 500 lbf. The
+two halves disagree by more than 20 percent, so neither number in it can be relied on. It also
+states no power setting, where TM-2005-213670 says "in full afterburner".
+
+TM-2005-213670 is therefore preferred: internally consistent and condition-specific. The conflict is
+recorded so nobody rediscovers 25 000 lbf and assumes it was overlooked — and because 25 000 lbf
+happens to equal TP-1373's 111.2 kN axis scale, a coincidence worth being suspicious of rather than
+encouraged by.
+
+### The bound does not apply to this number
+
+`~22 422 lbf` is an upper bound on the **TP-1034 figure 17 normalizer** for the PW-100(3)
+simulation, and on nothing else. NASA 836's published figure, 23 500 lbf, is **above** it.
+
+That is not a contradiction, because the two are different quantities on builds never shown to be
+equivalent: one is a simulation's internal normalizing constant, the other a quoted
+installed-aircraft engine figure. If anything, the two failing to fit is further evidence that they
+must not be treated as the same thing — applied across families the bound would "prove" a
+published NASA figure impossible. `MavF100EngineFamilies.BoundAppliesTo` enforces the scope and
+`[E25]` asserts it.
 
 ---
 
@@ -436,7 +478,8 @@ thrust equation printed immediately above it is not.
 | PLA anchor angles | CompatibleSupport | TP-1034 p. 11; TM X-3261 p. 6 |
 | design corrected airflow | CompatibleSupport | TP-1373 |
 | flight-thrust method agreement | CrossValidationOnly | TP-1782 |
-| **absolute thrust scale** | **Unavailable — PUBLIC-SOURCE BLOCKED** | reported CP2903B, classified (§6d) |
+| **figure 17 normalizer (PW-100(3))** | **Unavailable in held sources**, restricted primary spec | CP2903B classified, verified TP-1056 p. 8 (§6d) |
+| NASA 836 approximate SLS full-AB thrust | **AuthoritativeExactTarget**, approximate | NASA/TM-2005-213670 (§6e) |
 | net-thrust channel full scale, 30 000 lbf | CompatibleSupport | TP-1034 appendix C p. 28 (§6c) |
 | upper bound on the normalizer, ~22 422 lbf | CrossValidationOnly | derived (§6c) |
 | installed thrust | Unavailable | — |
@@ -450,12 +493,12 @@ thrust equation printed immediately above it is not.
 
 ## 9. What these four documents do not contain
 
-1. **Design maximum net thrust** — the normalizer of figure 17, now classified **PUBLIC-SOURCE
-   BLOCKED** (§6d). Its definition is pinned exactly (uninstalled net thrust at sea level, Mach 0,
-   PLA 130°); its value is printed nowhere, and the requirements are reported to live in the
-   classified P&W specification CP2903B. Three candidates investigated and all rejected —
-   TP-1373's 111.2 kN axis scale (§6a), engine 059/063 thrust (§6b), TP-1034's 30 000 lbf channel
-   scale (§6c). The last yields a derived upper bound of about 22 400 lbf.
+1. **The figure 17 normalizer** — unavailable in held sources, with a restricted primary
+   specification (§6d). Its definition is pinned exactly (uninstalled net thrust at sea level,
+   Mach 0, PLA 130°). Four candidates investigated and all rejected — TP-1373's 111.2 kN axis
+   scale (§6a), engine 059/063 thrust (§6b), TP-1034's 30 000 lbf channel scale (§6c), and NASA
+   836's 23 500 lbf (§6e — different engine family). The third yields a derived upper bound of
+   about 22 400 lbf, which applies to the PW-100(3) normalizer only.
 2. **Component performance maps as numbers** — published only as graphs, read from data cards.
 3. **SGTM coefficients** K1, K2, E, Cv — TP-1782 names them and withholds all four.
 4. **The P&W decks themselves** — CCD 1015, CCD 1103-1.0, CCD 1088-2.0 are all cited, none supplied.
@@ -474,12 +517,12 @@ thrust equation printed immediately above it is not.
 
 ## 10. Highest-value missing sources, ranked
 
-1. **An UNCLASSIFIED primary source that explicitly publishes the F100-PW-100(3) design maximum
-   net thrust** — or, equivalently per §6b, that build's sea-level-static maximum-augmentation
-   gross thrust. Expected to be **below ~22 400 lbf** per the §6c bound. Note the changed
-   character of this item after §6d: the P&W specification that would state it is reported
-   classified, so this is no longer a matter of reading further down the NASA chain. Do not
-   reconstruct CP2903B values.
+1. **An unclassified source publishing the F100-PW-100(3) design maximum net thrust** — or,
+   equivalently per §6b, that build's sea-level-static maximum-augmentation gross thrust.
+   Expected **below ~22 400 lbf** per §6c. The requirement document that would state it, CP2903B,
+   is classified and must never be reconstructed — but a performance figure published elsewhere is
+   a different document, and §6e shows NASA does publish such figures for the target aircraft.
+   Searching remains worthwhile.
 2. **NASA TP-1069** (P680059) and **NASA TP-1228** (P680063) — refs. 1 and 2 of TP-1373. These
    hold the absolute gross thrust and airflow that TP-1373 only summarises as percentages, and
    they would populate `MavF100DimensionalGrossThrustDataset` as a **separate** dataset. Note
