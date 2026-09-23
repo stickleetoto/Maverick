@@ -31,6 +31,8 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///  [E18] the sea-level-static anchor: sound mechanism, three gates, fails at the first
     ///  [E19] normalized net and dimensional gross remain separate datasets
     ///  [E20] TP-1034 appendix C prints a 30 000 lbf channel scale - and it is not the normalizer
+    ///  [E21] the normalizer is PUBLIC-SOURCE BLOCKED, not merely not-yet-found
+    ///  [E22] the research characteristic and the NASA-836 target stay separate paths
     ///
     /// These run on the installation profile and its static factories - production code, no
     /// GameObject, no Rigidbody, no play-mode session.
@@ -65,6 +67,8 @@ namespace MaverickFresh.FlightDynamics.Validation
             ValidateStaticAnchorDoesNotClose(report, ref passed, ref failed);
             ValidateDatasetsStaySeparate(report, ref passed, ref failed);
             ValidateY12ChannelScale(report, ref passed, ref failed);
+            ValidatePublicSourceBlocked(report, ref passed, ref failed);
+            ValidatePathSeparation(report, ref passed, ref failed);
 
             report.AppendLine();
             report.Append("RESULT: ")
@@ -1384,6 +1388,199 @@ namespace MaverickFresh.FlightDynamics.Validation
                 slsMax.HasNumber && Mathf.Abs(slsMax.netThrustFraction - 1.004f) < 0.01f,
                 "and the sea-level maximum-augmentation point is still a FRACTION, "
                 + slsMax.netThrustFraction.ToString("0.000") + ", not a force",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E21]
+
+        private static void ValidatePublicSourceBlocked(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E21] The normalizer is public-source blocked, not merely unfound");
+
+            MavF100DeclaredScalar scale = MavF100SourceData.DesignMaximumNetThrust;
+
+            Record(
+                scale.blocker == MavF100BlockerKind.PublicSourceBlocked,
+                "the design maximum net thrust is classified PublicSourceBlocked - the reported "
+                + "CP2903B specification is not public, so following the NASA report chain "
+                + "further is not expected to close it",
+                report, ref passed, ref failed);
+
+            Record(
+                !scale.declared && scale.sourceClass == MavF100SourceClass.Unavailable,
+                "and it remains undeclared and Unavailable - a named reason for a gap does not "
+                + "fill the gap",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.ClassifiedThrustSpecification.Contains("unverified here")
+                && MavF100SourceData.ClassifiedThrustSpecification.Contains("CP2903B"),
+                "the CP2903B finding is recorded as UNVERIFIED here - it appears nowhere in the "
+                + "four documents held, and rests on the report of TP-1056 alone",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100SourceData.ClassifiedThrustSpecification.Contains("Do not reconstruct"),
+                "with the instruction attached: a classified specification is not a gap to be "
+                + "filled by inference",
+                report, ref passed, ref failed);
+
+            // TP-1056's two useful findings do not depend on TP-1056, and the record says so.
+            Record(
+                MavF100SourceData.Tp1056ReportedProvenance.Contains("NOT held")
+                && MavF100SourceData.Tp1056ReportedProvenance.Contains("TP-1034"),
+                "TP-1056 is recorded as not held, with findings 1 and 2 cited instead to "
+                + "TP-1034 printed pp. 3, 4 and 26, which are",
+                report, ref passed, ref failed);
+
+            // Finding 2 strengthens the Y12 argument: the ceiling binds at computation time.
+            Record(
+                MavF100SourceData.SimulationNetThrustChannelFullScaleLbf == 30000f
+                && !MavF100SourceData.DesignMaximumNetThrust.declared,
+                "the 30 000 lbf channel scale is still held as a channel scale and still not "
+                + "used as the design thrust",
+                report, ref passed, ref failed);
+
+            float bound = MavF100SourceData.DesignMaximumNetThrustUpperBoundLbf;
+
+            Record(
+                bound > 22000f && bound < 23000f,
+                "and the derived upper bound stands at " + bound.ToString("0")
+                + " lbf, cross-validation grade",
+                report, ref passed, ref failed);
+        }
+
+        // --------------------------------------------------------------- [E22]
+
+        private static void ValidatePathSeparation(
+            StringBuilder report, ref int passed, ref int failed)
+        {
+            report.AppendLine();
+            report.AppendLine("[E22] Research characteristic and NASA-836 target stay separate");
+
+            // Path B is empty. That is the current, correct state.
+            Record(
+                !MavF100Nasa836TargetPropulsion.HasDimensionalAnchor,
+                "path B holds NO dimensional anchor: no NASA-836 source in this repository "
+                + "publishes a thrust, airflow, fuel flow or spool constant for 836's engines",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100Nasa836TargetPropulsion.EngineIdentityClass
+                    == MavF100SourceClass.AuthoritativeExactTarget,
+                "while the engine IDENTITY on path B is exact-target - the one exact-target "
+                + "propulsion fact this project holds",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100Nasa836TargetPropulsion.Anchors
+                    != MavF100Nasa836TargetPropulsion.Anchors,
+                "and each read returns a fresh array, so no caller can populate path B for "
+                + "everyone else",
+                report, ref passed, ref failed);
+
+            // Path membership: research evidence can never serve the target path.
+            Record(
+                !MavF100PathSeparation.BelongsTo(
+                    MavF100SourceClass.CompatibleSupport, MavF100PropulsionPath.Nasa836Target),
+                "compatible-support evidence does not belong to the target path, however good it "
+                + "is at being research data",
+                report, ref passed, ref failed);
+
+            Record(
+                !MavF100PathSeparation.BelongsTo(
+                    MavF100SourceClass.AuthoritativeExactTarget,
+                    MavF100PropulsionPath.ResearchCharacteristic),
+                "and exact-target evidence is not research evidence either - the separation runs "
+                + "in both directions",
+                report, ref passed, ref failed);
+
+            Record(
+                MavF100PathSeparation.BelongsTo(
+                    MavF100SourceClass.CompatibleSupport,
+                    MavF100PropulsionPath.ResearchCharacteristic)
+                && MavF100PathSeparation.BelongsTo(
+                    MavF100SourceClass.AuthoritativeExactTarget,
+                    MavF100PropulsionPath.Nasa836Target),
+                "each path admits its own evidence",
+                report, ref passed, ref failed);
+
+            // The combination, refused four different ways.
+            MavF100NetThrustFractionResult research =
+                MavF100NormalizedNetThrustModel.Evaluate(0f, 0f, 129.8f);
+
+            Record(research.HasNumber,
+                "path A still answers on its own: sea-level maximum augmentation is "
+                + research.netThrustFraction.ToString("0.000") + " of design maximum",
+                report, ref passed, ref failed);
+
+            MavF100Nasa836TargetAnchor empty = new MavF100Nasa836TargetAnchor();
+
+            MavF100PathCombination noAnchor = MavF100PathSeparation.DimensionalizeForTarget(
+                research, empty, MavF100ConfigurationEquivalence.Unproven);
+
+            Record(!noAnchor.permitted && noAnchor.newtons == 0f,
+                "but combining it with an absent target anchor is refused, and yields no number",
+                report, ref passed, ref failed);
+
+            MavF100Nasa836TargetAnchor uncited = new MavF100Nasa836TargetAnchor();
+            uncited.quantityName = "fixture";
+            uncited.quantity = MavF100ThrustQuantity.UninstalledNetThrust;
+            uncited.newtons = 100000f;
+            uncited.citation = string.Empty;
+
+            Record(
+                !MavF100PathSeparation.DimensionalizeForTarget(
+                    research, uncited, MavF100ConfigurationEquivalence.Unproven).permitted,
+                "an anchor with no NASA-836 citation is refused",
+                report, ref passed, ref failed);
+
+            MavF100Nasa836TargetAnchor grossAnchor = new MavF100Nasa836TargetAnchor();
+            grossAnchor.quantityName = "fixture gross";
+            grossAnchor.quantity = MavF100ThrustQuantity.GrossThrust;
+            grossAnchor.newtons = 100000f;
+            grossAnchor.citation = "fixture NASA-836 source";
+
+            MavF100ConfigurationEquivalence proven = new MavF100ConfigurationEquivalence();
+            proven.proven = true;
+            proven.provingSource = "fixture equivalence source";
+
+            MavF100PathCombination mismatch = MavF100PathSeparation.DimensionalizeForTarget(
+                research, grossAnchor, proven);
+
+            Record(!mismatch.permitted && mismatch.reason.Contains("quantity mismatch"),
+                "a GROSS anchor cannot scale the NET characteristic, even with equivalence proven",
+                report, ref passed, ref failed);
+
+            MavF100Nasa836TargetAnchor netAnchor = grossAnchor;
+            netAnchor.quantity = MavF100ThrustQuantity.UninstalledNetThrust;
+            netAnchor.quantityName = "fixture net";
+
+            MavF100PathCombination unproven = MavF100PathSeparation.DimensionalizeForTarget(
+                research, netAnchor, MavF100ConfigurationEquivalence.Unproven);
+
+            Record(!unproven.permitted && unproven.reason.Contains("equivalence"),
+                "and a matching anchor is still refused while build equivalence is unproven - "
+                + "otherwise the product is one engine's thrust shape wearing another's identity",
+                report, ref passed, ref failed);
+
+            // The positive case, so the barrier is known to be a gate rather than a wall.
+            MavF100PathCombination allowed = MavF100PathSeparation.DimensionalizeForTarget(
+                research, netAnchor, proven);
+
+            Record(
+                allowed.permitted
+                && Mathf.Abs(allowed.newtons
+                    - research.netThrustFraction * netAnchor.newtons) < 1f,
+                "with every condition met the combination is permitted and multiplies correctly",
+                report, ref passed, ref failed);
+
+            Record(
+                allowed.sourceClass == MavF100SourceClass.CompatibleSupport,
+                "and the product is CompatibleSupport, NOT exact-target: an exact-target anchor "
+                + "scales a research characteristic, it does not promote one",
                 report, ref passed, ref failed);
         }
 

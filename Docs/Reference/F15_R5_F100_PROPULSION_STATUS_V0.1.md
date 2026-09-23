@@ -1,6 +1,6 @@
 # F-15 R5 — F100-PW-100 propulsion implementation status
 
-**Status:** V0.1.
+**Status:** V0.2.
 **Target aircraft:** `NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100`
 **Target engine:** Pratt & Whitney F100-PW-100 × 2.
 **Source audit:** `F15_R5_F100_SOURCE_AUDIT_V0.1.md` — read that first; this document assumes it.
@@ -28,7 +28,7 @@ not move. Closing the scale is a declaration of one scalar, not a rewrite.
 | augmented thrust | **SOURCE-BACKED (shape only)** | TP-1034 fig. 17, PLA 83–130°, all 7 conditions |
 | Mach dependence | **SOURCE-BACKED (at 7 points only)** | Mach 0, 0.9, 1.8, 2.15, 2.2. No interpolation between them |
 | altitude dependence | **SOURCE-BACKED (at 7 points only)** | 0, 3.048, 6.096, 9.144, 12.19, 13.72, 17.83 km |
-| **absolute thrust scale** | **BLOCKED** | design maximum net thrust printed nowhere. Bounded above at ~22 400 lbf by §6c of the audit; two candidate values investigated and rejected |
+| **absolute thrust scale** | **PUBLIC-SOURCE BLOCKED** | design maximum net thrust printed nowhere. reported classified in CP2903B (§6d). Bounded above at ~22 400 lbf by §6c; three candidate values investigated and rejected |
 | airflow | **UNAVAILABLE** (one datum recorded) | design corrected airflow 98.4 kg/s from TP-1373; no schedule, no map |
 | fuel flow | **UNAVAILABLE** | an *input* to every model in the pack, never an output of a published schedule |
 | transient / spool dynamics | **BLOCKED** | rotor inertias printed; turbine and fan torque come from unpublished maps, so no time constant follows |
@@ -68,6 +68,41 @@ could distinguish from the measured ones.
 Interpolation **along power lever angle** is different and is performed: figure 17 draws a
 continuous curve through its markers at each condition, so the source itself asserts the intermediate
 values exist.
+
+
+---
+
+## 3a. Two intentionally separate paths
+
+R5 ends with two bodies of propulsion evidence that look adjacent and must not be combined.
+
+| | **A — research characteristic** | **B — NASA F-15B 836 target** |
+|---|---|---|
+| engine build | F100-PW-100(3), prototype series 2 7/8 schedules | F100-PW-100 on 836 |
+| carries | 63 normalized figure-17 points, printed equations, control schedules | engine **identity** only |
+| dimensional? | **no** — dimensionless throughout | would be, but holds **nothing** today |
+| gating | the seven documented source conditions, enforced | n/a |
+| provenance ceiling | `CompatibleSupport` | `AuthoritativeExactTarget` (identity) |
+| code | `MavF100SourceData`, `MavF100NormalizedNetThrustModel` | `MavF100Nasa836TargetPropulsion` |
+
+**Was the split worth building while path B is empty?** Yes — that is precisely when to build it.
+The combination is arithmetically trivial, a fraction times a force. Written as a bare
+multiplication at some call site it would be invisible, and the moment path B gains its first
+anchor that multiplication is the obvious next move. The product would be one engine build's thrust
+shape wearing the target's exact identity, and it would look sourced from everywhere.
+
+`MavF100PathSeparation.DimensionalizeForTarget` is the only place the two may meet. It refuses
+unless four conditions hold: path A produced a number; the path-B anchor is usable and cites a
+NASA-836 source; the thrust **quantities match** (a gross anchor cannot scale a net
+characteristic); and configuration equivalence between the builds is proven by a named source.
+Nothing reaches the second condition today.
+
+When it does pass, the product is graded `CompatibleSupport`, not exact-target: an exact-target
+anchor **scales** a research characteristic, it does not promote one. `[E22]` asserts all of this,
+including the positive case, so the barrier is demonstrably a gate rather than a wall.
+
+This generalises the barrier already standing between the normalized net model and
+`MavF100DimensionalGrossThrustDataset` — same rule, one rung up.
 
 ### Layer C — augmentation
 
@@ -166,12 +201,12 @@ Run in **Unity 6000.3.16f1 headless** through `MavFdmValidationBatchAdapter`.
 
 | suite | result |
 |---|---|
-| `MavF15PropulsionValidation` | **121 passed, 0 failed** (was 27) |
+| `MavF15PropulsionValidation` | **141 passed, 0 failed** (was 27) |
 | `MavF15BaumannTranscriptionValidation` | **28 passed, 0 failed** |
 | `MavF15ControlPathValidation` | **79 passed, 0 failed** |
-| **total** | **228 passed, 0 failed** |
+| **total** | **248 passed, 0 failed** |
 
-311 runtime scripts compile with 0 errors.
+312 runtime scripts compile with 0 errors.
 
 New sections, covering every item the R5 brief's §9 lists:
 
@@ -191,6 +226,8 @@ New sections, covering every item the R5 brief's §9 lists:
 | `[E18]` | the sea-level-static anchor: mechanism sound, three gates, fails at the first |
 | `[E19]` | normalized net and dimensional gross remain separate datasets |
 | `[E20]` | the TP-1034 30 000 lbf channel scale, and why it is not the normalizer |
+| `[E21]` | the normalizer is PUBLIC-SOURCE BLOCKED, not merely not-yet-found |
+| `[E22]` | the research characteristic and the NASA-836 target stay separate paths |
 
 **NOT RUN:** Unity play mode; any flight, trim or trajectory test; any comparison against TP-1782
 flight data (there is no dimensional thrust to compare, and TP-1782 publishes only percentages).
@@ -210,10 +247,13 @@ not attached: attaching it would change nothing today, and leaving it unattached
 
 ## 7. Next highest-value missing source
 
-**The design maximum net thrust of the F100-PW-100(3)** — one scalar — or, equivalently, that
-build's **sea-level-static maximum-augmentation gross thrust**, which §6b of the source audit
-shows is the same number and is far more likely to be printed. A P&W status/specification deck,
-or any F100-PW-100(3) sea-level test report.
+**An UNCLASSIFIED primary source that explicitly publishes the F100-PW-100(3) design maximum net
+thrust** — or, equivalently, that build's sea-level-static maximum-augmentation gross thrust.
+Expected below ~22 400 lbf per the §6c bound.
+
+The character of this blocker changed in §6d: the P&W specification that would state it,
+CP2903B, is reported classified, so this is no longer a matter of reading further down the NASA
+report chain. **Do not reconstruct CP2903B values.**
 
 **Not** TP-1069 or TP-1228. Those are worth having — they would populate the dimensional
 gross-thrust dataset — but their test matrices contain no static point, so they cannot supply

@@ -91,6 +91,30 @@ namespace MaverickFresh.FlightDynamics.F15
     }
 
     /// <summary>
+    /// Why a quantity is missing. The distinction matters because it changes what to do next.
+    /// </summary>
+    public enum MavF100BlockerKind
+    {
+        /// <summary>Nothing is missing.</summary>
+        None = 0,
+
+        /// <summary>
+        /// Not found yet in the sources held. Searching further may close it.
+        /// </summary>
+        NotYetFound = 1,
+
+        /// <summary>
+        /// The primary source exists and is NOT public, so the public report chain cannot close
+        /// it however far it is followed. Reported for the F100 thrust and fuel-consumption
+        /// specification - see <see cref="MavF100SourceData.ClassifiedThrustSpecification"/>.
+        ///
+        /// Recording this separately is what stops the same search being re-run. "Keep looking"
+        /// and "looking will not help" are different instructions to whoever picks this up next.
+        /// </summary>
+        PublicSourceBlocked = 2
+    }
+
+    /// <summary>
     /// A scalar that the sources define but never print. Carries its own declared flag because
     /// zero is a legal force and "nobody published it" is not zero.
     /// </summary>
@@ -99,14 +123,22 @@ namespace MaverickFresh.FlightDynamics.F15
         public bool declared;
         public float value;
         public MavF100SourceClass sourceClass;
+        public MavF100BlockerKind blocker;
         public string citation;
 
         public static MavF100DeclaredScalar Undeclared(string whyNot)
+        {
+            return Undeclared(MavF100BlockerKind.NotYetFound, whyNot);
+        }
+
+        public static MavF100DeclaredScalar Undeclared(
+            MavF100BlockerKind blocker, string whyNot)
         {
             MavF100DeclaredScalar s = new MavF100DeclaredScalar();
             s.declared = false;
             s.value = 0f;
             s.sourceClass = MavF100SourceClass.Unavailable;
+            s.blocker = blocker;
             s.citation = whyNot;
             return s;
         }
@@ -197,7 +229,8 @@ namespace MaverickFresh.FlightDynamics.F15
             get
             {
                 return MavF100DeclaredScalar.Undeclared(
-                    "UNAVAILABLE: design maximum net thrust is the normalizer of NASA TP-1034 "
+                    MavF100BlockerKind.PublicSourceBlocked,
+                    "PUBLIC-SOURCE BLOCKED: design maximum net thrust is the normalizer of NASA TP-1034 "
                     + "figure 17 and is not printed in TP-1034, TM X-3261, TP-1373 or TP-1782. "
                     + "Definition is fixed: uninstalled net thrust at sea level, Mach 0, "
                     + "PLA 130 deg. Two candidate values have been investigated and both "
@@ -205,10 +238,72 @@ namespace MaverickFresh.FlightDynamics.F15
                     + "AxisNormalizerIsNotTheDesignMaximum) and TP-1034's 30 000 lbf simulation "
                     + "channel scale (a SCALED FRACTION full scale, provably larger than the "
                     + "normalizer - see Y12IsNotTheFigure17Normalizer). The second does yield a "
-                    + "derived upper bound of about 22 400 lbf. Closing it needs the P&W F100 "
-                    + "status/spec deck or a sea-level test report for the (3) build.");
+                    + "derived upper bound of about 22 400 lbf. The F100 thrust and "
+                    + "fuel-consumption requirements are reported to live in P&W specification "
+                    + "CP2903B, which is CLASSIFIED, so the public NASA report chain is not "
+                    + "expected to close this. Do not reconstruct CP2903B values. Only another "
+                    + "UNCLASSIFIED primary source that explicitly publishes the figure can "
+                    + "close it.");
             }
         }
+
+        // ------------------------------------------------- NASA TP-1056 (reported)
+
+        /// <summary>
+        /// NASA TP-1056, the F100 multivariable control synthesis programme evaluation, is a
+        /// follow-on to TP-1034 on the same real-time simulation. The report is NOT held in this
+        /// repository, so nothing below was read here.
+        ///
+        /// Three findings were reported from it. Two of them do not need TP-1056 at all, because
+        /// TP-1034 states the same things in text that IS held, and those are cited instead - a
+        /// claim corroborated by a source in hand is worth more than the same claim resting on a
+        /// report nobody here can open.
+        ///
+        ///   1. The real-time F100-PW-100(3) simulation is patterned after CCD 1103-1.0.
+        ///      CORROBORATED IN HAND: TP-1034 printed p. 3 - "modifications were made to elements
+        ///      of that model to match the performance of the F100-PW-100(3) engine as predicted
+        ///      by the corresponding digital simulation (CCD 1103-1.0)" - and again on printed
+        ///      p. 6 and in the summary of results.
+        ///
+        ///   2. Engine net thrust is computed in the DIGITAL portion of the hybrid simulation.
+        ///      CORROBORATED IN HAND: TP-1034 printed p. 4 lists, among the digital-portion
+        ///      modifications, "auxiliary calculations such as the calculation of engine thrust
+        ///      and surge margins". The appendix C listing shows it directly - Y12 is computed in
+        ///      FORTRAN on printed p. 26. See <see cref="Y12IsNotTheFigure17Normalizer"/>, which
+        ///      this strengthens: the scaled-fraction ceiling is imposed where the value is
+        ///      COMPUTED, not merely where it is output to the analog machine, so the derived
+        ///      upper bound does not depend on how the figure was plotted.
+        ///
+        ///   3. F100 thrust and fuel-consumption requirements live in P&amp;W specification CP2903B,
+        ///      which is classified; the public programme used CCD 1103-1.0 predicted performance
+        ///      instead. NOT CORROBORATED: "CP2903B" and "2903" appear nowhere in the four
+        ///      documents held. This one rests on the report of TP-1056 alone.
+        /// </summary>
+        public const string Tp1056ReportedProvenance =
+            "NASA TP-1056 (F100 multivariable control synthesis programme) is NOT held in this "
+            + "repository. Findings 1 and 2 as reported are corroborated independently by "
+            + "TP-1034 printed pp. 3, 4 and 26, which are held, and are cited to TP-1034. "
+            + "Finding 3 (CP2903B classified) is unverified here and rests on the report alone.";
+
+        /// <summary>
+        /// The reported reason the absolute normalizer is not expected to be publicly
+        /// recoverable: the F100 thrust and fuel-consumption requirements are said to be in
+        /// P&amp;W specification CP2903B, which is classified.
+        ///
+        /// Unverified here. It is nonetheless acted on, because acting on it costs nothing and
+        /// only changes where NOT to look: it downgrades the public NASA report chain as a search
+        /// target, which is why <see cref="DesignMaximumNetThrust"/> now carries
+        /// <see cref="MavF100BlockerKind.PublicSourceBlocked"/> rather than NotYetFound.
+        ///
+        /// NOTHING in this repository may attempt to reconstruct, estimate or infer CP2903B
+        /// values. A classified specification is not a gap to be filled by inference.
+        /// </summary>
+        public const string ClassifiedThrustSpecification =
+            "REPORTED (unverified here): F100 thrust and fuel-consumption requirements are "
+            + "contained in P&W specification CP2903B, which is CLASSIFIED. The public "
+            + "multivariable-control programme used CCD 1103-1.0 predicted performance instead. "
+            + "Consequence: the absolute figure 17 normalizer is PUBLIC-SOURCE BLOCKED, not "
+            + "merely not-yet-found. Do not reconstruct CP2903B values.";
 
         // ------------------------------------ TP-1034 appendix C: the Y12 thrust channel
 
