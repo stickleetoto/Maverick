@@ -5,7 +5,7 @@ checkpoint:        F-15 V1 freeze (baseline, not end of work)
 branch:            claude/f15-full-implementation
 pr:                stickleetoto/Maverick#27   # DRAFT - never merge
 base:              sol/f15-r2-lateral
-final_sha:         see PR #27 header ("Final commit")
+freeze_sha:        43ba2d9ed207e2e3cd81fafd2be5087c200e312f   # V1 freeze content; this line added by the next commit
 target_config_id:  NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100
 mass_state_id:     NASA_F15B_836_BASELINE_8K_FUEL_MASS_STATE
 unity:             6000.3.16f1
