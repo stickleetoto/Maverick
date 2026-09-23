@@ -39,17 +39,17 @@ Status vocabulary:
 | CG definition | percent mean aerodynamic chord | NASA/TM-2012-215978 | DIRECT | High | **FROZEN** |
 | Reference fuel state | 8,000 lb fuel | NASA/TM-2012-215978 Table 1 context | DIRECT | High | **FROZEN** |
 | Reference fuel state SI | 3,628.73896 kg | unit conversion | DERIVED | High | **DERIVED** |
-| Reference weight | 37,152 lb | NASA/TM-2012-215978 Table 1, Baseline F-15B row | DIRECT | High | **FROZEN** |
+| Reference weight | 37,426 lb | NASA/TM-2012-215978 Table 1, **Baseline F-15B test airplane** column | DIRECT | High | **FROZEN** |
 | Reference weight SI | 165,260.329 N | unit conversion | DERIVED | High | **DERIVED** |
-| Mass-equivalent | 16,851.86373 kg | conversion from 37,152 lb | DERIVED, not independent measurement | High | **DERIVED** |
-| Reference CG | 26.05% MAC | NASA/TM-2012-215978 Table 1 | DIRECT | High | **FROZEN** |
-| `Ixx` | 27,953 slug-ft² | NASA/TM-2012-215978 Table 1 | DIRECT | High | **FROZEN** |
+| Mass-equivalent | 16,976.14804 kg | conversion from 37,426 lb | DERIVED, not independent measurement | High | **DERIVED** |
+| Reference CG | 26.34% MAC | NASA/TM-2012-215978 Table 1, Baseline column | DIRECT | High | **FROZEN** |
+| `Ixx` | 30,345 slug-ft² | NASA/TM-2012-215978 Table 1, Baseline column | DIRECT | High | **FROZEN** |
 | `Ixx` SI | 37,899.17911 kg m² | unit conversion | DERIVED | High | **DERIVED** |
-| `Iyy` | 190,777 slug-ft² | NASA/TM-2012-215978 Table 1 | DIRECT | High | **FROZEN** |
+| `Iyy` | 198,687 slug-ft² | NASA/TM-2012-215978 Table 1, Baseline column | DIRECT | High | **FROZEN** |
 | `Iyy` SI | 258,658.88073 kg m² | unit conversion | DERIVED | High | **DERIVED** |
-| `Izz` | 213,957 slug-ft² | NASA/TM-2012-215978 Table 1 | DIRECT | High | **FROZEN** |
+| `Izz` | 223,214 slug-ft² | NASA/TM-2012-215978 Table 1, Baseline column | DIRECT | High | **FROZEN** |
 | `Izz` SI | 290,086.74077 kg m² | unit conversion | DERIVED | High | **DERIVED** |
-| `Ixz` | -460 slug-ft² | NASA/TM-2012-215978 Table 1 | DIRECT source-reported sign | High | **FROZEN** |
+| `Ixz` | -5,070 slug-ft² | NASA/TM-2012-215978 Table 1, Baseline column | DIRECT source-reported sign | High | **FROZEN** |
 | `Ixz` SI | -623.676256 kg m² | unit conversion | DERIVED | High | **DERIVED** |
 | Fuel-dependent mass/CG/inertia model | — | only one frozen reference state in R0.5 | none | — | **UNAVAILABLE** |
 | Primary stabilator identity | paired all-moving stabilators; symmetric pitch, differential roll | NASA/TM-2012-215978; NTRS 20070028417 | DIRECT | High | **FROZEN** |
@@ -106,7 +106,7 @@ Required future work:
 
 ### GAP-F15FS-003 — full-scale reference datum
 
-The absolute aircraft datum, aerodynamic reference station, and a source-compatible way to place the 26.05%-MAC CG in meters are not frozen.
+The absolute aircraft datum, aerodynamic reference station, and a source-compatible way to place the 26.34%-MAC CG in meters are not frozen.
 
 Until this is closed, installation coordinates and moment-reference conversions cannot be claimed authoritative.
 

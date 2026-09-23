@@ -115,15 +115,56 @@ Configuration-state tag:
 | Field | Raw source value | SI conversion | Status |
 |---|---:|---:|---|
 | Fuel state | 8,000 lb | **3,628.73896 kg** | FROZEN raw state; SI DERIVED |
-| Weight | 37,152 lb | **165,260.329 N** | FROZEN raw; SI DERIVED using 4.4482216152605 N/lbf |
-| Mass-equivalent | derived from 37,152 lb | **16,851.86373 kg** | DERIVED; not a separately published mass |
-| CG | **26.05% MAC** | same | FROZEN |
-| `Ixx` | **27,953 slug-ft²** | **37,899.17911 kg m²** | FROZEN raw; SI DERIVED |
-| `Iyy` | **190,777 slug-ft²** | **258,658.88073 kg m²** | FROZEN raw; SI DERIVED |
-| `Izz` | **213,957 slug-ft²** | **290,086.74077 kg m²** | FROZEN raw; SI DERIVED |
-| `Ixz` | **-460 slug-ft²** | **-623.676256 kg m²** | FROZEN raw reported sign; SI DERIVED |
+| Weight | **37,426 lb** | **166,479.14217 N** | FROZEN raw; SI DERIVED using 4.4482216152605 N/lbf |
+| Mass-equivalent | derived from 37,426 lb | **16,976.14804 kg** | DERIVED; not a separately published mass |
+| CG | **26.34% MAC** | same | FROZEN |
+| `Ixx` | **30,345 slug-ft²** | **41,142.29564 kg m²** | FROZEN raw; SI DERIVED |
+| `Iyy` | **198,687 slug-ft²** | **269,383.40070 kg m²** | FROZEN raw; SI DERIVED |
+| `Izz` | **223,214 slug-ft²** | **302,637.54752 kg m²** | FROZEN raw; SI DERIVED |
+| `Ixz` | **-5,070 slug-ft²** | **-6,873.99700 kg m²** | FROZEN raw reported sign; SI DERIVED |
 
 Conversion used for inertia: `1 slug-ft² = 1.3558179483314 kg m²`.
+
+### Correction — the wrong table-1 column was frozen (source-classification fix)
+
+**Earlier revisions of this freeze, and of `MavF15MassReference.cs`, carried NASA/TM-2012-215978
+table 1's "Spike extended" column while labelling it the baseline row.** The error is recorded here
+rather than quietly overwritten.
+
+| field | **previously frozen (wrong column: Spike extended)** | **correct column: Baseline F-15B test airplane** |
+|---|---:|---:|
+| Weight | 37,152 lb | **37,426 lb** |
+| CG | 26.05 % MAC | **26.34 % MAC** |
+| `Ixx` | 27,953 slug-ft² | **30,345 slug-ft²** |
+| `Iyy` | 190,777 slug-ft² | **198,687 slug-ft²** |
+| `Izz` | 213,957 slug-ft² | **223,214 slug-ft²** |
+| `Ixz` | -460 slug-ft² | **-5,070 slug-ft²** |
+
+**Why the baseline column is the one this target requires.** The frozen target is
+`NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100` — explicitly the aircraft *before*
+the Quiet Spike article was fitted. Table 1's other two columns describe the aircraft *with* that
+article fitted, stowed and deployed. They are correct data about a different aircraft
+configuration.
+
+**Why it was not caught.** The six frozen constants carried no column identity, and the numbers give
+no hint: two of the three columns share a weight (37,152 lb), all three CGs sit within 0.3 % MAC, and
+every inertia is the same order of magnitude. Nothing in the code or the tests could tell one column
+from another.
+
+**Affected lineage.** Every commit from the original R1 freeze through `b0a66b6` carried the
+spike-extended values. No downstream tuning was ever performed against them — the F-15 has never
+flown in this repository, the aerodynamic profile fails closed on unavailable `S`/`c̄`, and thrust
+is zero — so nothing was compensated to suit the wrong mass and nothing needs un-compensating.
+
+**What changed to prevent a repeat.** All three table-1 columns are now represented explicitly in
+`MavF15Table1MassStates`, each carrying its printed column heading, and `MavF15MassReference`
+declares which one it selects. `MavF15MassReferenceValidation` pins the tuple
+`(37152, 26.05, 27953, 190777, 213957, -460)` to `QuietSpikeExtended` and asserts it must **not**
+satisfy the frozen baseline target state.
+
+This is a source-classification correction, not aircraft tuning.
+
+
 
 The published `Ixz` sign is preserved as source data. A later implementation must map product-of-inertia sign into Maverick's exact rigid-body tensor convention explicitly; R0.5 does not modify that convention.
 

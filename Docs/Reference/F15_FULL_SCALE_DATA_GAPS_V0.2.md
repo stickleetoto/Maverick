@@ -30,13 +30,19 @@ No R0/R0.5 frozen value was changed.
 | Span | 42.8 ft | 13.04544 m | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
 | Height | 18.7 ft | 5.69976 m | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
 | Fuel state | 8,000 lb | 3,628.73896 kg | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
-| Aircraft weight | 37,152 lb | 165,260.329 N | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
-| Mass equivalent | from 37,152 lb | 16,851.86373 kg | `FROZEN_DERIVED` |
-| CG | 26.05% MAC | same | `FROZEN_DIRECT` |
-| Ixx | 27,953 slug-ft^2 | 37,899.17911 kg m^2 | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
-| Iyy | 190,777 slug-ft^2 | 258,658.88073 kg m^2 | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
-| Izz | 213,957 slug-ft^2 | 290,086.74077 kg m^2 | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
-| Ixz | **-460 slug-ft^2** | -623.676256 kg m^2 | `FROZEN_DIRECT` / `FROZEN_DERIVED`; source sign preserved |
+| Aircraft weight | 37,426 lb | 166,479.14217 N | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
+| Mass equivalent | from 37,426 lb | 16,976.14804 kg | `FROZEN_DERIVED` |
+| CG | 26.34% MAC | same | `FROZEN_DIRECT` |
+| Ixx | 30,345 slug-ft^2 | 41,142.29564 kg m^2 | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
+| Iyy | 198,687 slug-ft^2 | 269,383.40070 kg m^2 | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
+| Izz | 223,214 slug-ft^2 | 302,637.54752 kg m^2 | `FROZEN_DIRECT` / `FROZEN_DERIVED` |
+| Ixz | **-5,070 slug-ft^2** | -6,873.99700 kg m^2 | `FROZEN_DIRECT` / `FROZEN_DERIVED`; source sign preserved |
+
+> **Column correction.** These values previously carried NASA/TM-2012-215978 table 1's
+> *Spike extended* column while labelled baseline. Corrected to the *Baseline F-15B test
+> airplane* column, which is the one the pre-Quiet-Spike target requires. Full note in
+> `F15_FULL_SCALE_TARGET_FREEZE_V0.1.md`.
+
 | Engine identity | 2 x Pratt & Whitney F100-PW-100 | — | `FROZEN_DIRECT` |
 
 The mass/inertia row remains the baseline F-15B 8,000-lb-fuel row from

@@ -54,15 +54,22 @@ Control travel is zero until exact-target hard-stop/sign authority is accepted.
 
 ### `MavF15MassReference.cs`
 
-Implements the exact NASA/TM-2012-215978 Table 1 baseline row at 8,000 lb fuel:
+Implements the exact NASA/TM-2012-215978 Table 1 **"Baseline F-15B test airplane"** column at
+8,000 lb fuel:
 
-- weight: 37,152 lb
-- mass equivalent: 16,851.86373 kg
-- CG: 26.05% MAC
-- Ixx: 27,953 slug-ft^2
-- Iyy: 190,777 slug-ft^2
-- Izz: 213,957 slug-ft^2
-- Ixz: -460 slug-ft^2
+- weight: 37,426 lb
+- mass equivalent: 16,976.14804 kg (DERIVED)
+- CG: 26.34% MAC
+- Ixx: 30,345 slug-ft^2
+- Iyy: 198,687 slug-ft^2
+- Izz: 223,214 slug-ft^2
+- Ixz: -5,070 slug-ft^2
+
+**Corrected.** Earlier revisions of this file listed the "Spike extended" column
+(37,152 lb / 26.05% MAC / 27,953 / 190,777 / 213,957 / -460) under the baseline heading. See the
+correction note in `F15_FULL_SCALE_TARGET_FREEZE_V0.1.md`. All three table-1 columns are now held
+explicitly in `MavF15Table1MassStates`, and `MavF15MassReferenceValidation` (38 checks) pins the
+mislabelled tuple to `QuietSpikeExtended`.
 
 The source Ixz sign is preserved and mapped into the same Unity principal-inertia representation used
 by the common FDM/F-16 path.
