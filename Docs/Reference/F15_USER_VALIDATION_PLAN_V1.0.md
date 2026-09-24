@@ -9,7 +9,7 @@
 ## Phase 1 — open, compile, run the existing suites
 
 1. Open the project in Unity 6000.3.16f1 on branch `claude/f15-full-implementation`. Let it import.
-2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 334 runtime + 33 editor scripts, 0 errors.
+2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 339 runtime + 33 editor scripts, 0 errors.
 3. **Close the Editor** (batch mode needs the project unlocked). Run each F-15 suite headless. PowerShell, one line per suite:
 
    ```
@@ -31,7 +31,8 @@
    | `f15-fcs-structure` | `MavF15Nasa836FcsStructureValidation` | 24 / 0 |
    | `f15-validation-data` | `MavF15Nasa836ValidationDataValidation` | 16 / 0 |
    | `f15-research-authority` | `MavF15ResearchControlAuthorityValidation` | 21 / 0 |
-   | **total** | | **542 / 0** |
+   | `f15-source-condition` | `MavF15BaumannSourceConditionValidation` | 26 / 0 |
+   | **total** | | **568 / 0** |
 
 4. **Inspect the logs.**
    - Each JSON must say `"status": "PASS"`.
@@ -96,7 +97,8 @@ The **exact** path is still fail-closed; the check below still applies.
 - a research-tagged profile provider — **done (WP-1)**;
 - a research-only thrust input — **done (WP-1)**;
 - **research-scoped control-surface travel — NOT available.** Trim needs stabilator deflection, and the research profile holds zero travel. WP-2 declared a research *demonstrated* range (−25…−5°) for static evaluation only; it is not travel.
-- **a research speed-domain decision** (WP-2 finding): Table VII's equilibria sit at 289–700 ft/s, and none lies inside the M 0.6 ± 0.001 research gate.
+- ~~a research speed-domain decision~~ — **resolved in WP-3A.** Set `conditionMode = SourceReproduction` on the research profile to admit the source-exercised 218.5–699.7 ft/s at 6,096 m. Every coefficient away from Mach 0.6 is flagged as extrapolated.
+- **Static reference already reproduced:** `f15-source-condition` `[W4]` evaluates all 170 assembled Table VII equilibria and reports residuals against print precision.
 
 Baumann's own equilibria use a fixed **8,300 lb** total thrust at 20,000 ft (DTIC ADA217366, PDF p.34 and p.124). That figure is a research-model constant and must never enter R5 propulsion.
 

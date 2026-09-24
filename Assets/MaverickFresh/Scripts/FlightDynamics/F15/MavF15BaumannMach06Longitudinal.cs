@@ -83,6 +83,14 @@ namespace MaverickFresh.FlightDynamics.F15
                 // The digit was wrong, though: the source reads 0.0983 *5* 17, not 0.0983 *6* 17.
                 // Confirmed at 12x on the page image - the glyph has the flat top bar and open
                 // upper-left of a 5, where the adjacent 3s and a 6 are plainly different.
+                //
+                // WP-3A VERSION FINDING (recorded, not acted on): the other two printings of this
+                // routine read 0.09833 *6* 17 - Baumann 1989 (DTIC ADA217366 PDF p.108) and Davison's
+                // own Appendix B bifurcation listing (ADA256613 PDF p.110). This value follows the
+                // Appendix C simulator listing that the whole transcription is taken from. The 1e-6
+                // difference sits in the high-AoA drag fit, which carries no weight below 20 deg AoA,
+                // so Baumann's Table VII cannot discriminate. See
+                // Docs/Reference/F15_TABLE_VII_EQUILIBRIUM_VALIDATION_V1.0.md.
                 + 0.09833517;
 
             double cfx = BlendLowHighAoaDrag(ral, cfxLow, cfxHigh);

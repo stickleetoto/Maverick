@@ -64,8 +64,11 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 | D6 | F-15 suites on the Unity `Maverick/Flight Dynamics` menu | **LOW VALUE** | Convenience for the user's Phase-1 run | S |
 | D7 | *(new, WP-2)* **Re-run the reconstructed digitization scripts** against the public PDFs and diff the regenerated `MavF15Nasa836ValidationData.cs` | **MEDIUM VALUE** | The scripts in `Data/F15/wp2_digitization/` were rebuilt verbatim after the scratch copies were lost, and have not been re-run. Needs the two PDFs downloaded again. | S |
 | D8 | *(new, WP-2)* Route the stall inhibitor through the pitch CAS in exact mode, as 836's pitch diagram draws it | **LOW VALUE** now | Structural; can only remove output. No numeric consequence until a gain exists. | S |
-| D9 | *(new, WP-2)* Research speed-domain decision for Table VII trim | **HIGH VALUE** for WP-3 | Baumann applies his M 0.6 coefficients at 219–700 ft/s; Maverick's research gate is M 0.6 ± 0.001, which excludes every tabulated equilibrium | S (decision) |
+| D9 | ✅ **DONE (WP-3A)** — Research speed-domain decision for Table VII trim | **HIGH VALUE** for WP-3 | Resolved from the source code: M 0.6 is the coefficient-fit condition, and the source varies V at fixed density. The gate is now two explicit modes, `StrictFitCondition` (default) and `SourceReproduction` (218.5–699.7 ft/s at 6,096 m, flagged as extrapolated). `F15_BAUMANN_SOURCE_CONDITION_AUDIT_V1.0.md` | S (decision) |
 | D10 | *(new, WP-2)* Research actuator lags (Davison PDF p.97: 20 / 28 / 20 s⁻¹, differential tail = 0.3 × aileron) | **MEDIUM VALUE** (research) | Version-matched bandwidth, not a rate limit. Would need an actuator lag type kept separate from rate limits. | S |
+| D11 | *(new, WP-3A)* **Research fixed-density option** for `SourceReproduction` | **HIGH VALUE** for WP-3B | The source has no altitude state: its density is the 20,000-ft constant at every state. Maverick's follows altitude, so a free-flying research body leaves the source semantics at once. Maverick's standard density at 6,096 m is also 6.8e-4 below the source's RHO. | S |
+| D12 | *(new, WP-3A)* CFX2 constant: which printing is right (0.09833617 in Baumann and Davison App. B, 0.09833517 in Davison App. C) | **LOW VALUE** | 1e-6 in the high-AoA drag fit, inactive below α 20°. Matters only for high-α research reproduction; a decision, not a hunt. | S |
+| D13 | *(new, WP-3A)* Coefficient-by-coefficient diff of Baumann 1989 vs Davison App. C `COEFF` for channels Table VII never exercises (aileron, rudder, differential tail, high-α, asymmetric) | **MEDIUM VALUE** (research) | Table VII verifies only the exercised channels. The text layers are too noisy to diff automatically, so this means reading rendered pages. | M |
 
 ---
 
@@ -97,6 +100,14 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 - **Status after WP-2:** Table VII's inputs are now representable as `STATIC_EQUILIBRIUM_VALIDATION_ONLY`, and a coefficient-level pitch check already closes to round-off. Trim **in the flying body** still needs:
   - D9, a research speed-domain decision: no tabulated equilibrium lies inside the M 0.6 ± 0.001 gate;
   - research surface travel: physical stops are still not adopted.
+- **WP-3A — ✅ COMPLETE** (source-condition semantics + static reproduction). `F15_BAUMANN_SOURCE_CONDITION_AUDIT_V1.0.md`, `F15_TABLE_VII_EQUILIBRIUM_VALIDATION_V1.0.md`.
+  - D9 is resolved.
+  - Table VII is stored as printed.
+  - 170 equilibria reproduce to print precision in six axes.
+  - The two halves' displaced columns and one listing difference (CFX2) are recorded.
+- **WP-3B (flying trim) — next.**
+  - **Meaningful now:** a solver has a sourced static target that the model already reproduces.
+  - **Still needs:** D11 (fixed density), and research surface travel for the flying body. The static control is validation-only.
 - Compare trim against Baumann Table VII.
 - Check static derivatives against the thesis curves.
 - Run deterministic perturbation runs inside the source envelope.

@@ -30,6 +30,10 @@ namespace MaverickFresh.FlightDynamics.F15
         [Tooltip("SIMULATION REFERENCE CHOICE, not source data: the research model's CG coincides with its own moment reference, so the Rigidbody center of mass sits at the aircraft's local origin. See MavF15AfitResearchMassReference.")]
         public Vector3 centerOfMassLocalM = Vector3.zero;
 
+        [Header("Research Condition")]
+        [Tooltip("StrictFitCondition (default): Mach 0.6 / 20,000 ft only - the coefficient-fit condition. SourceReproduction: the true airspeeds Baumann's own model ran (218.5-699.7 ft/s) at its fixed 20,000-ft density, with every coefficient extrapolated from the Mach 0.6 fit and reported as such. Research only; never NASA 836. See Docs/Reference/F15_BAUMANN_SOURCE_CONDITION_AUDIT_V1.0.md.")]
+        public MavF15ResearchConditionMode conditionMode = MavF15ResearchConditionMode.StrictFitCondition;
+
         [Header("Debug")]
         public MavFlightDynamicsProfile debugBuiltProfile;
         public string debugProfileStatus = "not built";
@@ -51,7 +55,7 @@ namespace MaverickFresh.FlightDynamics.F15
             profile.referenceGeometry = MavF15BaumannMach06Reference.CreateReferenceGeometry();
             profile.massProperties =
                 MavF15AfitResearchMassReference.CreateUnityMassProperties(centerOfMassLocalM);
-            profile.envelope = CreateResearchEnvelope();
+            profile.envelope = CreateResearchEnvelope(conditionMode);
             profile.controlSurfaceLimits = CreateUnavailableResearchControlLimits();
 
             // The research source models one total-aircraft thrust force, not an engine
@@ -66,7 +70,11 @@ namespace MaverickFresh.FlightDynamics.F15
             string reason;
             bool valid = profile.IsValid(out reason);
             debugProfileStatus = (valid ? "VALID (research only): " : "INVALID: ") + reason
-                + " @ " + MavF15AfitResearchIdentity.SourceConditionLabel;
+                + " @ " + MavF15AfitResearchIdentity.SourceConditionLabel
+                + (conditionMode == MavF15ResearchConditionMode.SourceReproduction
+                    ? " | SOURCE REPRODUCTION: source-exercised speeds admitted; coefficients are the "
+                      + "Mach 0.6 fit, extrapolated away from it, NOT aerodynamically validated"
+                    : " | strict coefficient-fit condition");
 
             debugBuiltProfile = profile;
             return profile;
@@ -84,6 +92,31 @@ namespace MaverickFresh.FlightDynamics.F15
         /// research model already declares.
         /// </summary>
         public static MavFlightDynamicsEnvelope CreateResearchEnvelope()
+        {
+            return CreateResearchEnvelope(MavF15ResearchConditionMode.StrictFitCondition);
+        }
+
+        /// <summary>
+        /// The envelope for a condition mode. SourceReproduction widens ONLY the Mach bounds, to the
+        /// source-exercised true airspeeds at the standard-atmosphere speed of sound of the fixed
+        /// 20,000-ft altitude; the alpha/beta span is unchanged. The widened bounds describe what the
+        /// source ran, not where its coefficients are valid.
+        /// </summary>
+        public static MavFlightDynamicsEnvelope CreateResearchEnvelope(MavF15ResearchConditionMode mode)
+        {
+            if (mode == MavF15ResearchConditionMode.SourceReproduction)
+            {
+                float a = MavAtmosphereModel.Sample(MavF15CoefficientFitCondition.PressureAltitudeM).speedOfSoundMps;
+                MavFlightDynamicsEnvelope wide = CreateStrictResearchEnvelope();
+                wide.minMach = MavF15SourceExercisedOperatingDomain.MinTabulatedTrueAirspeedMps / a;
+                wide.maxMach = MavF15SourceExercisedOperatingDomain.MaxTabulatedTrueAirspeedMps / a;
+                return wide;
+            }
+
+            return CreateStrictResearchEnvelope();
+        }
+
+        private static MavFlightDynamicsEnvelope CreateStrictResearchEnvelope()
         {
             return new MavFlightDynamicsEnvelope
             {

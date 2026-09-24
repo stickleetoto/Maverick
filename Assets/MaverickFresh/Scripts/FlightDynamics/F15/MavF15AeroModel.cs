@@ -63,7 +63,15 @@ namespace MaverickFresh.FlightDynamics.F15
 
         [Header("Debug")]
         public bool debugRefused;
+
+        [Tooltip("True when the state is AT the Mach 0.6 / 20,000 ft coefficient-fit condition.")]
         public bool debugAtFixedSourceCondition;
+
+        [Tooltip("The research condition mode in force. SourceReproduction is honoured only through a research profile that is this body's provider; anything else is strict.")]
+        public MavF15ResearchConditionMode debugConditionMode = MavF15ResearchConditionMode.StrictFitCondition;
+
+        [Tooltip("True when the coefficients just published were evaluated AWAY from the Mach 0.6 fit condition (SourceReproduction only): source-exercised, not aerodynamically validated.")]
+        public bool debugExtrapolatedFromFitCondition;
 
         [Tooltip("True when alpha/beta are inside the span of breakpoints the transcribed routine itself declares. NOT a claimed F-15 validity envelope - see MavF15BaumannMach06Domain.")]
         public bool debugInsideTranscribedSpan;
@@ -103,6 +111,8 @@ namespace MaverickFresh.FlightDynamics.F15
         {
             debugRefused = false;
             debugAtFixedSourceCondition = false;
+            debugExtrapolatedFromFitCondition = false;
+            debugConditionMode = MavF15ResearchConditionMode.StrictFitCondition;
             debugInsideTranscribedSpan = false;
             debugLongitudinalOnly = false;
             debugSixAxisResearch = false;
@@ -128,16 +138,25 @@ namespace MaverickFresh.FlightDynamics.F15
                 );
             }
 
-            string conditionReason;
-            debugAtFixedSourceCondition =
-                MavF15BaumannMach06Reference.IsAtSourceCondition(
-                    state,
-                    atmosphere,
-                    out conditionReason
-                );
+            // Strict unless a research profile that this body actually flies asks for source
+            // reproduction. See MavF15BaumannSourceSemantics.
+            debugConditionMode = ResolveConditionMode();
 
-            if (!debugAtFixedSourceCondition)
+            string conditionReason;
+            bool insideFitCondition;
+            bool admitted = MavF15ResearchConditionGate.Admits(
+                debugConditionMode,
+                state,
+                atmosphere,
+                out insideFitCondition,
+                out conditionReason
+            );
+
+            debugAtFixedSourceCondition = admitted && insideFitCondition;
+            if (!admitted)
                 return Refuse(conditionReason);
+
+            debugExtrapolatedFromFitCondition = !insideFitCondition;
 
             // F15-AUDIT-002: Mach and altitude were already fail-closed, alpha and beta were not.
             // The research fits are 6th- to 9th-order polynomials and diverge outside the span
@@ -249,6 +268,26 @@ namespace MaverickFresh.FlightDynamics.F15
                 useIndependentDifferentialTailResearchInput,
                 independentDifferentialTailResearchDeg
             );
+        }
+
+        /// <summary>
+        /// SourceReproduction takes effect only when a research profile on this GameObject asks for
+        /// it AND is the provider of the six-DoF body here. The exact NASA 836 profile, a missing
+        /// body, or a research profile the body does not fly all leave the gate strict.
+        /// </summary>
+        private MavF15ResearchConditionMode ResolveConditionMode()
+        {
+            MavF15AfitResearchFlightDynamicsProfile research =
+                GetComponent<MavF15AfitResearchFlightDynamicsProfile>();
+            if (research == null
+                || research.conditionMode != MavF15ResearchConditionMode.SourceReproduction)
+                return MavF15ResearchConditionMode.StrictFitCondition;
+
+            MavSixDoFBody body = GetComponent<MavSixDoFBody>();
+            if (body == null || body.profileProvider != research)
+                return MavF15ResearchConditionMode.StrictFitCondition;
+
+            return MavF15ResearchConditionMode.SourceReproduction;
         }
 
         private void ResolveActuator()

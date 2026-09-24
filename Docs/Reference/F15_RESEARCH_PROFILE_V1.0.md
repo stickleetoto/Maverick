@@ -76,9 +76,21 @@ The source is Davison's driver (`BWING=42.8`, `CWING=15.94`, `SREF=608.`, PDF p.
 
 The transcribed coefficient routine omits both thrust terms on purpose (`MavF15BaumannMach06Longitudinal`), so the force and the moment are applied **once**, through the propulsion load path.
 
-## 5. Envelope
+## 5. Envelope — and what "Mach 0.6" means (WP-3A)
 
-- **Mach:** 0.6 ± 0.001, altitude 6,096 ± 1 m. Both are enforced by the aero model and the research thrust.
+**Mach 0.6 / 20,000 ft is the coefficient-fit condition, not a runtime condition of the source model** (`F15_BAUMANN_SOURCE_CONDITION_AUDIT_V1.0.md`).
+- Baumann's own driver holds density at the 20,000-ft value.
+- It lets true velocity vary as a state, with q = ½ρV².
+- It never computes Mach.
+
+The profile now carries `conditionMode`, and every mode keeps the same α/β span:
+
+| Mode | Admits | Status |
+|---|---|---|
+| `StrictFitCondition` *(default)* | Mach 0.6 ± 0.001, altitude 6,096 ± 1 m, enforced by the aero model and the research thrust | the fit condition |
+| `SourceReproduction` | true airspeed 218.5–699.7 ft/s (the source-exercised span) at 6,096 ± 1 m only; the envelope widens to Mach 0.2107–0.6748 | every coefficient away from Mach 0.6 is flagged **EXTRAPOLATED from the M=0.6 fit — source-exercised, NOT aerodynamically validated** |
+
+`SourceReproduction` is honoured only when this profile is the six-DoF body's provider.
 - **α / β:** −4.0…90.0° α, ±20.0° β — the span the transcribed routine already declares (`MavF15BaumannMach06Domain`). **Not broadened.**
 - **Recorded, not applied:** Davison's driver also prints continuation bounds of −8…50° α and ±30° β (PDF p.92). Adopting them would narrow α and widen β relative to the declared span. That is a separate decision.
 
@@ -89,8 +101,11 @@ The transcribed coefficient routine omits both thrust terms on purpose (`MavF15B
   - The FCS applies 0 stages (no sourced gains).
   - This is exposed in `[Q1]`, not bypassed.
 - **Not live-ready.** The research propulsion is non-authoritative and not accepted. There is no operational command source.
-- **One flight condition.** No Mach, altitude or throttle variation exists in the source.
-- **No trim yet.** Baumann's Table VII equilibria need stabilator deflection around −10°, which zero travel cannot supply. Research trim (WP-3) first needs research-scoped surface authority, or a decision to adopt one travel set for research only.
+- **One coefficient-fit condition; no throttle or altitude variation.** The source's own model does vary true velocity (WP-3A). In `SourceReproduction` mode Maverick admits the velocities the source ran, at the source's fixed-density altitude only.
+- **Static reproduction done (WP-3A); flying trim not started.**
+  - Baumann's Table VII equilibria close to print precision in all six axes when fed through this configuration's aero, mass, inertia and thrust (`F15_TABLE_VII_EQUILIBRIUM_VALIDATION_V1.0.md`).
+  - Flying trim still needs research surface travel. The flying aircraft holds zero travel, so the surfaces enter only through the STATIC_EQUILIBRIUM_VALIDATION_ONLY control.
+  - The source's density also does not follow altitude.
 - **PlayMode: not run.** The batch adapter's Play Mode bridge is hard-wired to the FDM scheduler probe, and extending shared infrastructure was out of scope. Instead, `MavF15ResearchPipelineValidation` drives the real components through the editor-only `StepPhysicsForValidation` seam — the same `StepPhysicsCore` that `FixedUpdate` runs — on a hidden temporary object. No scene or prefab is touched. Unity does not integrate the Rigidbody in edit mode, so this checks the pipeline, not a trajectory.
 
 ## 7. Code and validation

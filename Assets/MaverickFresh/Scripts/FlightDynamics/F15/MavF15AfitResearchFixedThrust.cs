@@ -69,6 +69,25 @@ namespace MaverickFresh.FlightDynamics.F15
             out MavPropulsiveLoads loads,
             out string reason)
         {
+            return TryEvaluate(
+                profileId, MavF15ResearchConditionMode.StrictFitCondition, state, atmosphere,
+                out loads, out reason);
+        }
+
+        /// <summary>
+        /// As above, under an explicit research condition mode. The source holds THRUST = 8300 lb
+        /// constant at every state its model runs (it enters as THRUST/QBARS in CX), so in
+        /// SourceReproduction mode the same total force is produced wherever the research gate
+        /// admits the state - and nowhere else.
+        /// </summary>
+        public static bool TryEvaluate(
+            string profileId,
+            MavF15ResearchConditionMode mode,
+            MavFlightState state,
+            MavAtmosphereSample atmosphere,
+            out MavPropulsiveLoads loads,
+            out string reason)
+        {
             loads = MavPropulsiveLoads.Zero;
 
             if (profileId != MavF15AfitResearchIdentity.ConfigurationId)
@@ -80,8 +99,9 @@ namespace MaverickFresh.FlightDynamics.F15
             }
 
             string conditionReason;
-            if (!MavF15BaumannMach06Reference.IsAtSourceCondition(
-                    state, atmosphere, out conditionReason))
+            bool insideFitCondition;
+            if (!MavF15ResearchConditionGate.Admits(
+                    mode, state, atmosphere, out insideFitCondition, out conditionReason))
             {
                 reason = "research thrust refused away from its source condition: "
                     + conditionReason;
@@ -162,8 +182,13 @@ namespace MaverickFresh.FlightDynamics.F15
 
             MavPropulsiveLoads loads;
             string reason;
+            MavF15AfitResearchFlightDynamicsProfile research =
+                GetComponent<MavF15AfitResearchFlightDynamicsProfile>();
+            MavF15ResearchConditionMode mode = research != null
+                ? research.conditionMode
+                : MavF15ResearchConditionMode.StrictFitCondition;
             bool produced = MavF15AfitResearchThrustSource.TryEvaluate(
-                ResolveProfileId(), state, atmosphere, out loads, out reason);
+                ResolveProfileId(), mode, state, atmosphere, out loads, out reason);
 
             debugRefused = !produced;
             debugStatus = (produced ? "" : "REFUSED: ") + reason

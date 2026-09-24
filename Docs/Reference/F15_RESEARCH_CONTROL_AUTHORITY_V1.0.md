@@ -136,7 +136,7 @@ These are recorded in `MavF15ResearchControlConventions`.
 2. **The research envelope gate.** The aero and thrust refuse outside M 0.6 ± 0.001 at 6,096 ± 1 m, and **no tabulated equilibrium lies inside it**.
    - Table VII's closest points are 120 (V = 631.6 ft/s, M ≈ 0.609, in a −63° bank) and 121 (606.5 ft/s).
    - The source applies its M 0.6 coefficients at 219–700 ft/s by its own modelling assumption.
-   - Reproducing Table VII in the body needs a decision on the research speed domain first.
-3. **In-source inconsistency, recorded not resolved.** Table VII points 116–120 have V = 631.6…699.7 ft/s, but Baumann's text (PDF p.119) says equilibria above 622.14 ft/s were omitted.
+   - Reproducing Table VII in the body needs a decision on the research speed domain first. *(Resolved in WP-3A: the `SourceReproduction` condition mode, `F15_BAUMANN_SOURCE_CONDITION_AUDIT_V1.0.md`.)*
+3. ~~In-source inconsistency~~ — **corrected in WP-3A.** Table VII's second-half points 116–120 have V = 631.6…699.7 ft/s. Baumann's text (PDF pp.118–119) discounts velocities **"much higher"** than 622.14 ft/s, not every velocity above it, so keeping these points is consistent with it. The speed-domain question itself is resolved in `F15_BAUMANN_SOURCE_CONDITION_AUDIT_V1.0.md`.
 
 Whether an M 0.6 level-flight trim would fall inside the demonstrated range is a WP-3 question. **No trim was solved here.**
