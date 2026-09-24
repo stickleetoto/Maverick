@@ -1,6 +1,9 @@
-# F/A-18 Implementation Feasibility (r0)
+# F/A-18 Implementation Feasibility (r0, R1 addendum)
 
-Status: **research assessment, not an implementation plan.** Nothing here authorises runtime work. Evidence is at L2/L3 at most (see [library README §4](../../README.md#4-r0-retrieval-limitation-read-this-before-trusting-anything)), so every "yes" below is conditional on the page-verification package FA18-R1.
+> **R1 note.** This page is the r0 text plus an R1 addendum at the end. r0 level names map to R1 names as L0 = `SEARCH_LEAD_ONLY`, L1 = `CATALOGUE_VERIFIED`, L2 = `ABSTRACT_VERIFIED`, L3 = `CONTENT_EXTRACT_VERIFIED`, L4/L5 = `PAGE_VERIFIED` ([`SCHEMA.md` §2](../../SCHEMA.md#2-verification-levels)).
+
+
+Status: **research assessment, not an implementation plan.** Nothing here authorises runtime work. Evidence is at L2/L3 at most (see [library README §4](../../README.md#4-retrieval-limitation-read-this-before-trusting-anything)), so every "yes" below is conditional on the page-verification package FA18-R1.
 
 ---
 
@@ -122,3 +125,12 @@ A TV-active HARV and an ANSER-strake HARV are **separate later profiles** (mixer
 1. **FA18-R1: page verification and table census** (needs NTRS access). Open NASA-TM-107601, NASA-TM-110216, NASA-TM-4772, NASA-TM-110217, NASA-TM-4240 and NASA-CR-198248. Hash each file and index its pages. Answer Q-A1, Q-A2, Q-A7, Q-M1–M3, Q-ACT1–2, Q-C1–C2 and Q-P1–P3. Move `KNOWN_DATA` values to L4, and transcribe mass, geometry and actuator tables with a two-pass check (L5 pattern from `Docs/Reference/Data/F16/TP1538/`).
 2. **FA18-R2: aerodynamic-model route decision.** Resolve the Morelli MOF lead (NTRS-19940020628, J. Aircraft 1995) and the upstream database identity from the TM-107601 bibliography. Write the digitization plan and pilot-digitize one NASA-TM-4786 derivative figure with a full uncertainty manifest. Fold in the NASA-TM-4783 ground-to-flight caveats.
 3. **F16-R1 (Priority B): central F-16 lineage.** Migrate `Docs/Reference/F16_SOURCE_PACK_V0.1.md` into `SOURCE_INDEX.json` with verification levels. Extend it with NASA thrust data, high-alpha and departure studies and flight-test validation. Separate the specific NASA test aircraft from production-family data and from simulator/research models. Check whether the NESC 6-DOF check-cases (NASA-TM-2015-218675) include a case directly usable for the Maverick F-16 reference.
+
+---
+
+## 6. R1 addendum
+
+- **Answers to Q2/Q3 hardened by repository readings.** The public f18bas and f18harv reports do **not** print their aerodynamic arrays (repository page reading). A table-level F/A-18 model without guessed coefficients therefore still depends on an unpublished MDC A7247/A8575 lineage. The public alternatives are flight-derived derivatives (validation), a possible Morelli polynomial fit (Q-A3 open) and the CR-3608 rotary data (1/10-scale, cross-validation only).
+- **What improved.** Phase I mass state now has a printed Ixz (-2,039 slug-ft^2) and CG station and waterline (repository). A simplified baseline CAS is printed in f18bas. Three actuator lineages are separable.
+- **What did not change.** No F/A-18 value is `ALLOWED`. The library's own page-verification pass (FA18-R2) is still the gate.
+- **Cross-aircraft position** (no score): see [`../../AIRCRAFT_DATA_COVERAGE_MATRIX.md`](../../AIRCRAFT_DATA_COVERAGE_MATRIX.md).

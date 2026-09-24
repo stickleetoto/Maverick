@@ -1,6 +1,9 @@
-# F/A-18 Source Graph (r0)
+# F/A-18 Source Graph (r0, R1 addendum)
 
-Status: **lineage reconstructed from catalogue records, abstracts and search extracts.** No PDF bibliography has been read yet (see [library README §4](../../README.md#4-r0-retrieval-limitation-read-this-before-trusting-anything)). Edges marked *(probable)* must be confirmed from reference lists in FA18-R1.
+> **R1 note.** This page is the r0 text plus an R1 addendum at the end. r0 level names map to R1 names as L0 = `SEARCH_LEAD_ONLY`, L1 = `CATALOGUE_VERIFIED`, L2 = `ABSTRACT_VERIFIED`, L3 = `CONTENT_EXTRACT_VERIFIED`, L4/L5 = `PAGE_VERIFIED` ([`SCHEMA.md` §2](../../SCHEMA.md#2-verification-levels)).
+
+
+Status: **lineage reconstructed from catalogue records, abstracts and search extracts.** No PDF bibliography has been read yet (see [library README §4](../../README.md#4-retrieval-limitation-read-this-before-trusting-anything)). Edges marked *(probable)* must be confirmed from reference lists in FA18-R1.
 
 Source IDs refer to [`SOURCE_INDEX.json`](../../SOURCE_INDEX.json). Configuration IDs refer to [`KNOWN_DATA.md`](KNOWN_DATA.md#1-configuration-registry).
 
@@ -50,7 +53,7 @@ NASA-TM-110216  'f18harv' (1996, Langley) ── HARV with multi-axis TV + actua
         ├── EXTENDED_BY NASA-CR-1998-206937 (turbulence models)
         ├── USED_BY NASA-TP-3446 (longitudinal law), NASA-TP-1998-208465 (lat-dir law), NASA-TM-110217 (ANSER spec)
         ├── CURVE_FIT_OF (probable) JAIRCRAFT-1995-MORELLI-MOF / NTRS-19940020628 (subsonic tabular DB → MOF polynomials)
-        └── DERIVED_FROM (probable) JGCD-2011-CHAKRABORTY-* ("HARV aerodynamic data in the open literature")
+        └── DERIVED_FROM (probable) JGCD-2011-CHAKRABORTY-LINEAR / JGCD-2011-CHAKRABORTY-NONLINEAR ("HARV aerodynamic data in the open literature")
 ```
 
 **Key reading:** f18harv is *not* a clean baseline F/A-18 model. It is f18bas plus TV, plus strakes, plus (per extract) flight-data table updates. A baseline F/A-18 model from this lineage has to be built from f18bas-origin tables with TV and strake increments **absent** (not zeroed after the fact), and it still carries the HARV-specific table updates. Whether that separation is possible depends on how TM-110216 structures its build-up. This is open question Q-A2 in [`MISSING_DATA.md`](MISSING_DATA.md).
@@ -81,7 +84,7 @@ Separate branches (other airframes / eras):
   NTRS-19970041277, NTRS-19990060322  PSFCC research capability (production-family FCC + research processor)
   NASA-TM-2005-213666                 AAW research laws (853)
   NTRS-20110015950                    FAST NDI baseline law (853)
-  AIAA-2004-542 (Boeing/NAVAIR) ──▶ JGCD-2011-CHAKRABORTY-* (university reconstruction of baseline vs revised laws)
+  AIAA-2004-542 (Boeing/NAVAIR) ──▶ JGCD-2011-CHAKRABORTY-LINEAR / -NONLINEAR (university reconstruction of baseline vs revised laws)
 ```
 
 ## 4. Flight-derived aerodynamics lineage (validation branch)
@@ -136,3 +139,68 @@ TV: NASA-TP-3531 (tunnel) ─▶ NASA-TM-4771 (scale model / full-scale / flight
 | C4 | NASA-TM-4783 author list | Two catalogue extracts disagree | n/a | Metadata error or conflation with another report | Recorded as UNCONFIRMED |
 | C5 | NASA-TP-3111 affiliation | One extract says NASA Lewis | n/a | Probable catalogue error | Not relied on |
 | C6 | "Controlled flight to 70°" vs "stabilized flight at 65–70°" vs "controlled to 60°" statements | Various overview extracts | P2/P3 | Different phases/effectors and different definitions of "controlled" | Treat as narrative only; use flight data for envelopes |
+
+---
+
+## 8. R1 addendum: repository acquisitions, metadata fixes and cross-aircraft links
+
+R1 did **not** redo the F/A-18 pass. It added what the repository's F/A-18 consolidation branch (`sol/fa18-source-consolidation-r1` @e596c32) had already retrieved and read, fixed metadata that those readings contradict, and linked the pack to the other aircraft. Each change is recorded in the source's `existing_maverick_analysis` (repository path, branch, locator and the PDF sha256 the repository recorded). The library's own verification levels did not change.
+
+### 8.1 Upstream identities now named
+
+```
+MCAIR-FA18-AERO-DATABASE  = MDC A7247 Vol I (low AoA; issue 31 Aug 1981, Rev B 15 Nov 1982) + Vol II (high AoA) + MDC A8575 (basic aero data)
+        │  cited by NASA primary reports (repository reading)          ── still NOT PUBLICLY LOCATED
+        ▼
+NASA-TM-107601 f18bas ── also cites MDC A4107 / A7813 for the control-law lineage; Table 8.6 reproduces the A7813 rudder
+                          no-load rate (56 deg/s) while Table 8.7 uses 61 deg/s (repository)
+GE-F404-COMPLETE-ENGINE-MODEL = GE R88AEB427 "Software User's Manual for the HARV F404-GE-400 Dynamic Real Time Model"
+        │  DERIVED_FROM
+        ▼
+NASA-TM-4240 (Oct 1990; also AIAA 90-2166; Unclassified-Unlimited per its documentation page)
+```
+
+### 8.2 Sources added in R1 (repository acquisitions)
+
+| Source | What it adds | Configuration |
+|---|---|---|
+| `NASA-CR-3608` | Complete measured rotary-balance tables, 1/10-scale model, component build-up | `FA18-CFG-WT-CR3608` (new) |
+| `NASA-TM-4341` | Full-scale ground test of TV-vane axial thrust loss (Tables 2/3) | `FA18-CFG-HARV-P2-TV` |
+| `NASA-CR-198052` | Engine airflow estimation with clean and distorted inlet flow | HARV + `ENG-F404-GE-400` |
+| `NTRS-19970012895` | Overview of HATP experimental aerodynamics for the baseline F/A-18 (source graph only) | `FA18-CFG-PROD-AB` |
+| `NASA-TP-2000-209033` | F-18B SRA parameter estimation at high dynamic pressure, M 0.85-1.30 | `FA18-CFG-SRA-845` |
+| `NTRS-20070031030` | Automated simulation updates from flight data (method, HARV demonstration) | `FA18-CFG-SIM-F18HARV` |
+| `NASA-TM-104247` | Bleed-air effects on installed F404 thrust, HARV on a thrust stand | HARV + engine |
+| `NASA-TM-4591` | Dynamic response of in-flight thrust calculations | engine |
+
+### 8.3 Metadata corrected
+
+| Source | r0 | R1 |
+|---|---|---|
+| `NASA-TM-110216` | 3 authors | 7 authors (repository catalogue). **Order conflict**: repository catalogue V0.1 lists Strickland first, V0.2 lists Messina first (conflict C7) |
+| `NASA-TM-4240` | date unverified | October 1990; also AIAA 90-2166 |
+| `NASA-TP-97-206539` | date/organisation unverified | December 1997; NASA Dryden and SPARTA; Phase II, NASA-0 law, mixer 1, LEX fence, flights 1992-1994 |
+| `NASA-CR-194838` | "grant period May-Dec 1993" as the phase | December 1993; grant NCC 2-759; data from the 29 Sep 1992 OBES campaign |
+| `NASA-TM-4786` | flight dates unverified | Phase I flights 11-38, June 1987 - March 1988 (basic hardware/software) |
+| `NASA-TM-107601` | FCS version unverified | Simplified OFP 8.3.3 inner-loop CAS (printed; Q-C1 answered) |
+| `NASA-TM-88273`, `GE-F404-COMPLETE-ENGINE-MODEL` | aircraft null | engine-level identity stated explicitly |
+
+### 8.4 Conflicts updated
+
+| # | Update |
+|---|---|
+| C1 | 82 deg/s rudder rate is printed in f18harv Tables 6.1/6.2 **and** TP-97-206539 Table 1. f18bas uses 61 deg/s. 56 deg/s is both the AAW table value and the MDC A7813 no-load rating reproduced in TM-107601 Table 8.6. Whether the AAW figure is the same rating is not established |
+| C2 | The r0 "second inertia set" remains unattributed. Two further sets now exist: TP-97-206539 Table 3 Phase I (incl. Ixz -2,039) and f18bas Table 3.5 Fighter Escort 60 % fuel (incl. Ixz -2,430). Each is a different loading or configuration |
+| C7 (new) | TM-110216 author order (see 8.3) |
+| C8 (new) | Aileron limits: -25/+45 (f18bas), -25/+42 (f18harv), 24 up / 45 down (TP-97-206539 Table 1). r0's "25 up / 45 down" matches f18bas, so the r0 attribution to HARV sources is withdrawn |
+| C9 (new) | Engine PLA rate limits: 19.03/26.81 deg/s (TM-4240) vs 14/22 deg/s (TM-110216), identical time constants. Model-version conflict; never averaged |
+
+### 8.5 Cross-aircraft links
+
+| Link | Why it matters |
+|---|---|
+| Morelli global-model method: `JAIRCRAFT-1995-MORELLI-MOF` (HARV) and `MORELLI-ACC-1998-F16` (F-16) | Same method, different databases. The F-16 fit is Maverick's implemented model; a HARV fit would be the F/A-18 analogue if its coefficients are printed (Q-A3) |
+| `NASA-TM-2015-218675` NESC check-cases | Aircraft-independent EOM verification; its F-16 case is textbook lineage (F-16 pack) |
+| VISTA NF-16D in-flight simulation | Used for F-22 control-law evaluation (`AIAA-96-3379`); unrelated to F/A-18 data but the same class of evidence as HARV RFCS research laws |
+| Iliff output-error lineage (`NASA-RP-1168`) | The same Dryden method produced F/A-18 (TM-4786, TP-97-206539) and F-15 RPV derivatives (TN D-8136) |
+| `NASA-SP-2000-4519` (Langley 1990s history) | Covers F/A-18 and F-22 tunnel programmes; history only |

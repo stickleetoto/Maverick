@@ -1,18 +1,17 @@
-# F-16: queued package F16-R1 (Priority B)
+# F-16 pack (R1)
 
-Status: **not started in this library.** The current authority is the existing reference set in `Docs/Reference/`:
+The deepest pack in the library after R1. Start with [`IMPLEMENTATION_FEASIBILITY.md`](IMPLEMENTATION_FEASIBILITY.md).
 
-- [`F16_SOURCE_PACK_V0.1.md`](../../../../Reference/F16_SOURCE_PACK_V0.1.md): NASA TP-1538 → Morelli 1998 → Garza & Morelli chain, plus AFTI/F-16, F-16XL, VISTA/MATV and cross-validation implementations.
-- [`F16_TP1538_THRUST_DECK_V0.1.md`](../../../../Reference/F16_TP1538_THRUST_DECK_V0.1.md) and `Docs/Reference/Data/F16/TP1538/`: Table VI thrust deck, transcribed and cross-checked (the L5 pattern for this library).
-- `F16_TP1538_RUNTIME_SEMANTICS_V0.1.md`, `F16_TP1538_RUNTIME_VALIDATION_V0.1.md`, `Docs/F16_TP1538_TABLE_VI_TRANSCRIPTION.md`.
+| Document | Content |
+|---|---|
+| [`SOURCE_GRAPH.md`](SOURCE_GRAPH.md) | Configuration spine, top-level lineage, six-axis coefficient support, conflicts |
+| [`F16_MODEL_LINEAGE.md`](F16_MODEL_LINEAGE.md) | Every F-16 model, where its numbers came from, build-up conventions |
+| [`F16_FCS_SOURCE_GRAPH.md`](F16_FCS_SOURCE_GRAPH.md) | Four-layer FCS matrix (public architecture / public gains / research approximations / production not located) |
+| [`F16_PROPULSION_SOURCE_GRAPH.md`](F16_PROPULSION_SOURCE_GRAPH.md) | F100 / F110 lineage, never merged |
+| [`F16_VALIDATION_SOURCE_GRAPH.md`](F16_VALIDATION_SOURCE_GRAPH.md) | Check-cases, flight data, independence |
+| [`KNOWN_DATA.md`](KNOWN_DATA.md) + [`KNOWN_DATA.json`](KNOWN_DATA.json) | Configuration registry and candidate values |
+| [`MISSING_DATA.md`](MISSING_DATA.md) | Blockers and gaps |
+| [`IMPLEMENTATION_FEASIBILITY.md`](IMPLEMENTATION_FEASIBILITY.md) | Verdicts A-G |
+| [`SOURCES.json`](SOURCES.json) | Generated slice of `SOURCE_INDEX.json` |
 
-## F16-R1 scope (planned)
-
-1. Migrate every source from `F16_SOURCE_PACK_V0.1.md` into `SOURCE_INDEX.json` with verification levels. Leave the existing pack unchanged.
-2. Build `SOURCE_GRAPH.md` for the Morelli lineage, keeping three things separate:
-   - the specific NASA test aircraft (AFTI/F-16, F-16XL, VISTA/MATV, etc.)
-   - generic production-family F-16 data
-   - simulator/research models (TP-1538 simulation, Garza & Morelli, Stevens & Lewis-derived codes)
-3. Extend with NASA thrust data, control laws, mass/inertia, high-alpha/departure studies and flight-test validation.
-4. Check the NESC 6-DOF check-cases (`NASA-TM-2015-218675`) for a case usable against the Maverick F-16 reference.
-5. Produce `KNOWN_DATA`, `MISSING_DATA` and `IMPLEMENTATION_FEASIBILITY` for F-16 in the r0 format.
+The repository's existing F-16 authority documents stay where they are and are not changed by this library: `Docs/Reference/F16_SOURCE_PACK_V0.1.md`, `Docs/Reference/F16_TP1538_THRUST_DECK_V0.1.md`, `Docs/Reference/Data/F16/TP1538/`, and `Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_*.md`.

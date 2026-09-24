@@ -1,10 +1,14 @@
-# Source Library Metadata Schema v1
+# Source Library Metadata Schema v2 (R1)
 
 Schema IDs:
-- `maverick.aerospace.source-index.v1`: `SOURCE_INDEX.json`
-- `maverick.aerospace.known-data.v1`: `Aircraft/<type>/KNOWN_DATA.json`
+- `maverick.aerospace.source-index.v2`: `SOURCE_INDEX.json`
+- `maverick.aerospace.known-data.v2`: `Aircraft/<type>/KNOWN_DATA.json`
+- `maverick.aerospace.pack-sources.v1`: `Aircraft/<type>/SOURCES.json` (generated)
+- `maverick.aerospace.numeric-field-index.v1`: `AIRCRAFT_NUMERIC_FIELD_INDEX.json` (generated)
 
-`Tools/validate_aerospace_source_library.py` enforces everything marked **(validated)**.
+`Tools/validate_aerospace_source_library.py` enforces everything marked **(validated)**. `Tools/build_aerospace_source_views.py` generates the views; the validator fails if any view is stale **(validated)**.
+
+**Changes from v1 (r0):** verification levels renamed to the R1 vocabulary (§2); new source fields `aircraft_packs`, `index_group`, `existing_maverick_analysis` (§1, §1a); configuration records gain `configuration_scope` and `lineage_family` (§5); value records gain `field`, `precision`, `verification_level` and `existing_maverick_analysis`, and exactness gains `REPOSITORY_READING` (§6); the numeric field index (§6a).
 
 ---
 
@@ -14,7 +18,7 @@ Every field is required **(validated)**. Unknown values are `null`, `"unknown"`,
 
 | Field | Meaning |
 |---|---|
-| `source_id` | Stable ID, upper-case with hyphens. Prefer the report number (`NASA-TM-110216`), else `NTRS-<id>`, else `<VENUE>-<year>-<key>` **(validated: unique, pattern)** |
+| `source_id` | Stable ID, upper-case with hyphens. Prefer the report number (`NASA-TM-110216`), else `NTRS-<id>`, else `<VENUE>-<year>-<key>` **(validated: unique, pattern; no two sources may share a primary report number or an NTRS ID)** |
 | `title`, `authors[]`, `organization`, `year` | Bibliographic identity. Unconfirmed authors are written as `UNCONFIRMED (...)` |
 | `report_number` | As printed (NASA-TM-, TP-, CR-, RP-, SP-, AIAA paper no., DTIC AD no.) |
 | `ntrs_id` | NTRS document ID (e.g. `19960027892`), or `null` |
@@ -25,8 +29,11 @@ Every field is required **(validated)**. Unknown values are `null`, `"unknown"`,
 | `public_access_status` | See §3 **(validated)** |
 | `retrieval_status` | `NOT_RETRIEVED_EGRESS_BLOCKED`, `NOT_RETRIEVED`, `RETRIEVED_EXTERNAL_STORE`, `RETRIEVED_IN_REPO` **(validated)** |
 | `verification_level` | See §2 **(validated)** |
-| `aircraft`, `aircraft_variant`, `serial_or_tail_number`, `research_configuration`, `engine_configuration`, `FCS_configuration`, `date_or_phase` | Configuration identity (see §5) |
-| `configuration_ids[]` | Links into a `KNOWN_DATA.json` configuration registry **(validated: must resolve)** |
+| `aircraft_packs[]` | `FA18`, `F16`, `F15`, `F22`, `F14`, `FUNDAMENTALS`, `OTHER` **(validated: non-empty, enum)**. A source may belong to several packs (e.g. the F100 lineage is in `F15` and `F16`) |
+| `index_group` | Heading under which `SOURCE_INDEX.md` lists the source **(validated: non-empty)** |
+| `existing_maverick_analysis[]` | Cross-references to Maverick documents that analysed this source (§1a) **(validated: structure)** |
+| `aircraft`, `aircraft_variant`, `serial_or_tail_number`, `research_configuration`, `engine_configuration`, `FCS_configuration`, `date_or_phase` | Configuration identity: airframe/block, modifications, engine, FCS, date (see §5). For a source in any aircraft pack, `aircraft`, `aircraft_variant`, `research_configuration`, `engine_configuration`, `FCS_configuration` and `date_or_phase` must be non-empty; write `NOT_STATED` rather than leaving them null **(validated)** |
+| `configuration_ids[]` | Links into a `KNOWN_DATA.json` configuration registry **(validated: must resolve; non-empty for aircraft-pack sources)** |
 | `topics[]` | Free-text topic tags |
 | `contains{}` | Exactly the 22 keys below. Each value is `yes` (confirmed by abstract or extract), `likely` (implied, unconfirmed), `no`, or `unknown` **(validated)** |
 | `important_pages[]`, `important_figures[]`, `important_tables[]` | `{id, content, verification}` objects. Empty until indexed |
@@ -37,22 +44,34 @@ Every field is required **(validated)**. Unknown values are `null`, `"unknown"`,
 | `limitations[]`, `known_conflicts[]`, `notes`, `verification_notes` | Free text |
 | `related_sources[]` | `{source_id, relation}` **(validated: must resolve)**. Relation vocabulary is in `SOURCE_GRAPH.md` |
 
+### 1a. `existing_maverick_analysis[]`
+
+Records that another Maverick document (on any branch) analysed the source. It is evidence that someone in the project read something. **It never raises `verification_level`.**
+
+| Field | Meaning |
+|---|---|
+| `path` | Repository path of the analysing document |
+| `branch` | Branch and commit, e.g. `claude/f15-full-implementation @89140b9` |
+| `relationship` | What the document did with the source (page read, transcription, audit, citation) |
+| `locator` | Page/table/figure the document cites, as it cites it (not re-checked by the library) |
+| `level` | `REPO_PAGE_READ` (the document says it read the page), `REPO_PAGE_TRANSCRIBED_CROSSCHECKED` (transcribed and cross-checked, e.g. with a manifest and hash), `REPO_CITATION_ONLY` **(validated)** |
+| `note` | Free text, e.g. the PDF sha256 a repository manifest records |
+
 `contains` keys: `geometry, mass, cg, inertia, aerodynamic_coefficients, static_derivatives, rate_derivatives, control_derivatives, reference_geometry, FCS_architecture, FCS_numeric_gains, actuator_limits, actuator_rates, propulsion, thrust_data, source_code, equations, tables, plots, flight_data, trim_data, validation_data`.
 
 ## 2. Verification levels
 
-This axis records how far **we** have checked the source. It is separate from how good the source is.
+This axis records how far **the library** has checked the source itself. It is separate from how good the source is, and from what other Maverick documents say they read (§1a). Never upgrade beyond what was actually inspected. Never infer metadata (year, author, report type) from an accession-number pattern.
 
-| Level | Meaning | Allowed use |
-|---|---|---|
-| `L0_UNVERIFIED_LEAD` | Mentioned somewhere; existence not confirmed | Search target only |
-| `L1_CITATION_CONFIRMED` | Catalogue record found: title/ID/report number | Planning |
-| `L2_ABSTRACT_CONFIRMED` | Abstract or scope confirmed from the catalogue record or an index extract | Planning, lineage |
-| `L3_CONTENT_EXTRACT` | A specific content item (value, range, statement) seen in a search or index extract; page not confirmed | Lead for verification; never code |
-| `L4_PAGE_VERIFIED` | Document retrieved and hashed; page/table/figure checked by a reader | Implementation, for the matching configuration |
-| `L5_TRANSCRIBED_CROSSCHECKED` | Values transcribed, then independently cross-checked (e.g. the two-pass visual check plus SI/US cross-check used for TP-1538 Table VI in `Docs/Reference/Data/F16/TP1538/`) | Frozen reference data |
+| Level (R1) | r0 name | Meaning | Allowed use |
+|---|---|---|---|
+| `SEARCH_LEAD_ONLY` | L0 | Mentioned somewhere (including only in another Maverick document); the library has not confirmed it | Search target only |
+| `CATALOGUE_VERIFIED` | L1 | Catalogue record seen: title / ID / report number | Planning |
+| `ABSTRACT_VERIFIED` | L2 | Abstract or scope seen in the catalogue record or an index extract | Planning, lineage |
+| `CONTENT_EXTRACT_VERIFIED` | L3 | A specific content item (value, range, statement) seen in a search or index extract; page not confirmed | Lead for verification; never code |
+| `PAGE_VERIFIED` | L4 / L5 | Document retrieved and hashed by the library; the page, table or figure checked by a reader (L5-style transcription with cross-check is recorded in the value's notes) | Implementation, for the matching configuration |
 
-L4 and above requires `retrieval_status = RETRIEVED_*` and a `sha256` **(validated)**.
+`PAGE_VERIFIED` requires `retrieval_status = RETRIEVED_*` and a `sha256` **(validated)**. A value's own `verification_level` may not exceed its source's level **(validated)**.
 
 ## 3. Public access status
 
@@ -100,7 +119,7 @@ These are two independent axes. Never collapse them into one label.
 
 ## 5. Configuration registry (`KNOWN_DATA.json` → `configurations[]`)
 
-`configuration_id`, `label`, `airframe`, `serial`, `engine`, `fcs`, `research_hardware`, `dates`, `status`, `notes`.
+`configuration_id`, `label`, `airframe`, `serial`, `engine`, `fcs`, `research_hardware`, `dates`, `status`, `configuration_scope`, `lineage_family`, `notes`. `airframe`, `engine`, `fcs`, `dates`, `status`, `configuration_scope` and `lineage_family` must be non-empty (`NOT_RECORDED` is allowed) **(validated)**. Configuration IDs are unique across all packs **(validated)**; engine configurations (`ENG-…`) are defined once, in the pack where they are primary, and referenced from other packs.
 
 The IDs are the join key between sources and values. Track model/variant, production vs pre-production, block, tail/serial, research modifications, engine model/build, nozzle, FCS revision, external research hardware and test phase/date wherever known.
 
@@ -115,13 +134,30 @@ Each field answers one of the ten numeric-data questions:
 | 3 | What source? | `source_id` **(validated: resolves)**, or `UNRESOLVED` + `candidate_source_ids[]` **(validated)** |
 | 4 | What page/table/figure? | `location` (`NOT_CAPTURED` if unknown) **(validated: present)** |
 | 5 | Original or reproduced? | `origin`: `ORIGINAL`, `REPRODUCED`, `DIGITIZED`, `DERIVED` **(validated)** |
-| 6 | Exact / approximate / digitized? | `exactness`: `EXACT`, `APPROXIMATE`, `DIGITIZED`, `SEARCH_EXTRACT`, `SEARCH_EXTRACT_APPROXIMATE`, `ABSTRACT_STATEMENT`, `PUBLIC_FACT_SHEET` **(validated)** |
+| 6 | Exact / approximate / digitized? | `exactness`: `EXACT`, `APPROXIMATE`, `DIGITIZED`, `SEARCH_EXTRACT`, `SEARCH_EXTRACT_APPROXIMATE`, `ABSTRACT_STATEMENT`, `PUBLIC_FACT_SHEET`, `REPOSITORY_READING` **(validated)**. `REPOSITORY_READING` = the value was read in another Maverick document; it must have `verification_level = SEARCH_LEAD_ONLY` and an `existing_maverick_analysis` entry **(validated)** |
 | 7 | Units? | `units` **(validated: present)** |
 | 8 | Reference convention? | `reference_convention` **(validated: present)** |
-| 9 | Usable for implementation? | `implementation_use`: `ALLOWED` only if the source is L4+, the location is captured and exactness is page-level **(validated)** |
+| 9 | Usable for implementation? | `implementation_use`: `ALLOWED` only if the source **and** the value are `PAGE_VERIFIED`, the location is captured, exactness is page-level, and units and convention are stated **(validated)** |
 | 10 | Validation only? | `validation_use` **(validated: present)** |
 
-Plus `value`, `conflicts_with[]` (**validated**: must resolve) and `notes`.
+Plus `value`, `conflicts_with[]` (**validated**: must resolve across all packs), `notes`, and the v2 fields:
+
+| Field | Meaning |
+|---|---|
+| `field` | Canonical field name from the vocabulary in `Tools/build_aerospace_source_views.py` (`FIELD_GROUPS`), e.g. `reference_area`, `physical_span`, `Ixz`, `surface_rate_limit`, `thrust_table` **(validated)** |
+| `precision` | Printed precision (e.g. `1 slug-ft^2`, `0.01 ft`), `UNKNOWN`, or a note such as "as extracted" **(validated: present)** |
+| `verification_level` | What the library has seen of this value (§2) **(validated: ≤ source level)** |
+| `existing_maverick_analysis[]` | As §1a, for this value |
+
+Gap records are allowed: a value such as `NOT PUBLICLY LOCATED` with `implementation_use = NOT_A_MODEL_PARAMETER` documents a failed search so it is not repeated blindly.
+
+## 6a. Numeric field index (`AIRCRAFT_NUMERIC_FIELD_INDEX.json`, generated)
+
+One record per value across all packs: `value_id`, `aircraft`, `configuration`, `configuration_scope`, `field`, `quantity`, `value`, `units`, `precision`, `source_id`, `candidate_source_ids`, `page`, `location_as_recorded`, `provenance` (source provenance grade), `value_origin`, `exactness`, `verification_level`, `source_verification_level`, `implementation_use`, `implementation_allowed`, `has_existing_maverick_analysis`, `known_data_file`.
+
+- `page` is `null` unless both the source and the value are `PAGE_VERIFIED` **(validated)**.
+- `implementation_allowed` is `true` only when `implementation_use = ALLOWED` and the page is verified **(validated)**.
+- Every KNOWN_DATA value appears exactly once **(validated)**.
 
 ## 7. Digitized datasets (future)
 

@@ -1,0 +1,2230 @@
+{
+ "schema": "maverick.aerospace.known-data.v2",
+ "aircraft": "F-15",
+ "library_revision": "r1",
+ "generated": "2026-09-24",
+ "rule": "implementation_use = ALLOWED (the only state that sets implementation_allowed = true in AIRCRAFT_NUMERIC_FIELD_INDEX.json) requires: the source's own content inspected by the library at PAGE_VERIFIED, the configuration known, units and convention known, and the page/table/figure recorded. Values read only in other Maverick documents carry exactness REPOSITORY_READING and verification_level SEARCH_LEAD_ONLY: the repository reading is recorded in existing_maverick_analysis, it is not a primary source.",
+ "configurations": [
+  {
+   "configuration_id": "F15-CFG-NASA836-PRE-QS",
+   "label": "NASA F-15B 836 (USAF 74-0141), pre-Quiet-Spike baseline, 2 x F100-PW-100 - the Maverick F-15 target",
+   "airframe": "F-15B (production-representative two-seat; radar/gun removed for research)",
+   "serial": "NASA 836 / USAF 74-0141",
+   "engine": "F100-PW-100 x2; sub-build (1)/(2)/(2-7/8)/(3) NOT established",
+   "fcs": "Production-type mechanical + single-string analog CAS (simplified NASA block diagrams)",
+   "research_hardware": "standard air-data boom + sideslip vane during baseline flights",
+   "dates": "baseline flights before Quiet Spike (Quiet Spike flew 2006-2007)",
+   "status": "MAVERICK_TARGET_CONFIGURATION",
+   "configuration_scope": "EXACT_AIRFRAME",
+   "lineage_family": "NASA 836",
+   "notes": "Serial identity is not configuration identity: PFTF/LIFT/FTF-II/Quiet-Spike/post-2014 states are separate configurations."
+  },
+  {
+   "configuration_id": "F15-CFG-NASA836-QS",
+   "label": "NASA F-15B 836 with the Gulfstream Quiet Spike telescoping nose boom",
+   "airframe": "F-15B",
+   "serial": "NASA 836 / 74-0141",
+   "engine": "F100-PW-100 x2",
+   "fcs": "as baseline (no change reported)",
+   "research_hardware": "24-ft multisegmented telescoping nose boom",
+   "dates": "2006-2007",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "NASA 836",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F15-CFG-NASA836-PFTF",
+   "label": "NASA F-15B 836 carrying centerline research fixtures (FTF-II, PFTF, LIFT and similar)",
+   "airframe": "F-15B",
+   "serial": "NASA 836 / 74-0141",
+   "engine": "F100-PW-100 x2",
+   "fcs": "as baseline",
+   "research_hardware": "centerline fixture (varies by experiment)",
+   "dates": "1990s-2010s",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "NASA 836",
+   "notes": "Used here only for physical dimensions and identity statements."
+  },
+  {
+   "configuration_id": "F15-CFG-NASA836-POST2014",
+   "label": "NASA F-15B 836 after the 2014 re-engine",
+   "airframe": "F-15B",
+   "serial": "NASA 836 / 74-0141",
+   "engine": "F100-PW-220E x2 (per 2016 briefing, repository)",
+   "fcs": "digital engine control",
+   "research_hardware": "none",
+   "dates": "2014 onward",
+   "status": "OUT_OF_SCOPE",
+   "configuration_scope": "EXACT_AIRFRAME",
+   "lineage_family": "NASA 836",
+   "notes": "Any '24,000 lb' figure for tail 836 may describe this state; never use for the PW-100 target."
+  },
+  {
+   "configuration_id": "F15-CFG-NF15B-837",
+   "label": "NF-15B 837 (preproduction F-15B, highly modified: canards, vectoring nozzles; ACTIVE / IFCS)",
+   "airframe": "NF-15B",
+   "serial": "NASA 837",
+   "engine": "F100-PW-229 x2 with axisymmetric thrust-vectoring nozzles",
+   "fcs": "Research digital FCS (ACTIVE / IFCS)",
+   "research_hardware": "canards, P/YBBN nozzles",
+   "dates": "1990s-2000s",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "NASA 837",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F15-CFG-NASA835",
+   "label": "NASA 835 (F-15A) HIDEC / PCA research aircraft",
+   "airframe": "F-15A",
+   "serial": "NASA 835",
+   "engine": "PW1128 (per repository, PCA era)",
+   "fcs": "HIDEC / PCA research systems",
+   "research_hardware": "none",
+   "dates": "1980s-1990s",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "NASA 835",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F15-CFG-NASA-F15-EARLY-ENGINE-TESTBED",
+   "label": "Early NASA F-15 engine test bed flying prototype F100 engines (TP-1782 era)",
+   "airframe": "F-15 (airframe identity not captured)",
+   "serial": "n/a",
+   "engine": "Prototype F100 series 2-7/8 (engine 059 left)",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "late 1970s",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "EXACT_AIRFRAME",
+   "lineage_family": "NASA F-15 engine research",
+   "notes": "Airframe tail number not recorded by the library."
+  },
+  {
+   "configuration_id": "F15-CFG-PREPROD-8",
+   "label": "Preproduction F-15 No. 8 (TM-72861)",
+   "airframe": "F-15A preproduction",
+   "serial": "F-15 No. 8",
+   "engine": "F100 (build not recorded)",
+   "fcs": "Production-type mechanical + CAS as installed",
+   "research_hardware": "none",
+   "dates": "1970s",
+   "status": "CROSS_VALIDATION_ONLY",
+   "configuration_scope": "PREPRODUCTION",
+   "lineage_family": "Preproduction",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F15-CFG-PROD-AD",
+   "label": "Production F-15A-D family",
+   "airframe": "F-15A/B/C/D",
+   "serial": "n/a",
+   "engine": "F100-PW-100 / -220 by era",
+   "fcs": "Production mechanical + analog CAS (gains NOT public)",
+   "research_hardware": "none",
+   "dates": "1974 onward",
+   "status": "REFERENCE_ONLY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "Production",
+   "notes": "Family data (e.g. the McDonnell %MAC datum) is support for 836, never 836 authority by itself."
+  },
+  {
+   "configuration_id": "F15-CFG-SIM-AFIT-AEROBASE",
+   "label": "AFIT F-15 research simulations built on curve fits to the ASD 'F-15 Aerobase' / McAir ARO10 tables",
+   "airframe": "F-15 (simulation)",
+   "serial": "n/a",
+   "engine": "fixed thrust or simple models (thesis-specific)",
+   "fcs": "thesis-specific",
+   "research_hardware": "none",
+   "dates": "1987-1996",
+   "status": "CROSS_VALIDATION_ONLY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "AFIT / ASD Aerobase",
+   "notes": "Single-flight-condition curve fits; mass and geometry cited to MDC A4172."
+  },
+  {
+   "configuration_id": "F15-CFG-SIM-CR186019",
+   "label": "Brumbaugh (1991) AIAA controls design challenge aircraft model",
+   "airframe": "Generic high-performance fighter (F-15-like)",
+   "serial": "n/a",
+   "engine": "model-specific",
+   "fcs": "none (design challenge)",
+   "research_hardware": "none",
+   "dates": "1991",
+   "status": "CROSS_VALIDATION_ONLY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "NASA Dryden derived model",
+   "notes": "Author states the model is not representative of any particular aircraft (repository reading)."
+  },
+  {
+   "configuration_id": "F15-CFG-RPV-3-8",
+   "label": "NASA 3/8-scale F-15 remotely piloted research vehicle (unpowered)",
+   "airframe": "3/8-scale F-15 RPV",
+   "serial": "n/a",
+   "engine": "none (blocked inlets)",
+   "fcs": "remote digital augmentation",
+   "research_hardware": "none",
+   "dates": "1970s",
+   "status": "CROSS_VALIDATION_ONLY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "lineage_family": "NASA F-15 RPV",
+   "notes": "Repository R0 used the Basic 1 / 26% MAC state for a subscale profile under a transfer policy."
+  },
+  {
+   "configuration_id": "F15-CFG-WT-SUBSCALE",
+   "label": "Subscale F-15 wind-tunnel models (0.075, 1/12 rotary, three-surface transonic, CFT)",
+   "airframe": "F-15 tunnel models",
+   "serial": "n/a",
+   "engine": "n/a",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "1970s-1980s",
+   "status": "CROSS_VALIDATION_ONLY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "lineage_family": "NASA tunnel",
+   "notes": "Each report's own model state must be tagged before any value is used."
+  },
+  {
+   "configuration_id": "F15-CFG-ENTHUSIAST",
+   "label": "Hobbyist F-15 flight models",
+   "airframe": "F-15 (hobbyist)",
+   "serial": "n/a",
+   "engine": "n/a",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "PROHIBITED_AS_AUTHORITY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "Hobbyist",
+   "notes": ""
+  },
+  {
+   "configuration_id": "ENG-F100-PW-100-1",
+   "label": "F100-PW-100(1) as simulated in TM X-3261",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F100-PW-100(1)",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "F100",
+   "notes": "Build designations (1), (2), (2-7/8), (3) are never merged."
+  },
+  {
+   "configuration_id": "ENG-F100-PW-100-2-7-8",
+   "label": "Prototype F100 series 2-7/8 (P680059, P680063; 1977 altitude calibration)",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F100 series 2-7/8",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "1974-1980",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "EXACT_AIRFRAME",
+   "lineage_family": "F100",
+   "notes": "Series 2 core + series 3 fan; control schedules differ from both."
+  },
+  {
+   "configuration_id": "ENG-F100-PW-100-3",
+   "label": "F100-PW-100(3) improved-fan build",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F100-PW-100(3)",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "F100",
+   "notes": ""
+  },
+  {
+   "configuration_id": "ENG-F100-PW-100-3-DEEC",
+   "label": "P680063 in F100(3) gas-path configuration with DEEC (from 1980)",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F100(3) + DEEC",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "1980-1985",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "F100",
+   "notes": ""
+  },
+  {
+   "configuration_id": "ENG-F100-EMD",
+   "label": "F100 Engine Model Derivative",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F100 EMD",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "1985 onward",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "F100",
+   "notes": ""
+  }
+ ],
+ "values": [
+  {
+   "value_id": "F15-836-MASS-W",
+   "field": "mass",
+   "quantity": "Gross weight, Baseline column, 8,000 lb fuel",
+   "symbol": null,
+   "value": 37426,
+   "units": "lbf (weight)",
+   "precision": "1 lb",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": "8,000 lb fuel",
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8, Baseline column (per implementation branch)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836QS-MASS-W"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation-branch frozen value",
+     "locator": "table 1 p.8 Baseline",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-MASS-CG",
+   "field": "cg",
+   "quantity": "CG, Baseline column",
+   "symbol": null,
+   "value": 26.34,
+   "units": "% MAC",
+   "precision": "0.01 % MAC",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8 (per implementation branch)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "% MAC; absolute station not placed",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836QS-MASS-CG"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation-branch frozen value",
+     "locator": "table 1 p.8 Baseline",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-MASS-IXX",
+   "field": "Ixx",
+   "quantity": "Roll inertia, Baseline column",
+   "symbol": null,
+   "value": 30345,
+   "units": "slug-ft^2",
+   "precision": "1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8 (per implementation branch)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836QS-MASS-IXX"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation-branch frozen value",
+     "locator": "table 1 p.8 Baseline",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-MASS-IYY",
+   "field": "Iyy",
+   "quantity": "Pitch inertia, Baseline column",
+   "symbol": null,
+   "value": 198687,
+   "units": "slug-ft^2",
+   "precision": "1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8 (per implementation branch)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836QS-MASS-IYY"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation-branch frozen value",
+     "locator": "table 1 p.8 Baseline",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-MASS-IZZ",
+   "field": "Izz",
+   "quantity": "Yaw inertia, Baseline column",
+   "symbol": null,
+   "value": 223214,
+   "units": "slug-ft^2",
+   "precision": "1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8 (per implementation branch)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836QS-MASS-IZZ"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation-branch frozen value",
+     "locator": "table 1 p.8 Baseline",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-MASS-IXZ",
+   "field": "Ixz",
+   "quantity": "Product of inertia, Baseline column",
+   "symbol": null,
+   "value": -5070,
+   "units": "slug-ft^2",
+   "precision": "1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8 (per implementation branch)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Printed sign preserved; tensor sign mapping is a separate decision",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836QS-MASS-IXZ"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation-branch frozen value",
+     "locator": "table 1 p.8 Baseline",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836QS-MASS-W",
+   "field": "mass",
+   "quantity": "Gross weight, spike-extended column (read as baseline on main)",
+   "symbol": null,
+   "value": 37152,
+   "units": "lbf (weight)",
+   "precision": "1 lb",
+   "configuration_ids": [
+    "F15-CFG-NASA836-QS"
+   ],
+   "loading_state": "8,000 lb fuel",
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 (column identity per implementation branch)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-MASS-W"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FULL_SCALE_TARGET_FREEZE_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "main-branch R0.5 freeze used this column as 'baseline'",
+     "locator": "mass-state table",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    },
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation branch identifies it as the spike-extended column",
+     "locator": "corrections table",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "R1 conflict F15-X1. The value is a real printed column; the dispute is which configuration it belongs to."
+  },
+  {
+   "value_id": "F15-836QS-MASS-CG",
+   "field": "cg",
+   "quantity": "CG, spike-extended column",
+   "symbol": null,
+   "value": 26.05,
+   "units": "% MAC",
+   "precision": "0.01",
+   "configuration_ids": [
+    "F15-CFG-NASA836-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-MASS-CG"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FULL_SCALE_TARGET_FREEZE_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "main-branch freeze",
+     "locator": "mass-state table",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836QS-MASS-IXX",
+   "field": "Ixx",
+   "quantity": "Roll inertia, spike-extended column",
+   "symbol": null,
+   "value": 27953,
+   "units": "slug-ft^2",
+   "precision": "1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-MASS-IXX"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FULL_SCALE_TARGET_FREEZE_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "main-branch freeze",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836QS-MASS-IYY",
+   "field": "Iyy",
+   "quantity": "Pitch inertia, spike-extended column",
+   "symbol": null,
+   "value": 190777,
+   "units": "slug-ft^2",
+   "precision": "1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-MASS-IYY"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FULL_SCALE_TARGET_FREEZE_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "main-branch freeze",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836QS-MASS-IZZ",
+   "field": "Izz",
+   "quantity": "Yaw inertia, spike-extended column",
+   "symbol": null,
+   "value": 213957,
+   "units": "slug-ft^2",
+   "precision": "1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-MASS-IZZ"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FULL_SCALE_TARGET_FREEZE_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "main-branch freeze",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836QS-MASS-IXZ",
+   "field": "Ixz",
+   "quantity": "Product of inertia, spike-extended column",
+   "symbol": null,
+   "value": -460,
+   "units": "slug-ft^2",
+   "precision": "1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Table 1 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-MASS-IXZ"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FULL_SCALE_TARGET_FREEZE_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "main-branch freeze",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-PHYS-SPAN",
+   "field": "physical_span",
+   "quantity": "Physical wingspan",
+   "symbol": null,
+   "value": 42.8,
+   "units": "ft",
+   "precision": "0.1 ft",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PFTF",
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4782",
+   "candidate_source_ids": [],
+   "location": "p.10 (per repository); also TM-2005-213670 p.6, TM-2006-213674 p.12, AIAA 2001-3303 p.6, TM-2006-213675 p.18",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "PHYSICAL span - never a coefficient reference",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "PHYSICAL_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "physical span chain",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-PHYS-LEN",
+   "field": "length",
+   "quantity": "Overall length",
+   "symbol": null,
+   "value": 63.7,
+   "units": "ft",
+   "precision": "0.1 ft",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PFTF",
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4782",
+   "candidate_source_ids": [],
+   "location": "p.10 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Physical",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "PHYSICAL_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "physical",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-PHYS-HT",
+   "field": "height",
+   "quantity": "Overall height",
+   "symbol": null,
+   "value": 18.7,
+   "units": "ft",
+   "precision": "0.1 ft",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PFTF"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2005-213670",
+   "candidate_source_ids": [],
+   "location": "p.6 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Physical",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "PHYSICAL_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "physical",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-BOW",
+   "field": "mass",
+   "quantity": "Basic operating weight",
+   "symbol": null,
+   "value": 27500,
+   "units": "lbm",
+   "precision": "100 lb",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PFTF"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4782",
+   "candidate_source_ids": [],
+   "location": "p.10 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Operating weight; no inertia",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "CONTEXT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "TM-4782 p.10",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-CG-FS",
+   "field": "cg",
+   "quantity": "PFTF analysis CG as station",
+   "symbol": null,
+   "value": "28 % MAC = FS 561.7",
+   "units": "% MAC / in",
+   "precision": "0.1 in",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PFTF"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2001-210395",
+   "candidate_source_ids": [],
+   "location": "AIAA 2001-3303 p.12 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "One equation in two unknowns (MAC length and LE station)",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "CROSS_CHECK",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "NASA836_PFTF_CG",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-REF-GEOM",
+   "field": "reference_area",
+   "quantity": "836 reference area / MAC / reference span",
+   "symbol": null,
+   "value": "NOT PUBLICLY LOCATED",
+   "units": "ft^2 / ft",
+   "precision": "UNKNOWN",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2009-214651",
+   "candidate_source_ids": [],
+   "location": "Searched TM-2008-214634, TM-2009-214651, TM-2012-215978 and cited references (repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "GAP_RECORD",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "no S / cbar / b in any 836 report",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Gap record."
+  },
+  {
+   "value_id": "F15-837-REF-S",
+   "field": "reference_area",
+   "quantity": "NF-15B 837 reference area",
+   "symbol": null,
+   "value": 608,
+   "units": "ft^2",
+   "precision": "1 ft^2",
+   "configuration_ids": [
+    "F15-CFG-NF15B-837"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2003-212027",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Reference for nondimensionalising (837)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "837 table 1",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-837-REF-B",
+   "field": "reference_span",
+   "quantity": "NF-15B 837 reference span",
+   "symbol": null,
+   "value": 42.7,
+   "units": "ft",
+   "precision": "0.1 ft",
+   "configuration_ids": [
+    "F15-CFG-NF15B-837"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2003-212027",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "REFERENCE span (the same report's three-view dimensions 42.83 ft physical)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [
+    "F15-837-PHYS-SPAN"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "same airplane, two spans",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-837-PHYS-SPAN",
+   "field": "physical_span",
+   "quantity": "NF-15B 837 three-view span",
+   "symbol": null,
+   "value": 42.83,
+   "units": "ft",
+   "precision": "0.01 ft",
+   "configuration_ids": [
+    "F15-CFG-NF15B-837"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2003-212027",
+   "candidate_source_ids": [],
+   "location": "Three-view figure (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Physical",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "PHYSICAL_ONLY",
+   "conflicts_with": [
+    "F15-837-REF-B"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "same airplane, two spans",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Not a physics conflict: physical vs reference span."
+  },
+  {
+   "value_id": "F15-837-REF-CBAR",
+   "field": "mean_aerodynamic_chord",
+   "quantity": "NF-15B 837 reference chord",
+   "symbol": null,
+   "value": 15.94,
+   "units": "ft",
+   "precision": "0.01 ft",
+   "configuration_ids": [
+    "F15-CFG-NF15B-837"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2003-212027",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "837 table 1",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-837-MRC",
+   "field": "cg_reference",
+   "quantity": "NF-15B 837 moment reference",
+   "symbol": null,
+   "value": "FS 557.2 (= 25.66 % MAC)",
+   "units": "in / % MAC",
+   "precision": "0.1 in",
+   "configuration_ids": [
+    "F15-CFG-NF15B-837"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2003-212027",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "moment reference",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-PP8-REF-S",
+   "field": "reference_area",
+   "quantity": "Preproduction No. 8 wing area",
+   "symbol": null,
+   "value": "56.61 m^2 (609.3 ft^2)",
+   "units": "m^2",
+   "precision": "0.01 m^2",
+   "configuration_ids": [
+    "F15-CFG-PREPROD-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-72861",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.15 / PDF p.17 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "TM-72861 table 1",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-PP8-REF-CBAR",
+   "field": "mean_aerodynamic_chord",
+   "quantity": "Preproduction No. 8 MAC",
+   "symbol": null,
+   "value": 4.86,
+   "units": "m",
+   "precision": "0.01 m",
+   "configuration_ids": [
+    "F15-CFG-PREPROD-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-72861",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.15 / PDF p.17 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "TM-72861 table 1",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-FAM-MAC-EQ",
+   "field": "cg_reference",
+   "quantity": "McDonnell %MAC datum equation 'for all A through D models'",
+   "symbol": null,
+   "value": "%MAC = (FS - 508.1) / 191.33 x 100",
+   "units": "in",
+   "precision": "0.01 in",
+   "configuration_ids": [
+    "F15-CFG-PROD-AD"
+   ],
+   "loading_state": null,
+   "source_id": "AFIT-GA-ENY-91D-1",
+   "candidate_source_ids": [],
+   "location": "PDF p.14, p.55-56 (per repository)",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "FS positive aft; MAC 191.33 in = 15.94 ft; LE MAC FS 508.1",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "FAMILY_SUPPORT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "strongest new finding",
+     "locator": "section 7",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Reproduces 836's 28 % MAC = FS 561.7 to 0.03 in (repository) - consistency, not an 836 link."
+  },
+  {
+   "value_id": "F15-AFIT-REF",
+   "field": "reference_area",
+   "quantity": "AFIT research-profile reference geometry",
+   "symbol": null,
+   "value": "608 ft^2 / 42.8 ft / 15.94 ft",
+   "units": "ft^2 / ft / ft",
+   "precision": "as printed",
+   "configuration_ids": [
+    "F15-CFG-SIM-AFIT-AEROBASE"
+   ],
+   "loading_state": null,
+   "source_id": "AFIT-GAE-ENY-92M-01",
+   "candidate_source_ids": [],
+   "location": "per repository research profile",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation-branch frozen value",
+     "locator": "research profile F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Cited to MDC A4172 by the theses."
+  },
+  {
+   "value_id": "F15-AFIT-MASS",
+   "field": "mass",
+   "quantity": "Davison research mass state",
+   "symbol": null,
+   "value": 37000,
+   "units": "lbf (weight)",
+   "precision": "1,000 lb",
+   "configuration_ids": [
+    "F15-CFG-SIM-AFIT-AEROBASE"
+   ],
+   "loading_state": null,
+   "source_id": "AFIT-GAE-ENY-92M-01",
+   "candidate_source_ids": [],
+   "location": "per repository research profile",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation-branch frozen value",
+     "locator": "research profile",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-AFIT-INERTIA",
+   "field": "Ixx",
+   "quantity": "Davison research inertias Ixx / Iyy / Izz / Ixz",
+   "symbol": null,
+   "value": "25,480 / 166,620 / 186,930 / -1,000",
+   "units": "slug-ft^2",
+   "precision": "10 slug-ft^2",
+   "configuration_ids": [
+    "F15-CFG-SIM-AFIT-AEROBASE"
+   ],
+   "loading_state": null,
+   "source_id": "AFIT-GAE-ENY-92M-01",
+   "candidate_source_ids": [],
+   "location": "per repository research profile",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FINAL_STATE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "implementation-branch frozen value",
+     "locator": "research profile",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-CR186019-REF",
+   "field": "reference_area",
+   "quantity": "CR-186019 reference geometry",
+   "symbol": null,
+   "value": "608.0 ft^2 / 42.8 ft / 15.95 ft",
+   "units": "ft^2 / ft / ft",
+   "precision": "as printed",
+   "configuration_ids": [
+    "F15-CFG-SIM-CR186019"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-CR-186019",
+   "candidate_source_ids": [],
+   "location": "Table 1 p.4 / PDF p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [
+    "F15-AFIT-REF"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "CR-186019 table 1",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "cbar 15.95 vs 15.94 ft."
+  },
+  {
+   "value_id": "F15-PP8-STAB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Stabilator travel (preproduction No. 8)",
+   "symbol": null,
+   "value": "15 / -26",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F15-CFG-PREPROD-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-72861",
+   "candidate_source_ids": [],
+   "location": "control-system appendix (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed; direction labels not recorded by the library",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [
+    "F15-AFITM-STAB-LIM",
+    "F15-BAU-STAB-LIM",
+    "F15-CR186019-STAB-LIM"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_DN1180_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "TM-72861 appendix",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-AFITM-STAB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Stabilator travel (McDonnell AFIT thesis)",
+   "symbol": null,
+   "value": "29 down / 15 up",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F15-CFG-SIM-AFIT-AEROBASE"
+   ],
+   "loading_state": null,
+   "source_id": "AFIT-GAE-ENY-90D-16",
+   "candidate_source_ids": [],
+   "location": "PDF p.83-84 (per repository)",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [
+    "F15-PP8-STAB-LIM"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "McDonnell thesis",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-BAU-STAB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Stabilator travel (Baumann)",
+   "symbol": null,
+   "value": "+20 / -30",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F15-CFG-SIM-AFIT-AEROBASE"
+   ],
+   "loading_state": null,
+   "source_id": "AFIT-GAE-ENY-89D-01",
+   "candidate_source_ids": [],
+   "location": "PDF p.87 (per repository)",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [
+    "F15-PP8-STAB-LIM"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "Baumann",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-CR186019-STAB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Symmetric stabilator travel (CR-186019)",
+   "symbol": null,
+   "value": "+15 / -25",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F15-CFG-SIM-CR186019"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-CR-186019",
+   "candidate_source_ids": [],
+   "location": "Table 2 p.4 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [
+    "F15-PP8-STAB-LIM"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "CR-186019 table 2",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-CR186019-OTHER-LIM",
+   "field": "surface_position_limit",
+   "quantity": "CR-186019 aileron / differential stabilator / rudder travel",
+   "symbol": null,
+   "value": "+/-20 / +/-20 / +/-30",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F15-CFG-SIM-CR186019"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-CR-186019",
+   "candidate_source_ids": [],
+   "location": "Table 2 p.4 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "CR-186019 table 2",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-CR186019-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "CR-186019 actuator rate (all surfaces)",
+   "symbol": null,
+   "value": 24,
+   "units": "deg/s",
+   "precision": "1 deg/s",
+   "configuration_ids": [
+    "F15-CFG-SIM-CR186019"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-CR-186019",
+   "candidate_source_ids": [],
+   "location": "p.4 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "CR-186019 p.4",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-CR186019-ACT",
+   "field": "actuator_dynamics",
+   "quantity": "CR-186019 actuator transfer function",
+   "symbol": null,
+   "value": "20/(s+20)",
+   "units": "-",
+   "precision": "as printed",
+   "configuration_ids": [
+    "F15-CFG-SIM-CR186019"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-CR-186019",
+   "candidate_source_ids": [],
+   "location": "p.4 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_A4172_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "CR-186019 p.4",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-ACT-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "836 actuator rates / dynamics",
+   "symbol": null,
+   "value": "NOT PUBLICLY LOCATED",
+   "units": "deg/s",
+   "precision": "UNKNOWN",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "block diagrams print no rate or limit (repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "GAP_RECORD",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_836_FCS_STRUCTURE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "'No gain, schedule, limit or rate appears on these diagrams'",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-PP8-DIFF-RATIO",
+   "field": "fcs_gearing",
+   "quantity": "Differential-tail ratio (preproduction No. 8)",
+   "symbol": null,
+   "value": 0.3,
+   "units": "-",
+   "precision": "0.1",
+   "configuration_ids": [
+    "F15-CFG-PREPROD-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-72861",
+   "candidate_source_ids": [],
+   "location": "control-system appendix (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_DN1180_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "TM-72861 authorities",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-PP8-PEDAL-GEAR",
+   "field": "fcs_gearing",
+   "quantity": "Pedal gearing (preproduction No. 8)",
+   "symbol": null,
+   "value": 1.8,
+   "units": "deg/cm",
+   "precision": "0.1",
+   "configuration_ids": [
+    "F15-CFG-PREPROD-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-72861",
+   "candidate_source_ids": [],
+   "location": "control-system appendix (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CROSS_VALIDATION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_DN1180_SOURCE_LINEAGE_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "TM-72861 authorities",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-ARI-SW-FIG",
+   "field": "fcs_schedule_boundary",
+   "quantity": "Mechanical ARI inputs switched to zero (figure reading)",
+   "symbol": null,
+   "value": "Mach > 1.5",
+   "units": "Mach",
+   "precision": "0.1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Fig. 5, PDF p.23, printed p.19 (per implementation branch); same in TM-2009-214651 fig. 5",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Switch open strictly above threshold",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-ARI-SW-TXT"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_836_FCS_STRUCTURE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "rendered-page reading at 170 dpi",
+     "locator": "section 4",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "R1 conflict F15-X2."
+  },
+  {
+   "value_id": "F15-836-XFEED-SW-FIG",
+   "field": "fcs_schedule_boundary",
+   "quantity": "Roll-yaw crossfeed AoA input switched to zero (figure reading)",
+   "symbol": null,
+   "value": "Mach > 1.0",
+   "units": "Mach",
+   "precision": "0.1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Fig. 5 (per implementation branch)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-XFEED-SW-TXT"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_836_FCS_STRUCTURE_V1.0.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "section 4",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-ARI-SW-TXT",
+   "field": "fcs_schedule_boundary",
+   "quantity": "ARI operative boundary (main-branch reading)",
+   "symbol": null,
+   "value": "operative below Mach 1.0",
+   "units": "Mach",
+   "precision": "0.1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "Section 'The Flight Control System', text associated with Fig. 5 (per main-branch docs)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-ARI-SW-FIG"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FULL_SCALE_DATA_GAPS_V0.2.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "FROZEN_DIRECT on main",
+     "locator": "line 76",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Main-branch and implementation-branch readings are reversed. Main cites the text; implementation cites the rendered figure. The library cannot adjudicate without reading the page."
+  },
+  {
+   "value_id": "F15-836-XFEED-SW-TXT",
+   "field": "fcs_schedule_boundary",
+   "quantity": "Roll-to-yaw crossfeed upper boundary (main-branch reading)",
+   "symbol": null,
+   "value": "nullified above Mach 1.5",
+   "units": "Mach",
+   "precision": "0.1",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2012-215978",
+   "candidate_source_ids": [],
+   "location": "same locator (per main-branch docs)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-836-XFEED-SW-FIG"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_FULL_SCALE_DATA_GAPS_V0.2.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "FROZEN_DIRECT on main",
+     "locator": "line 77",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-836-THRUST-SLS",
+   "field": "thrust_class",
+   "quantity": "F100-PW-100 uninstalled SLS thrust, full afterburner (per engine, approximate)",
+   "symbol": null,
+   "value": 23500,
+   "units": "lbf",
+   "precision": "'approximately', 500 lbf",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PRE-QS",
+    "F15-CFG-NASA836-PFTF"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2005-213670",
+   "candidate_source_ids": [],
+   "location": "aircraft description (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Uninstalled, sea-level static, full AB",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "SANITY_BOUND",
+   "conflicts_with": [
+    "F15-836-THRUST-25K"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "section 6e",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Descriptive figure; never a deck. Engine sub-build unknown."
+  },
+  {
+   "value_id": "F15-836-THRUST-25K",
+   "field": "thrust_class",
+   "quantity": "Conflicting thrust statement '25,000 lbf (91,188 N)'",
+   "symbol": null,
+   "value": "25,000 lbf / 91,188 N (internally inconsistent)",
+   "units": "lbf / N",
+   "precision": "internally inconsistent",
+   "configuration_ids": [
+    "F15-CFG-NASA836-PFTF"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2001-210395",
+   "candidate_source_ids": [],
+   "location": "aircraft description (per repository); repeated in TM-2002-210736",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "REJECTED",
+   "conflicts_with": [
+    "F15-836-THRUST-SLS"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "section 6e",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "25,000 lbf = 111,206 N; 91,188 N = 20,500 lbf. 91,188 N also equals the TP-1538 F-16 simulation weight (R1-RN4 observation)."
+  },
+  {
+   "value_id": "F15-836-THRUST-PW220E",
+   "field": "thrust_class",
+   "quantity": "Post-2014 836 engines thrust class",
+   "symbol": null,
+   "value": "24,000 lb class",
+   "units": "lbf",
+   "precision": "class",
+   "configuration_ids": [
+    "F15-CFG-NASA836-POST2014"
+   ],
+   "loading_state": null,
+   "source_id": "NTRS-20160006705",
+   "candidate_source_ids": [],
+   "location": "briefing (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "CONTEXT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "section 6g",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-F100-PLA-MIL-73",
+   "field": "throttle_map",
+   "quantity": "Military power PLA (F100-PW-100(1) simulation)",
+   "symbol": null,
+   "value": 73,
+   "units": "deg PLA",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "ENG-F100-PW-100-1"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-X-3261",
+   "candidate_source_ids": [],
+   "location": "printed p.6 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-F100-PLA-83"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "PLA convention",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-F100-PLA-83",
+   "field": "throttle_map",
+   "quantity": "Top of non-augmented operation PLA (F100-PW-100(3) simulation)",
+   "symbol": null,
+   "value": 83,
+   "units": "deg PLA",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "ENG-F100-PW-100-3"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1034",
+   "candidate_source_ids": [],
+   "location": "printed p.11 / fig. 17(a) (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F15-F100-PLA-MIL-73"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "PLA convention",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Different builds, different conventions; not a contradiction to average."
+  },
+  {
+   "value_id": "F15-F100-NET-CURVES",
+   "field": "thrust_table",
+   "quantity": "Net thrust vs PLA, 7 flight conditions, as fraction of an UNSTATED design maximum",
+   "symbol": null,
+   "value": "63 digitized points (repository)",
+   "units": "fraction",
+   "precision": "digitized",
+   "configuration_ids": [
+    "ENG-F100-PW-100-3"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1034",
+   "candidate_source_ids": [],
+   "location": "Fig. 17, printed pp.64-65 (per repository)",
+   "origin": "DIGITIZED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Net thrust / design max net thrust (absolute scale unavailable)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "section 4",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-F100-CH-SCALE",
+   "field": "thrust_class",
+   "quantity": "TP-1034 net-thrust output channel full scale",
+   "symbol": null,
+   "value": 30000,
+   "units": "lbf",
+   "precision": "as printed",
+   "configuration_ids": [
+    "ENG-F100-PW-100-3"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1034",
+   "candidate_source_ids": [],
+   "location": "Appendix C, printed p.28 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "REJECTED_AS_SCALE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "section 6c",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "A simulation output-channel scale, not engine data."
+  },
+  {
+   "value_id": "F15-F100-AXIS-111",
+   "field": "thrust_class",
+   "quantity": "TP-1373 gross-thrust axis normalizer",
+   "symbol": null,
+   "value": 111.2,
+   "units": "kN",
+   "precision": "0.1 kN",
+   "configuration_ids": [
+    "ENG-F100-PW-100-2-7-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1373",
+   "candidate_source_ids": [],
+   "location": "Figs. 6(b), 6(d) (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "REJECTED_AS_SCALE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "section 6a",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Axis scale; equals 25,000 lbf - a coincidence to be suspicious of."
+  },
+  {
+   "value_id": "F15-F100-WA-DESIGN",
+   "field": "engine_airflow",
+   "quantity": "Design corrected airflow (series 2-7/8)",
+   "symbol": null,
+   "value": 98.4,
+   "units": "kg/s",
+   "precision": "0.1 kg/s",
+   "configuration_ids": [
+    "ENG-F100-PW-100-2-7-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1373",
+   "candidate_source_ids": [],
+   "location": "Figs. 6(a), 6(c); p.12 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "section 3",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-F100-ACC-WA",
+   "field": "model_accuracy",
+   "quantity": "TP-1373 calculated vs measured airflow accuracy (2 sigma)",
+   "symbol": null,
+   "value": 1.24,
+   "units": "%",
+   "precision": "0.01 %",
+   "configuration_ids": [
+    "ENG-F100-PW-100-2-7-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1373",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "ACCURACY_STATEMENT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-F100-ACC-FG",
+   "field": "model_accuracy",
+   "quantity": "TP-1373 calculated vs measured gross thrust accuracy (2 sigma)",
+   "symbol": null,
+   "value": 2.38,
+   "units": "%",
+   "precision": "0.01 %",
+   "configuration_ids": [
+    "ENG-F100-PW-100-2-7-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1373",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "ACCURACY_STATEMENT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F15-F100-SGTM",
+   "field": "model_accuracy",
+   "quantity": "Simplified vs gas-generator gross-thrust method agreement in flight",
+   "symbol": null,
+   "value": "+/-3",
+   "units": "%",
+   "precision": "1 %",
+   "configuration_ids": [
+    "ENG-F100-PW-100-2-7-8"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1782",
+   "candidate_source_ids": [],
+   "location": "printed pp.1, 17 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "ACCURACY_STATEMENT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F15_R5_F100_SOURCE_AUDIT_V0.1.md",
+     "branch": "claude/f15-full-implementation @89140b9",
+     "relationship": "oracle bound",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  }
+ ]
+}

@@ -1,4 +1,7 @@
-# F/A-18 Missing Data and Open Questions (r0)
+# F/A-18 Missing Data and Open Questions (r0, R1 status)
+
+> **R1 note.** This page is the r0 text plus an R1 addendum at the end. r0 level names map to R1 names as L0 = `SEARCH_LEAD_ONLY`, L1 = `CATALOGUE_VERIFIED`, L2 = `ABSTRACT_VERIFIED`, L3 = `CONTENT_EXTRACT_VERIFIED`, L4/L5 = `PAGE_VERIFIED` ([`SCHEMA.md` §2](../../SCHEMA.md#2-verification-levels)).
+
 
 Each item has an ID, the configuration it affects, what it blocks, where to look, and a priority. **P1** blocks any implementation, **P2** blocks validation claims, **P3** is refinement.
 
@@ -93,3 +96,22 @@ Each item has an ID, the configuration it affects, what it blocks, where to look
 | NAVAIR A1-F18AC-NFM-000 (NATOPS) | `NOT_PUBLIC_DISTRIBUTION_LIMITED` | Never use, even though copies circulate |
 | McDonnell Aircraft aerodynamic data reports | `NOT_PUBLICLY_LOCATED` | Upstream identity only |
 | GE F404 complete nonlinear dynamic engine model | `NOT_PUBLIC_PROPRIETARY` | Only NASA's simplified derivative (NASA-TM-4240) is usable |
+
+---
+
+## 9. R1 status of the r0 questions (from repository page readings)
+
+These answers come from the repository's F/A-18 consolidation branch (`sol/fa18-source-consolidation-r1` @e596c32), which retrieved and hashed the PDFs. The library has not repeated the reading, so each answer is `REPOSITORY_READING` level until the library's own page pass.
+
+| Question | R1 status |
+|---|---|
+| Q-A1 (aero tables printed?) | **Answered: no.** Neither TM-107601 nor TM-110216 prints the aerodynamic lookup arrays. The engine's 29 arrays are not printed either. Upstream identity: MDC A7247 / A8575 (not public) |
+| Q-A4 (upstream DB identity) | **Answered in part:** MDC A7247 Vol I/II and MDC A8575 |
+| Q-M1 (Ixz) | Two printed values located: -2,039 slug-ft^2 (TP-97-206539 Table 3, Phase I) and -2,430 (f18bas Table 3.5). f18bas defines Ixz = integral rho x z dV, with the negative off-diagonal |
+| Q-M3 (loading behind the Phase I table) | TP-97-206539 Table 3: 60 % fuel (6,480 lb), gear up, clean, pilot + support equipment; FS 454.33 / WL 105.24 in |
+| Q-C1 (baseline FCS printed?) | **Answered: yes, simplified.** f18bas Section 9, OFP 8.3.3 inner-loop CAS with gain/filter tables (production PROM-derived) |
+| Q-P1 (installed F404 tables printed?) | **Answered: no.** Only the table topology (12 Mach x 7 altitudes x 4 power states x 7 variables) and a Max-AB gross-thrust figure (TM-4240 fig. 4, digitized by the repository) |
+| Q-P2 (engine dynamics) | TM-4240 and TM-110216 disagree on PLA rate limits (C9); time constants 0.625 s / 0.55 s in both |
+| Actuators (section 3) | Three separate lineage tables now recorded (f18bas first-order, f18harv second-order, TP-97-206539 Table 1). Rates for LEF/TEF are included |
+
+Still open at library level: page verification of all of the above, Q-A2, Q-A3, Q-A7 (moment reference), Q-M2, Q-G2, Q-C2 to Q-C5, Q-P3 to Q-P5, Q-V1 to Q-V5.

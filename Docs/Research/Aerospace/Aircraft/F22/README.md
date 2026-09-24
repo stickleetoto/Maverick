@@ -1,9 +1,13 @@
-# F-22: not started (Priority E, feasibility audit only)
+# F-22 pack (R1 feasibility audit)
 
-Planned output: `PUBLIC_SOURCE_FEASIBILITY.md`. It answers what is public, what configuration that material describes, what is missing, and whether a useful 6-DOF research model is feasible.
+**Feasibility only. No F-22 model is built.** Answer in one line: a defensible production F-22 6-DOF model is not possible from public sources; a YF-22 research model is not possible either; only a generic, clearly labelled F-22-like educational model is. Details: [`PUBLIC_SOURCE_FEASIBILITY.md`](PUBLIC_SOURCE_FEASIBILITY.md).
 
-Rules for this audit:
+| Document | Content |
+|---|---|
+| [`PUBLIC_SOURCE_FEASIBILITY.md`](PUBLIC_SOURCE_FEASIBILITY.md) | Field classification and the three questions |
+| [`SOURCE_GRAPH.md`](SOURCE_GRAPH.md) | YF-22 / EMD / production / tunnel / generic lineages kept apart |
+| [`KNOWN_DATA.md`](KNOWN_DATA.md) + [`KNOWN_DATA.json`](KNOWN_DATA.json) | Identity values and targets (none usable as model inputs) |
+| [`MISSING_DATA.md`](MISSING_DATA.md) | What is missing |
+| [`SOURCES.json`](SOURCES.json) | Generated slice of `SOURCE_INDEX.json` |
 
-- Search only public NASA, USAF, DTIC and university material (YF-22, F-22 wind-tunnel studies, geometry, mass/inertia, derivatives, high alpha, thrust vectoring, FCS architecture, public propulsion information, validation studies).
-- **Do not fill gaps. Do not infer production F-22 data from YF-22 data.**
-- If a model is not feasible, say so and stop.
+Repository F-22 research (unchanged): `Docs/Reference/F22_*` on `sol/fa18-source-consolidation-r1`.

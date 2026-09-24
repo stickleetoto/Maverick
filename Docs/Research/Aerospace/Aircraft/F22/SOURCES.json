@@ -1,0 +1,1917 @@
+{
+ "schema": "maverick.aerospace.pack-sources.v1",
+ "generated_by": "Tools/build_aerospace_source_views.py",
+ "generated_from": "Docs/Research/Aerospace/SOURCE_INDEX.json",
+ "library_revision": "r1",
+ "pack": "F22",
+ "note": "Generated slice of SOURCE_INDEX.json (records whose aircraft_packs contains this pack). Edit SOURCE_INDEX.json, then regenerate.",
+ "source_count": 21,
+ "verification_levels": {
+  "ABSTRACT_VERIFIED": 5,
+  "CATALOGUE_VERIFIED": 9,
+  "CONTENT_EXTRACT_VERIFIED": 1,
+  "SEARCH_LEAD_ONLY": 6
+ },
+ "sources": [
+  {
+   "source_id": "MIL-HDBK-1797",
+   "title": "Flying Qualities of Piloted Aircraft (MIL-HDBK-1797, 19 December 1997)",
+   "authors": [
+    "U.S. Department of Defense"
+   ],
+   "organization": "U.S. DoD",
+   "year": 1997,
+   "report_number": "MIL-HDBK-1797",
+   "ntrs_id": null,
+   "public_url": "https://everyspec.com/MIL-HDBK/MIL-HDBK-1500-1799/MIL-HDBK-1797_NOTICE-1_39380/",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_DISTRIBUTION_A",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "aircraft_packs": [
+    "FUNDAMENTALS",
+    "F16",
+    "F15",
+    "FA18",
+    "F22"
+   ],
+   "index_group": "Fundamentals: flight controls, flying qualities and PIO",
+   "aircraft": null,
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [],
+   "topics": [
+    "flying qualities criteria",
+    "CAS/SAS requirements"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "likely",
+    "tables": "unknown",
+    "plots": "yes",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "MEDIUM",
+    "note": "Criteria for Maverick-owned research control laws."
+   },
+   "validation_usefulness": {
+    "rating": "HIGH",
+    "note": "Handling-qualities acceptance criteria."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "Distribution Statement A per search extract; superseded/reinstated history with MIL-STD-1797A (1995, 2004) must be checked before citing a specific revision.",
+   "verification_notes": "r0 2026-09-24: web-search index only; NTRS/DTIC/archive.org blocked by session egress policy; PDF not opened."
+  },
+  {
+   "source_id": "USAF-F22-FACT-SHEET",
+   "title": "F-22 Raptor (official USAF fact sheet)",
+   "authors": [
+    "United States Air Force"
+   ],
+   "organization": "U.S. Air Force",
+   "year": null,
+   "report_number": "af.mil fact sheet 104506",
+   "ntrs_id": null,
+   "public_url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104506/f-22-raptor/",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: production identity and public engineering sources",
+   "aircraft": "F-22A",
+   "aircraft_variant": "Production F-22A",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "F119-PW-100 x2 (2-D vectoring nozzles)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A"
+   ],
+   "topics": [
+    "identity",
+    "general characteristics"
+   ],
+   "contains": {
+    "geometry": "yes",
+    "mass": "yes",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "yes",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "implementation_usefulness": {
+    "rating": "DOMAIN_METADATA_ONLY",
+    "note": "Span/length/height/weights are identity data; no S, cbar, CG, inertia, coefficients, gains or deck."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": "Sanity bounds only."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-001",
+     "locator": "'General characteristics'",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Fact-sheet values (35,000-lbf class, 44 ft 6 in span, 62 ft 1 in length, 16 ft 8 in height, 43,340 lb weight, 83,500 lb MTOW, 18,000 lb fuel) are recorded in F22/KNOWN_DATA.json as PUBLIC_FACT_SHEET / PROHIBITED.",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "PW-F119-PRODUCT-PAGE",
+   "title": "F119 Engine (Pratt & Whitney product page)",
+   "authors": [
+    "Pratt & Whitney"
+   ],
+   "organization": "Pratt & Whitney",
+   "year": null,
+   "report_number": "manufacturer web page",
+   "ntrs_id": null,
+   "public_url": "https://www.prattwhitney.com/en/products/military-engines/f119",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: F119 propulsion",
+   "aircraft": "F-22A",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "F119-PW-100, 2-D convergent/divergent pitch-vectoring nozzle",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "ENG-F119-PW-100"
+   ],
+   "topics": [
+    "engine identity",
+    "nozzle vectoring"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "yes",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "implementation_usefulness": {
+    "rating": "DOMAIN_METADATA_ONLY",
+    "note": "+/-20 deg pitch vectoring statement is identity data, not a nozzle model."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-002",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    },
+    {
+     "path": "Docs/Reference/F22_SOURCE_ACQUISITION_DEEP_DIVE_R0_M2.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-M2-SRC-003",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "AIAA-96-3379",
+   "title": "F-22 Control Law Development and Flying Qualities",
+   "authors": [
+    "Harris, Jeffrey Jay",
+    "Black, G. Thomas"
+   ],
+   "organization": "Lockheed Martin Tactical Aircraft Systems; F-22 SPO",
+   "year": 1996,
+   "report_number": "AIAA 96-3379 (AFM conference, pp. 155-168)",
+   "ntrs_id": null,
+   "public_url": "https://doi.org/10.2514/6.1996-3379",
+   "pdf_url": null,
+   "mirror_url": "https://www.researchgate.net/publication/269064311_F-22_control_law_development_and_flying_qualities",
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_AUTHOR_HOSTED",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: production identity and public engineering sources",
+   "aircraft": "YF-22 (separate section) and F-22 EMD design",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "1996 F-22 development control-law design",
+   "date_or_phase": "July 1996",
+   "configuration_ids": [
+    "F22-CFG-EMD-1996-CLAW",
+    "F22-CFG-YF22-DEMVAL"
+   ],
+   "topics": [
+    "control-law design philosophy",
+    "CAP",
+    "damping",
+    "PIO",
+    "VISTA in-flight simulation"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "yes",
+    "FCS_numeric_gains": "no",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "yes",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "PREPRODUCTION",
+   "implementation_usefulness": {
+    "rating": "LOW",
+    "note": "Design targets (CAP 0.35 to 1.0; damping 1.1-1.2 per R1 search extract) are development goals, not production gains."
+   },
+   "validation_usefulness": {
+    "rating": "MEDIUM",
+    "note": "Handling-quality targets for a source-honest F-22-like CAS approximation."
+   },
+   "limitations": [
+    "YF-22 subsection is YF-22-only authority.",
+    "1996 development state; not the production OFP."
+   ],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "AIAA-94-2105",
+     "relation": "RELATED (YF-22 prototype TV)"
+    },
+    {
+     "source_id": "AIAA-2018-0525",
+     "relation": "RELATED (VISTA NF-16D used for in-flight simulation)"
+    }
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-003: PDF 14 pp., pp.4-7, figs. 8-12",
+     "locator": "PDF p.1, pp.4-7",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    },
+    {
+     "path": "Docs/Reference/F22_SOURCE_ACQUISITION_DEEP_DIVE_R0_M1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-DEEP-SRC-001",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "SFTE-2000-PERON-F22-HIGH-AOA",
+   "title": "F-22 Initial High Angle-of-Attack Flight Test Results",
+   "authors": [
+    "Peron, Lee R."
+   ],
+   "organization": "Air Force Flight Test Center",
+   "year": 2000,
+   "report_number": "SFTE European Chapter 2000, A2000-II-02",
+   "ntrs_id": null,
+   "public_url": "https://sfte-ec.org/sfteecold/data/Abstract/A2000-II-02.pdf",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: production identity and public engineering sources",
+   "aircraft": "F-22 EMD",
+   "aircraft_variant": "EMD high-AOA test aircraft (1999-2000)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "F119 x2",
+   "FCS_configuration": "Triplex electronic FLCS; pitch-axis thrust vectoring",
+   "date_or_phase": "1999-2000 EMD high-AOA test",
+   "configuration_ids": [
+    "F22-CFG-EMD-HIGH-AOA"
+   ],
+   "topics": [
+    "high-AOA envelope"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "likely",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "PREPRODUCTION",
+   "implementation_usefulness": {
+    "rating": "NOT_A_MODEL_PARAMETER",
+    "note": "-40 to +60 deg AOA characteristics are an EMD test-envelope statement."
+   },
+   "validation_usefulness": {
+    "rating": "MEDIUM",
+    "note": "Envelope narrative; flight differed from simulator/tunnel predictions."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-004 one-page public copy",
+     "locator": "p.1",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "NASA-SP-2000-4519",
+   "title": "Partners in Freedom: Contributions of the Langley Research Center to U.S. Military Aircraft of the 1990's",
+   "authors": [
+    "Chambers, Joseph R."
+   ],
+   "organization": "NASA Langley / NASA History Division",
+   "year": 2000,
+   "report_number": "NASA/SP-2000-4519",
+   "ntrs_id": "20000115606",
+   "public_url": "https://ntrs.nasa.gov/citations/20000115606",
+   "pdf_url": "https://ntrs.nasa.gov/api/citations/20000115606/downloads/20000115606.pdf",
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_NTRS_PDF_LISTED",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "aircraft_packs": [
+    "F22",
+    "FA18",
+    "F16"
+   ],
+   "index_group": "F-22: production identity and public engineering sources",
+   "aircraft": "YF-22 and F-22 (history)",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "October 2000",
+   "configuration_ids": [
+    "F22-CFG-YF22-DEMVAL",
+    "F22-CFG-WT-EARLY-F22"
+   ],
+   "topics": [
+    "test history",
+    "YF-22 to F-22 geometry changes",
+    "full-scale and spin tunnel tests"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "likely",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "NOT_A_MODEL_PARAMETER",
+    "note": "History; identifies test programmes (1992 full-scale tunnel, 1993 spin tunnel) whose data are not public."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-005",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "AIAA-99-4015",
+   "title": "AFRL F-22 Dynamic Wind Tunnel Test Results",
+   "authors": [
+    "Gillard, William J."
+   ],
+   "organization": "AFRL",
+   "year": 1999,
+   "report_number": "AIAA 99-4015",
+   "ntrs_id": null,
+   "public_url": "https://doi.org/10.2514/6.1999-4015",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: wind-tunnel / early-configuration models",
+   "aircraft": "F-22 dynamic tunnel model (state UNKNOWN)",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-WT-EARLY-F22"
+   ],
+   "topics": [
+    "rotary balance",
+    "forced oscillation"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "likely",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "likely",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "implementation_usefulness": {
+    "rating": "UNASSESSED",
+    "note": "Model geometry/date unknown until the paper is read."
+   },
+   "validation_usefulness": {
+    "rating": "HIGH",
+    "note": "Only public primary dynamic-derivative lead."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-006 NOT_ACQUIRED",
+     "locator": null,
+     "level": "REPO_CITATION_ONLY",
+     "note": null
+    },
+    {
+     "path": "Docs/Reference/F22_DATA_GAPS_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "P1",
+     "locator": null,
+     "level": "REPO_CITATION_ONLY",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "NTRS-20000052124",
+   "title": "Fin Buffeting Features of an Early F-22 Model",
+   "authors": [
+    "Moses",
+    "UNCONFIRMED (co-authors)"
+   ],
+   "organization": "NASA Langley",
+   "year": 2000,
+   "report_number": "AIAA 2000-1695",
+   "ntrs_id": "20000052124",
+   "public_url": "https://ntrs.nasa.gov/citations/20000052124",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_NTRS_CITATION_ONLY",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: wind-tunnel / early-configuration models",
+   "aircraft": "F-22 (early configuration)",
+   "aircraft_variant": "13.3%-scale early F-22 model",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-WT-EARLY-F22"
+   ],
+   "topics": [
+    "fin buffet"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "yes",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "implementation_usefulness": {
+    "rating": "NOT_A_MODEL_PARAMETER",
+    "note": "Structural buffet; early shape."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-007",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "JAIRCRAFT-2006-ANDERSON-F22-BUFFET",
+   "title": "F-22 low-speed buffet / V-9 model study (Journal of Aircraft 2006)",
+   "authors": [
+    "Anderson",
+    "Patel",
+    "Black"
+   ],
+   "organization": "Journal of Aircraft (AIAA)",
+   "year": 2006,
+   "report_number": "doi 10.2514/1.10247",
+   "ntrs_id": null,
+   "public_url": "https://doi.org/10.2514/1.10247",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: wind-tunnel / early-configuration models",
+   "aircraft": "F-22 V-9 tunnel model",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-WT-EARLY-F22"
+   ],
+   "topics": [
+    "buffet"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "implementation_usefulness": {
+    "rating": "NOT_A_MODEL_PARAMETER",
+    "note": ""
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_SOURCE_ACQUISITION_DEEP_DIVE_R0_M1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-DEEP-SRC-006 low-speed buffet lead",
+     "locator": null,
+     "level": "REPO_CITATION_ONLY",
+     "note": null
+    }
+   ],
+   "notes": "Title not captured verbatim by the library.",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "AIAA-2013-0972",
+   "title": "USAF SEEK EAGLE CFD / stability-and-control study covering A-10C, F-16C and F-22 (Distribution A)",
+   "authors": [
+    "UNCONFIRMED"
+   ],
+   "organization": "USAF SEEK EAGLE Office / Cobalt Solutions (UNCONFIRMED)",
+   "year": 2013,
+   "report_number": "AIAA 2013-0972",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": "https://www.cobaltcfd.com/pdfs/AIAA_2013_ratcliff.pdf",
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_AUTHOR_HOSTED",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "F22",
+    "F16"
+   ],
+   "index_group": "F-22: production identity and public engineering sources",
+   "aircraft": "F-22A (CFD)",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A",
+    "F16-CFG-PROD-CD"
+   ],
+   "topics": [
+    "CFD",
+    "stability derivatives",
+    "stores certification"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "likely",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "likely",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "UNASSESSED",
+    "note": "Whether any F-22 numbers are printed is unknown; CFD-predicted values would be VALIDATION_ONLY at best."
+   },
+   "validation_usefulness": {
+    "rating": "MEDIUM",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_SOURCE_ACQUISITION_DEEP_DIVE_R0_M1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-DEEP-SRC-005",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library."
+  },
+  {
+   "source_id": "RTO-MP-SCI-162-P23",
+   "title": "F/A-22 / F119 propulsion flight-test paper (STORM / component-level model) in RTO-MP-SCI-162",
+   "authors": [
+    "Webb",
+    "Kidman",
+    "Malloy"
+   ],
+   "organization": "NATO RTO (AFFTC / Pratt & Whitney authors)",
+   "year": 2005,
+   "report_number": "RTO-MP-SCI-162, Paper 23",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_DISTRIBUTION_A",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: F119 propulsion",
+   "aircraft": "F/A-22",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "F119-PW-100",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "ENG-F119-PW-100",
+    "F22-CFG-EMD-HIGH-AOA"
+   ],
+   "topics": [
+    "installed-thrust model",
+    "validation RMS"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "yes",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "yes"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "PREPRODUCTION",
+   "implementation_usefulness": {
+    "rating": "LOW",
+    "note": "Architecture and accuracy statements (<2% / ~2.5% RMS per repository) only; no deck."
+   },
+   "validation_usefulness": {
+    "rating": "MEDIUM",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_SOURCE_ACQUISITION_DEEP_DIVE_R0_M2.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-M2-SRC-001 sections 2.1-2.5",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: identity from the Maverick repository F-22 catalogue (branch sol/fa18-source-consolidation-r1 @e596c32) only; the library has not inspected this source."
+  },
+  {
+   "source_id": "ASME-GT2002-30001",
+   "title": "F119 engine model / flight-test paper (Malloy, Webb, Kidman, ASME Turbo Expo 2002)",
+   "authors": [
+    "Malloy",
+    "Webb",
+    "Kidman"
+   ],
+   "organization": "ASME Turbo Expo",
+   "year": 2002,
+   "report_number": "ASME GT2002-30001",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: F119 propulsion",
+   "aircraft": "F-22",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "F119-PW-100",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "ENG-F119-PW-100"
+   ],
+   "topics": [
+    "in-flight thrust"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "PREPRODUCTION",
+   "implementation_usefulness": {
+    "rating": "LOW",
+    "note": ""
+   },
+   "validation_usefulness": {
+    "rating": "MEDIUM",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_SOURCE_ACQUISITION_DEEP_DIVE_R0_M2.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "companion to RTO paper",
+     "locator": null,
+     "level": "REPO_CITATION_ONLY",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: identity from the Maverick repository F-22 catalogue (branch sol/fa18-source-consolidation-r1 @e596c32) only; the library has not inspected this source."
+  },
+  {
+   "source_id": "NTRS-20050169937",
+   "title": "F119 low-observable nozzle-flap internal performance test (NASA, May 1995)",
+   "authors": [
+    "UNCONFIRMED"
+   ],
+   "organization": "NASA",
+   "year": 1995,
+   "report_number": null,
+   "ntrs_id": "20050169937",
+   "public_url": "https://ntrs.nasa.gov/citations/20050169937",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_NTRS_CITATION_ONLY",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: F119 propulsion",
+   "aircraft": "(engine nozzle)",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "F119 nozzle flaps (redesigned LO variants)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "ENG-F119-PW-100"
+   ],
+   "topics": [
+    "nozzle internal performance"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "yes",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "implementation_usefulness": {
+    "rating": "NOT_A_MODEL_PARAMETER",
+    "note": "Nozzle coefficients vs P&W CFD; no installed deck."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_SOURCE_ACQUISITION_DEEP_DIVE_R0_M2.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-M2-SRC-002",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Date from the NTRS record extract (May 1995), not from the accession number.",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library."
+  },
+  {
+   "source_id": "AEDC-F22-TEST-HISTORY",
+   "title": "AEDC public histories of F-22 / F119 tunnel and engine testing",
+   "authors": [
+    "Arnold Engineering Development Complex"
+   ],
+   "organization": "USAF AEDC",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: production identity and public engineering sources",
+   "aircraft": "F-22A / F119",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A"
+   ],
+   "topics": [
+    "test history"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "NOT_A_MODEL_PARAMETER",
+    "note": ""
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-008",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: identity from the Maverick repository F-22 catalogue (branch sol/fa18-source-consolidation-r1 @e596c32) only; the library has not inspected this source."
+  },
+  {
+   "source_id": "AIAA-94-2105",
+   "title": "Thrust Vector Aided Maneuvering of the YF-22 Advanced Tactical Fighter Prototype",
+   "authors": [
+    "UNCONFIRMED"
+   ],
+   "organization": "UNCONFIRMED",
+   "year": 1994,
+   "report_number": "AIAA 94-2105",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: YF-22 prototype (never production authority)",
+   "aircraft": "YF-22",
+   "aircraft_variant": "YF-22 prototype (DemVal)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-YF22-DEMVAL"
+   ],
+   "topics": [
+    "thrust vectoring",
+    "prototype"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "PREPRODUCTION",
+   "implementation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": "YF-22 data are never production F-22 authority."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": "YF-22-only research reference."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library."
+  },
+  {
+   "source_id": "NRC-1997-AVIATION-SAFETY-PILOT-CONTROL",
+   "title": "Aviation Safety and Pilot Control: Understanding and Preventing Unfavorable Pilot-Vehicle Interactions",
+   "authors": [
+    "National Research Council"
+   ],
+   "organization": "National Academy Press",
+   "year": 1997,
+   "report_number": "NAP 5469",
+   "ntrs_id": null,
+   "public_url": "https://nap.nationalacademies.org/catalog/5469",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "F22",
+    "FUNDAMENTALS"
+   ],
+   "index_group": "F-22: YF-22 prototype (never production authority)",
+   "aircraft": "Multiple (includes YF-22 PIO case)",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-YF22-DEMVAL"
+   ],
+   "topics": [
+    "PIO",
+    "rate limiting",
+    "APC"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "likely",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "NOT_A_MODEL_PARAMETER",
+    "note": ""
+   },
+   "validation_usefulness": {
+    "rating": "MEDIUM",
+    "note": "PIO/rate-limit methodology."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "AFRL-VA-WP-TR-1998-3043",
+   "title": "Innovative Control Effectors (ICE 101) configuration study",
+   "authors": [
+    "UNCONFIRMED"
+   ],
+   "organization": "AFRL / Lockheed Martin",
+   "year": 1998,
+   "report_number": "AFRL-VA-WP-TR-1998-3043",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_DISTRIBUTION_A",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "F22",
+    "FUNDAMENTALS"
+   ],
+   "index_group": "F-22: generic / unrelated F-22-like configurations",
+   "aircraft": "ICE 101 (generic tailless fighter; NOT F-22)",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-GENERIC-UNRELATED"
+   ],
+   "topics": [
+    "innovative control effectors"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "likely",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "implementation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": "Unrelated configuration; must never be labelled F-22."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "Recorded because it surfaces in F-22 searches.",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library."
+  },
+  {
+   "source_id": "RTO-TR-029",
+   "title": "Flight Control Design - Best Practices",
+   "authors": [
+    "NATO RTO SCI"
+   ],
+   "organization": "NATO RTO",
+   "year": 2000,
+   "report_number": "RTO-TR-029 (DTIC ADA387777)",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_DISTRIBUTION_A",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "F22",
+    "FUNDAMENTALS"
+   ],
+   "index_group": "F-22: production identity and public engineering sources",
+   "aircraft": "Multiple",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "December 2000",
+   "configuration_ids": [],
+   "topics": [
+    "FCS design practice",
+    "PIO",
+    "actuator rate limits"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "yes",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "NOT_A_MODEL_PARAMETER",
+    "note": ""
+   },
+   "validation_usefulness": {
+    "rating": "MEDIUM",
+    "note": "Design-practice reference."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "F22-PRODUCTION-FCS-AERO-DATA",
+   "title": "Production / EMD F-22 aerodynamic database, flight-control law, actuator and mass-property documentation",
+   "authors": [
+    "Lockheed Martin / Boeing / USAF"
+   ],
+   "organization": "Manufacturer / USAF",
+   "year": null,
+   "report_number": "UNKNOWN",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "NOT_PUBLICLY_LOCATED",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: not public / not located",
+   "aircraft": "F-22A",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A",
+    "F22-CFG-EMD-HIGH-AOA"
+   ],
+   "topics": [
+    "aero database",
+    "OFP",
+    "mass properties"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "implementation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": "Do not reconstruct."
+   },
+   "validation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_DATA_GAPS_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "P2-P5",
+     "locator": null,
+     "level": "REPO_CITATION_ONLY",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "F22-LANGLEY-1992-FST-1993-SPIN-DATA",
+   "title": "1992 Langley Full-Scale Tunnel and 1993 Spin Tunnel / rotary-balance F-22 data packages",
+   "authors": [
+    "NASA Langley"
+   ],
+   "organization": "NASA Langley",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "NOT_PUBLICLY_LOCATED",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: not public / not located",
+   "aircraft": "F-22 (tunnel models)",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "F22-CFG-WT-EARLY-F22"
+   ],
+   "topics": [
+    "force/oscillation data",
+    "rotary balance"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "implementation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": ""
+   },
+   "validation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_DATA_GAPS_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "P2, P3",
+     "locator": null,
+     "level": "REPO_CITATION_ONLY",
+     "note": null
+    }
+   ],
+   "notes": "Existence per SP-2000-4519 history (repository reading); no public data package located.",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "F119-PERFORMANCE-DECK",
+   "title": "F119-PW-100 installed performance / customer deck",
+   "authors": [
+    "Pratt & Whitney"
+   ],
+   "organization": "Pratt & Whitney",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "NOT_PUBLIC_PROPRIETARY",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "F22"
+   ],
+   "index_group": "F-22: not public / not located",
+   "aircraft": "(engine)",
+   "aircraft_variant": "NOT_STATED (not recorded in the material the library inspected)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
+   "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
+   "configuration_ids": [
+    "ENG-F119-PW-100"
+   ],
+   "topics": [
+    "thrust deck"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "implementation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": "Proprietary; do not estimate from the 35,000-lbf class figure."
+   },
+   "validation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_DATA_GAPS_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "P5",
+     "locator": null,
+     "level": "REPO_CITATION_ONLY",
+     "note": null
+    }
+   ],
+   "notes": "",
+   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  }
+ ]
+}

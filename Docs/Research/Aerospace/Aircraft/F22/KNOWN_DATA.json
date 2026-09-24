@@ -1,0 +1,569 @@
+{
+ "schema": "maverick.aerospace.known-data.v2",
+ "aircraft": "F-22",
+ "library_revision": "r1",
+ "generated": "2026-09-24",
+ "rule": "implementation_use = ALLOWED (the only state that sets implementation_allowed = true in AIRCRAFT_NUMERIC_FIELD_INDEX.json) requires: the source's own content inspected by the library at PAGE_VERIFIED, the configuration known, units and convention known, and the page/table/figure recorded. Values read only in other Maverick documents carry exactness REPOSITORY_READING and verification_level SEARCH_LEAD_ONLY: the repository reading is recorded in existing_maverick_analysis, it is not a primary source.",
+ "configurations": [
+  {
+   "configuration_id": "F22-CFG-PROD-F22A",
+   "label": "Production F-22A (public baseline)",
+   "airframe": "F-22A",
+   "serial": "n/a",
+   "engine": "F119-PW-100 x2 with 2-D pitch-vectoring nozzles",
+   "fcs": "Production triplex digital FLCS (NOT public)",
+   "research_hardware": "none",
+   "dates": "IOC 2005; production 1997-2011",
+   "status": "REFERENCE_ONLY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "Production",
+   "notes": "Block/OFP increments not tracked publicly; treat all production data as family scope."
+  },
+  {
+   "configuration_id": "F22-CFG-EMD-1996-CLAW",
+   "label": "F-22 EMD control-law design state described in 1996",
+   "airframe": "F-22 EMD (design)",
+   "serial": "n/a",
+   "engine": "F119",
+   "fcs": "1996 development control laws (design targets public; gains not)",
+   "research_hardware": "none",
+   "dates": "1996",
+   "status": "DEVELOPMENT_REFERENCE",
+   "configuration_scope": "PREPRODUCTION",
+   "lineage_family": "EMD",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F22-CFG-EMD-HIGH-AOA",
+   "label": "F-22 EMD high-AOA test aircraft, 1999-2000",
+   "airframe": "F-22 EMD",
+   "serial": "n/a",
+   "engine": "F119 x2",
+   "fcs": "EMD triplex FLCS with pitch TV",
+   "research_hardware": "none",
+   "dates": "1999-2000",
+   "status": "DEVELOPMENT_REFERENCE",
+   "configuration_scope": "PREPRODUCTION",
+   "lineage_family": "EMD",
+   "notes": "EMD is not automatically production."
+  },
+  {
+   "configuration_id": "F22-CFG-YF22-DEMVAL",
+   "label": "YF-22 prototype (Dem/Val)",
+   "airframe": "YF-22",
+   "serial": "n/a",
+   "engine": "YF119 or YF120 (by prototype)",
+   "fcs": "Prototype FLCS (point-design demonstrations)",
+   "research_hardware": "none",
+   "dates": "1990-1991",
+   "status": "YF22_ONLY",
+   "configuration_scope": "PREPRODUCTION",
+   "lineage_family": "YF-22",
+   "notes": "Different geometry from the F-22 (per NASA SP-2000-4519 history). Never production authority."
+  },
+  {
+   "configuration_id": "F22-CFG-WT-EARLY-F22",
+   "label": "Early / development F-22 wind-tunnel models (13.3% buffet model, dynamic models, V-9 model)",
+   "airframe": "F-22 tunnel models",
+   "serial": "n/a",
+   "engine": "n/a",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "1990s",
+   "status": "CONFIGURATION_UNKNOWN",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "lineage_family": "Tunnel",
+   "notes": "Model geometry/date must be established per report before any value is compared with EMD or production."
+  },
+  {
+   "configuration_id": "F22-CFG-GENERIC-UNRELATED",
+   "label": "Generic or unrelated F-22-like configurations (e.g. ICE 101, educational 'F-22-like' models)",
+   "airframe": "NOT an F-22",
+   "serial": "n/a",
+   "engine": "n/a",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "GENERIC_CONFIGURATION_ONLY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "Generic",
+   "notes": ""
+  },
+  {
+   "configuration_id": "ENG-F119-PW-100",
+   "label": "Pratt & Whitney F119-PW-100",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F119-PW-100 with 2-D C-D pitch-vectoring nozzle",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "F119",
+   "notes": ""
+  }
+ ],
+ "values": [
+  {
+   "value_id": "F22-FS-SPAN",
+   "field": "physical_span",
+   "quantity": "Wingspan (fact sheet)",
+   "symbol": null,
+   "value": "44 ft 6 in",
+   "units": "ft-in",
+   "precision": "1 in",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A"
+   ],
+   "loading_state": null,
+   "source_id": "USAF-F22-FACT-SHEET",
+   "candidate_source_ids": [],
+   "location": "'General characteristics'",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "reference_convention": "Physical span - not a reference span",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "PHYSICAL_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "fact-sheet transcription",
+     "locator": "F22-SRC-001: span",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-FS-LEN",
+   "field": "length",
+   "quantity": "Length (fact sheet)",
+   "symbol": null,
+   "value": "62 ft 1 in",
+   "units": "ft-in",
+   "precision": "1 in",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A"
+   ],
+   "loading_state": null,
+   "source_id": "USAF-F22-FACT-SHEET",
+   "candidate_source_ids": [],
+   "location": "'General characteristics'",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "reference_convention": "Physical",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "PHYSICAL_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "fact-sheet transcription",
+     "locator": "F22-SRC-001: length",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-FS-HT",
+   "field": "height",
+   "quantity": "Height (fact sheet)",
+   "symbol": null,
+   "value": "16 ft 8 in",
+   "units": "ft-in",
+   "precision": "1 in",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A"
+   ],
+   "loading_state": null,
+   "source_id": "USAF-F22-FACT-SHEET",
+   "candidate_source_ids": [],
+   "location": "'General characteristics'",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "reference_convention": "Physical",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "PHYSICAL_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "fact-sheet transcription",
+     "locator": "F22-SRC-001: height",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-FS-WEIGHT",
+   "field": "mass",
+   "quantity": "Weight (fact sheet; loading undefined)",
+   "symbol": null,
+   "value": 43340,
+   "units": "lb",
+   "precision": "10 lb",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A"
+   ],
+   "loading_state": null,
+   "source_id": "USAF-F22-FACT-SHEET",
+   "candidate_source_ids": [],
+   "location": "'General characteristics'",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "reference_convention": "Loading state not defined (empty? operating?)",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "SANITY_BOUND",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "fact-sheet transcription",
+     "locator": "F22-SRC-001: weight",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-FS-MTOW",
+   "field": "mass",
+   "quantity": "Maximum takeoff weight (fact sheet)",
+   "symbol": null,
+   "value": 83500,
+   "units": "lb",
+   "precision": "100 lb",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A"
+   ],
+   "loading_state": null,
+   "source_id": "USAF-F22-FACT-SHEET",
+   "candidate_source_ids": [],
+   "location": "'General characteristics'",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "SANITY_BOUND",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "fact-sheet transcription",
+     "locator": "F22-SRC-001: max takeoff weight",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-FS-FUEL",
+   "field": "fuel_mass",
+   "quantity": "Internal fuel (fact sheet)",
+   "symbol": null,
+   "value": 18000,
+   "units": "lb",
+   "precision": "1,000 lb",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A"
+   ],
+   "loading_state": null,
+   "source_id": "USAF-F22-FACT-SHEET",
+   "candidate_source_ids": [],
+   "location": "'General characteristics'",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "SANITY_BOUND",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "fact-sheet transcription",
+     "locator": "F22-SRC-001: fuel capacity",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-FS-THRUST",
+   "field": "thrust_class",
+   "quantity": "Thrust class per engine (fact sheet)",
+   "symbol": null,
+   "value": "35,000 lb class",
+   "units": "lbf",
+   "precision": "class",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A",
+    "ENG-F119-PW-100"
+   ],
+   "loading_state": null,
+   "source_id": "USAF-F22-FACT-SHEET",
+   "candidate_source_ids": [],
+   "location": "'General characteristics'",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "SANITY_BOUND",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "fact-sheet transcription",
+     "locator": "F22-SRC-001: thrust",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "A class figure is not a deck; never scale a curve to it."
+  },
+  {
+   "value_id": "F22-F119-VECTOR",
+   "field": "nozzle_vectoring_limit",
+   "quantity": "Pitch thrust-vector range",
+   "symbol": null,
+   "value": "up/down as much as 20",
+   "units": "deg",
+   "precision": "'as much as'",
+   "configuration_ids": [
+    "ENG-F119-PW-100"
+   ],
+   "loading_state": null,
+   "source_id": "PW-F119-PRODUCT-PAGE",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "CONTEXT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-002",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-EMD-AOA-RANGE",
+   "field": "flight_envelope",
+   "quantity": "EMD high-AOA characteristics explored",
+   "symbol": null,
+   "value": "below -40 to above +60",
+   "units": "deg AOA",
+   "precision": "10 deg",
+   "configuration_ids": [
+    "F22-CFG-EMD-HIGH-AOA"
+   ],
+   "loading_state": null,
+   "source_id": "SFTE-2000-PERON-F22-HIGH-AOA",
+   "candidate_source_ids": [],
+   "location": "p.1",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "ENVELOPE_CONTEXT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-004",
+     "locator": "p.1",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "A test envelope, not an aerodynamic-data domain."
+  },
+  {
+   "value_id": "F22-CLAW-CAP",
+   "field": "fcs_design_target",
+   "quantity": "1996 design CAP target band",
+   "symbol": null,
+   "value": "0.35 to 1.0",
+   "units": "g^-1 s^-2 (CAP)",
+   "precision": "as stated",
+   "configuration_ids": [
+    "F22-CFG-EMD-1996-CLAW"
+   ],
+   "loading_state": null,
+   "source_id": "AIAA-96-3379",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "HANDLING_QUALITIES_TARGET",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_PUBLIC_SOURCE_CATALOG_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-SRC-003: CAP and damping as design variables",
+     "locator": "pp.4-7",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "A design goal band, not a production response measurement."
+  },
+  {
+   "value_id": "F22-CLAW-DAMP",
+   "field": "fcs_design_target",
+   "quantity": "1996 design short-period damping target",
+   "symbol": null,
+   "value": "1.1 to 1.2",
+   "units": "-",
+   "precision": "0.1",
+   "configuration_ids": [
+    "F22-CFG-EMD-1996-CLAW"
+   ],
+   "loading_state": null,
+   "source_id": "AIAA-96-3379",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "HANDLING_QUALITIES_TARGET",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-F119-STORM-ACC",
+   "field": "model_accuracy",
+   "quantity": "F119 installed-thrust model accuracy statements",
+   "symbol": null,
+   "value": "< 2 % / ~2.5 % RMS",
+   "units": "%",
+   "precision": "as stated",
+   "configuration_ids": [
+    "ENG-F119-PW-100"
+   ],
+   "loading_state": null,
+   "source_id": "RTO-MP-SCI-162-P23",
+   "candidate_source_ids": [],
+   "location": "sections 2.3 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "ACCURACY_STATEMENT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_SOURCE_ACQUISITION_DEEP_DIVE_R0_M2.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "F22-M2-SRC-001",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-WT-SCALE",
+   "field": "model_scale",
+   "quantity": "Early F-22 fin-buffet model scale",
+   "symbol": null,
+   "value": 0.133,
+   "units": "-",
+   "precision": "0.001",
+   "configuration_ids": [
+    "F22-CFG-WT-EARLY-F22"
+   ],
+   "loading_state": null,
+   "source_id": "NTRS-20000052124",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "CONTEXT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F22-REF-GEOM",
+   "field": "reference_area",
+   "quantity": "F-22 reference area / MAC / reference span, CG, inertia, coefficients, gains",
+   "symbol": null,
+   "value": "NOT PUBLICLY LOCATED",
+   "units": "-",
+   "precision": "UNKNOWN",
+   "configuration_ids": [
+    "F22-CFG-PROD-F22A",
+    "F22-CFG-EMD-HIGH-AOA"
+   ],
+   "loading_state": null,
+   "source_id": "F22-PRODUCTION-FCS-AERO-DATA",
+   "candidate_source_ids": [],
+   "location": "n/a",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "GAP_RECORD",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F22_DATA_GAPS_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "data availability matrix and P2-P5",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Gap record. Do not derive from fact-sheet span or photographs."
+  }
+ ]
+}

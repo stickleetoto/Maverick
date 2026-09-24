@@ -1,0 +1,1452 @@
+{
+ "schema": "maverick.aerospace.known-data.v2",
+ "aircraft": "F-16",
+ "library_revision": "r1",
+ "generated": "2026-09-24",
+ "rule": "implementation_use = ALLOWED (the only state that sets implementation_allowed = true in AIRCRAFT_NUMERIC_FIELD_INDEX.json) requires: the source's own content inspected by the library at PAGE_VERIFIED, the configuration known, units and convention known, and the page/table/figure recorded. Values read only in other Maverick documents carry exactness REPOSITORY_READING and verification_level SEARCH_LEAD_ONLY: the repository reading is recorded in existing_maverick_analysis, it is not a primary source.",
+ "configurations": [
+  {
+   "configuration_id": "F16-CFG-NASA-REF-TP1538",
+   "label": "NASA Langley TP-1538 simulation configuration (development-era F-16 with relaxed static stability)",
+   "airframe": "F-16 (as simulated; wind-tunnel-derived aerodynamics)",
+   "serial": "n/a",
+   "engine": "Afterburning turbofan; engine model named in App. B not identified by variant in repository reading",
+   "fcs": "F-16-type Nz/AoA-limiting CAS as simulated, plus Langley research modifications",
+   "research_hardware": "none (simulation)",
+   "dates": "December 1979 report",
+   "status": "SIMULATION_REFERENCE",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "NASA Langley F-16 simulation lineage",
+   "notes": "Maverick's current 'NASA Reference F-16'. Not a production block. Mass/geometry/thrust in this configuration are the TP-1538 simulation's own."
+  },
+  {
+   "configuration_id": "F16-CFG-SIM-MORELLI1998",
+   "label": "Morelli (1998) global polynomial fit to the TP-1538-lineage subsonic F-16 database",
+   "airframe": "F-16 (16% scale tunnel database per repository)",
+   "serial": "n/a",
+   "engine": "n/a (aerodynamics only)",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "1998",
+   "status": "SIMULATION_REFERENCE",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "lineage_family": "NASA Langley F-16 simulation lineage",
+   "notes": "LEF fixed at 25 deg by construction (repository analysis); M < 0.6; alpha -10..45; beta +/-30."
+  },
+  {
+   "configuration_id": "F16-CFG-SIM-STEVENS-LEWIS",
+   "label": "Stevens & Lewis textbook F-16 model and its descendants (NESC check-case F-16, simupy-flight, AeroBench)",
+   "airframe": "F-16 (textbook reduction of TP-1538 data)",
+   "serial": "n/a",
+   "engine": "Textbook engine lag + thrust tables (lineage per Garza & Morelli / textbook)",
+   "fcs": "None or textbook example laws",
+   "research_hardware": "none",
+   "dates": "1992 / 2003 / 2015 editions",
+   "status": "CROSS_VALIDATION_REFERENCE",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "NASA Langley F-16 simulation lineage (textbook branch)",
+   "notes": "Descendants share numbers; agreement among them is NOT independent confirmation (repeated-number register)."
+  },
+  {
+   "configuration_id": "F16-CFG-YF16-DEV",
+   "label": "YF-16 / lightweight-fighter prototype and FSD development configurations (tunnel models)",
+   "airframe": "YF-16 prototype / FSD F-16 tunnel models",
+   "serial": "n/a",
+   "engine": "n/a (tunnel)",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "1970s",
+   "status": "HISTORICAL_TUNNEL",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "lineage_family": "General Dynamics / NASA Langley development tunnel programme",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F16-CFG-GENERIC-ACADEMIC",
+   "label": "Academic re-implementations of the textbook/NASA F-16 model (theses, journal papers)",
+   "airframe": "F-16 (derived)",
+   "serial": "n/a",
+   "engine": "varies",
+   "fcs": "varies",
+   "research_hardware": "none",
+   "dates": "varies",
+   "status": "CROSS_VALIDATION_ONLY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "NASA Langley F-16 simulation lineage (academic branch)",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F16-CFG-PROD-AB",
+   "label": "Production F-16A/B family (Blocks 1-20)",
+   "airframe": "F-16A/B",
+   "serial": "n/a",
+   "engine": "F100-PW-200 (F100-PW-220 on later/upgraded aircraft)",
+   "fcs": "Analog FLCS (architecture described in a public manufacturer case study; gains NOT public)",
+   "research_hardware": "none",
+   "dates": "1978 onward",
+   "status": "REFERENCE_ONLY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "Production",
+   "notes": "Block/engine/FLCS identity must be carried per source; no public production aero or gain data located."
+  },
+  {
+   "configuration_id": "F16-CFG-PROD-CD",
+   "label": "Production F-16C/D family (Block 25 onward)",
+   "airframe": "F-16C/D",
+   "serial": "n/a",
+   "engine": "F100-PW-200/-220/-229 or F110-GE-100/-129 depending on block",
+   "fcs": "Analog (early blocks) / digital FLCS (Block 40 onward) - production gains NOT public",
+   "research_hardware": "none",
+   "dates": "1984 onward",
+   "status": "REFERENCE_ONLY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "Production",
+   "notes": "Block 40 DFLCC identity appears in the F-16XL research report (TP-2004-212046)."
+  },
+  {
+   "configuration_id": "F16-CFG-FALCON21",
+   "label": "Falcon 21 F-16 derivative (supersonic tunnel model)",
+   "airframe": "F-16 derivative tunnel model",
+   "serial": "n/a",
+   "engine": "n/a",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "TP-3355 era",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "lineage_family": "NASA/GD derivative studies",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F16-CFG-F16XL",
+   "label": "F-16XL (cranked-arrow) research aircraft and models",
+   "airframe": "F-16XL-1 (single seat) / F-16XL-2 (two seat)",
+   "serial": "n/a",
+   "engine": "F-16XL-2 with F110-GE-129 (per NASA TM-104326 abstract); XL-1 engine not recorded here",
+   "fcs": "Research; later Block 40 DFLCCs (TP-2004-212046)",
+   "research_hardware": "cranked-arrow wing; research gloves/instrumentation",
+   "dates": "1980s-1990s",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "F-16XL",
+   "notes": "Never merge with F-16 aero."
+  },
+  {
+   "configuration_id": "F16-CFG-AFTI",
+   "label": "AFTI/F-16 (Advanced Fighter Technology Integration)",
+   "airframe": "AFTI/F-16 (modified F-16A FSD airframe; serial not recorded by the library)",
+   "serial": "n/a",
+   "engine": "n/a",
+   "fcs": "Triplex digital flight control system (research)",
+   "research_hardware": "research hardware varied by phase (not recorded by the library)",
+   "dates": "1980s",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "AFTI",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F16-CFG-VISTA-MATV",
+   "label": "VISTA NF-16D in the MATV (axisymmetric vectoring nozzle) configuration",
+   "airframe": "NF-16D VISTA (Block 30 F-16D base)",
+   "serial": "n/a",
+   "engine": "F110-GE-100 with AVEN axisymmetric vectoring nozzle (17 deg)",
+   "fcs": "Revised control laws for MATV; VSS",
+   "research_hardware": "AVEN, nose chines",
+   "dates": "1993-1994 (programme ended 1994)",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "VISTA",
+   "notes": ""
+  },
+  {
+   "configuration_id": "F16-CFG-VISTA-NF16D",
+   "label": "VISTA NF-16D variable-stability aircraft (later X-62A)",
+   "airframe": "NF-16D VISTA (F-16D Block 30 base)",
+   "serial": "n/a",
+   "engine": "Later F100-PW-229 (per public histories)",
+   "fcs": "Variable Stability System in parallel with F-16 control laws",
+   "research_hardware": "none",
+   "dates": "1992 onward",
+   "status": "SEPARATE_CONFIGURATION",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "VISTA",
+   "notes": "Flight-identified models (AIAA 2018-0525) describe THIS airframe, not a production block."
+  },
+  {
+   "configuration_id": "ENG-F100-PW-200",
+   "label": "Pratt & Whitney F100-PW-200 (F-16A/B)",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F100-PW-200",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "F100",
+   "notes": "Never merged with F100-PW-100 (F-15) or later variants."
+  },
+  {
+   "configuration_id": "ENG-F100-PW-220",
+   "label": "Pratt & Whitney F100-PW-220 (F-15 and F-16)",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F100-PW-220",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "F100",
+   "notes": "The F100-PW-220E (post-2014 NASA 836) is a further variant; not merged."
+  },
+  {
+   "configuration_id": "ENG-F100-PW-229",
+   "label": "Pratt & Whitney F100-PW-229",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F100-PW-229",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "F100",
+   "notes": "Also on NF-15B 837 (with vectoring nozzles)."
+  },
+  {
+   "configuration_id": "ENG-F110-GE-100",
+   "label": "General Electric F110-GE-100",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F110-GE-100",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "F110",
+   "notes": ""
+  },
+  {
+   "configuration_id": "ENG-F110-GE-129",
+   "label": "General Electric F110-GE-129",
+   "airframe": "(engine)",
+   "serial": "n/a",
+   "engine": "F110-GE-129",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "UNKNOWN",
+   "status": "ENGINE_IDENTITY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "F110",
+   "notes": ""
+  }
+ ],
+ "values": [
+  {
+   "value_id": "F16-GEO-S",
+   "field": "reference_area",
+   "quantity": "Reference wing area",
+   "symbol": "S",
+   "value": 300,
+   "units": "ft^2",
+   "precision": "printed 300 ft^2 (27.87 m^2)",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Aerodynamic reference area",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Area ... 27.87 (300)\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Maverick implements 27.870912 m^2 (exact ft conversion)."
+  },
+  {
+   "value_id": "F16-GEO-B",
+   "field": "reference_span",
+   "quantity": "Reference wing span",
+   "symbol": "b",
+   "value": 30,
+   "units": "ft",
+   "precision": "printed 30 ft (9.144 m)",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Aerodynamic reference span (Table I lists it as span; physical vs reference distinction not stated in repository reading)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Span ... 9.144 (30)\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-GEO-CBAR",
+   "field": "mean_aerodynamic_chord",
+   "quantity": "Mean aerodynamic chord",
+   "symbol": "cbar",
+   "value": 11.32,
+   "units": "ft",
+   "precision": "0.01 ft (printed 3.45 m)",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Aerodynamic reference chord",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Mean aerodynamic chord ... 3.45 (11.32)\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-CG-REF",
+   "field": "cg_reference",
+   "quantity": "Aerodynamic moment reference CG",
+   "symbol": "xcg_ref",
+   "value": 0.35,
+   "units": "fraction of cbar",
+   "precision": "0.01 cbar",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538",
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I; Morelli nomenclature (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Longitudinal only, fraction of MAC",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Reference center-of-gravity location ... 0.35cbar\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-CG-DEMO",
+   "field": "cg",
+   "quantity": "CG of the Morelli demonstration manoeuvre",
+   "symbol": "xcg",
+   "value": 0.25,
+   "units": "fraction of cbar",
+   "precision": "0.01 cbar",
+   "configuration_ids": [
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "MORELLI-ACC-1998-F16",
+   "candidate_source_ids": [],
+   "location": "Section 3 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Longitudinal only",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "VALIDATION_CONDITION_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "demonstration CG, not an operating CG",
+     "locator": "Morelli section 3",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-MASS-W",
+   "field": "mass",
+   "quantity": "Weight",
+   "symbol": "W",
+   "value": 20500,
+   "units": "lbf (weight)",
+   "precision": "printed 20,500 lb / 91,188 N",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": "TP-1538 simulation loading",
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Single simulation loading; no fuel state stated in repository reading",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F16-MASS-ALT-647"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Weight, N (lb) ... 91 188 (20 500)\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "= 637.16 slug. The printed SI figure 91,188 N reappears in an unrelated F-15 context (see library repeated-number register R1-RN4)."
+  },
+  {
+   "value_id": "F16-MASS-ALT-647",
+   "field": "mass",
+   "quantity": "Alternative mass quoted for 'other NASA F-16 studies'",
+   "symbol": null,
+   "value": 647.2,
+   "units": "slug",
+   "precision": "0.1 slug",
+   "configuration_ids": [
+    "F16-CFG-GENERIC-ACADEMIC"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TM-2003-212145",
+    "STEVENS-LEWIS-ACS"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F16-MASS-W"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_REFERENCE_SPEC_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "note: 'other NASA F-16 studies use ... approximately 647.2 slug' (study not named)",
+     "locator": "line 115",
+     "level": "REPO_CITATION_ONLY",
+     "note": null
+    }
+   ],
+   "notes": "Repository mentions the number without naming the study. Candidates are the two most likely carriers; neither is confirmed. Never use."
+  },
+  {
+   "value_id": "F16-MASS-IX",
+   "field": "Ixx",
+   "quantity": "Roll moment of inertia",
+   "symbol": "Ix",
+   "value": 9496,
+   "units": "slug-ft^2",
+   "precision": "1 slug-ft^2",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes X fwd, Y right, Z down",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, Ix",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-MASS-IY",
+   "field": "Iyy",
+   "quantity": "Pitch moment of inertia",
+   "symbol": "Iy",
+   "value": 55814,
+   "units": "slug-ft^2",
+   "precision": "1 slug-ft^2",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, Iy",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-MASS-IZ",
+   "field": "Izz",
+   "quantity": "Yaw moment of inertia",
+   "symbol": "Iz",
+   "value": 63100,
+   "units": "slug-ft^2",
+   "precision": "1 slug-ft^2 (printed to hundreds)",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, Iz",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-MASS-IXZ",
+   "field": "Ixz",
+   "quantity": "Product of inertia",
+   "symbol": "Ixz",
+   "value": 982,
+   "units": "slug-ft^2",
+   "precision": "1 slug-ft^2",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention of the product of inertia must be taken from the report's nomenclature before use",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, Ixz",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ACT-DH-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Horizontal tail (symmetric) travel",
+   "symbol": "dh",
+   "value": "+/-25",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538",
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository); Morelli Table 1",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign per TP-1538 nomenclature",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Symmetric (dh), deg +/-25\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ACT-DA-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Aileron (flaperon) travel",
+   "symbol": "da",
+   "value": "+/-21.5",
+   "units": "deg",
+   "precision": "0.5 deg",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538",
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository); Morelli Table 1",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign per TP-1538 nomenclature",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Ailerons (flaperons), deg +/-21.5\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ACT-DR-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Rudder travel",
+   "symbol": "dr",
+   "value": "+/-30",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538",
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign per TP-1538 nomenclature",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Rudder, deg +/-30\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ACT-DD-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Differential tail travel, per surface",
+   "symbol": "dd",
+   "value": "+/-5.375",
+   "units": "deg",
+   "precision": "0.001 deg",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Per surface",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Differential (dd), per surface, deg +/-5.375\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ACT-SB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Speed brake travel",
+   "symbol": null,
+   "value": 60,
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table I (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Maximum opening",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "repository page read of TP-1538 Table I",
+     "locator": "TP-1538 Table I, \"Speed brake, deg 60\"",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ACT-RATE-TP1538",
+   "field": "surface_rate_limit",
+   "quantity": "Surface rate limits in the TP-1538 material",
+   "symbol": null,
+   "value": "NOT FOUND",
+   "units": "deg/s",
+   "precision": "UNKNOWN",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Repository review of TP-1538 found no sourced rate limit; stabilator actuator model in fig. 63 not transcribed",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "GAP_RECORD",
+   "conflicts_with": [
+    "F16-ACT-RATE-DH-SL",
+    "F16-ACT-RATE-DA-SL",
+    "F16-ACT-RATE-DR-SL",
+    "F16-ACT-TAU-SL"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "'No sourced rate limit was found in the material reviewed'",
+     "locator": "section 9",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Gap record, not a number. Recorded so the textbook values below are not mistaken for TP-1538 data."
+  },
+  {
+   "value_id": "F16-ACT-RATE-DH-SL",
+   "field": "surface_rate_limit",
+   "quantity": "Horizontal tail rate limit (textbook lineage)",
+   "symbol": null,
+   "value": 60,
+   "units": "deg/s",
+   "precision": "1 deg/s",
+   "configuration_ids": [
+    "F16-CFG-SIM-STEVENS-LEWIS"
+   ],
+   "loading_state": null,
+   "source_id": "ARXIV-1907-11913",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "REPRODUCED",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Symmetric",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F16-ACT-RATE-TP1538"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "Seen in an arXiv extract that cites Stevens & Lewis. Textbook-lineage value; upstream primary source not identified."
+  },
+  {
+   "value_id": "F16-ACT-RATE-DA-SL",
+   "field": "surface_rate_limit",
+   "quantity": "Aileron rate limit (textbook lineage)",
+   "symbol": null,
+   "value": 80,
+   "units": "deg/s",
+   "precision": "1 deg/s",
+   "configuration_ids": [
+    "F16-CFG-SIM-STEVENS-LEWIS"
+   ],
+   "loading_state": null,
+   "source_id": "ARXIV-1907-11913",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "REPRODUCED",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Symmetric",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F16-ACT-RATE-TP1538"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ACT-RATE-DR-SL",
+   "field": "surface_rate_limit",
+   "quantity": "Rudder rate limit (textbook lineage)",
+   "symbol": null,
+   "value": 120,
+   "units": "deg/s",
+   "precision": "1 deg/s",
+   "configuration_ids": [
+    "F16-CFG-SIM-STEVENS-LEWIS"
+   ],
+   "loading_state": null,
+   "source_id": "ARXIV-1907-11913",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "REPRODUCED",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Symmetric",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F16-ACT-RATE-TP1538"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ACT-TAU-SL",
+   "field": "actuator_dynamics",
+   "quantity": "First-order actuator time constant (textbook lineage)",
+   "symbol": null,
+   "value": 0.0495,
+   "units": "s",
+   "precision": "0.0001 s (= 1/20.2 s)",
+   "configuration_ids": [
+    "F16-CFG-SIM-STEVENS-LEWIS"
+   ],
+   "loading_state": null,
+   "source_id": "ARXIV-1907-11913",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "REPRODUCED",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "First-order lag, all surfaces",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F16-ACT-RATE-TP1538"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-DB-ALPHA",
+   "field": "aero_domain_alpha",
+   "quantity": "Morelli model alpha domain",
+   "symbol": null,
+   "value": "-10 .. +45",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "MORELLI-ACC-1998-F16",
+   "candidate_source_ids": [],
+   "location": "Table 1 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "domain",
+     "locator": "Morelli Table 1",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-DB-BETA",
+   "field": "aero_domain_beta",
+   "quantity": "Morelli model beta domain",
+   "symbol": null,
+   "value": "-30 .. +30",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "MORELLI-ACC-1998-F16",
+   "candidate_source_ids": [],
+   "location": "Table 1 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "domain",
+     "locator": "Morelli Table 1",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-DB-MACH",
+   "field": "aero_domain_mach",
+   "quantity": "Morelli model Mach applicability",
+   "symbol": null,
+   "value": "< 0.6",
+   "units": "-",
+   "precision": "0.1",
+   "configuration_ids": [
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "MORELLI-ACC-1998-F16",
+   "candidate_source_ids": [],
+   "location": "Section 3 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "'16% scale model ... Mach < 0.6'",
+     "locator": "Morelli section 3",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-DB-LEF",
+   "field": "aero_configuration_state",
+   "quantity": "Leading-edge flap state represented by the Morelli base functions",
+   "symbol": null,
+   "value": 25,
+   "units": "deg (fixed)",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "MORELLI-ACC-1998-F16",
+   "candidate_source_ids": [],
+   "location": "Repository analysis of TP-1538 build-up equations + Morelli Table 1",
+   "origin": "DERIVED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "LEF resolved from primary sources",
+     "locator": "section 10",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Derived by the repository from the build-up equation, not printed as a single statement."
+  },
+  {
+   "value_id": "F16-VAL-MORELLI-ACC",
+   "field": "model_accuracy",
+   "quantity": "Polynomial model vs wind-tunnel database, simulated doublet",
+   "symbol": null,
+   "value": "< 10",
+   "units": "% difference",
+   "precision": "stated bound",
+   "configuration_ids": [
+    "F16-CFG-SIM-MORELLI1998"
+   ],
+   "loading_state": null,
+   "source_id": "MORELLI-ACC-1998-F16",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "ACCURACY_STATEMENT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "One condition (alpha 10 deg, M 0.26, xcg 0.25 per repository)."
+  },
+  {
+   "value_id": "F16-ENG-HENG",
+   "field": "engine_angular_momentum",
+   "quantity": "Engine angular momentum (fixed)",
+   "symbol": null,
+   "value": 160,
+   "units": "slug-ft^2/s",
+   "precision": "1 slug-ft^2/s (216.9 kg m^2/s printed)",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Appendix B (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Along body X",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "engine angular momentum",
+     "locator": "TP-1538 App. B",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ENG-TABLE-VI",
+   "field": "thrust_table",
+   "quantity": "Thrust values used in simulation (idle / military / maximum vs Mach and altitude)",
+   "symbol": null,
+   "value": "TABLE: Mach 0.2-1.0 (5 columns) x altitude 0-15,240 m (6 rows) x 3 power levels; 90 SI cells",
+   "units": "N (printed SI and lbf)",
+   "precision": "printed integers",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table VI, PDF p.99/233, report p.93 (per repository manifest)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Engine variant and installed/uninstalled + gross/net bookkeeping NOT stated in the repository reading",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/F16_TP1538_THRUST_DECK_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "two-pass visual transcription",
+     "locator": "PDF p.99, report p.93",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    },
+    {
+     "path": "Docs/Reference/Data/F16/TP1538/manifest.json",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "manifest; source PDF sha256 aae0ece64474291368c0b4c816d3ab327c6100329e6eb030c2f4545d0913feb3; raw CSV sha256 9e0d9906...",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "The strongest numeric F-16 propulsion item in the repository. The library records it but cannot release it: the library has not read the page. The repository's own implementation authority is separate from this library."
+  },
+  {
+   "value_id": "F16-ENG-PC-LOW",
+   "field": "throttle_map",
+   "quantity": "Power-command gearing below delta_th 0.77",
+   "symbol": null,
+   "value": "Pc = 64.94 * delta_th",
+   "units": "percent",
+   "precision": "0.01",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2003-212145",
+   "candidate_source_ids": [],
+   "location": "Engine model section (per repository)",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "delta_th in 0..1",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_PROPULSION_REFERENCE_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "engine model transcription",
+     "locator": "Garza & Morelli engine model",
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ENG-PC-HIGH",
+   "field": "throttle_map",
+   "quantity": "Power-command gearing above delta_th 0.77",
+   "symbol": null,
+   "value": "Pc = 217.38 * delta_th - 117.38",
+   "units": "percent",
+   "precision": "0.01",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2003-212145",
+   "candidate_source_ids": [],
+   "location": "Engine model section (per repository)",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "delta_th in 0..1",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_PROPULSION_REFERENCE_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "engine model transcription",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-ENG-RTAU",
+   "field": "engine_dynamics",
+   "quantity": "Reciprocal time constant of the power lag",
+   "symbol": null,
+   "value": "1.0 (dP <= 25); 0.1 (dP >= 50); 1.9 - 0.036 dP otherwise",
+   "units": "1/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2003-212145",
+   "candidate_source_ids": [],
+   "location": "Engine model section (per repository)",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "dP = commanded minus actual power (percent)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_PROPULSION_REFERENCE_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "engine model transcription",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-FCS-ROLL-165",
+   "field": "fcs_design_target",
+   "quantity": "Commanded roll rate limit in the simulated FCS",
+   "symbol": null,
+   "value": "about 165",
+   "units": "deg/s",
+   "precision": "approximate ('about')",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Text (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "BEHAVIOUR_POINT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Assets/MaverickFresh/Scripts/FlightDynamics/F16/F16_SOURCE_COVERAGE_MATRIX_V0.1.md",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "'limited to only about 165 deg/sec'",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "A single data point, not a law."
+  },
+  {
+   "value_id": "F16-FCS-DFLCC-RATE",
+   "field": "fcs_frame_rate",
+   "quantity": "Block 40 DFLCC frame rate on the F-16XL research installation",
+   "symbol": null,
+   "value": 64,
+   "units": "Hz",
+   "precision": "1 Hz",
+   "configuration_ids": [
+    "F16-CFG-F16XL"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-2004-212046",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "CONTEXT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "F-16XL research installation, not a production F-16C statement."
+  },
+  {
+   "value_id": "F16-VISTA-DB-ALPHA",
+   "field": "aero_domain_alpha",
+   "quantity": "Bihrle VISTA low-speed nonlinear model alpha domain",
+   "symbol": null,
+   "value": "-80 .. +90",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F16-CFG-VISTA-NF16D"
+   ],
+   "loading_state": null,
+   "source_id": "DTIC-ADA327869",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-VISTA-DB-BETA",
+   "field": "aero_domain_beta",
+   "quantity": "Bihrle VISTA low-speed nonlinear model beta domain",
+   "symbol": null,
+   "value": "-30 .. +30",
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F16-CFG-VISTA-NF16D"
+   ],
+   "loading_state": null,
+   "source_id": "DTIC-ADA327869",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-MATV-VECTOR",
+   "field": "nozzle_vectoring_limit",
+   "quantity": "AVEN nozzle vector angle (MATV)",
+   "symbol": null,
+   "value": 17,
+   "units": "deg",
+   "precision": "1 deg",
+   "configuration_ids": [
+    "F16-CFG-VISTA-MATV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NTRS-19950007831",
+    "AIAA-94-3513"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "CONTEXT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Seen in public programme summaries (manufacturer / press), not in an indexed technical source. Candidates are the MATV flight-test papers. Identity data only."
+  },
+  {
+   "value_id": "F16-TN8176-SCALE",
+   "field": "model_scale",
+   "quantity": "Tunnel model scale in TN D-8176",
+   "symbol": null,
+   "value": 0.15,
+   "units": "-",
+   "precision": "0.01",
+   "configuration_ids": [
+    "F16-CFG-YF16-DEV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TN-D-8176",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "CONTEXT",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  }
+ ]
+}
