@@ -102,10 +102,11 @@ The profile now carries `conditionMode`, and every mode keeps the same α/β spa
   - This is exposed in `[Q1]`, not bypassed.
 - **Not live-ready.** The research propulsion is non-authoritative and not accepted. There is no operational command source.
 - **One coefficient-fit condition; no throttle or altitude variation.** The source's own model does vary true velocity (WP-3A). In `SourceReproduction` mode Maverick admits the velocities the source ran, at the source's fixed-density altitude only.
-- **Static reproduction done (WP-3A); flying trim not started.**
+- **Static reproduction done (WP-3A); research trim solver done (WP-3B); flying trim not started.**
   - Baumann's Table VII equilibria close to print precision in all six axes when fed through this configuration's aero, mass, inertia and thrust (`F15_TABLE_VII_EQUILIBRIUM_VALIDATION_V1.0.md`).
+  - **WP-3B:** `MavF15AfitResearchTrimSolver` solves the source's own symmetric equilibrium off the body. It uses the fixed source density, 8,300 lbf total thrust and the thrust-line moment. From perturbed starts it recovers all 89 symmetric Table VII states within print resolution (`F15_RESEARCH_TRIM_SOLVER_V1.0.md`).
   - Flying trim still needs research surface travel. The flying aircraft holds zero travel, so the surfaces enter only through the STATIC_EQUILIBRIUM_VALIDATION_ONLY control.
-  - The source's density also does not follow altitude.
+  - **Recorded runtime gap:** the body computes q from ISA density at its altitude (`MavSixDoFBody`). So `SourceReproduction` in the body does **not** reproduce the source's fixed-density q, which is 6.83e-4 off even at 6,096 m. Unity's gravity is also 9.81 against the source's 9.80664 m/s². The research-only environment policy that would close this is designed, not built (`F15_RESEARCH_TRIM_SOLVER_V1.0.md` §10; D11).
 - **PlayMode: not run.** The batch adapter's Play Mode bridge is hard-wired to the FDM scheduler probe, and extending shared infrastructure was out of scope. Instead, `MavF15ResearchPipelineValidation` drives the real components through the editor-only `StepPhysicsForValidation` seam — the same `StepPhysicsCore` that `FixedUpdate` runs — on a hidden temporary object. No scene or prefab is touched. Unity does not integrate the Rigidbody in edit mode, so this checks the pipeline, not a trajectory.
 
 ## 7. Code and validation
@@ -117,11 +118,13 @@ The profile now carries `conditionMode`, and every mode keeps the same α/β spa
 | `MavF15InertiaBasis` | shared inertia math (proven identical to the exact conversion) |
 | `MavF15AfitResearchFlightDynamicsProfile` | the research provider (exact provider untouched) |
 | `MavF15AfitResearchThrustSource`, `MavF15AfitResearchFixedThrust` | research-only thrust |
+| `MavF15AfitResearchTrimSolver`, `MavF15AfitResearchSourceEnvironment` | WP-3B research trim (symmetric), off the body, in the source's own units and environment |
 
 | Suite | Checks | Result |
 |---|---:|---|
 | `MavF15ResearchContaminationValidation` — `[X1]`–`[X5]` written and run **before** the research code (22/0), `[X6]` after | 32 | PASS |
 | `MavF15ResearchProfileValidation` — `[P0]`–`[P6]` | 35 | PASS |
 | `MavF15ResearchPipelineValidation` — `[Q1]`–`[Q3]`, editor seam, **not PlayMode** | 13 | PASS |
+| `MavF15ResearchTrimSolverValidation` — `[R1]`–`[R13]` (WP-3B) | 34 | PASS |
 
 No flight-performance tolerance is asserted anywhere.

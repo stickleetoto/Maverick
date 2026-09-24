@@ -10,12 +10,13 @@ target_config_id:  NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100
 mass_state_id:     NASA_F15B_836_BASELINE_8K_FUEL_MASS_STATE
 unity:             6000.3.16f1
 edit_scope:        Assets/MaverickFresh/Scripts/FlightDynamics/**, Docs/Reference/**
-known_good:        568 passed / 0 failed (12 headless suites); 339 runtime + 33 editor scripts compile, 0 errors
+known_good:        602 passed / 0 failed (13 headless suites); 342 runtime + 33 editor scripts compile, 0 errors
 playmode_flight:   NOT RUN
 exact_path:        FAIL-CLOSED
 research_path:     WP-1 done - F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH, structurally prepared at M0.6/20k only; uncontrolled (zero surface travel); 8,300 lbf total fixed thrust
 wp2:               done - 836 FCS structure + Mach 1.5/1.0 switches; 836 validation data (validation only); research demonstrated range (not a physical limit); sign convention verified
 wp3a:              done - M0.6 = coefficient-fit condition (source varies V, fixed density); StrictFitCondition/SourceReproduction modes; Table VII stored + reproduced statically to print precision (170 states)
+wp3b:              done - source-faithful research trim solver (symmetric), off the body; 89 symmetric Table VII states recovered from perturbed starts, 356/356 converged, all within print resolution; runtime q still ISA-based (recorded gap, D11)
 sources:           E:\f15-sources\ (Baumann ADA217366, Davison ADA256613 - outside the repo)
 ```
 
@@ -36,11 +37,12 @@ sources:           E:\f15-sources\ (Baumann ADA217366, Davison ADA256613 - outsi
 | **836 validation data** (WP-2) | `Validation/MavF15Nasa836ValidationData` (generated) and `MavF15Nasa836ValidationSeries` — validation only |
 | **research source condition** (WP-3A) | `MavF15BaumannSourceSemantics.cs`: `MavF15CoefficientFitCondition`, `MavF15SourceExercisedOperatingDomain`, `MavF15PhysicalValidityEnvelope`, `MavF15ResearchConditionMode`, `MavF15ResearchConditionGate`; the mode is `MavF15AfitResearchFlightDynamicsProfile.conditionMode` |
 | **Table VII** (WP-3A) | `Validation/MavF15BaumannTableVii` (+ generated data), `MavF15TableViiEquilibriumReproduction` — validation only |
+| **research trim** (WP-3B) | `MavF15AfitResearchTrimSolver.cs`: `MavF15AfitResearchTrimSolver.SolveSymmetric` / `EvaluateSymmetricResidual`, `MavF15AfitResearchSourceEnvironment`; round trip in `Validation/MavF15TableViiTrimRecovery` |
 | **research configuration** (WP-1) | `MavF15AfitResearchFlightDynamicsProfile`, `MavF15AfitResearchMassReference`, `MavF15AfitResearchFixedThrust` / `MavF15AfitResearchThrustSource`, `MavF15AfitResearchIdentity`, `MavF15InertiaBasis` |
 
 ## Validation suites — `…/FlightDynamics/Validation/`
 
-`MavF15MassReferenceValidation` (45) · `MavF15ReferenceGeometryValidation` (51) · `MavF15BaumannTranscriptionValidation` (28) · `MavF15ControlPathValidation` (79) · `MavF15PropulsionValidation` (198) · `MavF15ResearchContaminationValidation` (32) · `MavF15ResearchProfileValidation` (35) · `MavF15ResearchPipelineValidation` (13, editor-only, drives the real body through the `StepPhysicsForValidation` seam — **not PlayMode**) · `MavF15Nasa836FcsStructureValidation` (24) · `MavF15Nasa836ValidationDataValidation` (16) · `MavF15ResearchControlAuthorityValidation` (21) · `MavF15BaumannSourceConditionValidation` (26)
+`MavF15MassReferenceValidation` (45) · `MavF15ReferenceGeometryValidation` (51) · `MavF15BaumannTranscriptionValidation` (28) · `MavF15ControlPathValidation` (79) · `MavF15PropulsionValidation` (198) · `MavF15ResearchContaminationValidation` (32) · `MavF15ResearchProfileValidation` (35) · `MavF15ResearchPipelineValidation` (13, editor-only, drives the real body through the `StepPhysicsForValidation` seam — **not PlayMode**) · `MavF15Nasa836FcsStructureValidation` (24) · `MavF15Nasa836ValidationDataValidation` (16) · `MavF15ResearchControlAuthorityValidation` (21) · `MavF15BaumannSourceConditionValidation` (26) · `MavF15ResearchTrimSolverValidation` (34)
 
 Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidationBatchAdapter.RunBatch`. The exact command line is in `F15_USER_VALIDATION_PLAN_V1.0.md` §1.
 
@@ -58,6 +60,7 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 | research surface authority, sign convention | `F15_RESEARCH_CONTROL_AUTHORITY_V1.0.md` |
 | what "Mach 0.6" means; the two condition modes | `F15_BAUMANN_SOURCE_CONDITION_AUDIT_V1.0.md` |
 | Table VII dataset and static reproduction | `F15_TABLE_VII_EQUILIBRIUM_VALIDATION_V1.0.md` |
+| research trim solver; runtime density gap; WP-3C turning-trim plan | `F15_RESEARCH_TRIM_SOLVER_V1.0.md` |
 | target freeze, mass correction | `F15_FULL_SCALE_TARGET_FREEZE_V0.1.md` |
 | S / c̄ / b audit | `F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md` |
 | McDonnell lineage | `F15_A4172_SOURCE_LINEAGE_V0.1.md`, `F15_DN1180_SOURCE_LINEAGE_V0.1.md` |
@@ -83,6 +86,7 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 - TM-2012-215978's spike-configuration figures (derivative borders, CAS-off Dutch roll / short period) with the 836 baseline.
 - Source-exercised speeds with aerodynamically validated ones: `SourceReproduction` output is always an extrapolation of the Mach 0.6 fit.
 - Table VII's two halves by printed point number in the turning region: r, θ, φ and V are printed two rows lower.
+- The research trim's demonstrated-range stabilator box with travel, a hard stop or an actuator limit; or its trim with a flying trim (the body's q is still ISA-based).
 
 ## Hard rules still in force
 
@@ -95,8 +99,8 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 ## Next developer's first action
 
 1. Check out the branch.
-2. Run the twelve suites (validation plan §1) and confirm **568 / 0**.
-3. WP-1, WP-2 and WP-3A are complete. Before starting **WP-3B** (flying trim), read `F15_TABLE_VII_EQUILIBRIUM_VALIDATION_V1.0.md` §6. The static target is reproduced. Still open:
-   - research surface travel;
-   - whether to freeze density at the source value for research reproduction;
-   - the 6.8e-4 density offset.
+2. Run the thirteen suites (validation plan §1) and confirm **602 / 0**.
+3. WP-1, WP-2, WP-3A and WP-3B are complete. The research trim solver recovers the symmetric Table VII states off the body. Next, read `F15_RESEARCH_TRIM_SOLVER_V1.0.md`:
+   - §11 — **WP-3C**, turning trim: 8 unknowns, the pitchfork at point 165, and parameterizing by φ.
+   - §10 — **D11**, the research-only runtime environment policy (fixed source density, gravity) that any flying source reproduction needs first.
+   - Still open for flying trim: research surface travel.

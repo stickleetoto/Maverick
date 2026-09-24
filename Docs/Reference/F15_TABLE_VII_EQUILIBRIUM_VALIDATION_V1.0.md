@@ -1,6 +1,6 @@
 # F-15 — Baumann Table VII: Dataset and Static Equilibrium Reproduction (V1.0, WP-3A)
 
-> **Research configuration only** (`F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH`). **Not a trim solver.** Published states go in, residuals come out. Nothing is iterated, adjusted or tuned.
+> **Research configuration only** (`F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH`). **§1–§6 are not a trim solver.** Published states go in, residuals come out. Nothing is iterated, adjusted or tuned. **§7 (WP-3B)** adds the trim recovery: the symmetric states solved from perturbed starts by `MavF15AfitResearchTrimSolver`.
 
 **Headline:** Maverick's transcription of Davison's 1992 coefficient routine, with the research mass, inertia, 8,300 lbf thrust and the source's fixed density, **reproduces Baumann's 1989 Table VII equilibria to print precision in all six axes**. That covers all 170 states that can be assembled, symmetric and turning, at implied Mach 0.28–0.64.
 
@@ -142,9 +142,36 @@ In the turning region, the second half's r, θ, φ and V columns are printed **t
 
 ## 6. What this unblocks — and what it does not
 
-- **Static checks are meaningful now.** The research model, driven by the source's own states, lands on the source's own equilibria. A trim solver built on this model therefore has a sourced target, and a reproduction test to pass first.
-- **Still open for WP-3B (flying trim):**
+- **Static checks are meaningful now.** The research model, driven by the source's own states, lands on the source's own equilibria. A trim solver built on this model therefore has a sourced target, and a reproduction test to pass first. **WP-3B built that solver (§7).**
+- **Still open for flying trim** (WP-3B solved trim off the body; nothing was flown):
   - the flying research body still has **zero surface travel** (WP-2);
   - Maverick's density **follows altitude**, while the source's does not (`SourceReproduction` admits only 6,096 ± 1 m);
   - Maverick's standard-atmosphere density at 6,096 m is **6.8e-4 below** the source's RHO, which shifts q by the same fraction;
   - trajectory-level behaviour (Davison's simulator time histories) is **unvalidated**.
+
+## 7. WP-3B — the symmetric equilibria recovered by trim
+
+**Solver:** `MavF15AfitResearchTrimSolver` (`F15_RESEARCH_TRIM_SOLVER_V1.0.md`). It solves the source's own symmetric equilibrium:
+- **Parameter:** V, as printed.
+- **Unknowns:** α, stabilator, θ.
+- **Residuals:** X, Z and M.
+- **Inputs:** the fixed RHO, 8,300 lbf total thrust, and its 0.25-in thrust-line moment.
+
+**Method:**
+- Each of the **89** symmetric states is solved from **four** deterministic perturbed starts (up to 2° α, 1° stabilator, 3° θ). The published row builds the start and is the reporting target; it never enters the residual.
+
+**Results:**
+- **356 / 356 converged** in 2–3 iterations.
+- **Recovered minus printed:**
+
+  | | α | stabilator | θ |
+  |---|---|---|---|
+  | max | 6.66e-3° | 8.47e-3° | 6.82e-3° |
+  | mean | 3.07e-3° | 3.94e-3° | 2.69e-3° |
+
+- **Print floor:** `|dx/dV|·½ unit of the printed V + ½ unit of x`, where V has 4 digits. It is context, not a threshold. **0 of 89 states exceed it in any unknown**, and the largest difference is 0.96 of the floor.
+- **Independent check:** the §3 evaluator, at the recovered states, gives X/W ≤ 2.5e-7, Z/W ≤ 9.8e-7 and M/q̄Sc̄ ≤ 6.1e-8. The lateral residuals are exactly 0.
+- **Point 165** — the symmetric pitchfork state printed inside the turning section — is also recovered within its floor.
+- **Other roots:** a 455-start grid finds no second root at any V probed.
+
+**What this does not add:** anything about validity away from Mach 0.6, and anything about the turning states. Those are WP-3C (`F15_RESEARCH_TRIM_SOLVER_V1.0.md` §11).

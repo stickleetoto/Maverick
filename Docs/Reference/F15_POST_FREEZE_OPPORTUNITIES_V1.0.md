@@ -57,7 +57,7 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 | # | Opportunity | Class | Why | effort |
 |---|---|---|---|---|
 | D1 | ✅ **DONE (WP-1)** — **Exact-vs-research contamination tests across modules** — research geometry never reaches the exact profile; research thrust never reaches R5; family FCS never passes the exact floor; research profile IDs never carry the 836 target ID; `MavF15AeroModel` refuses research without opt-in (now covered by `[X4]`) | **HIGH VALUE** | Cheap, and it guards the whole architecture. **Must precede or accompany C1**, which is the change most likely to leak. | S |
-| D2 | **Research-mode trim validation vs Baumann Table VII** (ADA217366 PDF pp.124–129: equilibria against stabilator at 8,300 lb and 20,000 ft) | **HIGH VALUE** (after C1+C2) | The only sourced trim reference for the research model. Report differences; no tolerance can be asserted while Maverick's Davison-version transcription differs from Baumann's 1989 original. | M |
+| D2 | ◐ **SYMMETRIC HALF DONE (WP-3A static, WP-3B trim)** — **Research-mode trim validation vs Baumann Table VII** (ADA217366 PDF pp.124–129: equilibria against stabilator at 8,300 lb and 20,000 ft) | **HIGH VALUE** (after C1+C2) | WP-3B: all 89 symmetric states recovered by the research trim solver from perturbed starts, within print resolution (`F15_RESEARCH_TRIM_SOLVER_V1.0.md`). Turning states remain: D14. Differences are reported; no tolerance is asserted. | M |
 | D3 | Research-mode static-derivative checks (Cmα, Cnβ, Clβ, Cmq from the transcribed polynomials at the source condition, against the thesis curves; McDonnell 1990 fig. 4-2 Cmq) | **MEDIUM VALUE** | Headless, no PlayMode needed. Needs curve digitization. | S–M |
 | D4 | Source-envelope validation (refusal at the M/altitude/α/β edges, in PlayMode) | **MEDIUM VALUE** | Headless coverage exists for the domain gate; PlayMode confirmation follows C1. | S |
 | D5 | Automated deterministic trajectory / perturbation tests (pinned `Time.captureFramerate`) | **MEDIUM VALUE** (after C1) | Makes research-mode regressions bit-exact; no pass criteria beyond "bounded, finite, inside span" until D2 exists | M |
@@ -66,8 +66,9 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 | D8 | *(new, WP-2)* Route the stall inhibitor through the pitch CAS in exact mode, as 836's pitch diagram draws it | **LOW VALUE** now | Structural; can only remove output. No numeric consequence until a gain exists. | S |
 | D9 | ✅ **DONE (WP-3A)** — Research speed-domain decision for Table VII trim | **HIGH VALUE** for WP-3 | Resolved from the source code: M 0.6 is the coefficient-fit condition, and the source varies V at fixed density. The gate is now two explicit modes, `StrictFitCondition` (default) and `SourceReproduction` (218.5–699.7 ft/s at 6,096 m, flagged as extrapolated). `F15_BAUMANN_SOURCE_CONDITION_AUDIT_V1.0.md` | S (decision) |
 | D10 | *(new, WP-2)* Research actuator lags (Davison PDF p.97: 20 / 28 / 20 s⁻¹, differential tail = 0.3 × aileron) | **MEDIUM VALUE** (research) | Version-matched bandwidth, not a rate limit. Would need an actuator lag type kept separate from rate limits. | S |
-| D11 | *(new, WP-3A)* **Research fixed-density option** for `SourceReproduction` | **HIGH VALUE** for WP-3B | The source has no altitude state: its density is the 20,000-ft constant at every state. Maverick's follows altitude, so a free-flying research body leaves the source semantics at once. Maverick's standard density at 6,096 m is also 6.8e-4 below the source's RHO. | S |
+| D11 | *(new, WP-3A; design in WP-3B)* **Research-only runtime environment policy** for `SourceReproduction`: fixed source density, and a gravity decision | **HIGH VALUE** before any flying source reproduction | The source has no altitude state: its density is the 20,000-ft constant at every state. `MavSixDoFBody` samples ISA density at its altitude, so runtime `SourceReproduction` does not reproduce the source's q (6.83e-4 low even at 6,096 m; measured in `[R13]`). Unity's gravity is 9.81 against the source's 9.80664 m/s² (+3.43e-4). WP-3B solved trim off the body in the source's own environment. The policy — research-profile-scoped, default off, never touching `MavAtmosphereModel` — is designed in `F15_RESEARCH_TRIM_SOLVER_V1.0.md` §10 and **not built**. Gravity touches the load-application boundary and needs its own reviewed change. | S–M |
 | D12 | *(new, WP-3A)* CFX2 constant: which printing is right (0.09833617 in Baumann and Davison App. B, 0.09833517 in Davison App. C) | **LOW VALUE** | 1e-6 in the high-AoA drag fit, inactive below α 20°. Matters only for high-α research reproduction; a decision, not a hunt. | S |
+| D14 | *(new, WP-3B)* **WP-3C — turning trim** for Table VII's 81 turning states | **HIGH VALUE** (research) | 8 unknowns (α, β, p, q, r, θ, φ, stabilator) and 8 residuals (X, Y, Z, L, M, N, θ̇, φ̇). The turns leave the symmetric branch in a pitchfork at point 165 (V 377.4 ft/s). At fixed V there are three roots and a singular Jacobian at the fork, so parameterize by φ. The six-axis equations already reproduce these states statically (WP-3A). Plan: `F15_RESEARCH_TRIM_SOLVER_V1.0.md` §11. | M |
 | D13 | *(new, WP-3A)* Coefficient-by-coefficient diff of Baumann 1989 vs Davison App. C `COEFF` for channels Table VII never exercises (aileron, rudder, differential tail, high-α, asymmetric) | **MEDIUM VALUE** (research) | Table VII verifies only the exercised channels. The text layers are too noisy to diff automatically, so this means reading rendered pages. | M |
 
 ---
@@ -105,9 +106,12 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
   - Table VII is stored as printed.
   - 170 equilibria reproduce to print precision in six axes.
   - The two halves' displaced columns and one listing difference (CFX2) are recorded.
-- **WP-3B (flying trim) — next.**
-  - **Meaningful now:** a solver has a sourced static target that the model already reproduces.
-  - **Still needs:** D11 (fixed density), and research surface travel for the flying body. The static control is validation-only.
+- **WP-3B — ✅ COMPLETE** (source-faithful research trim solver, symmetric, off the body). `F15_RESEARCH_TRIM_SOLVER_V1.0.md`.
+  - A dedicated research trim plant on `MavDampedNewtonSolver`. The generic solver's ISA density, solved-for thrust and no-thrust-moment assumptions do not describe the source, so it was left unchanged.
+  - 89 symmetric Table VII states recovered from perturbed starts: 356 / 356 converged, all within print resolution, no second root found.
+  - The runtime ISA-density gap is recorded, and D11 is designed.
+- **WP-3C (turning trim, D14) — next candidate.** Justified: the symmetric solver is stable, and the six-axis equations reproduce the turning states statically.
+- **Flying trim** still needs D11, and research surface travel for the flying body. The static control is validation-only.
 - Compare trim against Baumann Table VII.
 - Check static derivatives against the thesis curves.
 - Run deterministic perturbation runs inside the source envelope.
