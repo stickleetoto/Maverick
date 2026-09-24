@@ -1,0 +1,3434 @@
+{
+ "schema": "maverick.aerospace.known-data.v2",
+ "aircraft": "F/A-18",
+ "library_revision": "r1",
+ "generated": "2026-09-24",
+ "rule": "implementation_use = ALLOWED (the only state that sets implementation_allowed = true in AIRCRAFT_NUMERIC_FIELD_INDEX.json) requires: the source's own content inspected by the library at PAGE_VERIFIED, the configuration known, units and convention known, and the page/table/figure recorded. Values read only in other Maverick documents carry exactness REPOSITORY_READING and verification_level SEARCH_LEAD_ONLY: the repository reading is recorded in existing_maverick_analysis, it is not a primary source.",
+ "configurations": [
+  {
+   "configuration_id": "FA18-CFG-PROD-AB",
+   "label": "Production F/A-18A/B (U.S. Navy)",
+   "airframe": "Production family; block/lot not specified",
+   "serial": null,
+   "engine": "F404-GE-400 x2",
+   "fcs": "Production digital FBW (PROM versions V8.x/V10.x family); production gains NOT public",
+   "research_hardware": null,
+   "dates": "NOT_RECORDED",
+   "status": "REFERENCE_ONLY",
+   "notes": "Target identity for 'baseline F/A-18' claims. No public source in r0 provides production FCS gains or a manufacturer aero database.",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "Production"
+  },
+  {
+   "configuration_id": "FA18-CFG-HARV-P1-BASIC",
+   "label": "NASA HARV Phase 1 — basic F-18 hardware/software configuration",
+   "airframe": "F-18 full-scale development aircraft #6 (pre-production; built before the F/A-18 redesignation)",
+   "serial": "NASA 840, BuNo 160780",
+   "engine": "F404-GE-400 x2",
+   "fcs": "Basic F-18 FCS (V8.3.3 per VDD; upgrade to V10.1 timing unverified)",
+   "research_hardware": "Spin chute (why the Navy loaned this airframe), research instrumentation; no TV vanes",
+   "dates": "From April 1987 (phase end date unverified)",
+   "status": "CANDIDATE_VALIDATION_CONFIG",
+   "notes": "Flight-derived lat-dir derivatives for this configuration: NASA-TM-4786. Mass properties: NASA-TM-4772 Phase 1 column.",
+   "configuration_scope": "EXACT_AIRFRAME",
+   "lineage_family": "NASA 840 HARV"
+  },
+  {
+   "configuration_id": "FA18-CFG-HARV-P2-TV",
+   "label": "NASA HARV Phase 2 — multi-axis thrust vectoring + RFCS",
+   "airframe": "Same airframe as P1",
+   "serial": "NASA 840, BuNo 160780",
+   "engine": "F404-GE-400 x2 with 3 external TV vanes per engine",
+   "fcs": "Basic F/A-18 FCS (V10.1 family) + RFCS (Pace 1750A, Ada) running NASA research laws (e.g., NASA-1A)",
+   "research_hardware": "TV vane system (~2,200 lb); spin-chute / emergency-system / ballast changes (~1,500 lb)",
+   "dates": "Unverified (between Phase 1 and July 1995)",
+   "status": "CANDIDATE_VALIDATION_CONFIG",
+   "notes": "TV hardware changes mass (Phase 2/3 column of TM-4772) and aft-body aero; never merge TV terms into a baseline F/A-18.",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "NASA 840 HARV"
+  },
+  {
+   "configuration_id": "FA18-CFG-HARV-P3-ANSER",
+   "label": "NASA HARV Phase 3 — TV + Actuated Nose Strakes for Enhanced Rolling (ANSER)",
+   "airframe": "Same airframe with modified forebody",
+   "serial": "NASA 840, BuNo 160780",
+   "engine": "F404-GE-400 x2 with TV vanes",
+   "fcs": "RFCS running the ANSER research control law (NASA-TM-110217; v152.0 validated in NASA-CR-198250)",
+   "research_hardware": "TV vanes + conformal actuated forebody strakes",
+   "dates": "ANSER flight data July 1995 - May 1996; program ended September 1996",
+   "status": "CANDIDATE_RESEARCH_TARGET",
+   "notes": "Only configuration with a public, code-level control-law specification.",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "NASA 840 HARV"
+  },
+  {
+   "configuration_id": "FA18-CFG-SIM-F18BAS",
+   "label": "NASA Langley 'f18bas' simulation (NASA-TM-107601)",
+   "airframe": "Simulation of the basic F/A-18",
+   "serial": null,
+   "engine": "F404 engine model (details unverified)",
+   "fcs": "Basic F/A-18 control-system model (version unverified)",
+   "research_hardware": "Preliminary HARV TV system model",
+   "dates": "1992",
+   "status": "SIMULATION_REFERENCE",
+   "notes": "Wind-tunnel-derived database, alpha -10..+90 deg, beta -20..+20 deg, table look-up with linear interpolation (extract).",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "NASA Langley F/A-18 simulation lineage"
+  },
+  {
+   "configuration_id": "FA18-CFG-SIM-F18HARV",
+   "label": "NASA Langley 'f18harv' simulation (NASA-TM-110216)",
+   "airframe": "Simulation of the HARV",
+   "serial": "Models NASA 840",
+   "engine": "F404 engine model with TV effects (details unverified)",
+   "fcs": "Host for NASA-1A / lateral-directional / ANSER research laws",
+   "research_hardware": "TV vanes + actuated forebody strakes",
+   "dates": "1996",
+   "status": "SIMULATION_REFERENCE",
+   "notes": "Database domain per extract: alpha -10..+90 deg, beta -20..+20 deg, Mach 0..2.0. Domain is not a validated envelope.",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "NASA Langley F/A-18 simulation lineage"
+  },
+  {
+   "configuration_id": "FA18-CFG-SRA-845",
+   "label": "NASA F/A-18 Systems Research Aircraft",
+   "airframe": "Pre-production two-seat F/A-18B",
+   "serial": "NASA 845",
+   "engine": "F404 (variant unverified)",
+   "fcs": "Production-family FCS + systems experiments",
+   "research_hardware": "EPAD EHA/EMA on left aileron; fly-by-light; power-by-wire",
+   "dates": "First research flight 21 May 1993",
+   "status": "NOT_AN_AERO_SOURCE",
+   "notes": "Useful for actuator technology only; no aero model located.",
+   "configuration_scope": "EXACT_AIRFRAME",
+   "lineage_family": "NASA 845 SRA"
+  },
+  {
+   "configuration_id": "FA18-CFG-AAW-853",
+   "label": "NASA F/A-18A Active Aeroelastic Wing (X-53)",
+   "airframe": "Navy F/A-18A airframe 853 with wings taken from HARV 840, wing-box skins thinned",
+   "serial": "NASA 853",
+   "engine": "F404 (variant unverified)",
+   "fcs": "AAW research control laws (NASA/TM-2005-213666)",
+   "research_hardware": "Modified flexible wing; research instrumentation",
+   "dates": "Program from 1996; flight phases early 2003 and early 2005",
+   "status": "SEPARATE_CONFIGURATION",
+   "notes": "Serial-identity trap: HARV 840's wings flew again on 853 in a different structural configuration.",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "NASA 853"
+  },
+  {
+   "configuration_id": "FA18-CFG-FAST-853",
+   "label": "NASA Full-scale Advanced Systems Testbed (FAST) F/A-18",
+   "airframe": "F/A-18 (tail number per program pages 853; unverified)",
+   "serial": "NASA 853 (unverified)",
+   "engine": "F404 (variant unverified)",
+   "fcs": "Nonlinear dynamic inversion baseline research law (2011)",
+   "research_hardware": "Research flight computers",
+   "dates": "c. 2011",
+   "status": "SEPARATE_CONFIGURATION",
+   "notes": "",
+   "configuration_scope": "RESEARCH_MODIFIED",
+   "lineage_family": "NASA 853"
+  },
+  {
+   "configuration_id": "FA18-CFG-UMN-DERIVED",
+   "label": "University of Minnesota falling-leaf analysis model",
+   "airframe": "Derived simulation",
+   "serial": null,
+   "engine": "Not the focus",
+   "fcs": "Reconstructed baseline and revised F/A-18 control laws",
+   "research_hardware": null,
+   "dates": "2011",
+   "status": "CROSS_VALIDATION_ONLY",
+   "notes": "Built from 'F/A-18 HARV aerodynamic data in the open literature' (abstract) plus the Heller/David/Holmberg control-law description.",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "Academic"
+  },
+  {
+   "configuration_id": "FA18-CFG-EF",
+   "label": "F/A-18E/F Super Hornet",
+   "airframe": "Different aircraft (larger airframe, F414 engines)",
+   "serial": null,
+   "engine": "F414-GE-400",
+   "fcs": "Different FCS",
+   "research_hardware": null,
+   "dates": "NOT_RECORDED",
+   "status": "OUT_OF_SCOPE",
+   "notes": "Not a variant of the HARV data set. Do not mix.",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "Super Hornet (out of scope)"
+  },
+  {
+   "configuration_id": "ENG-F404-GE-400",
+   "label": "General Electric F404-GE-400 (engine identity)",
+   "airframe": "Installations: F/A-18A/B (twin), HARV (twin with TV vanes), X-29A (single)",
+   "serial": null,
+   "engine": "F404-GE-400",
+   "fcs": "n/a (engine identity)",
+   "research_hardware": null,
+   "dates": "NOT_RECORDED",
+   "status": "ENGINE_IDENTITY",
+   "notes": "Engine-level (uninstalled) data from X-29A tests may inform the engine; installed effects do not transfer between airframes.",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "lineage_family": "F404"
+  },
+  {
+   "configuration_id": "FA18-CFG-WT-CR3608",
+   "label": "1/10-scale F-18 rotary-balance model (Langley Spin Tunnel; NASA CR-3608)",
+   "airframe": "F-18 1/10-scale tunnel model",
+   "serial": "n/a",
+   "engine": "n/a",
+   "fcs": "n/a",
+   "research_hardware": "none",
+   "dates": "1984 report",
+   "status": "CROSS_VALIDATION_ONLY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "lineage_family": "NASA Langley tunnel",
+   "notes": "Component build-up (body, wing, LEX, tails) preserved by the repository transcription; scale-model data never full-scale exact."
+  }
+ ],
+ "values": [
+  {
+   "value_id": "FA18-GEO-S",
+   "field": "reference_area",
+   "quantity": "Reference wing area",
+   "symbol": "S",
+   "value": 400,
+   "units": "ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC",
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Reference-geometry table (number/page not captured)",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Aerodynamic reference area",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Widely repeated F/A-18 value; repetition in derived works is not independent confirmation (see SOURCE_GRAPH repeated-number register). R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-GEO-CBAR",
+   "field": "mean_aerodynamic_chord",
+   "quantity": "Reference mean aerodynamic chord",
+   "symbol": "cbar",
+   "value": 11.52,
+   "units": "ft",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC",
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Reference-geometry table (number/page not captured)",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Aerodynamic reference length (longitudinal)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": " R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-GEO-B",
+   "field": "reference_span",
+   "quantity": "Reference span",
+   "symbol": "b",
+   "value": 37.4,
+   "units": "ft",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC",
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Reference-geometry table (number/page not captured)",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Aerodynamic reference length (lateral)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Extract gives 37.4 ft; many derived sources print 37.42 ft. Resolve the printed precision in R1; do not 'correct' either. R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-GEO-SPAN-PHYS",
+   "field": "physical_span",
+   "quantity": "Physical wing span (public fact page)",
+   "symbol": "b_phys",
+   "value": "37 ft 5 in",
+   "units": "ft-in",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC",
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-FS-002-DFRC",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Physical span; wingtip stores/rails status not stated",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "IDENTITY_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Physical dimension, not the aerodynamic reference span. 37 ft 5 in = 37.417 ft."
+  },
+  {
+   "value_id": "FA18-MASS-P1-W",
+   "field": "mass",
+   "quantity": "Gross weight, Phase 1 (basic) loading",
+   "symbol": "W",
+   "value": 31980,
+   "units": "lbm",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": "Tabulated Phase 1 condition; ~60 % internal fuel (6,480 lbm) inferred from the same extract — verify",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table (number/page not captured)",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": " R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-MASS-P1-CG",
+   "field": "cg",
+   "quantity": "Longitudinal CG, Phase 1",
+   "symbol": "x_cg",
+   "value": 21.9,
+   "units": "% MAC",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": "As FA18-MASS-P1-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Percent of reference MAC; MAC leading-edge station not captured",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": " R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-MASS-P1-FS",
+   "field": "cg",
+   "quantity": "CG fuselage station, Phase 1",
+   "symbol": "FS_cg",
+   "value": 454.33,
+   "units": "in (fuselage station)",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": "As FA18-MASS-P1-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Manufacturer fuselage-station datum (origin not captured)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": " R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-MASS-P1-IXX",
+   "field": "Ixx",
+   "quantity": "Roll moment of inertia, Phase 1",
+   "symbol": "Ixx",
+   "value": 22040,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": "As FA18-MASS-P1-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Body axes assumed (not verified)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": " R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-MASS-P1-IYY",
+   "field": "Iyy",
+   "quantity": "Pitch moment of inertia, Phase 1",
+   "symbol": "Iyy",
+   "value": 124554,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": "As FA18-MASS-P1-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Body axes assumed (not verified)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": " R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-MASS-P1-IZZ",
+   "field": "Izz",
+   "quantity": "Yaw moment of inertia, Phase 1",
+   "symbol": "Izz",
+   "value": 139382,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": "As FA18-MASS-P1-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Body axes assumed (not verified)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": " R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-MASS-P23-W",
+   "field": "mass",
+   "quantity": "Gross weight, Phase 2/3 (TV / ANSER) loading",
+   "symbol": "W",
+   "value": 36099,
+   "units": "lbm",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": "Tabulated Phase 2/3 condition; ~60 % internal fuel inferred — verify",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table (number/page not captured)",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-MASS-P23-CG",
+   "field": "cg",
+   "quantity": "Longitudinal CG, Phase 2/3",
+   "symbol": "x_cg",
+   "value": 23.8,
+   "units": "% MAC",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": "As FA18-MASS-P23-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Percent of reference MAC",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-MASS-P23-FS",
+   "field": "cg",
+   "quantity": "CG fuselage station, Phase 2/3",
+   "symbol": "FS_cg",
+   "value": 456.88,
+   "units": "in (fuselage station)",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": "As FA18-MASS-P23-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Manufacturer fuselage-station datum",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-MASS-P23-IXX",
+   "field": "Ixx",
+   "quantity": "Roll moment of inertia, Phase 2/3",
+   "symbol": "Ixx",
+   "value": 22789,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": "As FA18-MASS-P23-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Body axes assumed (not verified)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-MASS-ALT-IXX"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-MASS-P23-IYY",
+   "field": "Iyy",
+   "quantity": "Pitch moment of inertia, Phase 2/3",
+   "symbol": "Iyy",
+   "value": 176809,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": "As FA18-MASS-P23-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Body axes assumed (not verified)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-MASS-ALT-IYY"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-MASS-P23-IZZ",
+   "field": "Izz",
+   "quantity": "Yaw moment of inertia, Phase 2/3",
+   "symbol": "Izz",
+   "value": 191744,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": "As FA18-MASS-P23-W",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Body axes assumed (not verified)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-MASS-ALT-IZZ"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-MASS-FUEL-INT",
+   "field": "fuel_mass",
+   "quantity": "Internal fuel mass for tabulated loading",
+   "symbol": "m_fuel",
+   "value": 6480,
+   "units": "lbm",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC",
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": "Stated as approximately 60 % internal fuel",
+   "source_id": "NASA-TM-4772",
+   "candidate_source_ids": [],
+   "location": "Mass-properties table or text",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same number transcribed from NASA/TP-97-206539 Table 3 (unmodified Phase I column)",
+     "locator": "Table 3, PDF p.16 / printed p.10",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Which phase column(s) this applies to is not captured. R1: the repository reads this number in NASA/TP-97-206539 Table 3; the r0 attribution to TM-4772 is unconfirmed (see FA18 SOURCE_GRAPH R1 addendum)."
+  },
+  {
+   "value_id": "FA18-MASS-ALT-IXX",
+   "field": "Ixx",
+   "quantity": "Roll moment of inertia (second extract set)",
+   "symbol": "Ixx",
+   "value": 22632,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": "'60 percent internal fuel' per extract",
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TP-3531",
+    "NASA-TM-110216",
+    "NASA-TP-3446"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "NOT_USABLE_UNTIL_ATTRIBUTED",
+   "conflicts_with": [
+    "FA18-MASS-P23-IXX"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "Search extract attributed the set to the LTRS mirror of NASA-TP-3531; a wind-tunnel TV paper is an unusual home for full-scale inertias, so attribution is doubtful."
+  },
+  {
+   "value_id": "FA18-MASS-ALT-IYY",
+   "field": "Iyy",
+   "quantity": "Pitch moment of inertia (second extract set)",
+   "symbol": "Iyy",
+   "value": 174246.3,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TP-3531",
+    "NASA-TM-110216",
+    "NASA-TP-3446"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "NOT_USABLE_UNTIL_ATTRIBUTED",
+   "conflicts_with": [
+    "FA18-MASS-P23-IYY"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-MASS-ALT-IZZ",
+   "field": "Izz",
+   "quantity": "Yaw moment of inertia (second extract set)",
+   "symbol": "Izz",
+   "value": 189336.4,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TP-3531",
+    "NASA-TM-110216",
+    "NASA-TP-3446"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "NOT_USABLE_UNTIL_ATTRIBUTED",
+   "conflicts_with": [
+    "FA18-MASS-P23-IZZ"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-MASS-ALT-IXZ",
+   "field": "Ixz",
+   "quantity": "Product of inertia (second extract set)",
+   "symbol": "Ixz",
+   "value": -2131.8,
+   "units": "slug-ft^2",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TP-3531",
+    "NASA-TM-110216",
+    "NASA-TP-3446"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Sign convention of Ixz not captured (body axes; definition +/- integral xz dm unknown)",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "NOT_USABLE_UNTIL_ATTRIBUTED",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "The only Ixz candidate found. Sign convention MUST be verified before any use."
+  },
+  {
+   "value_id": "FA18-MASS-DELTA-MOD",
+   "field": "mass_increment",
+   "quantity": "Weight increase of HARV modifications (modified minus unmodified)",
+   "symbol": "dW_mod",
+   "value": 4119,
+   "units": "lb",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-WEB-HARV-VDD",
+   "candidate_source_ids": [],
+   "location": "VDD subsection 3.2.1",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CONSISTENCY_CHECK",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Equals 36,099 - 31,980 lbm from NASA-TM-4772 exactly. Both are NASA HARV program documents, so this is internal consistency, not independent confirmation."
+  },
+  {
+   "value_id": "FA18-MASS-DELTA-TV",
+   "field": "mass_increment",
+   "quantity": "Weight of TV vane system installation (approximate)",
+   "symbol": "dW_TV",
+   "value": 2200,
+   "units": "lb",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-WEB-HARV-VDD",
+   "candidate_source_ids": [],
+   "location": "VDD subsection 3.2.1",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT_APPROXIMATE",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CONSISTENCY_CHECK",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-MASS-DELTA-CHUTE",
+   "field": "mass_increment",
+   "quantity": "Spin chute, emergency systems and ballast (approximate)",
+   "symbol": "dW_misc",
+   "value": 1500,
+   "units": "lb",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-WEB-HARV-VDD",
+   "candidate_source_ids": [],
+   "location": "VDD subsection 3.2.1",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT_APPROXIMATE",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CONSISTENCY_CHECK",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-STAB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Stabilator position limits",
+   "symbol": "dh_lim",
+   "value": "24 up / 10.5 down",
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TM-110216",
+    "NASA-CR-198248"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "Direction words as extracted; symmetric/differential split and sign convention not verified",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-STAB-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Stabilator rate limit",
+   "symbol": "dh_dot_lim",
+   "value": 40,
+   "units": "deg/s",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TM-110216",
+    "NASA-CR-198248"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-AIL-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Aileron position limits",
+   "symbol": "da_lim",
+   "value": "25 up / 45 down",
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TM-107601",
+    "NASA-TM-110216",
+    "NASA-CR-198248"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-BAS-AIL-LIM",
+    "FA18-HARV-AIL-LIM",
+    "FA18-P2T1-AIL-LIM"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "45 deg down is consistent with aileron droop; verify. R1 correction: '25 up / 45 down' matches the f18bas table (TM-107601 Table 8.7: -25/+45), not TM-110216 (-25/+42) and not TP-97-206539 Table 1 (24 up / 45 down), per repository transcriptions. The r0 attribution to HARV sources is withdrawn; TM-107601 added as candidate."
+  },
+  {
+   "value_id": "FA18-ACT-AIL-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Aileron rate limit",
+   "symbol": "da_dot_lim",
+   "value": 100,
+   "units": "deg/s",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TM-110216",
+    "NASA-CR-198248"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-RUD-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Rudder position limits",
+   "symbol": "dr_lim",
+   "value": "30 left / 30 right",
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TM-110216",
+    "NASA-CR-198248",
+    "NASA-TP-1998-208465",
+    "NASA-TM-110217"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-RUD-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Rudder rate limit",
+   "symbol": "dr_dot_lim",
+   "value": 82,
+   "units": "deg/s",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TM-110216",
+    "NASA-CR-198248"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-ACT-AAW-RUD-RATE",
+    "FA18-BAS-RUD-RATE",
+    "FA18-A7813-RUD-RATE"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": " R1: repository transcriptions place 82 deg/s in TM-110216 Tables 6.1/6.2 and TP-97-206539 Table 1."
+  },
+  {
+   "value_id": "FA18-ACT-LEF-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Leading-edge flap position limits",
+   "symbol": "dlef_lim",
+   "value": "3 up / 33 down",
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-CR-198248",
+    "NASA-TP-1998-208465",
+    "NASA-TM-110217"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-TEF-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Trailing-edge flap position limits",
+   "symbol": "dtef_lim",
+   "value": "8 up / 45 down",
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-CR-198248",
+    "NASA-TP-1998-208465",
+    "NASA-TM-110217"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-AAW-STAB-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Stabilator rate limit (AAW)",
+   "symbol": "dh_dot_lim",
+   "value": 40,
+   "units": "deg/s",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-AAW-853"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2005-213664",
+   "candidate_source_ids": [],
+   "location": "Actuator characteristics table (AAW document family; exact report not resolved)",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-AAW-RUD-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Rudder rate limit (AAW)",
+   "symbol": "dr_dot_lim",
+   "value": 56,
+   "units": "deg/s",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-AAW-853"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2005-213664",
+   "candidate_source_ids": [],
+   "location": "Actuator characteristics table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-ACT-RUD-RATE"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": " R1 observation: 56 deg/s is also the MDC A7813 rudder NO-LOAD rate reproduced in TM-107601 Table 8.6 (repository). Whether the AAW table quotes the same rating is not established."
+  },
+  {
+   "value_id": "FA18-ACT-AAW-TEF-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Trailing-edge flap rate limit (AAW)",
+   "symbol": "dtef_dot_lim",
+   "value": 18,
+   "units": "deg/s",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-AAW-853"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2005-213664",
+   "candidate_source_ids": [],
+   "location": "Actuator characteristics table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-AAW-AIL-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Aileron rate limit (AAW)",
+   "symbol": "da_dot_lim",
+   "value": 100,
+   "units": "deg/s",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-AAW-853"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2005-213664",
+   "candidate_source_ids": [],
+   "location": "Actuator characteristics table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ACT-AAW-LEF-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Leading-edge flap rate limit (AAW, inboard LEF)",
+   "symbol": "dlef_dot_lim",
+   "value": 15,
+   "units": "deg/s",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-AAW-853"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-2005-213664",
+   "candidate_source_ids": [],
+   "location": "Actuator characteristics table",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Extract labels it 'ILEF' (inboard leading-edge flap). AAW split outboard LEF behaviour differs from the HARV."
+  },
+  {
+   "value_id": "FA18-DB-ALPHA",
+   "field": "aero_domain_alpha",
+   "quantity": "Aerodynamic database angle-of-attack domain",
+   "symbol": "alpha_db",
+   "value": "-10 .. +90",
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS",
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN_GATE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Also stated for f18bas (NASA-TM-107601 extract). Database domain != validated envelope."
+  },
+  {
+   "value_id": "FA18-DB-BETA",
+   "field": "aero_domain_beta",
+   "quantity": "Aerodynamic database sideslip domain",
+   "symbol": "beta_db",
+   "value": "-20 .. +20",
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS",
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN_GATE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-DB-MACH",
+   "field": "aero_domain_mach",
+   "quantity": "Aerodynamic database Mach domain",
+   "symbol": "M_db",
+   "value": "0.0 .. 2.0",
+   "units": "-",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Abstract (per search extract)",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN_GATE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Flight validation of the HARV research laws is concentrated at M 0.2-0.7."
+  },
+  {
+   "value_id": "FA18-RFCS-ENV",
+   "field": "flight_envelope",
+   "quantity": "Research flight control system engagement envelope",
+   "symbol": "RFCS_env",
+   "value": "M 0.2-0.7; 15,000-35,000 ft initial (later 45,000 ft)",
+   "units": "-",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV",
+    "FA18-CFG-HARV-P3-ANSER"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-WEB-HARV-VDD",
+   "candidate_source_ids": [],
+   "location": "VDD section 3.3",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN_GATE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ENG-THRUST-CLASS",
+   "field": "thrust_class",
+   "quantity": "Afterburning thrust class per engine (fact sheet)",
+   "symbol": "T_AB_class",
+   "value": 16000,
+   "units": "lbf",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "ENG-F404-GE-400"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-FS-002-DFRC",
+   "candidate_source_ids": [],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "PUBLIC_FACT_SHEET",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "PROHIBITED",
+   "validation_use": "IDENTITY_ONLY",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Marketing/fact-sheet class figure; not an installed or uninstalled thrust deck point."
+  },
+  {
+   "value_id": "FA18-ENG-PLA-IDLE",
+   "field": "throttle_map",
+   "quantity": "Power lever angle at idle",
+   "symbol": "PLA_idle",
+   "value": 35,
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "ENG-F404-GE-400"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TM-4240",
+    "NASA-TP-3001",
+    "NASA-TM-4140"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Engine control schedule; installation-independent if verified."
+  },
+  {
+   "value_id": "FA18-ENG-PLA-INT",
+   "field": "throttle_map",
+   "quantity": "Power lever angle at intermediate (max non-afterburning)",
+   "symbol": "PLA_int",
+   "value": 102,
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "ENG-F404-GE-400"
+   ],
+   "loading_state": null,
+   "source_id": "UNRESOLVED",
+   "candidate_source_ids": [
+    "NASA-TM-4240",
+    "NASA-TP-3001",
+    "NASA-TM-4140"
+   ],
+   "location": "NOT_CAPTURED",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ENG-MODEL-ACC-SS",
+   "field": "model_accuracy",
+   "quantity": "Simple engine model steady-state accuracy vs GE complete model",
+   "symbol": "err_ss",
+   "value": "within 3",
+   "units": "%",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "ENG-F404-GE-400",
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4240",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "ACCEPTANCE_TOLERANCE_REFERENCE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Evaluated at M 0.2 and M 0.7, 35,000 ft."
+  },
+  {
+   "value_id": "FA18-ENG-MODEL-ACC-TR",
+   "field": "model_accuracy",
+   "quantity": "Simple engine model transient accuracy vs GE complete model",
+   "symbol": "err_tr",
+   "value": "within 25",
+   "units": "%",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "ENG-F404-GE-400",
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4240",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "ACCEPTANCE_TOLERANCE_REFERENCE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ENG-INFLIGHT-ACC",
+   "field": "model_accuracy",
+   "quantity": "Uninstalled gross thrust accuracy of in-flight thrust methods",
+   "symbol": "err_Fg",
+   "value": "1 .. 4",
+   "units": "%",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "ENG-F404-GE-400"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-3001",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "UNCERTAINTY_REFERENCE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "X-29A installation; engine-level uncertainty only."
+  },
+  {
+   "value_id": "FA18-PID-ALPHA-ILIFF-BASIC",
+   "field": "aero_domain_alpha",
+   "quantity": "Alpha range of flight-derived lat-dir derivatives, basic F-18",
+   "symbol": "alpha_range",
+   "value": "3 .. 47",
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4786",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN_GATE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-PID-ALPHA-NAPOLITANO",
+   "field": "aero_domain_alpha",
+   "quantity": "Alpha range of flight-derived derivatives (WVU pEst)",
+   "symbol": "alpha_range",
+   "value": "10 .. 60",
+   "units": "deg",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-CR-194838",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "ABSTRACT_STATEMENT",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN_GATE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-DEP-TEST-COND",
+   "field": "flight_envelope",
+   "quantity": "Departure test entry conditions (inlet compatibility study)",
+   "symbol": "dep_cond",
+   "value": "M 0.3-0.4; 35,000 ft; entry yaw rate 40-90 deg/s",
+   "units": "-",
+   "precision": "as extracted (printed precision not confirmed)",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": null,
+   "source_id": "NTRS-19990024943",
+   "candidate_source_ids": [],
+   "location": "Abstract",
+   "origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "reference_convention": "AS_STATED_IN_SOURCE",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "SCENARIO_REFERENCE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "HARV phase during these departures not verified; configuration tag is provisional."
+  },
+  {
+   "value_id": "FA18-BAS-STAB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Stabilator position limits (f18bas)",
+   "symbol": null,
+   "value": "-24 / +10.5",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-BAS-STAB-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Stabilator rate limit (f18bas)",
+   "symbol": null,
+   "value": 40,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: first-order lag, tau = 1/30 s"
+  },
+  {
+   "value_id": "FA18-BAS-RUD-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Rudder position limits (f18bas)",
+   "symbol": null,
+   "value": "-30 / +30",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-BAS-RUD-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Rudder rate limit (f18bas)",
+   "symbol": null,
+   "value": 61,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-HARV-RUD-RATE",
+    "FA18-A7813-RUD-RATE"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: first-order lag, tau = 1/40 s"
+  },
+  {
+   "value_id": "FA18-BAS-AIL-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Aileron position limits (f18bas)",
+   "symbol": null,
+   "value": "-25 / +45",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-HARV-AIL-LIM",
+    "FA18-P2T1-AIL-LIM"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-BAS-AIL-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Aileron rate limit (f18bas)",
+   "symbol": null,
+   "value": 100,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: first-order lag, tau = 1/48 s"
+  },
+  {
+   "value_id": "FA18-BAS-TEF-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Trailing-edge flap position limits (f18bas)",
+   "symbol": null,
+   "value": "-8 / +45",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-BAS-TEF-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Trailing-edge flap rate limit (f18bas)",
+   "symbol": null,
+   "value": 18,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: first-order lag, tau = 1/20 s"
+  },
+  {
+   "value_id": "FA18-BAS-LEF-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Leading-edge flap position limits (f18bas)",
+   "symbol": null,
+   "value": "-3 / +34",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-HARV-LEF-LIM"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-BAS-LEF-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Leading-edge flap rate limit (f18bas)",
+   "symbol": null,
+   "value": 18,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-HARV-LEF-RATE"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 8.7, PDF p.87 / printed p.81 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: first-order lag, tau = 1/20 s"
+  },
+  {
+   "value_id": "FA18-HARV-STAB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Stabilator position limits (f18harv)",
+   "symbol": null,
+   "value": "-24 / +10.5",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-HARV-STAB-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Stabilator rate limit (f18harv)",
+   "symbol": null,
+   "value": 40,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: second-order, wn 30.74, zeta 0.509"
+  },
+  {
+   "value_id": "FA18-HARV-RUD-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Rudder position limits (f18harv)",
+   "symbol": null,
+   "value": "-30 / +30",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-HARV-RUD-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Rudder rate limit (f18harv)",
+   "symbol": null,
+   "value": 82,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-BAS-RUD-RATE"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: second-order, wn 72.1, zeta 0.69"
+  },
+  {
+   "value_id": "FA18-HARV-AIL-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Aileron position limits (f18harv)",
+   "symbol": null,
+   "value": "-25 / +42",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-BAS-AIL-LIM",
+    "FA18-P2T1-AIL-LIM"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-HARV-AIL-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Aileron rate limit (f18harv)",
+   "symbol": null,
+   "value": 100,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: second-order, wn 75, zeta 0.59"
+  },
+  {
+   "value_id": "FA18-HARV-TEF-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Trailing-edge flap position limits (f18harv)",
+   "symbol": null,
+   "value": "-8 / +45",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-HARV-TEF-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Trailing-edge flap rate limit (f18harv)",
+   "symbol": null,
+   "value": 18,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: second-order, wn 35, zeta 0.71"
+  },
+  {
+   "value_id": "FA18-HARV-LEF-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Leading-edge flap position limits (f18harv)",
+   "symbol": null,
+   "value": "-3 / +33",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-BAS-LEF-LIM"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-HARV-LEF-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Leading-edge flap rate limit (f18harv)",
+   "symbol": null,
+   "value": 15,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-BAS-LEF-RATE"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: two real poles 26.9 and 82.9 rad/s"
+  },
+  {
+   "value_id": "FA18-HARV-TVV-LIM",
+   "field": "surface_position_limit",
+   "quantity": "TV vane position limits (f18harv)",
+   "symbol": null,
+   "value": "-10 / +25",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-HARV-TVV-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "TV vane rate limit (f18harv)",
+   "symbol": null,
+   "value": 80,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18HARV_ACTUATORS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Tables 6.1/6.2, printed pp.90-93 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: second-order as aileron; hinge moment modifies rate (Eq. 4.1, printed p.40)"
+  },
+  {
+   "value_id": "FA18-P2T1-STAB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Stabilator position limits (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": "24 TEU / 10.5 TED",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-STAB-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Stabilator rate limit (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": 40,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-RUD-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Rudder position limits (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": "30 L / 30 R",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-RUD-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Rudder rate limit (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": 82,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-AIL-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Aileron position limits (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": "24 TEU / 45 TED",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-BAS-AIL-LIM",
+    "FA18-HARV-AIL-LIM"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-AIL-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Aileron rate limit (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": 100,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-TEF-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Trailing-edge flap position limits (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": "8 up / 45 down",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-TEF-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Trailing-edge flap rate limit (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": 18,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-LEF-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Leading-edge flap position limits (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": "3 up / 33 down",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-LEF-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Leading-edge flap rate limit (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": 15,
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-SB-LIM",
+   "field": "surface_position_limit",
+   "quantity": "Speed brake position limits (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": "60 open",
+   "units": "deg",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Sign convention as printed in the source table",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P2T1-SB-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Speed brake rate limit (HARV Phase II flight-test table)",
+   "symbol": null,
+   "value": "20-30",
+   "units": "deg/s",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 1, PDF p.14 / printed p.8 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating unless stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_CONTROL_LIMITS_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "repository transcription",
+     "locator": "Table 1, PDF p.14 / printed p.8 (per repository)",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Dynamics: rate published as a range"
+  },
+  {
+   "value_id": "FA18-A7813-RUD-RATE",
+   "field": "surface_rate_limit",
+   "quantity": "Rudder no-load rate limit, MDC A7813 as reproduced",
+   "symbol": null,
+   "value": 56,
+   "units": "deg/s",
+   "precision": "1 deg/s",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 8.6 (per repository)",
+   "origin": "REPRODUCED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "No-load rating",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-BAS-RUD-RATE",
+    "FA18-ACT-RUD-RATE"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/FA18_SOURCE_ACQUISITION_DEEP_DIVE_R0_M1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "conflict record: Table 8.6 (A7813, 56) vs Table 8.7 (61)",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P1-IXZ",
+   "field": "Ixz",
+   "quantity": "Product of inertia, Phase 1 (unmodified) column",
+   "symbol": null,
+   "value": -2039,
+   "units": "slug-ft^2",
+   "precision": "1 slug-ft^2",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": "60% fuel (6,480 lb), gear up, clean, pilot + support equipment",
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 3, PDF p.16 / printed p.10 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Printed sign preserved; the report discusses its product-of-inertia convention",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-P1-WL",
+   "field": "cg",
+   "quantity": "CG waterline, Phase 1 column",
+   "symbol": null,
+   "value": 105.24,
+   "units": "in (waterline)",
+   "precision": "0.01 in",
+   "configuration_ids": [
+    "FA18-CFG-HARV-P1-BASIC"
+   ],
+   "loading_state": "60% fuel",
+   "source_id": "NASA-TP-97-206539",
+   "candidate_source_ids": [],
+   "location": "Table 3 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Waterline",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/FA18_HARV_PHASE1_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-BAS-GEO-S",
+   "field": "reference_area",
+   "quantity": "Reference wing area (f18bas)",
+   "symbol": null,
+   "value": 400,
+   "units": "ft^2",
+   "precision": "1 ft^2",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.4, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Simulation-defined reference",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-BAS-GEO-CBAR",
+   "field": "mean_aerodynamic_chord",
+   "quantity": "Reference MAC (f18bas)",
+   "symbol": null,
+   "value": 11.523,
+   "units": "ft",
+   "precision": "0.001 ft (138.275 in)",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.4, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Simulation-defined reference",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-BAS-GEO-B",
+   "field": "reference_span",
+   "quantity": "Reference span (f18bas)",
+   "symbol": null,
+   "value": 37.42,
+   "units": "ft",
+   "precision": "0.01 ft",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.4, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Simulation-defined reference",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-GEO-B"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-BAS-MASS-W",
+   "field": "mass",
+   "quantity": "Weight, f18bas Fighter Escort 60% internal fuel",
+   "symbol": null,
+   "value": 31665,
+   "units": "lbf (weight)",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": "Fighter Escort, 60% internal fuel",
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.5, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes / stations as printed",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Simulation-defined state; not proof of the exact BuNo 160780 Phase I flight state."
+  },
+  {
+   "value_id": "FA18-BAS-MASS-FS",
+   "field": "cg",
+   "quantity": "CG fuselage station, f18bas Fighter Escort 60% internal fuel",
+   "symbol": null,
+   "value": 457.3,
+   "units": "in (FS)",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": "Fighter Escort, 60% internal fuel",
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.5, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes / stations as printed",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Simulation-defined state; not proof of the exact BuNo 160780 Phase I flight state."
+  },
+  {
+   "value_id": "FA18-BAS-MASS-WL",
+   "field": "cg",
+   "quantity": "CG waterline, f18bas Fighter Escort 60% internal fuel",
+   "symbol": null,
+   "value": 101.6,
+   "units": "in (WL)",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": "Fighter Escort, 60% internal fuel",
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.5, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes / stations as printed",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Simulation-defined state; not proof of the exact BuNo 160780 Phase I flight state."
+  },
+  {
+   "value_id": "FA18-BAS-MASS-IXX",
+   "field": "Ixx",
+   "quantity": "Roll inertia, f18bas Fighter Escort 60% internal fuel",
+   "symbol": null,
+   "value": 22337,
+   "units": "slug-ft^2",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": "Fighter Escort, 60% internal fuel",
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.5, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes / stations as printed",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Simulation-defined state; not proof of the exact BuNo 160780 Phase I flight state."
+  },
+  {
+   "value_id": "FA18-BAS-MASS-IYY",
+   "field": "Iyy",
+   "quantity": "Pitch inertia, f18bas Fighter Escort 60% internal fuel",
+   "symbol": null,
+   "value": 120293,
+   "units": "slug-ft^2",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": "Fighter Escort, 60% internal fuel",
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.5, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes / stations as printed",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Simulation-defined state; not proof of the exact BuNo 160780 Phase I flight state."
+  },
+  {
+   "value_id": "FA18-BAS-MASS-IZZ",
+   "field": "Izz",
+   "quantity": "Yaw inertia, f18bas Fighter Escort 60% internal fuel",
+   "symbol": null,
+   "value": 138945,
+   "units": "slug-ft^2",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": "Fighter Escort, 60% internal fuel",
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.5, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Body axes / stations as printed",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Simulation-defined state; not proof of the exact BuNo 160780 Phase I flight state."
+  },
+  {
+   "value_id": "FA18-BAS-MASS-IXZ",
+   "field": "Ixz",
+   "quantity": "Product of inertia, f18bas Fighter Escort 60% internal fuel",
+   "symbol": null,
+   "value": -2430,
+   "units": "slug-ft^2",
+   "precision": "as printed",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18BAS"
+   ],
+   "loading_state": "Fighter Escort, 60% internal fuel",
+   "source_id": "NASA-TM-107601",
+   "candidate_source_ids": [],
+   "location": "Table 3.5, PDF p.26 / printed p.20 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Report defines Ixz = integral rho x z dV; negative appears off-diagonal",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F18BAS_REFERENCE_PROPERTIES_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "Simulation-defined state; not proof of the exact BuNo 160780 Phase I flight state."
+  },
+  {
+   "value_id": "FA18-ENG-PLARATE-4240",
+   "field": "engine_dynamics",
+   "quantity": "Increasing-PLA rate limits, non-AB / AB (TM-4240, 1990)",
+   "symbol": null,
+   "value": "19.03 / 26.81",
+   "units": "deg/s",
+   "precision": "0.01 deg/s",
+   "configuration_ids": [
+    "ENG-F404-GE-400",
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4240",
+   "candidate_source_ids": [],
+   "location": "Fig. 5 / text (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-ENG-PLARATE-110216"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/FA18_PUBLIC_NUMERIC_EXTRACTION_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "engine-dynamics conflict",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "CONFLICTED_MODEL_VERSION; no averaging."
+  },
+  {
+   "value_id": "FA18-ENG-PLARATE-110216",
+   "field": "engine_dynamics",
+   "quantity": "Increasing-PLA rate limits, non-AB / AB (TM-110216, 1996)",
+   "symbol": null,
+   "value": "14 / 22",
+   "units": "deg/s",
+   "precision": "1 deg/s",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Section 4.1 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "FA18-ENG-PLARATE-4240"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/FA18_PUBLIC_NUMERIC_EXTRACTION_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "engine-dynamics conflict",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": ""
+  },
+  {
+   "value_id": "FA18-ENG-TAU",
+   "field": "engine_dynamics",
+   "quantity": "Engine lag time constants (published identically in TM-4240 and TM-110216)",
+   "symbol": null,
+   "value": "0.625 / 0.55",
+   "units": "s",
+   "precision": "0.005 s",
+   "configuration_ids": [
+    "ENG-F404-GE-400",
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4240",
+   "candidate_source_ids": [],
+   "location": "per repository",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/FA18_PUBLIC_NUMERIC_EXTRACTION_V0.1.md",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "same constants in both",
+     "locator": null,
+     "level": "REPO_PAGE_READ",
+     "note": null
+    }
+   ],
+   "notes": "Which constant applies to which regime is not recorded by the library."
+  },
+  {
+   "value_id": "FA18-ENG-GRID",
+   "field": "thrust_table",
+   "quantity": "HARV engine table topology",
+   "symbol": null,
+   "value": "12 Mach (0-1.8) x 7 altitudes (0-50 kft) x 4 power states x 7 variables; 29 arrays",
+   "units": "-",
+   "precision": "exact structure",
+   "configuration_ids": [
+    "FA18-CFG-SIM-F18HARV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-110216",
+   "candidate_source_ids": [],
+   "location": "Section 4.1, PDF p.44 / printed p.38 (per repository)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F404_HARV_ENGINE_GRID_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "grid transcription",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "The 29 numeric arrays themselves are NOT printed."
+  },
+  {
+   "value_id": "FA18-ENG-MAXAB-FIG4",
+   "field": "thrust_table",
+   "quantity": "Max-AB gross thrust surface (modified HARV nozzle), digitized",
+   "symbol": null,
+   "value": "DIGITIZED FIGURE (nearest 100 lbf; +/-150 lbf reading uncertainty)",
+   "units": "lbf",
+   "precision": "100 lbf (digitized)",
+   "configuration_ids": [
+    "ENG-F404-GE-400",
+    "FA18-CFG-HARV-P2-TV"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TM-4240",
+   "candidate_source_ids": [],
+   "location": "Fig. 4, PDF p.14 / printed p.10 (per repository)",
+   "origin": "DIGITIZED",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "n/a",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/FA18/F404_HARV_MAXAB_GROSS_THRUST_DIGITIZED_V0.1.csv",
+     "branch": "sol/fa18-source-consolidation-r1 @e596c32",
+     "relationship": "digitization",
+     "locator": null,
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "DIGITIZED_PRIMARY_FIGURE, not the GE/NASA lookup array. Configuration tag is the HARV modified-nozzle installation (phase association per repository)."
+  }
+ ]
+}
