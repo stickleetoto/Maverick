@@ -22,8 +22,8 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 
 | # | Opportunity | Class | Why | closure | exact | research | validation | effort |
 |---|---|---|---|---|---|---|---|---|
-| A1 | **Cross-check the R3 stage chain against 836's own simplified control block diagrams** (NASA/TM-2009-214651 figs. 3–5; TM-2012-215978 figs. 3–5) | **HIGH VALUE** | Already held. It is the only **exact-scope** FCS evidence. It can upgrade the FCS *architecture* layer to exact structure, and it adds two exact logic facts: ARI out above M 1.5, roll-yaw crossfeed out above M 1.0. Gains stay unavailable. | certain (held) | medium (structure) | medium | high | S |
-| A2 | **Digitize 836 baseline-flight derivative trends and flight/simulation time histories as validation-only data**: TM-2008-214634 figs. 12–15 (Cnβ and Cmα vs Mach for the baseline; baseline push-over–pull-up and rudder-sweep responses); TM-2012-215978 figs. 15–23 and 30–33 (derivative borders; CAS-off Dutch-roll and short-period characteristics) | **HIGH VALUE** | Public, exact-scope, flight-derived. They become the first 836 **validation targets**. They are nondimensional trends, so they cannot close `S` / `c̄` / `b`, and direct comparison needs matching reference definitions. Store as `OriginalPrimary × Exact836`, never as model data. | certain (held) | medium (validation only) | low | **high** | M |
+| A1 | ✅ **DONE (WP-2)** — **Cross-check the R3 stage chain against 836's own simplified control block diagrams** (NASA/TM-2009-214651 figs. 3–5; TM-2012-215978 figs. 3–5) | **HIGH VALUE** | Already held. It is the only **exact-scope** FCS evidence. It can upgrade the FCS *architecture* layer to exact structure, and it adds two exact logic facts: ARI out above M 1.5, roll-yaw crossfeed out above M 1.0. Gains stay unavailable. | certain (held) | medium (structure) | medium | high | S |
+| A2 | ✅ **DONE (WP-2), with a scope correction** — TM-2012's derivative borders are unscaled and its CAS-off figures are spike-configuration, so both were excluded; TM-2008 figs. 12–15 and TM-2012 figs. 27–29 (baseline simulation) were digitized (`F15_836_VALIDATION_DATA_V1.0.md`) — **Digitize 836 baseline-flight derivative trends and flight/simulation time histories as validation-only data**: TM-2008-214634 figs. 12–15 (Cnβ and Cmα vs Mach for the baseline; baseline push-over–pull-up and rudder-sweep responses); TM-2012-215978 figs. 15–23 and 30–33 (derivative borders; CAS-off Dutch-roll and short-period characteristics) | **HIGH VALUE** | Public, exact-scope, flight-derived. They become the first 836 **validation targets**. They are nondimensional trends, so they cannot close `S` / `c̄` / `b`, and direct comparison needs matching reference definitions. Store as `OriginalPrimary × Exact836`, never as model data. | certain (held) | medium (validation only) | low | **high** | M |
 | A3 | DFRC F-15B simulation documentation (the "baseline aerodynamic model" the Quiet Spike reports update) | **MEDIUM VALUE** — one time-boxed search only | Would close G1/G2 outright if public. Nothing so far suggests it is. | low | **very high** | high | high | S (search) |
 | A4 | 836 inlet / propulsion installation geometry | **LOW VALUE** | No 836 source seen; installed effects are downstream of a thrust scale that does not exist yet | low | medium | low | low | M |
 | A5 | 836 engine mount / thrust-line coordinates | **MEDIUM VALUE** — narrow | Needed before any engine-out or asymmetric test. Family numbers exist (AFIT tables: ±25.5 in lateral, 0.25 in vertical, nozzle pivot −20.219 ft) but are unattributed. A primary F-15 installation source may exist. | low–medium | medium | medium | medium | S–M |
@@ -62,6 +62,10 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 | D4 | Source-envelope validation (refusal at the M/altitude/α/β edges, in PlayMode) | **MEDIUM VALUE** | Headless coverage exists for the domain gate; PlayMode confirmation follows C1. | S |
 | D5 | Automated deterministic trajectory / perturbation tests (pinned `Time.captureFramerate`) | **MEDIUM VALUE** (after C1) | Makes research-mode regressions bit-exact; no pass criteria beyond "bounded, finite, inside span" until D2 exists | M |
 | D6 | F-15 suites on the Unity `Maverick/Flight Dynamics` menu | **LOW VALUE** | Convenience for the user's Phase-1 run | S |
+| D7 | *(new, WP-2)* **Re-run the reconstructed digitization scripts** against the public PDFs and diff the regenerated `MavF15Nasa836ValidationData.cs` | **MEDIUM VALUE** | The scripts in `Data/F15/wp2_digitization/` were rebuilt verbatim after the scratch copies were lost, and have not been re-run. Needs the two PDFs downloaded again. | S |
+| D8 | *(new, WP-2)* Route the stall inhibitor through the pitch CAS in exact mode, as 836's pitch diagram draws it | **LOW VALUE** now | Structural; can only remove output. No numeric consequence until a gain exists. | S |
+| D9 | *(new, WP-2)* Research speed-domain decision for Table VII trim | **HIGH VALUE** for WP-3 | Baumann applies his M 0.6 coefficients at 219–700 ft/s; Maverick's research gate is M 0.6 ± 0.001, which excludes every tabulated equilibrium | S (decision) |
+| D10 | *(new, WP-2)* Research actuator lags (Davison PDF p.97: 20 / 28 / 20 s⁻¹, differential tail = 0.3 × aileron) | **MEDIUM VALUE** (research) | Version-matched bandwidth, not a rate limit. Would need an actuator lag type kept separate from rate limits. | S |
 
 ---
 
@@ -78,13 +82,21 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 - Exact path unchanged and still fail-closed.
 - Outcome: research mode becomes runnable in PlayMode for the first time.
 
-**WP-2 — Exact 836 FCS structure and validation targets** (A1 + A2)
+**WP-2 — Exact 836 FCS structure and validation targets** (A1 + A2) — ✅ **COMPLETE.** See `F15_836_FCS_STRUCTURE_V1.0.md`, `F15_836_VALIDATION_DATA_V1.0.md`, `F15_RESEARCH_CONTROL_AUTHORITY_V1.0.md`.
+- 9 of 11 stages are confirmed as exact 836 structure. The Mach 1.5 ARI and Mach 1.0 crossfeed switches are in code, exact mode only.
+- 60 validation-only series digitized. TM-2012's derivative and CAS-off figures were excluded as spike-configuration or unscaled.
+- Research surface authority audit: a demonstrated stabilator range of −25…−5° (not a physical limit). The sign convention was verified against Baumann Table VII.
+
+**Original scope:**
 - Cross-check the R3 stage chain against 836's own block diagrams. Record the M 1.5 / M 1.0 switch points as exact logic facts, with gains still unavailable.
 - Digitize the baseline-flight derivative trends and time histories as `OriginalPrimary × Exact836` validation-only data, never model data.
 - No source hunt needed: everything is already held.
 
 **WP-3 — Research-mode validation against its own sources** (D2 + D3 + D5, after WP-1)
 - **New prerequisite found in WP-1:** the research aircraft has zero surface travel. Baumann's Table VII equilibria need stabilator around −10°, so the D2 trim comparison needs a *research-scoped* surface-authority decision first. Baumann's own Table VI prints stabilator +20/−30°, but it conflicts with the other public sets. D3 (static derivatives, headless) is **not** blocked by this.
+- **Status after WP-2:** Table VII's inputs are now representable as `STATIC_EQUILIBRIUM_VALIDATION_ONLY`, and a coefficient-level pitch check already closes to round-off. Trim **in the flying body** still needs:
+  - D9, a research speed-domain decision: no tabulated equilibrium lies inside the M 0.6 ± 0.001 gate;
+  - research surface travel: physical stops are still not adopted.
 - Compare trim against Baumann Table VII.
 - Check static derivatives against the thesis curves.
 - Run deterministic perturbation runs inside the source envelope.

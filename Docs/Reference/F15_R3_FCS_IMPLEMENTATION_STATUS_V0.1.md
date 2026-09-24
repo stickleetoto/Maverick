@@ -114,6 +114,8 @@ F-15 crossfeeds before or after the roll ratio changer is not established by any
 here. The choice is marked in the code rather than buried, and has no numeric consequence today
 because both gains are Unavailable. `DN-1180.01-238-458 Rev. D` would settle it.
 
+> **Settled for 836 structure (WP-2).** 836's own yaw control model (NASA/TM-2009-214651 fig. 5) feeds the mechanical ARI from lateral stick deflection through its own filter, not from the roll ratio changer, so R3's choice matches. The gain is still unavailable. The full stage-by-stage cross-check, including the two Mach switches now in code, is in `F15_836_FCS_STRUCTURE_V1.0.md`.
+
 ---
 
 ## 4. Provenance and FCS modes

@@ -16,6 +16,10 @@ namespace MaverickFresh.FlightDynamics.F15
         public MavF15ControlDemand mechanicalDemand;
 
         public float rollDamperAuthority01;
+
+        /// <summary>The mode the solution was formed under; the stage report grades against it.</summary>
+        public MavF15FcsMode mode;
+
         public bool modeConsistent;
         public string modeReason;
         public List<MavF15FcsStageResult> stages;
@@ -77,6 +81,15 @@ namespace MaverickFresh.FlightDynamics.F15
     ///      -> ARI                        roll COMMAND crossfed to rudder
     ///      -> roll-to-yaw crossfeed      roll RATE crossfed to rudder
     ///      = MavF15RequestedSurfaceState
+    ///
+    /// EXACT 836 STRUCTURE
+    /// -------------------
+    /// In <see cref="MavF15FcsMode.ExactNasa836Unavailable"/> the two Mach switches printed on 836's
+    /// own yaw control model (<see cref="MavF15Nasa836FcsStructure"/>) are honoured: the ARI is
+    /// held out above Mach 1.5 and the roll-to-yaw crossfeed above Mach 1.0. The switches only
+    /// remove a stage. They supply no gain, so in exact mode - where no gain exists - the output
+    /// is neutral with or without them. Family and research modes draw on other sources and are
+    /// not gated by the 836 switches.
     ///
     /// Each stage reports itself separately through <see cref="MavF15FcsStageResult"/>: whether it
     /// ran, what it contributed in degrees, the provenance of the gains it used, and why it did
@@ -233,6 +246,7 @@ namespace MaverickFresh.FlightDynamics.F15
             solution.rollDamperAuthority01 = 1f;
             solution.requested = MavF15RequestedSurfaceState.Neutral;
             solution.mechanicalDemand = MavF15ControlDemand.Zero;
+            solution.mode = mode;
 
             // ---- Mode consistency ---------------------------------------------------------
             // Checked before anything runs. A mixed-provenance configuration is refused outright
@@ -342,8 +356,8 @@ namespace MaverickFresh.FlightDynamics.F15
             ApplyTurnCoordination(schedules, pilot, state, r, ref surfaces, stages);
 
             // ---- Stage 8: ARI and roll-to-yaw crossfeed -----------------------------------
-            ApplyAri(schedules, pilot, ref surfaces, stages);
-            ApplyRollToYawCrossfeed(schedules, pilot, p, ref surfaces, stages);
+            ApplyAri(mode, schedules, pilot, state.mach, ref surfaces, stages);
+            ApplyRollToYawCrossfeed(mode, schedules, pilot, p, state.mach, ref surfaces, stages);
 
             solution.requested = MavF15RequestedSurfaceState.From(surfaces);
             return solution;
@@ -620,15 +634,18 @@ namespace MaverickFresh.FlightDynamics.F15
         /// unintended loop through the roll axis, and a roll rate with the stick centred would
         /// produce rudder.
         ///
-        /// OPEN MODELLING QUESTION: this takes the raw mechanical roll command, so the ARI is NOT
-        /// scaled by RRAD. Whether the real F-15 crossfeeds before or after the roll ratio changer
-        /// is not established by any source in this repository. The choice is visible here rather
-        /// than buried, and it has no numeric consequence today because both gains are Unavailable.
-        /// DN-1180.01-238-458 Rev. D would settle it.
+        /// This takes the raw mechanical roll command, so the ARI is NOT scaled by RRAD. For 836
+        /// that matches the aircraft's own yaw control model: its mechanical aileron-rudder
+        /// interconnect takes lateral stick deflection directly, through its own filter, not the
+        /// roll ratio changer's output (NASA/TM-2009-214651 fig. 5). The diagram prints no gain.
+        ///
+        /// In exact mode the ARI is held out above Mach 1.5, as that diagram's switches draw it.
         /// </summary>
         private static void ApplyAri(
+            MavF15FcsMode mode,
             MavF15ControlLawSchedules schedules,
             MavF15PilotCommand pilot,
+            float mach,
             ref MavF15SurfaceState surfaces,
             List<MavF15FcsStageResult> stages)
         {
@@ -637,6 +654,16 @@ namespace MaverickFresh.FlightDynamics.F15
                 stages.Add(MavF15FcsStageResult.NotApplied(
                     MavF15FcsStage.AileronRudderInterconnect,
                     "no sourced ARI gain; no roll/rudder coordination"));
+                return;
+            }
+
+            string switchReason;
+            if (mode == MavF15FcsMode.ExactNasa836Unavailable
+                && MavF15Nasa836FcsStructure.IsSwitchedOutAt(
+                    MavF15FcsStage.AileronRudderInterconnect, mach, out switchReason))
+            {
+                stages.Add(MavF15FcsStageResult.NotApplied(
+                    MavF15FcsStage.AileronRudderInterconnect, switchReason));
                 return;
             }
 
@@ -655,11 +682,16 @@ namespace MaverickFresh.FlightDynamics.F15
         /// <summary>
         /// Roll RATE crossfed to rudder. Distinct from the ARI above, which is fed by roll command;
         /// both appear in F-15-family control-system descriptions and they are not the same path.
+        ///
+        /// On 836 the crossfeed feeds the yaw CAS, which is why it is skipped with the yaw CAS
+        /// disengaged, and it is held out above Mach 1.0 in exact mode (NASA/TM-2009-214651 fig. 5).
         /// </summary>
         private static void ApplyRollToYawCrossfeed(
+            MavF15FcsMode mode,
             MavF15ControlLawSchedules schedules,
             MavF15PilotCommand pilot,
             float p,
+            float mach,
             ref MavF15SurfaceState surfaces,
             List<MavF15FcsStageResult> stages)
         {
@@ -674,6 +706,16 @@ namespace MaverickFresh.FlightDynamics.F15
             {
                 stages.Add(MavF15FcsStageResult.NotApplied(
                     MavF15FcsStage.RollToYawCrossfeed, "no sourced roll-to-yaw crossfeed gain"));
+                return;
+            }
+
+            string switchReason;
+            if (mode == MavF15FcsMode.ExactNasa836Unavailable
+                && MavF15Nasa836FcsStructure.IsSwitchedOutAt(
+                    MavF15FcsStage.RollToYawCrossfeed, mach, out switchReason))
+            {
+                stages.Add(MavF15FcsStageResult.NotApplied(
+                    MavF15FcsStage.RollToYawCrossfeed, switchReason));
                 return;
             }
 
@@ -759,6 +801,13 @@ namespace MaverickFresh.FlightDynamics.F15
                       .Append(", ")
                       .Append(r.provenance.ToString())
                       .Append(")");
+                }
+
+                if (solution.mode == MavF15FcsMode.ExactNasa836Unavailable)
+                {
+                    sb.Append("  {836 structure: ")
+                      .Append(MavF15Nasa836FcsStructure.Get(r.stage).classification.ToString())
+                      .Append("}");
                 }
 
                 sb.AppendLine();

@@ -42,7 +42,7 @@ Only gaps that block implementation are listed here. Ranked follow-on work: `F15
   - TM-72861 (preproduction F-15 No. 8): authorities, the 0.3 differential ratio, 1.8°/cm pedal gearing, ARI gradients, and RRAD/ARI **plots**.
   - Davison figure 27: roll-damper washout, zero at 20.2° α.
   - Four conflicting public surface-travel sets.
-  - **NASA 836's own simplified pitch/roll/yaw control block diagrams** (NASA/TM-2009-214651 figs. 3–5; TM-2012-215978 figs. 3–5). Exact scope, **structure only, no gains**, apart from two Mach switch points (ARI out above M 1.5, roll-yaw crossfeed out above M 1.0). Identified at the V1 freeze; not yet cross-checked against the R3 stage chain.
+  - **NASA 836's own simplified pitch/roll/yaw control block diagrams** (NASA/TM-2009-214651 figs. 3–5; TM-2012-215978 figs. 3–5). Exact scope, **structure only, no gains**, apart from two Mach switch points (ARI out above M 1.5, roll-yaw crossfeed out above M 1.0). Identified at the V1 freeze. **Cross-checked in WP-2** (`F15_836_FCS_STRUCTURE_V1.0.md`): 9 of 11 stages confirmed as structure, and the two switches are in code. Gains remain unavailable, so this gap is unchanged.
 - **DN-1180.01-238-458 Rev. D:** **NOT PUBLICLY LOCATED.** One public citation (Nolan 1992), with no numbers.
 - **What would close it.** DN-1180 itself, or public AFFTC-TR-74-8 / AFFTC-TR-76-48, which are the sources behind TM-72861's figures. Those still give family scope, not 836.
 - **More searching worthwhile?** **Once, narrowly:** check the distribution status of AFFTC-TR-74-8 and TR-76-48. Otherwise no.

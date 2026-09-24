@@ -10,10 +10,11 @@ target_config_id:  NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100
 mass_state_id:     NASA_F15B_836_BASELINE_8K_FUEL_MASS_STATE
 unity:             6000.3.16f1
 edit_scope:        Assets/MaverickFresh/Scripts/FlightDynamics/**, Docs/Reference/**
-known_good:        481 passed / 0 failed (8 headless suites); 327 runtime + 33 editor scripts compile, 0 errors
+known_good:        542 passed / 0 failed (11 headless suites); 334 runtime + 33 editor scripts compile, 0 errors
 playmode_flight:   NOT RUN
 exact_path:        FAIL-CLOSED
 research_path:     WP-1 done - F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH, structurally prepared at M0.6/20k only; uncontrolled (zero surface travel); 8,300 lbf total fixed thrust
+wp2:               done - 836 FCS structure + Mach 1.5/1.0 switches; 836 validation data (validation only); research demonstrated range (not a physical limit); sign convention verified
 ```
 
 ## Code entry points — `Assets/MaverickFresh/Scripts/FlightDynamics/F15/`
@@ -28,11 +29,14 @@ research_path:     WP-1 done - F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH, str
 | flight control | `MavF15FlightControlSystem` (gains, modes, provenance floor) → `MavF15ControlLaw` (11 stages) → `MavF15ControlActuator` |
 | propulsion | `MavF15PropulsionSystem`, `MavF15PropulsionSkeleton`; F100 layer in `MavF100*` (deck, source data, paths, families, lineage) |
 | the gate that must stay shut | `MavF100PathSeparation.DimensionalizeForTarget` |
+| **836 FCS structure** (WP-2) | `MavF15Nasa836FcsStructure` (stage grades, the two Mach switches), used by `MavF15ControlLaw` in exact mode |
+| **research surface authority** (WP-2) | `MavF15ResearchControlAuthority.cs`: `MavF15ResearchDemonstratedControlRange`, `MavF15PhysicalSurfaceHardStops`, `MavF15ActuatorRateLimits`, `MavF15ResearchStaticControlState`, `MavF15ResearchControlConventions` |
+| **836 validation data** (WP-2) | `Validation/MavF15Nasa836ValidationData` (generated) and `MavF15Nasa836ValidationSeries` — validation only |
 | **research configuration** (WP-1) | `MavF15AfitResearchFlightDynamicsProfile`, `MavF15AfitResearchMassReference`, `MavF15AfitResearchFixedThrust` / `MavF15AfitResearchThrustSource`, `MavF15AfitResearchIdentity`, `MavF15InertiaBasis` |
 
 ## Validation suites — `…/FlightDynamics/Validation/`
 
-`MavF15MassReferenceValidation` (45) · `MavF15ReferenceGeometryValidation` (51) · `MavF15BaumannTranscriptionValidation` (28) · `MavF15ControlPathValidation` (79) · `MavF15PropulsionValidation` (198) · `MavF15ResearchContaminationValidation` (32) · `MavF15ResearchProfileValidation` (35) · `MavF15ResearchPipelineValidation` (13, editor-only, drives the real body through the `StepPhysicsForValidation` seam — **not PlayMode**)
+`MavF15MassReferenceValidation` (45) · `MavF15ReferenceGeometryValidation` (51) · `MavF15BaumannTranscriptionValidation` (28) · `MavF15ControlPathValidation` (79) · `MavF15PropulsionValidation` (198) · `MavF15ResearchContaminationValidation` (32) · `MavF15ResearchProfileValidation` (35) · `MavF15ResearchPipelineValidation` (13, editor-only, drives the real body through the `StepPhysicsForValidation` seam — **not PlayMode**) · `MavF15Nasa836FcsStructureValidation` (24) · `MavF15Nasa836ValidationDataValidation` (16) · `MavF15ResearchControlAuthorityValidation` (21)
 
 Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidationBatchAdapter.RunBatch`. The exact command line is in `F15_USER_VALIDATION_PLAN_V1.0.md` §1.
 
@@ -45,6 +49,9 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 | what to do next, ranked | `F15_POST_FREEZE_OPPORTUNITIES_V1.0.md` |
 | how the user validates | `F15_USER_VALIDATION_PLAN_V1.0.md` |
 | research configuration | `F15_RESEARCH_PROFILE_V1.0.md` |
+| 836 FCS structure | `F15_836_FCS_STRUCTURE_V1.0.md` |
+| 836 validation data | `F15_836_VALIDATION_DATA_V1.0.md` (digitization scripts: `Data/F15/wp2_digitization/`) |
+| research surface authority, sign convention | `F15_RESEARCH_CONTROL_AUTHORITY_V1.0.md` |
 | target freeze, mass correction | `F15_FULL_SCALE_TARGET_FREEZE_V0.1.md` |
 | S / c̄ / b audit | `F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md` |
 | McDonnell lineage | `F15_A4172_SOURCE_LINEAGE_V0.1.md`, `F15_DN1180_SOURCE_LINEAGE_V0.1.md` |
@@ -64,6 +71,10 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 - Research-model constants (e.g. Baumann's 8,300 lb trim thrust) inside R5 propulsion. The research thrust lives in `MavF15AfitResearchThrustSource` and refuses under any profile but the research one.
 - The research profile, mass state or thrust with the exact profile, in either direction.
 - The F-15A–D %MAC datum as 836 authority (decided: not promoted).
+- The 836 validation data (flight estimates, time histories) as model coefficients or inputs.
+- The research demonstrated control range (what Baumann commanded) with a physical hard stop, an actuator limit, or the flying aircraft's travel.
+- Davison's research actuator lags (20 / 28 / 20 s⁻¹) with a rate limit, or with any exact actuator data.
+- TM-2012-215978's spike-configuration figures (derivative borders, CAS-off Dutch roll / short period) with the 836 baseline.
 
 ## Hard rules still in force
 
@@ -76,5 +87,5 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 ## Next developer's first action
 
 1. Check out the branch.
-2. Run the eight suites (validation plan §1) and confirm **481 / 0**.
-3. WP-1 is complete. Pick up **WP-2** from `F15_POST_FREEZE_OPPORTUNITIES_V1.0.md` §5. WP-3's trim comparison first needs research-scoped surface authority (§5 note).
+2. Run the eleven suites (validation plan §1) and confirm **542 / 0**.
+3. WP-1 and WP-2 are complete. Before starting **WP-3** (research trim), read `F15_RESEARCH_CONTROL_AUTHORITY_V1.0.md` §7: static coefficient-level checks against Baumann Table VII can run now, but trim in the flying research body still needs a research speed-domain decision and research surface travel.

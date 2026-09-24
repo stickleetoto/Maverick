@@ -9,7 +9,7 @@
 ## Phase 1 — open, compile, run the existing suites
 
 1. Open the project in Unity 6000.3.16f1 on branch `claude/f15-full-implementation`. Let it import.
-2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 327 runtime + 33 editor scripts, 0 errors.
+2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 334 runtime + 33 editor scripts, 0 errors.
 3. **Close the Editor** (batch mode needs the project unlocked). Run each F-15 suite headless. PowerShell, one line per suite:
 
    ```
@@ -28,7 +28,10 @@
    | `f15-contamination` | `MavF15ResearchContaminationValidation` | 32 / 0 |
    | `f15-research-profile` | `MavF15ResearchProfileValidation` | 35 / 0 |
    | `f15-research-pipeline` | `MavF15ResearchPipelineValidation` (editor-only) | 13 / 0 |
-   | **total** | | **481 / 0** |
+   | `f15-fcs-structure` | `MavF15Nasa836FcsStructureValidation` | 24 / 0 |
+   | `f15-validation-data` | `MavF15Nasa836ValidationDataValidation` | 16 / 0 |
+   | `f15-research-authority` | `MavF15ResearchControlAuthorityValidation` | 21 / 0 |
+   | **total** | | **542 / 0** |
 
 4. **Inspect the logs.**
    - Each JSON must say `"status": "PASS"`.
@@ -81,7 +84,7 @@ The **exact** path is still fail-closed; the check below still applies.
 |---|---|---|
 | Static ground checks (weight on gear, taxi) | **NO** | no F-15 ground-contact or landing-gear model is part of this branch |
 | Control direction / sign — control law → actuator → surface state | **YES**, headless | covered by `MavF15ControlPathValidation` (routing, sole actual-state owner, neutral output) |
-| Control direction / sign — surface → aircraft response | **NO** (exact) · **blocked** (research) | exact sign conventions and hard stops are unavailable. Research-mode sign conventions come from Davison's listing (CX +fwd, CY +right, CZ +down, Cl right-wing-down, Cm nose-up, Cn nose-right). The research profile now exists (WP-1), but it holds every surface at **zero travel**, so no surface response can be observed until a research-scoped travel decision is made. |
+| Control direction / sign — surface → aircraft response | **NO** (exact) · **coefficient level only** (research) | exact sign conventions and hard stops are unavailable. Research-mode sign conventions come from Davison's listing (CX +fwd, CY +right, CZ +down, Cl right-wing-down, Cm nose-up, Cn nose-right). The research profile now exists (WP-1), but it holds every surface at **zero travel**, so no surface response can be observed in the body. **WP-2:** the stabilator sign convention is verified at coefficient level against Baumann Table VII (`[A5]`). |
 | Left/right engine independence | **YES**, headless | `[E*]` propulsion checks, independent slot runtimes. In PlayMode, only independence of per-engine state can be observed: F100 thrust is zero in every mode. The research configuration's fixed thrust is one total force with no engines. |
 | Zero / failed-engine asymmetric loads | **NO** | needs engine mount coordinates (`geometryDeclared = false`) **and** nonzero thrust. Meaningless until both exist. |
 
@@ -92,7 +95,8 @@ The **exact** path is still fail-closed; the check below still applies.
 **Prerequisites:**
 - a research-tagged profile provider — **done (WP-1)**;
 - a research-only thrust input — **done (WP-1)**;
-- **research-scoped control-surface travel — NOT available.** Trim needs stabilator deflection, and the research profile holds zero travel.
+- **research-scoped control-surface travel — NOT available.** Trim needs stabilator deflection, and the research profile holds zero travel. WP-2 declared a research *demonstrated* range (−25…−5°) for static evaluation only; it is not travel.
+- **a research speed-domain decision** (WP-2 finding): Table VII's equilibria sit at 289–700 ft/s, and none lies inside the M 0.6 ± 0.001 research gate.
 
 Baumann's own equilibria use a fixed **8,300 lb** total thrust at 20,000 ft (DTIC ADA217366, PDF p.34 and p.124). That figure is a research-model constant and must never enter R5 propulsion.
 
