@@ -99,6 +99,8 @@ See [`F15_PROPULSION_SOURCE_GRAPH.md`](F15_PROPULSION_SOURCE_GRAPH.md).
 
 ## 7. Conflicts centralised in R1
 
+> **R2.** No F-15 primary file was reachable (NTRS and DTIC blocked), so nothing was promoted or reopened. Each conflict below is now classified, with both claims recorded, in the library [`CONFLICT_REGISTER.md`](../../CONFLICT_REGISTER.md) (F15-X1 to X8). Still **UNRESOLVED**: F15-X2 (ARI/crossfeed switch points) and F15-X5 (15.94 vs 15.95 ft, low impact).
+
 | # | Quantity | Values | Where | Status |
 |---|---|---|---|---|
 | F15-X1 | 836 mass state | Main-branch freeze: 37,152 lb, 26.05 % MAC, Ixx 27,953, Iyy 190,777, Izz 213,957, Ixz -460 slug-ft^2. Implementation branch: that is the **spike-extended** column; the Baseline column is 37,426 lb, 26.34 %, 30,345 / 198,687 / 223,214 / -5,070 | `F15_FULL_SCALE_TARGET_FREEZE_V0.1.md` (main) vs `F15_FINAL_STATE_V1.0.md` (implementation) | **Resolved in favour of the implementation branch for the target**, which read and labelled all three Table 1 columns. Both columns are kept, each tagged with its own configuration. Library confirmation still requires a page read |

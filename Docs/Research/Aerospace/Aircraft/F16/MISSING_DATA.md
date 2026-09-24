@@ -1,4 +1,6 @@
-# F-16 Missing Data (R1)
+# F-16 Missing Data (R1, R2 status)
+
+> **R2.** M1-M8 are unchanged: the TP-1538, Morelli and Garza & Morelli PDFs could not be reached (NTRS blocked). The NESC check-case configuration needs nothing further for a validation profile; its gaps (no actuators, no engine lag, one design point) are properties of the check-case model, not missing data.
 
 What the public record does not give (or the library has not yet confirmed), ranked by what blocks a sourced F-16 model. Each row names the configuration it applies to. "Not located" means searched and time-boxed, not proven absent.
 

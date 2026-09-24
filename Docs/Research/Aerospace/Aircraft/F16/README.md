@@ -1,6 +1,8 @@
-# F-16 pack (R1)
+# F-16 pack (R1, R2)
 
-The deepest pack in the library after R1. Start with [`IMPLEMENTATION_FEASIBILITY.md`](IMPLEMENTATION_FEASIBILITY.md).
+The deepest pack in the library. Start with [`IMPLEMENTATION_FEASIBILITY.md`](IMPLEMENTATION_FEASIBILITY.md).
+
+**R2:** the first library-verified F-16 configuration is `F16-CFG-NESC-CHECKCASE` (NASA's NESC check-case model files, file-line verified; 34 implementation-allowed values). It is a validation configuration, not Maverick's Morelli-model reference F-16. See [`../../VERIFICATION_LOG_R2.md`](../../VERIFICATION_LOG_R2.md).
 
 | Document | Content |
 |---|---|

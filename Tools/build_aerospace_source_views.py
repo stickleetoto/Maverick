@@ -10,8 +10,10 @@ Everything below is generated from them and must never be edited by hand:
 
 * Aircraft/<PACK>/SOURCES.json            per-pack slice of SOURCE_INDEX.json
 * AIRCRAFT_NUMERIC_FIELD_INDEX.json       flat index of every candidate numeric value
-* the table blocks between GENERATED markers in SOURCE_INDEX.md and in each
-  Aircraft/<PACK>/KNOWN_DATA.md
+* the table blocks between GENERATED markers in SOURCE_INDEX.md, CONFLICT_REGISTER.md
+  and each Aircraft/<PACK>/KNOWN_DATA.md
+
+CONFLICT_REGISTER.json is also canonical (hand-maintained).
 
 Usage:
     python3 Tools/build_aerospace_source_views.py          # write the views
@@ -32,6 +34,8 @@ LIB = ROOT / "Docs/Research/Aerospace"
 INDEX_JSON = LIB / "SOURCE_INDEX.json"
 INDEX_MD = LIB / "SOURCE_INDEX.md"
 NUMERIC_INDEX = LIB / "AIRCRAFT_NUMERIC_FIELD_INDEX.json"
+CONFLICTS_JSON = LIB / "CONFLICT_REGISTER.json"
+CONFLICTS_MD = LIB / "CONFLICT_REGISTER.md"
 GENERATOR = "Tools/build_aerospace_source_views.py"
 
 PACK_FOLDERS = {"FA18": "FA18", "F16": "F16", "F15": "F15", "F22": "F22"}
@@ -52,11 +56,15 @@ SCOPE_SHORT = {"EXACT_AIRFRAME": "EXACT", "PRODUCTION_FAMILY": "PROD_FAMILY", "P
 FIELD_GROUPS = [
     ("Geometry and reference quantities", {"reference_area", "reference_span", "mean_aerodynamic_chord", "physical_span", "length", "height",
                                            "cg_reference", "model_scale"}),
-    ("Mass properties", {"mass", "cg", "Ixx", "Iyy", "Izz", "Ixz", "fuel_mass", "mass_increment"}),
+    ("Mass properties", {"mass", "cg", "Ixx", "Iyy", "Izz", "Ixz", "Ixy", "Iyz", "fuel_mass", "mass_increment"}),
+    ("Aerodynamic model definition and tables", {"aero_coefficient_definition", "aero_coefficient_table", "rate_normalization",
+                                                 "control_input_definition"}),
     ("Controls, actuators and FCS", {"surface_position_limit", "surface_rate_limit", "actuator_dynamics", "fcs_gearing", "fcs_schedule_boundary",
                                      "fcs_design_target", "fcs_frame_rate"}),
-    ("Aerodynamic-data domains and envelopes", {"aero_domain_alpha", "aero_domain_beta", "aero_domain_mach", "aero_configuration_state", "flight_envelope"}),
+    ("Aerodynamic-data domains and envelopes", {"aero_domain_alpha", "aero_domain_beta", "aero_domain_mach", "aero_domain_control",
+                                                "aero_configuration_state", "flight_envelope"}),
     ("Propulsion", {"thrust_table", "thrust_class", "throttle_map", "engine_dynamics", "engine_angular_momentum", "engine_airflow", "nozzle_vectoring_limit"}),
+    ("Trim and check-case validation data", {"trim_state", "check_case_dataset"}),
     ("Accuracy statements", {"model_accuracy"}),
 ]
 ALL_FIELDS = set().union(*[g[1] for g in FIELD_GROUPS])
@@ -112,8 +120,19 @@ def pack_sources(index) -> dict[Path, str]:
 
 
 # ------------------------------------------------------------------ numeric field index
+def conflict_map() -> dict:
+    """value_id -> list of (conflict_id, status)."""
+    out: dict = {}
+    if CONFLICTS_JSON.exists():
+        for c in load_json(CONFLICTS_JSON)["conflicts"]:
+            for vid in c["value_ids"]:
+                out.setdefault(vid, []).append((c["conflict_id"], c["status"]))
+    return out
+
+
 def numeric_index(index) -> str:
     sources = {s["source_id"]: s for s in index["sources"]}
+    conflicts = conflict_map()
     records = []
     for path in known_files():
         doc = load_json(path)
@@ -143,10 +162,13 @@ def numeric_index(index) -> str:
                 "implementation_use": v["implementation_use"],
                 "implementation_allowed": v["implementation_use"] == "ALLOWED",
                 "has_existing_maverick_analysis": bool(v.get("existing_maverick_analysis")),
+                "conflict_ids": [c for c, _ in conflicts.get(v["value_id"], [])],
+                "unresolved_conflict": any(s == "UNRESOLVED" for _, s in conflicts.get(v["value_id"], [])),
+                "why_not_allowed": None if v["implementation_use"] == "ALLOWED" else why_not(v, src, conflicts.get(v["value_id"], [])),
                 "known_data_file": str(path.relative_to(ROOT)),
             })
     doc = {
-        "schema": "maverick.aerospace.numeric-field-index.v1",
+        "schema": "maverick.aerospace.numeric-field-index.v2",
         "generated_by": GENERATOR,
         "library_revision": index["library_revision"],
         "rule": ("implementation_allowed is true only when implementation_use is ALLOWED, which the validator permits only for a value whose "
@@ -160,10 +182,31 @@ def numeric_index(index) -> str:
             "by_verification_level": dict(Counter(r["verification_level"] for r in records)),
             "by_implementation_use": dict(Counter(r["implementation_use"] for r in records)),
             "with_existing_maverick_analysis": sum(r["has_existing_maverick_analysis"] for r in records),
+            "implementation_allowed_by_configuration": dict(Counter(c for r in records if r["implementation_allowed"] for c in r["configuration"])),
+            "with_unresolved_conflict": sum(r["unresolved_conflict"] for r in records),
         },
         "records": records,
     }
     return dump_json(doc)
+
+
+def why_not(v, src, conflicts) -> str:
+    """Plain-language reason a value is not implementation-allowed."""
+    use = v["implementation_use"]
+    if use == "PROHIBITED":
+        return "PROHIBITED: identity/fact-sheet figure or non-public source"
+    if use in ("DOMAIN_METADATA_ONLY", "NOT_A_MODEL_PARAMETER"):
+        return f"{use}: not a model parameter (domain, gap record, dataset or accuracy statement)"
+    reasons = []
+    if v["verification_level"] != "PAGE_VERIFIED" or not src or src["verification_level"] != "PAGE_VERIFIED":
+        reasons.append("source page not inspected by the library")
+    if v["exactness"] == "REPOSITORY_READING":
+        reasons.append("value known only from another Maverick document")
+    if v["source_id"] == "UNRESOLVED":
+        reasons.append("source unresolved")
+    if any(s == "UNRESOLVED" for _, s in conflicts):
+        reasons.append("listed in an unresolved conflict")
+    return "; ".join(reasons) or "blocked pending review"
 
 
 # ------------------------------------------------------------------ markdown blocks
@@ -254,6 +297,20 @@ def known_md_blocks(doc) -> dict[str, str]:
     return {"configurations": "\n".join(c_rows), "values": "\n".join(v_out)}
 
 
+def conflict_md_blocks() -> dict[str, str]:
+    doc = load_json(CONFLICTS_JSON)
+    rows = ["| ID | Aircraft | Quantity | Claims (source → configuration) | Classification | Status | Resolution | Values |",
+            "|---|---|---|---|---|---|---|---|"]
+    for c in doc["conflicts"]:
+        claims = "<br>".join(f"{cell(x['claim'])} (`{x['source_id']}` → {short_cfg([x['configuration_id']])})" for x in c["claims"])
+        rows.append("| " + " | ".join([f"`{c['conflict_id']}`", cell(c["aircraft"]), cell(c["quantity"]), claims, cell(c["classification"]),
+                                        f"**{c['status']}**" if c["status"] == "UNRESOLVED" else c["status"], cell(c["resolution"]),
+                                        cell([f"`{v}`" for v in c["value_ids"]])]) + " |")
+    n = Counter(c["status"] for c in doc["conflicts"])
+    summary = f"{len(doc['conflicts'])} conflicts: " + ", ".join(f"{k} {n[k]}" for k in doc["status_vocabulary"])
+    return {"conflict-summary": summary, "conflict-table": "\n".join(rows)}
+
+
 # ------------------------------------------------------------------ driver
 def render() -> dict[Path, str]:
     index = load_json(INDEX_JSON)
@@ -263,6 +320,11 @@ def render() -> dict[Path, str]:
     for name, body in index_md_blocks(index).items():
         text = replace_block(text, name, body)
     out[INDEX_MD] = text
+    if CONFLICTS_MD.exists():
+        text = CONFLICTS_MD.read_text(encoding="utf-8")
+        for name, body in conflict_md_blocks().items():
+            text = replace_block(text, name, body)
+        out[CONFLICTS_MD] = text
     for path in known_files():
         md = path.with_suffix(".md")
         if not md.exists():

@@ -1,7 +1,7 @@
 {
  "schema": "maverick.aerospace.known-data.v2",
  "aircraft": "F-16",
- "library_revision": "r1",
+ "library_revision": "r2",
  "generated": "2026-09-24",
  "rule": "implementation_use = ALLOWED (the only state that sets implementation_allowed = true in AIRCRAFT_NUMERIC_FIELD_INDEX.json) requires: the source's own content inspected by the library at PAGE_VERIFIED, the configuration known, units and convention known, and the page/table/figure recorded. Values read only in other Maverick documents carry exactness REPOSITORY_READING and verification_level SEARCH_LEAD_ONLY: the repository reading is recorded in existing_maverick_analysis, it is not a primary source.",
  "configurations": [
@@ -242,6 +242,20 @@
    "configuration_scope": "PRODUCTION_FAMILY",
    "lineage_family": "F110",
    "notes": ""
+  },
+  {
+   "configuration_id": "F16-CFG-NESC-CHECKCASE",
+   "label": "NESC 6-DOF check-case F-16 (DAVE-ML package, 2012-2013)",
+   "airframe": "F-16 check-case simulation model (not an airframe or production block)",
+   "serial": "n/a",
+   "engine": "Steady-state net thrust tables (Stevens & Lewis 2nd ed.); no engine lag; no engine angular momentum",
+   "fcs": "NESC LQR SAS and autopilot check-case controller (Jackson 2013); NOT an F-16 FCS; no actuator dynamics",
+   "research_hardware": "none",
+   "dates": "Files 2012-2013 (aero Mod P 2013-10-21); redistributed by NASA simupy-flight (data accessed summer 2020)",
+   "status": "VALIDATION_REFERENCE",
+   "configuration_scope": "SIMULATION_ONLY",
+   "lineage_family": "NASA Langley F-16 simulation lineage: TP-1538 data -> Stevens & Lewis -> Morelli MATLAB (Garza & Morelli) -> NESC DAVE-ML",
+   "notes": "Aero is the Stevens & Lewis table model as adapted by Morelli (file header); it is NOT the Morelli 1998 polynomial model that Maverick implements. Check cases use CG 25 % MAC with coefficients about the 35 % MAC moment reference centre."
   }
  ],
  "values": [
@@ -277,7 +291,7 @@
      "note": null
     }
    ],
-   "notes": "Maverick implements 27.870912 m^2 (exact ft conversion)."
+   "notes": "Maverick implements 27.870912 m^2 (exact ft conversion). R2: NESC 300 ft^2 - consistent, not independent."
   },
   {
    "value_id": "F16-GEO-B",
@@ -311,7 +325,7 @@
      "note": null
     }
    ],
-   "notes": ""
+   "notes": " R2: NESC 30 ft, labelled as the aerodynamic reference span - consistent, not independent. TP-1538 wording still unverified."
   },
   {
    "value_id": "F16-GEO-CBAR",
@@ -345,7 +359,7 @@
      "note": null
     }
    ],
-   "notes": ""
+   "notes": " R2: NESC 11.32 ft - consistent, not independent."
   },
   {
    "value_id": "F16-CG-REF",
@@ -380,7 +394,7 @@
      "note": null
     }
    ],
-   "notes": ""
+   "notes": " R2: NESC MRC 35 % MAC - consistent, not independent."
   },
   {
    "value_id": "F16-CG-DEMO",
@@ -450,7 +464,7 @@
      "note": null
     }
    ],
-   "notes": "= 637.16 slug. The printed SI figure 91,188 N reappears in an unrelated F-15 context (see library repeated-number register R1-RN4)."
+   "notes": "= 637.16 slug. The printed SI figure 91,188 N reappears in an unrelated F-15 context (see library repeated-number register R1-RN4). R2: NESC mass 637.1595 slug '(20,500 lbm)' - consistent, not independent."
   },
   {
    "value_id": "F16-MASS-ALT-647",
@@ -523,7 +537,7 @@
      "note": null
     }
    ],
-   "notes": ""
+   "notes": " R2: same value in NESC F16_inertia.dml (Stevens & Lewis lineage) - consistent, not independent."
   },
   {
    "value_id": "F16-MASS-IY",
@@ -557,7 +571,7 @@
      "note": null
     }
    ],
-   "notes": ""
+   "notes": " R2: same value in NESC F16_inertia.dml - consistent, not independent."
   },
   {
    "value_id": "F16-MASS-IZ",
@@ -591,7 +605,7 @@
      "note": null
     }
    ],
-   "notes": ""
+   "notes": " R2: same value in NESC F16_inertia.dml - consistent, not independent."
   },
   {
    "value_id": "F16-MASS-IXZ",
@@ -625,7 +639,7 @@
      "note": null
     }
    ],
-   "notes": ""
+   "notes": " R2: same value in NESC F16_inertia.dml (bodyProductOfInertia_ZX, 'no sign reversal') - consistent, not independent."
   },
   {
    "value_id": "F16-ACT-DH-LIM",
@@ -837,7 +851,7 @@
      "note": null
     }
    ],
-   "notes": "Gap record, not a number. Recorded so the textbook values below are not mistaken for TP-1538 data."
+   "notes": "Gap record, not a number. Recorded so the textbook values below are not mistaken for TP-1538 data. R2: TP-1538 fig. 63 still unread (NTRS blocked); F16-C1 stays open for the TP-1538 configuration."
   },
   {
    "value_id": "F16-ACT-RATE-DH-SL",
@@ -1182,7 +1196,7 @@
      "note": null
     }
    ],
-   "notes": "The strongest numeric F-16 propulsion item in the repository. The library records it but cannot release it: the library has not read the page. The repository's own implementation authority is separate from this library."
+   "notes": "The strongest numeric F-16 propulsion item in the repository. The library records it but cannot release it: the library has not read the page. The repository's own implementation authority is separate from this library. R2: NESC F16_prop.dml (file-verified) equals this transcription in 88 of 90 cells at Mach 0.2-1.0; it differs at Mach 0.8 and 1.0 sea-level MAX (F16-C6) and adds a Mach 0 column. This supports the repository transcription but does not page-verify TP-1538."
   },
   {
    "value_id": "F16-ENG-PC-LOW",
@@ -1447,6 +1461,1086 @@
    "conflicts_with": [],
    "existing_maverick_analysis": [],
    "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-S",
+   "field": "reference_area",
+   "quantity": "Reference wing area",
+   "symbol": null,
+   "value": 300,
+   "units": "ft^2",
+   "precision": "as encoded ('300.')",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml line 380, variableDef varID=sref (referenceWingArea, output)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Aerodynamic reference area",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-B",
+   "field": "reference_span",
+   "quantity": "Reference wing span",
+   "symbol": null,
+   "value": 30,
+   "units": "ft",
+   "precision": "as encoded ('30.')",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml line 374, variableDef varID=bspan (referenceWingSpan)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Lateral aerodynamic reference length (normalises Cl, Cn and b/2V)",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-CBAR",
+   "field": "mean_aerodynamic_chord",
+   "quantity": "Reference chord",
+   "symbol": null,
+   "value": 11.32,
+   "units": "ft",
+   "precision": "0.01 ft",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml line 368 varID=cbar; also F16_inertia.dml line 56 varID=CBAR",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Longitudinal aerodynamic reference length (normalises Cm and cbar*q/2V)",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-MRC",
+   "field": "cg_reference",
+   "quantity": "Moment reference centre",
+   "symbol": null,
+   "value": 35,
+   "units": "percent MAC (+aft of MAC leading edge)",
+   "precision": "exact (35)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "location": "F16_inertia.dml line 141 varID=DXCG (description and calculation DXCG = (35 - CG_PCT_MAC)*CBAR/100); README.html (NESC F-16 package, v6) 'Trimmed flight conditions' ('35% of MAC behind the wing leading edge')",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Aero and thrust forces/moments act at the MRC and must be transferred to the CM; DXCG positive when CM is forward of MRC",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-MASS",
+   "field": "mass",
+   "quantity": "Total mass",
+   "symbol": null,
+   "value": 637.1595,
+   "units": "slug",
+   "precision": "0.0001 slug",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "location": "F16_inertia.dml line 111 varID=XMASS ('Total mass of vehicle (20,500 lbm)')",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Constant mass",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-CG",
+   "field": "cg",
+   "quantity": "CG position for the check cases",
+   "symbol": null,
+   "value": 25,
+   "units": "percent MAC (+aft)",
+   "precision": "exact (25.0)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "location": "README.html (NESC F-16 package, v6) section F16_inertia.dml ('input value for the CG position should be 25%') and Results; F16_inertia.dml line 44 varID=CG_PCT_MAC (file default initialValue 35)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Longitudinal only; lateral and vertical CM offsets are 0",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Trap: the inertia file's default input is 35 (= the MRC). The check cases require 25."
+  },
+  {
+   "value_id": "F16-NESC-IXX",
+   "field": "Ixx",
+   "quantity": "Roll moment of inertia",
+   "symbol": null,
+   "value": 9496.0,
+   "units": "slug-ft^2",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "location": "F16_inertia.dml line 63 varID=XIXX",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Body X axis",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-IYY",
+   "field": "Iyy",
+   "quantity": "Pitch moment of inertia",
+   "symbol": null,
+   "value": 55814.0,
+   "units": "slug-ft^2",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "location": "F16_inertia.dml line 71 varID=XIYY",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Body Y axis",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-IZZ",
+   "field": "Izz",
+   "quantity": "Yaw moment of inertia",
+   "symbol": null,
+   "value": 63100.0,
+   "units": "slug-ft^2",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "location": "F16_inertia.dml line 79 varID=XIZZ",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Body Z axis",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-IXZ",
+   "field": "Ixz",
+   "quantity": "Product of inertia, X-Z plane",
+   "symbol": null,
+   "value": 982.0,
+   "units": "slug-ft^2",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "location": "F16_inertia.dml line 87 varID=XIZX (bodyProductOfInertia_ZX); README.html (NESC F-16 package, v6) Table 6 ('no sign reversal')",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "AIAA S-119 bodyProductOfInertia_ZX, stated as 'normal' sign with no sign reversal; confirm the S-119 integral definition before mapping to a tensor",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-IXY",
+   "field": "Ixy",
+   "quantity": "Product of inertia, X-Y plane",
+   "symbol": null,
+   "value": 0.0,
+   "units": "slug-ft^2",
+   "precision": "exact",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "location": "F16_inertia.dml line 95 varID=XIXY",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "S-119 bodyProductOfInertia_XY",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-IYZ",
+   "field": "Iyz",
+   "quantity": "Product of inertia, Y-Z plane",
+   "symbol": null,
+   "value": 0.0,
+   "units": "slug-ft^2",
+   "precision": "exact",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "location": "F16_inertia.dml line 103 varID=XIYZ",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "S-119 bodyProductOfInertia_YZ",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-AERO-DEF",
+   "field": "aero_coefficient_definition",
+   "quantity": "Output coefficient definitions",
+   "symbol": null,
+   "value": "CX +fwd, CY +right, CZ +down, Cl +RWD, Cm +ANU, Cn +ANR; body axes; about the MRC",
+   "units": "nd",
+   "precision": "n/a (definition)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml lines 784-905 (variableDefs cx, cy, cz, cl, cm, cn); README.html (NESC F-16 package, v6) Table 2",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Body-axis force and moment coefficients at the moment reference centre (35 % MAC)",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-BUILDUP",
+   "field": "aero_coefficient_definition",
+   "quantity": "Coefficient build-up equations",
+   "symbol": null,
+   "value": "cx = CX0 + cq2v*CXq; cy = CY0 + b2v*(CYp*p + CYr*r); cz = CZ1 + cq2v*CZq; cl = Cl0 + ClDA*dail + ClDR*drdr + b2v*(Clp*p + Clr*r); cm = Cm0 + cq2v*Cmq; cn = Cn0 + CnDA*dail + CnDR*drdr + b2v*(Cnp*p + Cnr*r)",
+   "units": "nd",
+   "precision": "n/a (equations)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml calculation elements of cx, cy, cz, cl1, cl, cm, cn1, cn (lines 734-905)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "No CG term inside the aero model: moment transfer to the CM is done outside (MRC 35 % MAC)",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Trap: ClDA, ClDR, CnDA, CnDR are labelled units='_deg' (lines 712-727) but the build-up multiplies them by the NORMALISED deflections dail = ail/20 and drdr = rdr/30. Implement the calculation elements, not the unit labels."
+  },
+  {
+   "value_id": "F16-NESC-RATE-NORM",
+   "field": "rate_normalization",
+   "quantity": "Rate normalisation",
+   "symbol": null,
+   "value": "b2v = bspan/(2*vt) multiplies p and r; cq2v = cbar*q/(2*vt); p, q, r in rad/s; vt in ft/s (minValue 0.1)",
+   "units": "nd",
+   "precision": "n/a (equations)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml line 549 (b2v), line 562 (cq2v), line 292 (vt), lines 311-325 (p, q, r)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Body rates positive RWD / ANU / ANR",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-CTRL-DEF",
+   "field": "control_input_definition",
+   "quantity": "Control inputs to the aero model",
+   "symbol": null,
+   "value": "el deg +TED; ail deg +LWD, (right - left)/2; rdr deg +TEL; normalised del = el/25, dail = ail/20, drdr = rdr/30",
+   "units": "deg",
+   "precision": "n/a (definition)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml lines 332-345 (el, ail, rdr), 390 (del), 405 (dail), 418 (drdr); README.html (NESC F-16 package, v6) Table 1",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Sign conventions as stated in the file 'sign' attributes",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-ALPHA",
+   "field": "aero_domain_alpha",
+   "quantity": "Angle-of-attack domain",
+   "symbol": null,
+   "value": "-10 .. 45 (breakpoints -10:5:45)",
+   "units": "deg",
+   "precision": "exact breakpoints",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml breakpointDef ALPHA1 and every independentVarRef varID=alpha (e.g. line 989): min -10, max 45, extrapolate='neither'",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Input clamped to the range (no extrapolation)",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-BETA",
+   "field": "aero_domain_beta",
+   "quantity": "Sideslip domain",
+   "symbol": null,
+   "value": "|beta| 0 .. 30 (breakpoints 0:5:30) for Cl0/Cn0 with the sign of beta applied; -30 .. 30 (breakpoints -30:10:30) for control-power tables",
+   "units": "deg",
+   "precision": "exact breakpoints",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml breakpointDefs BETA1, BETA2; lines 1088 and 1124 (absbeta); clt/cnt calculations lines 607 and 639",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "beta positive wind in the right ear (+ANL); clamped, no extrapolation",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-ELEV-DOMAIN",
+   "field": "aero_domain_control",
+   "quantity": "Elevator domain of the aero tables",
+   "symbol": null,
+   "value": "-24 .. 24 (breakpoints -24:12:24)",
+   "units": "deg",
+   "precision": "exact breakpoints",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml breakpointDef DE1 and independentVarRef varID=el lines 987 and 1052: min -24, max 24, extrapolate='neither'",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "+TED; clamped",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "The check-case mixer can command up to +/-25 deg (F16-NESC-MIXER); table look-ups clamp at +/-24 deg while del = el/25 is not clamped."
+  },
+  {
+   "value_id": "F16-NESC-MACH",
+   "field": "aero_domain_mach",
+   "quantity": "Mach / flight-envelope statement",
+   "symbol": null,
+   "value": "No Mach input; envelope 'limited to the vicinity of 10,000 ft MSL and 287.8 knots equivalent airspeed (around Mach 0.5)'",
+   "units": "-",
+   "precision": "as stated",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "location": "README.html (NESC F-16 package, v6) section 'Assumptions and Limitations' (HTML line 910)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Validity statement, not a clamp",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "validation_use": "DOMAIN",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-TBL-LONG",
+   "field": "aero_coefficient_table",
+   "quantity": "Longitudinal static tables",
+   "symbol": null,
+   "value": "CX0(alpha 12 x el 5) CX_table; CZ0(alpha 12) CZ0_table with CZ1 = CZ0*(1 - (beta/rtd)^2) - 0.19*del; Cm0(alpha 12 x el 5) Cm0_table",
+   "units": "nd",
+   "precision": "as encoded (3 significant digits typical)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml griddedTableDefs CX_table line 994, CZ0_table line 1026, Cm0_table line 1060; CZ1 calculation line 479",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Body axes about the MRC; alpha and el in degrees",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-TBL-LAT",
+   "field": "aero_coefficient_table",
+   "quantity": "Lateral-directional static terms",
+   "symbol": null,
+   "value": "CY0 = -0.02*beta + 0.021*dail + 0.086*drdr (beta in deg); Cl0(alpha 12 x |beta| 7) and Cn0(alpha 12 x |beta| 7), sign of beta applied",
+   "units": "nd",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml CY0 line 441; Cl0_table line 1095; Cn0_table line 1131; clt/cnt piecewise lines 607 and 639",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Body axes about the MRC",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-TBL-DAMP",
+   "field": "aero_coefficient_table",
+   "quantity": "Damping derivative tables",
+   "symbol": null,
+   "value": "CXq, CYr, CYp, CZq, Clr, Clp, Cmq, Cnr, Cnp vs alpha (12 breakpoints)",
+   "units": "per unit normalised rate",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml griddedTableDefs lines 1175, 1201, 1227, 1253, 1279, 1305, 1334, 1360, 1386",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Multiplied by cbar*q/2V or b*p/2V, b*r/2V with rates in rad/s",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-TBL-CTRL",
+   "field": "aero_coefficient_table",
+   "quantity": "Lateral-directional control-power tables",
+   "symbol": null,
+   "value": "ClDA, ClDR, CnDA, CnDR vs alpha (12) x beta (-30:10:30)",
+   "units": "per unit normalised deflection (file labels say per degree; see F16-NESC-BUILDUP)",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml griddedTableDefs lines 1418, 1459, 1499, 1540; variableDefs lines 712-727",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Multiplied by dail = ail/20 and drdr = rdr/30",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-THRUST-TABLES",
+   "field": "thrust_table",
+   "quantity": "Idle / military / maximum thrust tables",
+   "symbol": null,
+   "value": "T_IDLE, T_MIL, T_MAX on Mach 0:0.2:1.0 x altitude 0:10,000:50,000 ft (36 cells each)",
+   "units": "lbf",
+   "precision": "as encoded (lbf)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "location": "F16_prop.dml griddedTableDefs T_IDLE line 257, T_MIL line 281, T_MAX line 305 (data lines 270-326)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Net steady-state thrust along body +X at the MRC; thrust moments all zero; altitude MSL",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Differs from the repository transcription of TP-1538 Table VI at two cells (Mach 0.8 and 1.0, sea level, MAX) and adds a Mach 0 column (conflict F16-C6)."
+  },
+  {
+   "value_id": "F16-NESC-PLA",
+   "field": "throttle_map",
+   "quantity": "Power-lever semantics and interpolation",
+   "symbol": null,
+   "value": "PWR 0-100 %, MIL_PWR = 50; PWR < 50: T_IDLE + PWR*(T_MIL - T_IDLE)/50; PWR >= 50: T_MIL + (PWR - 50)*(T_MAX - T_MIL)/50",
+   "units": "percent",
+   "precision": "exact",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "location": "F16_prop.dml line 44 (PWR), line 72 (MIL_PWR), line 107 (FEX piecewise calculation)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Linear interpolation between tables",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-ENGINE-DYN",
+   "field": "engine_dynamics",
+   "quantity": "Engine dynamics in the check-case model",
+   "symbol": null,
+   "value": "none: steady-state thrust only (no power lag, no engine angular momentum)",
+   "units": "-",
+   "precision": "n/a",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "location": "F16_prop.dml FEX description line 107 ('Net steady-state thrust'); README.html (NESC F-16 package, v6) Table 4",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "SEMANTICS",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Garza & Morelli's power lag (F16-ENG-RTAU) and the TP-1538 engine angular momentum (F16-ENG-HENG) are NOT part of the NESC configuration."
+  },
+  {
+   "value_id": "F16-NESC-TMAX-M08-SL",
+   "field": "thrust_table",
+   "quantity": "Maximum thrust, Mach 0.8, sea level",
+   "symbol": null,
+   "value": 28070.0,
+   "units": "lbf",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "location": "F16_prop.dml line 324 (MACH = 0.8 row, first value)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Net steady-state thrust",
+   "implementation_use": "ALLOWED",
+   "validation_use": "CROSS_CHECK",
+   "conflicts_with": [
+    "F16-TP1538-TMAX-M08-SL"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-TMAX-M10-SL",
+   "field": "thrust_table",
+   "quantity": "Maximum thrust, Mach 1.0, sea level",
+   "symbol": null,
+   "value": 28885.0,
+   "units": "lbf",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "location": "F16_prop.dml line 325 (MACH = 1.0 row, first value)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Net steady-state thrust",
+   "implementation_use": "ALLOWED",
+   "validation_use": "CROSS_CHECK",
+   "conflicts_with": [
+    "F16-TP1538-TMAX-M10-SL"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-MIXER",
+   "field": "fcs_gearing",
+   "quantity": "Check-case pilot-to-surface mixer",
+   "symbol": null,
+   "value": "el = -25*stick; ail = -21.5*lat; rdr = -30*pedal + 0.008*ail; PWR = 100*throttle",
+   "units": "deg per unit input",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "location": "F16_control.dml calculation elements of el (line 1117), ail (1133), rdr (1148), PWR (1171)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "stick, lat, pedal in -1..+1 (+aft, +right, +right), throttle 0..1; outputs follow the aero-model sign conventions",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Check-case controller only. The 0.008*ail term is an aileron-to-rudder interconnect of this controller, not a sourced F-16 ARI."
+  },
+  {
+   "value_id": "F16-NESC-LQR",
+   "field": "fcs_gearing",
+   "quantity": "Check-case LQR gain matrices",
+   "symbol": null,
+   "value": "longLQR (2x4: stick and throttle vs airspeed, alpha, q, theta) and latdLQR (2x4: lateral stick and pedal vs phi, beta, p, r)",
+   "units": "mixed (per kt, per deg, per rad/s)",
+   "precision": "as encoded (15 digits)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "location": "F16_control.dml variableDefs longLQR11 (line 574) through latdLQR24 (line 651)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Designed for 10,013 ft MSL, Mach 0.525, 287.8 KEAS; outputs negated to stabilise",
+   "implementation_use": "ALLOWED",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Not an F-16 FCS."
+  },
+  {
+   "value_id": "F16-NESC-ACTUATORS",
+   "field": "actuator_dynamics",
+   "quantity": "Actuators in the check-case model",
+   "symbol": null,
+   "value": "none: controller outputs are applied as surface deflections directly; no rate limits, no position limits beyond aero-table clamping",
+   "units": "-",
+   "precision": "n/a",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "location": "F16_control.dml outputs el, ail, rdr (lines 1117-1160) feed F16_aero.dml inputs directly; README.html (NESC F-16 package, v6) Tables 8 and 1",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "n/a",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "SEMANTICS",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Resolves the NESC side of F16-C1: the NESC configuration carries no actuator model, so it gives no support to the textbook 60/80/120 deg/s rates."
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-COND",
+   "field": "trim_state",
+   "quantity": "Case 11 trim condition",
+   "symbol": null,
+   "value": "altitude 10,013 ft MSL; true airspeed 565.6854 ft/s; CM 25.0 % MAC; wings level, un-accelerated, zero flight-path angle",
+   "units": "ft, ft/s, percent MAC",
+   "precision": "as printed",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "location": "README.html (NESC F-16 package, v6) Table 11 (HTML lines 1841-1865) and the paragraph before it",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "US 1976 atmosphere; 32.174 ft/s^2 gravity; oblate rotating Earth (README Results)",
+   "implementation_use": "ALLOWED",
+   "validation_use": "TRIM_REFERENCE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-THETA",
+   "field": "trim_state",
+   "quantity": "Case 11 trimmed pitch attitude (= alpha)",
+   "symbol": null,
+   "value": 2.6538,
+   "units": "deg (+ANU)",
+   "precision": "0.0001 deg (README); 16 digits (control file)",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "location": "README.html (NESC F-16 package, v6) Table 11 (HTML line 1870); F16_control.dml line 471 designAngleOfAttack 2.653813535191715",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Pitch attitude equals alpha at zero flight-path angle",
+   "implementation_use": "ALLOWED",
+   "validation_use": "TRIM_REFERENCE",
+   "conflicts_with": [
+    "F16-NESC-CASE11-INIT"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-TAIL",
+   "field": "trim_state",
+   "quantity": "Case 11 trimmed horizontal tail",
+   "symbol": null,
+   "value": -3.241,
+   "units": "deg (+TED)",
+   "precision": "0.0001 deg",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "location": "README.html (NESC F-16 package, v6) Table 11 (HTML line 1880)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Negative = trailing edge up",
+   "implementation_use": "ALLOWED",
+   "validation_use": "TRIM_REFERENCE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-STICK",
+   "field": "trim_state",
+   "quantity": "Case 11 trimmed longitudinal stick",
+   "symbol": null,
+   "value": 0.1296382327486013,
+   "units": "fraction (+aft)",
+   "precision": "16 digits",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "location": "F16_control.dml line 231 trimmedPilotControl_long; README.html (NESC F-16 package, v6) Table 11 line 1875 (12.96 %)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Stick -1..+1, +aft",
+   "implementation_use": "ALLOWED",
+   "validation_use": "TRIM_REFERENCE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-THROTTLE",
+   "field": "trim_state",
+   "quantity": "Case 11 trimmed throttle / power-lever angle",
+   "symbol": null,
+   "value": 0.1390191130965607,
+   "units": "fraction (= 13.9019 % PLA)",
+   "precision": "16 digits",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "location": "F16_control.dml line 226 trimmedPilotControl_throttle; README.html (NESC F-16 package, v6) Table 11 lines 1885-1890",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Throttle 0..1; PWR = 100 x throttle",
+   "implementation_use": "ALLOWED",
+   "validation_use": "TRIM_REFERENCE",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-NESC-CASE11-INIT",
+   "field": "trim_state",
+   "quantity": "Case 11 initial pitch attitude in the three reference simulations",
+   "symbol": null,
+   "value": "2.64333 (sim 02), 2.63873 (sim 04), 2.63893 (sim 05)",
+   "units": "deg",
+   "precision": "as recorded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-CHECKCASE-TRAJECTORIES",
+   "candidate_source_ids": [],
+   "location": "Atmos_11_sim_02/04/05.csv, first data row, column eulerAngle_deg_Pitch",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Each tool trimmed with its own atmosphere/gravitation implementation",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "TOLERANCE_REFERENCE",
+   "conflicts_with": [
+    "F16-NESC-TRIM11-THETA"
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "Spread of about 0.015 deg between tools and the README; the README itself says small atmosphere/gravitation differences change the trim."
+  },
+  {
+   "value_id": "F16-NESC-CHECKCASES",
+   "field": "check_case_dataset",
+   "quantity": "NESC F-16 trajectory check cases",
+   "symbol": null,
+   "value": "cases 11, 12, 13.1-13.4, 15, 16; simulations 02, 04, 05 (24 CSV files)",
+   "units": "-",
+   "precision": "as recorded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-CHECKCASE-TRAJECTORIES",
+   "candidate_source_ids": [],
+   "location": "NESC_data/Atmospheric_checkcases/Atmos_11 ... Atmos_16 (see SOURCE_FILES_MANIFEST.json)",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Column names per NESC (units in the headers)",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "IMPLEMENTATION_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": "Case 12 starts at Mach 2.01, 30,013 ft with the Mach-independent subsonic model: an EOM/implementation test only, never an aerodynamic validation point."
+  },
+  {
+   "value_id": "F16-NESC-STATIC-SHOTS",
+   "field": "check_case_dataset",
+   "quantity": "DAVE-ML static check-shots",
+   "symbol": null,
+   "value": "16 aero shots (nominal, +/- sideslip, +/- p, q, r, +/- surfaces, skewed) and 9 propulsion shots",
+   "units": "-",
+   "precision": "as encoded",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "loading_state": null,
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "location": "F16_aero.dml staticShot elements lines 1564-3919; F16_prop.dml staticShot elements lines 370-856",
+   "origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "reference_convention": "Inputs and expected outputs per shot",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "validation_use": "UNIT_VERIFICATION",
+   "conflicts_with": [],
+   "existing_maverick_analysis": [],
+   "notes": ""
+  },
+  {
+   "value_id": "F16-TP1538-TMAX-M08-SL",
+   "field": "thrust_table",
+   "quantity": "Maximum thrust, Mach 0.8, sea level (TP-1538 Table VI)",
+   "symbol": null,
+   "value": 26070,
+   "units": "lbf",
+   "precision": "printed integer; SI column 115,959 N",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table VI, PDF p.99, report p.93 (per repository transcription)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Engine variant and bookkeeping not stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F16-NESC-TMAX-M08-SL"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/F16/TP1538/table_vi_raw_source.csv",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "two-pass visual transcription; US and SI rows",
+     "locator": "rows US_CUSTOMARY,0.8,0 and SI,0.8,0",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "115,959 N = 26,070 lbf x 4.448, so the printed SI column (per repository) is consistent with 26,070, not with the NESC 28,070."
+  },
+  {
+   "value_id": "F16-TP1538-TMAX-M10-SL",
+   "field": "thrust_table",
+   "quantity": "Maximum thrust, Mach 1.0, sea level (TP-1538 Table VI)",
+   "symbol": null,
+   "value": 28886,
+   "units": "lbf",
+   "precision": "printed integer; SI column 128,485 N",
+   "configuration_ids": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "loading_state": null,
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "location": "Table VI, PDF p.99, report p.93 (per repository transcription)",
+   "origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "reference_convention": "Engine variant and bookkeeping not stated",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "validation_use": "CANDIDATE_AFTER_PAGE_VERIFICATION",
+   "conflicts_with": [
+    "F16-NESC-TMAX-M10-SL"
+   ],
+   "existing_maverick_analysis": [
+    {
+     "path": "Docs/Reference/Data/F16/TP1538/table_vi_raw_source.csv",
+     "branch": "claude/aerospace-source-library-r0 (inherited from main @6499d0d)",
+     "relationship": "two-pass visual transcription",
+     "locator": "rows US_CUSTOMARY,1.0,0 and SI,1.0,0",
+     "level": "REPO_PAGE_TRANSCRIBED_CROSSCHECKED",
+     "note": null
+    }
+   ],
+   "notes": "128,485 N = 28,886 x 4.448 (rounded); 28,885 would give 128,480 N."
   }
  ]
 }

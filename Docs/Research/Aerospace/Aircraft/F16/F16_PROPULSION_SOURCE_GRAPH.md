@@ -1,4 +1,4 @@
-# F-16 Propulsion Source Graph: F100 / F110 lineage (R1)
+# F-16 Propulsion Source Graph: F100 / F110 lineage (R1, R2 update)
 
 Parent: [`SOURCE_GRAPH.md`](SOURCE_GRAPH.md). Shared F100 lineage with the F-15: [`../F15/F15_PROPULSION_SOURCE_GRAPH.md`](../F15/F15_PROPULSION_SOURCE_GRAPH.md).
 
@@ -15,6 +15,7 @@ Parent: [`SOURCE_GRAPH.md`](SOURCE_GRAPH.md). Shared F100 lineage with the F-15:
 | `ENG-F100-PW-229` | F100-PW-229 | F-16C/D Block 52; later NF-16D VISTA (public histories) | None located |
 | `ENG-F110-GE-100` | F110-GE-100 | F-16C/D Block 30/40/50 family; VISTA/MATV with AVEN | MATV reports (`AIAA-94-3513`, `NTRS-19950007831`) for the vectoring installation only |
 | `ENG-F110-GE-129` | F110-GE-129 | F-16C/D; F-16XL-2 | `NASA-TM-104326` (exhaust flow properties in the F-16XL) |
+| *(unnamed)* | NESC check-case engine (R2, file-verified) | `F16-CFG-NESC-CHECKCASE` | `NESC-F16-PROP-DML`: steady-state net thrust tables, Mach 0-1.0 x 0-50,000 ft, PLA 0-100 (MIL at 50); no lag. **Implementation-allowed for the NESC configuration** |
 | *(unnamed)* | TP-1538 simulated engine | TP-1538 simulation (`F16-CFG-NASA-REF-TP1538`) | **TP-1538 Table VI**: idle / military / maximum thrust vs Mach 0.2-1.0 and altitude 0-15,240 m, page-transcribed and cross-checked by the repository (`Docs/Reference/Data/F16/TP1538/manifest.json`). Engine variant not stated |
 
 ## 2. Lineage
@@ -53,8 +54,13 @@ Simulation engines (not a named engine)
 | `ICAS-2008-286` flight thrust deck | Yes (if tabulated in the paper) | F-16A/B with F100 | Abstract only. Whether numbers are printed is unknown |
 | Fact-sheet thrust classes | Identity only | any | `PROHIBITED` for modelling |
 
+### R2 cross-check of Table VI
+
+NESC `F16_prop.dml` and the repository transcription of TP-1538 Table VI agree in 88 of 90 cells. They differ at sea-level MAX, Mach 0.8 (NESC 28,070 vs TP-1538 26,070 lbf) and Mach 1.0 (28,885 vs 28,886 lbf). TP-1538's printed SI column (per repository) matches the TP-1538 values. NESC also adds a Mach 0 column. See conflict F16-C6. The TP-1538 table is still not page-verified by the library.
+
 ## 4. Verdict for dimensional propulsion (verdict D)
 
+- **NESC check-case configuration (R2):** **verified and implementation-allowed** (steady-state only).
 - **TP-1538 simulation configuration:** a dimensional propulsion model is **supported** from Table VI plus the Garza & Morelli power lag, both tied to the simulation and not to a named engine. The library still needs its own page verification before it can mark any value `ALLOWED`.
 - **Production F-16 with a named engine:** **not supported.** No public installed deck for any F-16 engine variant was located. `ICAS-2008-286` is the one lead that might change this for the F-16A/B with F100.
 - **VISTA/MATV thrust vectoring:** architecture and flight-test narrative only.

@@ -195,6 +195,10 @@ NASA-TM-4240 (Oct 1990; also AIAA 90-2166; Unclassified-Unlimited per its docume
 | C8 (new) | Aileron limits: -25/+45 (f18bas), -25/+42 (f18harv), 24 up / 45 down (TP-97-206539 Table 1). r0's "25 up / 45 down" matches f18bas, so the r0 attribution to HARV sources is withdrawn |
 | C9 (new) | Engine PLA rate limits: 19.03/26.81 deg/s (TM-4240) vs 14/22 deg/s (TM-110216), identical time constants. Model-version conflict; never averaged |
 
+### 8.4a R2 status
+
+No F/A-18 primary file was reachable in R2 (NTRS blocked), so nothing was promoted. All F/A-18 conflicts are classified in the library [`CONFLICT_REGISTER.md`](../../CONFLICT_REGISTER.md) (FA18-C1 to C10). Still **UNRESOLVED**: C1 (the AAW 56 deg/s rating), C2 (unattributed inertia set), C4, C5, C7 (metadata).
+
 ### 8.5 Cross-aircraft links
 
 | Link | Why it matters |

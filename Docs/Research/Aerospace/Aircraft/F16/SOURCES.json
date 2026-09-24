@@ -5,12 +5,13 @@
  "library_revision": "r1",
  "pack": "F16",
  "note": "Generated slice of SOURCE_INDEX.json (records whose aircraft_packs contains this pack). Edit SOURCE_INDEX.json, then regenerate.",
- "source_count": 76,
+ "source_count": 83,
  "verification_levels": {
   "ABSTRACT_VERIFIED": 32,
   "CATALOGUE_VERIFIED": 22,
   "CONTENT_EXTRACT_VERIFIED": 2,
-  "SEARCH_LEAD_ONLY": 20
+  "SEARCH_LEAD_ONLY": 20,
+  "PAGE_VERIFIED": 7
  },
  "sources": [
   {
@@ -45,7 +46,9 @@
    "engine_configuration": "NOT_STATED (not recorded in the material the library inspected)",
    "FCS_configuration": "NOT_STATED (not recorded in the material the library inspected)",
    "date_or_phase": "NOT_STATED (not recorded in the material the library inspected)",
-   "configuration_ids": [],
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
    "topics": [
     "6-DOF verification",
     "atmosphere",
@@ -109,10 +112,18 @@
     {
      "source_id": "AIAA-2002-4482",
      "relation": "USES_FORMAT (DAVE-ML)"
+    },
+    {
+     "source_id": "NESC-F16-PACKAGE-README",
+     "relation": "COMPANION (F-16 model package)"
+    },
+    {
+     "source_id": "NESC-F16-CHECKCASE-TRAJECTORIES",
+     "relation": "COMPANION (check-case data)"
     }
    ],
    "existing_maverick_analysis": [],
-   "notes": "Fundamentals: Validation / ModelVerification.",
+   "notes": "Fundamentals: Validation / ModelVerification. R2: the report PDF itself is still unread (NTRS blocked). Its F-16 model files and trajectories were file-verified through NASA's simupy-flight redistribution (NESC-F16-* records).",
    "verification_notes": "r0 2026-09-24: web-search index only; NTRS/DTIC/archive.org blocked by session egress policy; PDF not opened."
   },
   {
@@ -398,6 +409,10 @@
     {
      "source_id": "STEVENS-LEWIS-ACS",
      "relation": "UPSTREAM_OF (textbook F-16 model data)"
+    },
+    {
+     "source_id": "NESC-F16-PROP-DML",
+     "relation": "UPSTREAM_OF (via Stevens & Lewis; 88/90 thrust cells agree)"
     }
    ],
    "existing_maverick_analysis": [
@@ -434,7 +449,7 @@
      "note": null
     }
    ],
-   "notes": "Abstract (search extract): fighter configuration based on F-16 wind-tunnel testing; resistant to classical yaw departure; susceptible to pitch departure by inertia coupling in rapid large rolls at low airspeed; deep-stall trim with difficult recovery; control-system modifications developed.",
+   "notes": "Abstract (search extract): fighter configuration based on F-16 wind-tunnel testing; resistant to classical yaw departure; susceptible to pitch departure by inertia coupling in rapid large rolls at low airspeed; deep-stall trim with difficult recovery; control-system modifications developed. R2: still not page-verified by the library (NTRS blocked). Independent evidence gathered: the NESC package README states the NESC aero implements TP-1538 data via Garza & Morelli; NESC thrust tables equal the repository transcription of Table VI in 88 of 90 cells (F16-C6).",
    "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
   },
   {
@@ -661,7 +676,7 @@
      "note": null
     }
    ],
-   "notes": "Published January 2003 (search extract). Includes an F-14 simulation — relevant to the future F-14 pack.",
+   "notes": "Published January 2003 (search extract). Includes an F-14 simulation — relevant to the future F-14 pack. R2: NESC F16_aero.dml cites this TM as 'Garza, Fredrico R.; and Morelli, Eugene A.', A Collection of Nonlinear Aircraft Simulations in MATLAB, NASA TM-2003-212145, 2003-01 (spelling 'Fredrico' as in the file).",
    "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
   },
   {
@@ -929,7 +944,7 @@
     }
    ],
    "existing_maverick_analysis": [],
-   "notes": "Search extracts state the textbook F-16 data are based on NASA TP-1538. Actuator rate/time-constant values circulating in academic papers (60/80/120 deg/s, 0.0495 s) are attributed to this lineage — see ARXIV-1907-11913.",
+   "notes": "Search extracts state the textbook F-16 data are based on NASA TP-1538. Actuator rate/time-constant values circulating in academic papers (60/80/120 deg/s, 0.0495 s) are attributed to this lineage — see ARXIV-1907-11913. R2: NESC F16_aero.dml cites the 1st edition (1992, ISBN 0-471-61397-5); F16_prop.dml and F16_inertia.dml cite the 2nd edition (2003, ISBN 0-471-37145-9). The editions are not assumed to carry identical tables.",
    "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
   },
   {
@@ -4209,10 +4224,10 @@
    "public_url": "https://nasa.github.io/simupy-flight/",
    "pdf_url": null,
    "mirror_url": null,
-   "local_filename": null,
+   "local_filename": "/home/user/nasa/simupy-flight (git clone, commit 70754e6916afc206e8c0abb386d1a9c98bf8f561); NESC files copied to the external store",
    "sha256": null,
    "public_access_status": "PUBLIC_WEB_PAGE",
-   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "retrieval_status": "RETRIEVED_EXTERNAL_STORE",
    "verification_level": "ABSTRACT_VERIFIED",
    "aircraft_packs": [
     "F16",
@@ -4227,7 +4242,8 @@
    "FCS_configuration": "as check-case",
    "date_or_phase": "2022",
    "configuration_ids": [
-    "F16-CFG-SIM-STEVENS-LEWIS"
+    "F16-CFG-SIM-STEVENS-LEWIS",
+    "F16-CFG-NESC-CHECKCASE"
    ],
    "topics": [
     "open-source 6-DOF",
@@ -4282,8 +4298,8 @@
     }
    ],
    "existing_maverick_analysis": [],
-   "notes": "",
-   "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+   "notes": "R2: cloned read-only at commit 70754e6916afc206e8c0abb386d1a9c98bf8f561. Its NESC_data folder redistributes the NESC F-16 package and check-case trajectories, indexed as NESC-F16-* sources. The simupy code itself was not reviewed.",
+   "verification_notes": "R2 2026-09-24: repository retrieved by git clone; README and NESC_data inspected. Level kept at ABSTRACT_VERIFIED because the toolkit code was not reviewed."
   },
   {
    "source_id": "ARCH-2018-HEIDLAUF",
@@ -6789,6 +6805,645 @@
    "existing_maverick_analysis": [],
    "notes": "",
    "verification_notes": "R1 2026-09-24: web-search index only; NTRS/DTIC/archive.org/AFIT/CORE still blocked by session egress policy; PDF not opened by the library. Author forenames/initials as shown in index extracts or repository documents; not checked against a title page by the library."
+  },
+  {
+   "source_id": "NESC-F16-PACKAGE-README",
+   "title": "F-16 Subsonic aircraft aero, inertial, and autopilot models (NESC F-16 package README, version 6)",
+   "authors": [
+    "Jackson, Bruce"
+   ],
+   "organization": "NASA Langley Research Center / NASA Engineering and Safety Center",
+   "year": 2013,
+   "report_number": "NESC F16_package README.html, version 6, 2013-10-22",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": "https://github.com/nasa/simupy-flight/tree/70754e6916afc206e8c0abb386d1a9c98bf8f561/NESC_data",
+   "local_filename": "/home/user/aerospace-sources/F16/NESC_F16_package__nasa_simupy-flight_70754e6/NESC_data/All_models/F16_package/README/README.html",
+   "sha256": "5496aa1314374d5d25f7c9f412351222eaee2f51b0fda6beebd348ace2483269",
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "RETRIEVED_EXTERNAL_STORE",
+   "verification_level": "PAGE_VERIFIED",
+   "aircraft_packs": [
+    "F16"
+   ],
+   "index_group": "F-16: validation data and cross-validation implementations",
+   "aircraft": "F-16 (NESC check-case simulation model)",
+   "aircraft_variant": "NESC 6-DOF check-case F-16 (subsonic table model; not a production block)",
+   "serial_or_tail_number": null,
+   "research_configuration": "Check-case model for simulation verification; no research hardware",
+   "engine_configuration": "Steady-state net thrust tables (Stevens & Lewis 2nd ed.); no engine lag",
+   "FCS_configuration": "NESC LQR SAS / autopilot check-case controller (not an F-16 FCS)",
+   "date_or_phase": "2013-10-22",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "topics": [
+    "model description",
+    "sign conventions",
+    "trim solution (case 11)"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "yes",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "yes",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "yes",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "yes",
+    "validation_data": "yes"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "INDEXED",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "HIGH",
+    "note": "Defines the check-case configuration, conventions and the case 11 trim solution (Table 11)."
+   },
+   "validation_usefulness": {
+    "rating": "HIGH",
+    "note": "Trim solution for straight-and-level flight at 10,013 ft, 565.6854 ft/s, CG 25 %."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "NASA-TM-2015-218675",
+     "relation": "COMPANION (check-case report)"
+    },
+    {
+     "source_id": "NESC-F16-AERO-DML",
+     "relation": "DESCRIBES"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "States that F16_aero.dml 'is based on [TM212145] by Garza and Morelli, which implements aero data published in [TP1538] by Nguyen'; prop and inertia from Stevens & Lewis 2003; flight envelope limited to the vicinity of 10,000 ft MSL and 287.8 KEAS (around Mach 0.5). Version note: the README (v6, 2013-10-22) lists F16_aero.dml mod O (2013-09-11) and F16_control.dml rev E (2013-09-12); the files NASA redistributes are the later Mod P (2013-10-21: check-case variable rename only) and Rev F (2013-10-22: SAS forced on when the autopilot is selected).",
+   "verification_notes": "R2 2026-09-24: retrieved as NASA's own redistribution (git clone of github.com/nasa/simupy-flight at commit 70754e6916af; NESC data 'accessed summer 2020' from nescacademy.nasa.gov/flightsim per NESC_data/README.rst). File hashed and stored outside the repository (SOURCE_FILES_MANIFEST.json). PAGE_VERIFIED here means the cited file elements (variableDef / griddedTableDef / table rows, with line numbers) were read in the hashed file. No Maverick branch holds a hash for these files, so no cross-branch hash comparison was possible."
+  },
+  {
+   "source_id": "NESC-F16-AERO-DML",
+   "title": "F-16 Subsonic Aerodynamics Model (a la Garza), DAVE-ML F16_aero.dml, Mod P",
+   "authors": [
+    "Jackson, Bruce"
+   ],
+   "organization": "NASA Langley Research Center / NASA Engineering and Safety Center",
+   "year": 2013,
+   "report_number": "F16_aero.dml Mod P, 2013-10-21 (created 2003-06-10)",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": "https://github.com/nasa/simupy-flight/tree/70754e6916afc206e8c0abb386d1a9c98bf8f561/NESC_data",
+   "local_filename": "/home/user/aerospace-sources/F16/NESC_F16_package__nasa_simupy-flight_70754e6/NESC_data/All_models/F16_package/F16_S119_source/F16_aero.dml",
+   "sha256": "82796577b989b5f3becb7d13430ff6c619b3ecd2e642a6427b743658fb177e51",
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "RETRIEVED_EXTERNAL_STORE",
+   "verification_level": "PAGE_VERIFIED",
+   "aircraft_packs": [
+    "F16"
+   ],
+   "index_group": "F-16: validation data and cross-validation implementations",
+   "aircraft": "F-16 (NESC check-case simulation model)",
+   "aircraft_variant": "NESC 6-DOF check-case F-16 (subsonic table model; not a production block)",
+   "serial_or_tail_number": null,
+   "research_configuration": "Check-case model for simulation verification; no research hardware",
+   "engine_configuration": "Steady-state net thrust tables (Stevens & Lewis 2nd ed.); no engine lag",
+   "FCS_configuration": "NESC LQR SAS / autopilot check-case controller (not an F-16 FCS)",
+   "date_or_phase": "Mod P 2013-10-21",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "topics": [
+    "table aero model",
+    "CX CY CZ Cl Cm Cn",
+    "static check-shots"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "yes",
+    "static_derivatives": "yes",
+    "rate_derivatives": "yes",
+    "control_derivatives": "yes",
+    "reference_geometry": "yes",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "yes",
+    "equations": "yes",
+    "tables": "yes",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "yes"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "INDEXED",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "HIGH",
+    "note": "Complete six-axis table model for the NESC configuration; units, signs and clamping are explicit."
+   },
+   "validation_usefulness": {
+    "rating": "HIGH",
+    "note": "16 static check-shots (inputs and expected outputs) for unit-level verification."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "NASA-TM-2003-212145",
+     "relation": "DERIVED_FROM (stated in file header)"
+    },
+    {
+     "source_id": "STEVENS-LEWIS-ACS",
+     "relation": "DERIVED_FROM (stated in file header)"
+    },
+    {
+     "source_id": "NASA-TP-1538",
+     "relation": "DERIVED_FROM (via Garza & Morelli, per the package README)"
+    },
+    {
+     "source_id": "MORELLI-ACC-1998-F16",
+     "relation": "CONFIGURATION_INCOMPATIBLE (table model vs global polynomial model)"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "Header: 'Based on Morelli's adaptation of Stevens and Lewis' F-16 example [1] described in Garza & Morelli's TM [2]. Obtained from E. A. Morelli in the form of Matlab scripts' (f16_aero.m, f16_aero_setup.m, 1995-06-17). References: Stevens & Lewis 1992 (ISBN 0-471-61397-5); NASA TM-2003-212145. This is NOT the Morelli 1998 global polynomial model. Revision history A-P is in the file header; Mod O (2013-09-12) moved moment coefficients to the 35 % MAC moment reference centre.",
+   "verification_notes": "R2 2026-09-24: retrieved as NASA's own redistribution (git clone of github.com/nasa/simupy-flight at commit 70754e6916af; NESC data 'accessed summer 2020' from nescacademy.nasa.gov/flightsim per NESC_data/README.rst). File hashed and stored outside the repository (SOURCE_FILES_MANIFEST.json). PAGE_VERIFIED here means the cited file elements (variableDef / griddedTableDef / table rows, with line numbers) were read in the hashed file. No Maverick branch holds a hash for these files, so no cross-branch hash comparison was possible."
+  },
+  {
+   "source_id": "NESC-F16-PROP-DML",
+   "title": "F-16 propulsion model (a la Stevens & Lewis), DAVE-ML F16_prop.dml",
+   "authors": [
+    "Jackson, Bruce"
+   ],
+   "organization": "NASA Langley Research Center / NASA Engineering and Safety Center",
+   "year": 2012,
+   "report_number": "F16_prop.dml, initial version 2012-08-07",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": "https://github.com/nasa/simupy-flight/tree/70754e6916afc206e8c0abb386d1a9c98bf8f561/NESC_data",
+   "local_filename": "/home/user/aerospace-sources/F16/NESC_F16_package__nasa_simupy-flight_70754e6/NESC_data/All_models/F16_package/F16_S119_source/F16_prop.dml",
+   "sha256": "e5fd7772e5c05cdac666c94febbe4cb50139418b26045affd92dbd198f2215c6",
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "RETRIEVED_EXTERNAL_STORE",
+   "verification_level": "PAGE_VERIFIED",
+   "aircraft_packs": [
+    "F16"
+   ],
+   "index_group": "F-16: validation data and cross-validation implementations",
+   "aircraft": "F-16 (NESC check-case simulation model)",
+   "aircraft_variant": "NESC 6-DOF check-case F-16 (subsonic table model; not a production block)",
+   "serial_or_tail_number": null,
+   "research_configuration": "Check-case model for simulation verification; no research hardware",
+   "engine_configuration": "Steady-state net thrust tables (Stevens & Lewis 2nd ed.); no engine lag",
+   "FCS_configuration": "NESC LQR SAS / autopilot check-case controller (not an F-16 FCS)",
+   "date_or_phase": "2012-08-07",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "topics": [
+    "idle / MIL / MAX thrust tables",
+    "power-lever interpolation"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "yes",
+    "thrust_data": "yes",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "yes",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "yes"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "INDEXED",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "HIGH",
+    "note": "Steady-state net thrust tables and interpolation law for the NESC configuration."
+   },
+   "validation_usefulness": {
+    "rating": "HIGH",
+    "note": "9 static check-shots."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "STEVENS-LEWIS-ACS",
+     "relation": "DERIVED_FROM (stated in file header)"
+    },
+    {
+     "source_id": "NASA-TP-1538",
+     "relation": "CONSISTENT_WITH (88/90 cells vs repository transcription; not independent)"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "Cites Stevens & Lewis 2nd ed. (2003, ISBN 0-471-37145-9). No engine lag and no engine angular momentum in this file. R2 cross-check: 88 of 90 cells at Mach 0.2-1.0 equal the repository's transcription of TP-1538 Table VI; the Mach 0.8 and 1.0 sea-level MAX cells differ (conflict F16-C6).",
+   "verification_notes": "R2 2026-09-24: retrieved as NASA's own redistribution (git clone of github.com/nasa/simupy-flight at commit 70754e6916af; NESC data 'accessed summer 2020' from nescacademy.nasa.gov/flightsim per NESC_data/README.rst). File hashed and stored outside the repository (SOURCE_FILES_MANIFEST.json). PAGE_VERIFIED here means the cited file elements (variableDef / griddedTableDef / table rows, with line numbers) were read in the hashed file. No Maverick branch holds a hash for these files, so no cross-branch hash comparison was possible."
+  },
+  {
+   "source_id": "NESC-F16-INERTIA-DML",
+   "title": "F-16 inertia model (a la Stevens & Lewis), DAVE-ML F16_inertia.dml",
+   "authors": [
+    "Jackson, Bruce"
+   ],
+   "organization": "NASA Langley Research Center / NASA Engineering and Safety Center",
+   "year": 2012,
+   "report_number": "F16_inertia.dml, initial version 2012-08-07",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": "https://github.com/nasa/simupy-flight/tree/70754e6916afc206e8c0abb386d1a9c98bf8f561/NESC_data",
+   "local_filename": "/home/user/aerospace-sources/F16/NESC_F16_package__nasa_simupy-flight_70754e6/NESC_data/All_models/F16_package/F16_S119_source/F16_inertia.dml",
+   "sha256": "e11d4eba5b158d24db7034bd85682ad0b896dd2f3172f007ca3d6d6d4e693c4a",
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "RETRIEVED_EXTERNAL_STORE",
+   "verification_level": "PAGE_VERIFIED",
+   "aircraft_packs": [
+    "F16"
+   ],
+   "index_group": "F-16: validation data and cross-validation implementations",
+   "aircraft": "F-16 (NESC check-case simulation model)",
+   "aircraft_variant": "NESC 6-DOF check-case F-16 (subsonic table model; not a production block)",
+   "serial_or_tail_number": null,
+   "research_configuration": "Check-case model for simulation verification; no research hardware",
+   "engine_configuration": "Steady-state net thrust tables (Stevens & Lewis 2nd ed.); no engine lag",
+   "FCS_configuration": "NESC LQR SAS / autopilot check-case controller (not an F-16 FCS)",
+   "date_or_phase": "2012-08-07",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "topics": [
+    "mass",
+    "inertia",
+    "CG vs moment reference centre"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "yes",
+    "cg": "yes",
+    "inertia": "yes",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "yes",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "INDEXED",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "HIGH",
+    "note": "Constant mass and inertia with explicit CG / MRC relation for the NESC configuration."
+   },
+   "validation_usefulness": {
+    "rating": "HIGH",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "STEVENS-LEWIS-ACS",
+     "relation": "DERIVED_FROM (stated in file header)"
+    },
+    {
+     "source_id": "NASA-TP-1538",
+     "relation": "CONSISTENT_WITH (same values as repository reading of Table I; same lineage)"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "Cites Stevens & Lewis 2nd ed. (2003). Mass 637.1595 slug '(20,500 lbm)'. Moment reference centre at 35 % MAC; test CG 25 % (package README).",
+   "verification_notes": "R2 2026-09-24: retrieved as NASA's own redistribution (git clone of github.com/nasa/simupy-flight at commit 70754e6916af; NESC data 'accessed summer 2020' from nescacademy.nasa.gov/flightsim per NESC_data/README.rst). File hashed and stored outside the repository (SOURCE_FILES_MANIFEST.json). PAGE_VERIFIED here means the cited file elements (variableDef / griddedTableDef / table rows, with line numbers) were read in the hashed file. No Maverick branch holds a hash for these files, so no cross-branch hash comparison was possible."
+  },
+  {
+   "source_id": "NESC-F16-CONTROL-DML",
+   "title": "F-16 simple control system (NESC check-case SAS / autopilot), DAVE-ML F16_control.dml Rev F",
+   "authors": [
+    "Jackson, Bruce"
+   ],
+   "organization": "NASA Langley Research Center / NASA Engineering and Safety Center",
+   "year": 2013,
+   "report_number": "F16_control.dml Rev F, 2013-10-22",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": "https://github.com/nasa/simupy-flight/tree/70754e6916afc206e8c0abb386d1a9c98bf8f561/NESC_data",
+   "local_filename": "/home/user/aerospace-sources/F16/NESC_F16_package__nasa_simupy-flight_70754e6/NESC_data/All_models/F16_package/F16_S119_source/F16_control.dml",
+   "sha256": "bca7789dde61b741de69f697ce8799ee666214d0e1fa203973523774fc3a969b",
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "RETRIEVED_EXTERNAL_STORE",
+   "verification_level": "PAGE_VERIFIED",
+   "aircraft_packs": [
+    "F16"
+   ],
+   "index_group": "F-16: validation data and cross-validation implementations",
+   "aircraft": "F-16 (NESC check-case simulation model)",
+   "aircraft_variant": "NESC 6-DOF check-case F-16 (subsonic table model; not a production block)",
+   "serial_or_tail_number": null,
+   "research_configuration": "Check-case model for simulation verification; no research hardware",
+   "engine_configuration": "Steady-state net thrust tables (Stevens & Lewis 2nd ed.); no engine lag",
+   "FCS_configuration": "NESC LQR SAS / autopilot check-case controller (not an F-16 FCS)",
+   "date_or_phase": "2013-10-22",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "topics": [
+    "LQR SAS",
+    "autopilot",
+    "pilot-to-surface mixer",
+    "trim inputs"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "yes",
+    "FCS_numeric_gains": "yes",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "yes",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "INDEXED",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "HIGH",
+    "note": "Check-case controller and mixer for the NESC configuration only. Not an F-16 FCS."
+   },
+   "validation_usefulness": {
+    "rating": "HIGH",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "NESC-AIAA-2013-5071",
+     "relation": "CITES (planned paper; number not confirmed by the file)"
+    },
+    {
+     "source_id": "NASA-TM-2003-212145",
+     "relation": "CITES"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "LQR gains designed by the author for 10,013 ft MSL, Mach 0.525 (287.8 KEAS). Mixer: el = -25 x stick, ail = -21.5 x lateral, rdr = -30 x pedal + 0.008 x ail, PWR = 100 x throttle. No actuator dynamics or rate limits. REF01 cites a planned 2013 AIAA MST paper 'Development of Verification Data for Flight Simulations' (Jackson, Shelton et al.); its AIAA paper number is not given in the file.",
+   "verification_notes": "R2 2026-09-24: retrieved as NASA's own redistribution (git clone of github.com/nasa/simupy-flight at commit 70754e6916af; NESC data 'accessed summer 2020' from nescacademy.nasa.gov/flightsim per NESC_data/README.rst). File hashed and stored outside the repository (SOURCE_FILES_MANIFEST.json). PAGE_VERIFIED here means the cited file elements (variableDef / griddedTableDef / table rows, with line numbers) were read in the hashed file. No Maverick branch holds a hash for these files, so no cross-branch hash comparison was possible."
+  },
+  {
+   "source_id": "NESC-F16-GNC-DML",
+   "title": "Example F-16 guidance, navigation and control system (NESC), DAVE-ML F16_gnc.dml Rev C",
+   "authors": [
+    "Jackson, Bruce"
+   ],
+   "organization": "NASA Langley Research Center / NASA Engineering and Safety Center",
+   "year": 2013,
+   "report_number": "F16_gnc.dml Rev C, 2013-10-22",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": "https://github.com/nasa/simupy-flight/tree/70754e6916afc206e8c0abb386d1a9c98bf8f561/NESC_data",
+   "local_filename": "/home/user/aerospace-sources/F16/NESC_F16_package__nasa_simupy-flight_70754e6/NESC_data/All_models/F16_package/F16_S119_source/F16_gnc.dml",
+   "sha256": "fc1dbff00cc14b0228973c43cfc17797fd48d2e36950ec039ff4e77d8577827c",
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "RETRIEVED_EXTERNAL_STORE",
+   "verification_level": "PAGE_VERIFIED",
+   "aircraft_packs": [
+    "F16"
+   ],
+   "index_group": "F-16: validation data and cross-validation implementations",
+   "aircraft": "F-16 (NESC check-case simulation model)",
+   "aircraft_variant": "NESC 6-DOF check-case F-16 (subsonic table model; not a production block)",
+   "serial_or_tail_number": null,
+   "research_configuration": "Check-case model for simulation verification; no research hardware",
+   "engine_configuration": "Steady-state net thrust tables (Stevens & Lewis 2nd ed.); no engine lag",
+   "FCS_configuration": "NESC LQR SAS / autopilot check-case controller (not an F-16 FCS)",
+   "date_or_phase": "2013-10-22",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "topics": [
+    "circumnavigation autopilot (cases 15, 16)"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "yes",
+    "FCS_numeric_gains": "yes",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "INDEXED",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "LOW",
+    "note": "Needed only to reproduce cases 15 and 16."
+   },
+   "validation_usefulness": {
+    "rating": "MEDIUM",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "NESC-F16-CONTROL-DML",
+     "relation": "EXTENDS"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "R2 2026-09-24: retrieved as NASA's own redistribution (git clone of github.com/nasa/simupy-flight at commit 70754e6916af; NESC data 'accessed summer 2020' from nescacademy.nasa.gov/flightsim per NESC_data/README.rst). File hashed and stored outside the repository (SOURCE_FILES_MANIFEST.json). PAGE_VERIFIED here means the cited file elements (variableDef / griddedTableDef / table rows, with line numbers) were read in the hashed file. No Maverick branch holds a hash for these files, so no cross-branch hash comparison was possible."
+  },
+  {
+   "source_id": "NESC-F16-CHECKCASE-TRAJECTORIES",
+   "title": "NESC atmospheric check-case trajectories for the F-16 (cases 11, 12, 13.1-13.4, 15, 16; simulations 02, 04, 05)",
+   "authors": [
+    "NASA NESC 6-DOF simulation check-case team"
+   ],
+   "organization": "NASA Langley Research Center / NASA Engineering and Safety Center",
+   "year": null,
+   "report_number": "NESC_data/Atmospheric_checkcases (24 CSV files)",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": "https://github.com/nasa/simupy-flight/tree/70754e6916afc206e8c0abb386d1a9c98bf8f561/NESC_data",
+   "local_filename": "/home/user/aerospace-sources/F16/NESC_F16_package__nasa_simupy-flight_70754e6/NESC_data/Atmospheric_checkcases (multi-file dataset)",
+   "sha256": "21a5255153d71208f763ec170112c3a2333fdd488ff221e26aa2bfee2e2699b6",
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "RETRIEVED_EXTERNAL_STORE",
+   "verification_level": "PAGE_VERIFIED",
+   "aircraft_packs": [
+    "F16"
+   ],
+   "index_group": "F-16: validation data and cross-validation implementations",
+   "aircraft": "F-16 (NESC check-case simulation model)",
+   "aircraft_variant": "NESC 6-DOF check-case F-16 (subsonic table model; not a production block)",
+   "serial_or_tail_number": null,
+   "research_configuration": "Check-case model for simulation verification; no research hardware",
+   "engine_configuration": "Steady-state net thrust tables (Stevens & Lewis 2nd ed.); no engine lag",
+   "FCS_configuration": "NESC LQR SAS / autopilot check-case controller (not an F-16 FCS)",
+   "date_or_phase": "Data accessed by NASA simupy-flight in summer 2020",
+   "configuration_ids": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "topics": [
+    "time histories",
+    "trim",
+    "manoeuvres"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "yes",
+    "plots": "unknown",
+    "flight_data": "no",
+    "trim_data": "yes",
+    "validation_data": "yes"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "INDEXED",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "NOT_A_MODEL_PARAMETER",
+    "note": "Reference trajectories from three independent simulation tools."
+   },
+   "validation_usefulness": {
+    "rating": "HIGH",
+    "note": "Implementation-verification target for the NESC configuration. Case 12 (Mach 2.01) is outside any data validity: EOM test only."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "NASA-TM-2015-218675",
+     "relation": "COMPANION (data of the check-case report)"
+    },
+    {
+     "source_id": "NASA-SIMUPY-FLIGHT",
+     "relation": "USED_BY (regression reference)"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "Simulation IDs 02, 04, 05 are anonymised tool identifiers. Case 11 initial pitch attitude: 2.64333 (sim 02), 2.63873 (sim 04), 2.63893 deg (sim 05); package README trim 2.6538 deg (author's Simulink sim).",
+   "verification_notes": "R2 2026-09-24: retrieved as NASA's own redistribution (git clone of github.com/nasa/simupy-flight at commit 70754e6916af; NESC data 'accessed summer 2020' from nescacademy.nasa.gov/flightsim per NESC_data/README.rst). File hashed and stored outside the repository (SOURCE_FILES_MANIFEST.json). PAGE_VERIFIED here means the cited file elements (variableDef / griddedTableDef / table rows, with line numbers) were read in the hashed file. No Maverick branch holds a hash for these files, so no cross-branch hash comparison was possible."
   }
  ]
 }

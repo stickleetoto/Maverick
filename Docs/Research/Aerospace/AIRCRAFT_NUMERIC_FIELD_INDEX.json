@@ -1,30 +1,36 @@
 {
- "schema": "maverick.aerospace.numeric-field-index.v1",
+ "schema": "maverick.aerospace.numeric-field-index.v2",
  "generated_by": "Tools/build_aerospace_source_views.py",
  "library_revision": "r1",
  "rule": "implementation_allowed is true only when implementation_use is ALLOWED, which the validator permits only for a value whose source content was inspected by the library at PAGE_VERIFIED, with configuration, units, convention and page/table/figure recorded. 'page' is null unless both the source and the value are PAGE_VERIFIED; 'location_as_recorded' may carry a repository or extract locator that the library has not checked.",
  "summary": {
-  "records": 209,
-  "implementation_allowed": 0,
+  "records": 251,
+  "implementation_allowed": 34,
   "by_aircraft": {
    "F-15": 56,
-   "F-16": 37,
+   "F-16": 79,
    "F-22": 14,
    "F/A-18": 102
   },
   "by_verification_level": {
-   "SEARCH_LEAD_ONLY": 135,
+   "SEARCH_LEAD_ONLY": 137,
    "ABSTRACT_VERIFIED": 15,
    "CONTENT_EXTRACT_VERIFIED": 51,
+   "PAGE_VERIFIED": 40,
    "CATALOGUE_VERIFIED": 8
   },
   "by_implementation_use": {
-   "BLOCKED_PENDING_PAGE_VERIFICATION": 154,
-   "NOT_A_MODEL_PARAMETER": 25,
+   "BLOCKED_PENDING_PAGE_VERIFICATION": 156,
+   "NOT_A_MODEL_PARAMETER": 30,
    "PROHIBITED": 16,
-   "DOMAIN_METADATA_ONLY": 14
+   "DOMAIN_METADATA_ONLY": 15,
+   "ALLOWED": 34
   },
-  "with_existing_maverick_analysis": 155
+  "with_existing_maverick_analysis": 157,
+  "implementation_allowed_by_configuration": {
+   "F16-CFG-NESC-CHECKCASE": 34
+  },
+  "with_unresolved_conflict": 29
  },
  "records": [
   {
@@ -53,6 +59,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -81,6 +92,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -109,6 +125,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -137,6 +158,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -165,6 +191,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -193,6 +224,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -221,6 +257,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -249,6 +290,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -277,6 +323,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -305,6 +356,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -333,6 +389,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -361,6 +422,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X1"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -391,6 +457,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -421,6 +490,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -449,6 +521,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -477,6 +552,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -505,6 +583,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -533,6 +614,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -561,6 +645,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -589,6 +676,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X4"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -617,6 +709,11 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X4"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -645,6 +742,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -673,6 +773,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -701,6 +804,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -729,6 +835,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -757,6 +866,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -785,6 +897,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X5"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -813,6 +930,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -841,6 +961,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -869,6 +992,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X5"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -897,6 +1025,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X6"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -925,6 +1058,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X6"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -953,6 +1091,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X6"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -981,6 +1124,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X6"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1009,6 +1157,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1037,6 +1188,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1065,6 +1219,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1093,6 +1250,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1121,6 +1281,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1149,6 +1312,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1177,6 +1343,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1205,6 +1376,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1233,6 +1409,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1261,6 +1442,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1291,6 +1477,11 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X3"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1319,6 +1510,12 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F16-C4",
+    "F15-X3"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1347,6 +1544,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1375,6 +1575,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X7"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1403,6 +1608,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X7"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1431,6 +1641,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1459,6 +1672,11 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X8"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1487,6 +1705,11 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F15-X8"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1515,6 +1738,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1543,6 +1769,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1571,6 +1800,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1599,6 +1831,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F15/KNOWN_DATA.json"
   },
   {
@@ -1627,6 +1862,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1655,6 +1893,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1683,6 +1924,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1713,6 +1957,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1741,6 +1988,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1769,6 +2019,12 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F16-C2",
+    "F16-C4"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1800,6 +2056,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F16-C2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; source unresolved; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1828,6 +2089,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1856,6 +2120,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1884,6 +2151,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1912,6 +2182,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1942,6 +2215,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -1972,6 +2248,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2002,6 +2281,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2030,6 +2312,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2058,6 +2343,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2086,6 +2374,11 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F16-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2114,6 +2407,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "F16-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2142,6 +2440,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "F16-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2170,6 +2473,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "F16-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2198,6 +2506,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "F16-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2226,6 +2539,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2254,6 +2570,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2282,6 +2601,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2310,6 +2632,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2338,6 +2663,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2366,6 +2694,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2394,6 +2725,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F16-C3"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2422,6 +2758,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2450,6 +2789,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2478,6 +2820,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2506,6 +2851,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2534,6 +2882,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2562,6 +2913,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2590,6 +2944,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2621,6 +2978,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2649,6 +3009,1325 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-S",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "reference_area",
+   "quantity": "Reference wing area",
+   "value": 300,
+   "units": "ft^2",
+   "precision": "as encoded ('300.')",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml line 380, variableDef varID=sref (referenceWingArea, output)",
+   "location_as_recorded": "F16_aero.dml line 380, variableDef varID=sref (referenceWingArea, output)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-B",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "reference_span",
+   "quantity": "Reference wing span",
+   "value": 30,
+   "units": "ft",
+   "precision": "as encoded ('30.')",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml line 374, variableDef varID=bspan (referenceWingSpan)",
+   "location_as_recorded": "F16_aero.dml line 374, variableDef varID=bspan (referenceWingSpan)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-CBAR",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "mean_aerodynamic_chord",
+   "quantity": "Reference chord",
+   "value": 11.32,
+   "units": "ft",
+   "precision": "0.01 ft",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml line 368 varID=cbar; also F16_inertia.dml line 56 varID=CBAR",
+   "location_as_recorded": "F16_aero.dml line 368 varID=cbar; also F16_inertia.dml line 56 varID=CBAR",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-MRC",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "cg_reference",
+   "quantity": "Moment reference centre",
+   "value": 35,
+   "units": "percent MAC (+aft of MAC leading edge)",
+   "precision": "exact (35)",
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "page": "F16_inertia.dml line 141 varID=DXCG (description and calculation DXCG = (35 - CG_PCT_MAC)*CBAR/100); README.html (NESC F-16 package, v6) 'Trimmed flight conditions' ('35% of MAC behind the wing leading edge')",
+   "location_as_recorded": "F16_inertia.dml line 141 varID=DXCG (description and calculation DXCG = (35 - CG_PCT_MAC)*CBAR/100); README.html (NESC F-16 package, v6) 'Trimmed flight conditions' ('35% of MAC behind the wing leading edge')",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-MASS",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "mass",
+   "quantity": "Total mass",
+   "value": 637.1595,
+   "units": "slug",
+   "precision": "0.0001 slug",
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "page": "F16_inertia.dml line 111 varID=XMASS ('Total mass of vehicle (20,500 lbm)')",
+   "location_as_recorded": "F16_inertia.dml line 111 varID=XMASS ('Total mass of vehicle (20,500 lbm)')",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-CG",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "cg",
+   "quantity": "CG position for the check cases",
+   "value": 25,
+   "units": "percent MAC (+aft)",
+   "precision": "exact (25.0)",
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "page": "README.html (NESC F-16 package, v6) section F16_inertia.dml ('input value for the CG position should be 25%') and Results; F16_inertia.dml line 44 varID=CG_PCT_MAC (file default initialValue 35)",
+   "location_as_recorded": "README.html (NESC F-16 package, v6) section F16_inertia.dml ('input value for the CG position should be 25%') and Results; F16_inertia.dml line 44 varID=CG_PCT_MAC (file default initialValue 35)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-IXX",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "Ixx",
+   "quantity": "Roll moment of inertia",
+   "value": 9496.0,
+   "units": "slug-ft^2",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "page": "F16_inertia.dml line 63 varID=XIXX",
+   "location_as_recorded": "F16_inertia.dml line 63 varID=XIXX",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-IYY",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "Iyy",
+   "quantity": "Pitch moment of inertia",
+   "value": 55814.0,
+   "units": "slug-ft^2",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "page": "F16_inertia.dml line 71 varID=XIYY",
+   "location_as_recorded": "F16_inertia.dml line 71 varID=XIYY",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-IZZ",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "Izz",
+   "quantity": "Yaw moment of inertia",
+   "value": 63100.0,
+   "units": "slug-ft^2",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "page": "F16_inertia.dml line 79 varID=XIZZ",
+   "location_as_recorded": "F16_inertia.dml line 79 varID=XIZZ",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-IXZ",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "Ixz",
+   "quantity": "Product of inertia, X-Z plane",
+   "value": 982.0,
+   "units": "slug-ft^2",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "page": "F16_inertia.dml line 87 varID=XIZX (bodyProductOfInertia_ZX); README.html (NESC F-16 package, v6) Table 6 ('no sign reversal')",
+   "location_as_recorded": "F16_inertia.dml line 87 varID=XIZX (bodyProductOfInertia_ZX); README.html (NESC F-16 package, v6) Table 6 ('no sign reversal')",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-IXY",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "Ixy",
+   "quantity": "Product of inertia, X-Y plane",
+   "value": 0.0,
+   "units": "slug-ft^2",
+   "precision": "exact",
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "page": "F16_inertia.dml line 95 varID=XIXY",
+   "location_as_recorded": "F16_inertia.dml line 95 varID=XIXY",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-IYZ",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "Iyz",
+   "quantity": "Product of inertia, Y-Z plane",
+   "value": 0.0,
+   "units": "slug-ft^2",
+   "precision": "exact",
+   "source_id": "NESC-F16-INERTIA-DML",
+   "candidate_source_ids": [],
+   "page": "F16_inertia.dml line 103 varID=XIYZ",
+   "location_as_recorded": "F16_inertia.dml line 103 varID=XIYZ",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-AERO-DEF",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_coefficient_definition",
+   "quantity": "Output coefficient definitions",
+   "value": "CX +fwd, CY +right, CZ +down, Cl +RWD, Cm +ANU, Cn +ANR; body axes; about the MRC",
+   "units": "nd",
+   "precision": "n/a (definition)",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml lines 784-905 (variableDefs cx, cy, cz, cl, cm, cn); README.html (NESC F-16 package, v6) Table 2",
+   "location_as_recorded": "F16_aero.dml lines 784-905 (variableDefs cx, cy, cz, cl, cm, cn); README.html (NESC F-16 package, v6) Table 2",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-BUILDUP",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_coefficient_definition",
+   "quantity": "Coefficient build-up equations",
+   "value": "cx = CX0 + cq2v*CXq; cy = CY0 + b2v*(CYp*p + CYr*r); cz = CZ1 + cq2v*CZq; cl = Cl0 + ClDA*dail + ClDR*drdr + b2v*(Clp*p + Clr*r); cm = Cm0 + cq2v*Cmq; cn = Cn0 + CnDA*dail + CnDR*drdr + b2v*(Cnp*p + Cnr*r)",
+   "units": "nd",
+   "precision": "n/a (equations)",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml calculation elements of cx, cy, cz, cl1, cl, cm, cn1, cn (lines 734-905)",
+   "location_as_recorded": "F16_aero.dml calculation elements of cx, cy, cz, cl1, cl, cm, cn1, cn (lines 734-905)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-RATE-NORM",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "rate_normalization",
+   "quantity": "Rate normalisation",
+   "value": "b2v = bspan/(2*vt) multiplies p and r; cq2v = cbar*q/(2*vt); p, q, r in rad/s; vt in ft/s (minValue 0.1)",
+   "units": "nd",
+   "precision": "n/a (equations)",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml line 549 (b2v), line 562 (cq2v), line 292 (vt), lines 311-325 (p, q, r)",
+   "location_as_recorded": "F16_aero.dml line 549 (b2v), line 562 (cq2v), line 292 (vt), lines 311-325 (p, q, r)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-CTRL-DEF",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "control_input_definition",
+   "quantity": "Control inputs to the aero model",
+   "value": "el deg +TED; ail deg +LWD, (right - left)/2; rdr deg +TEL; normalised del = el/25, dail = ail/20, drdr = rdr/30",
+   "units": "deg",
+   "precision": "n/a (definition)",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml lines 332-345 (el, ail, rdr), 390 (del), 405 (dail), 418 (drdr); README.html (NESC F-16 package, v6) Table 1",
+   "location_as_recorded": "F16_aero.dml lines 332-345 (el, ail, rdr), 390 (del), 405 (dail), 418 (drdr); README.html (NESC F-16 package, v6) Table 1",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-ALPHA",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_domain_alpha",
+   "quantity": "Angle-of-attack domain",
+   "value": "-10 .. 45 (breakpoints -10:5:45)",
+   "units": "deg",
+   "precision": "exact breakpoints",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml breakpointDef ALPHA1 and every independentVarRef varID=alpha (e.g. line 989): min -10, max 45, extrapolate='neither'",
+   "location_as_recorded": "F16_aero.dml breakpointDef ALPHA1 and every independentVarRef varID=alpha (e.g. line 989): min -10, max 45, extrapolate='neither'",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-BETA",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_domain_beta",
+   "quantity": "Sideslip domain",
+   "value": "|beta| 0 .. 30 (breakpoints 0:5:30) for Cl0/Cn0 with the sign of beta applied; -30 .. 30 (breakpoints -30:10:30) for control-power tables",
+   "units": "deg",
+   "precision": "exact breakpoints",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml breakpointDefs BETA1, BETA2; lines 1088 and 1124 (absbeta); clt/cnt calculations lines 607 and 639",
+   "location_as_recorded": "F16_aero.dml breakpointDefs BETA1, BETA2; lines 1088 and 1124 (absbeta); clt/cnt calculations lines 607 and 639",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-ELEV-DOMAIN",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_domain_control",
+   "quantity": "Elevator domain of the aero tables",
+   "value": "-24 .. 24 (breakpoints -24:12:24)",
+   "units": "deg",
+   "precision": "exact breakpoints",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml breakpointDef DE1 and independentVarRef varID=el lines 987 and 1052: min -24, max 24, extrapolate='neither'",
+   "location_as_recorded": "F16_aero.dml breakpointDef DE1 and independentVarRef varID=el lines 987 and 1052: min -24, max 24, extrapolate='neither'",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-MACH",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_domain_mach",
+   "quantity": "Mach / flight-envelope statement",
+   "value": "No Mach input; envelope 'limited to the vicinity of 10,000 ft MSL and 287.8 knots equivalent airspeed (around Mach 0.5)'",
+   "units": "-",
+   "precision": "as stated",
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "page": "README.html (NESC F-16 package, v6) section 'Assumptions and Limitations' (HTML line 910)",
+   "location_as_recorded": "README.html (NESC F-16 package, v6) section 'Assumptions and Limitations' (HTML line 910)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "DOMAIN_METADATA_ONLY",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TBL-LONG",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_coefficient_table",
+   "quantity": "Longitudinal static tables",
+   "value": "CX0(alpha 12 x el 5) CX_table; CZ0(alpha 12) CZ0_table with CZ1 = CZ0*(1 - (beta/rtd)^2) - 0.19*del; Cm0(alpha 12 x el 5) Cm0_table",
+   "units": "nd",
+   "precision": "as encoded (3 significant digits typical)",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml griddedTableDefs CX_table line 994, CZ0_table line 1026, Cm0_table line 1060; CZ1 calculation line 479",
+   "location_as_recorded": "F16_aero.dml griddedTableDefs CX_table line 994, CZ0_table line 1026, Cm0_table line 1060; CZ1 calculation line 479",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TBL-LAT",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_coefficient_table",
+   "quantity": "Lateral-directional static terms",
+   "value": "CY0 = -0.02*beta + 0.021*dail + 0.086*drdr (beta in deg); Cl0(alpha 12 x |beta| 7) and Cn0(alpha 12 x |beta| 7), sign of beta applied",
+   "units": "nd",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml CY0 line 441; Cl0_table line 1095; Cn0_table line 1131; clt/cnt piecewise lines 607 and 639",
+   "location_as_recorded": "F16_aero.dml CY0 line 441; Cl0_table line 1095; Cn0_table line 1131; clt/cnt piecewise lines 607 and 639",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TBL-DAMP",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_coefficient_table",
+   "quantity": "Damping derivative tables",
+   "value": "CXq, CYr, CYp, CZq, Clr, Clp, Cmq, Cnr, Cnp vs alpha (12 breakpoints)",
+   "units": "per unit normalised rate",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml griddedTableDefs lines 1175, 1201, 1227, 1253, 1279, 1305, 1334, 1360, 1386",
+   "location_as_recorded": "F16_aero.dml griddedTableDefs lines 1175, 1201, 1227, 1253, 1279, 1305, 1334, 1360, 1386",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TBL-CTRL",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "aero_coefficient_table",
+   "quantity": "Lateral-directional control-power tables",
+   "value": "ClDA, ClDR, CnDA, CnDR vs alpha (12) x beta (-30:10:30)",
+   "units": "per unit normalised deflection (file labels say per degree; see F16-NESC-BUILDUP)",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml griddedTableDefs lines 1418, 1459, 1499, 1540; variableDefs lines 712-727",
+   "location_as_recorded": "F16_aero.dml griddedTableDefs lines 1418, 1459, 1499, 1540; variableDefs lines 712-727",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-THRUST-TABLES",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "thrust_table",
+   "quantity": "Idle / military / maximum thrust tables",
+   "value": "T_IDLE, T_MIL, T_MAX on Mach 0:0.2:1.0 x altitude 0:10,000:50,000 ft (36 cells each)",
+   "units": "lbf",
+   "precision": "as encoded (lbf)",
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "page": "F16_prop.dml griddedTableDefs T_IDLE line 257, T_MIL line 281, T_MAX line 305 (data lines 270-326)",
+   "location_as_recorded": "F16_prop.dml griddedTableDefs T_IDLE line 257, T_MIL line 281, T_MAX line 305 (data lines 270-326)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-PLA",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "throttle_map",
+   "quantity": "Power-lever semantics and interpolation",
+   "value": "PWR 0-100 %, MIL_PWR = 50; PWR < 50: T_IDLE + PWR*(T_MIL - T_IDLE)/50; PWR >= 50: T_MIL + (PWR - 50)*(T_MAX - T_MIL)/50",
+   "units": "percent",
+   "precision": "exact",
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "page": "F16_prop.dml line 44 (PWR), line 72 (MIL_PWR), line 107 (FEX piecewise calculation)",
+   "location_as_recorded": "F16_prop.dml line 44 (PWR), line 72 (MIL_PWR), line 107 (FEX piecewise calculation)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-ENGINE-DYN",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "engine_dynamics",
+   "quantity": "Engine dynamics in the check-case model",
+   "value": "none: steady-state thrust only (no power lag, no engine angular momentum)",
+   "units": "-",
+   "precision": "n/a",
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "page": "F16_prop.dml FEX description line 107 ('Net steady-state thrust'); README.html (NESC F-16 package, v6) Table 4",
+   "location_as_recorded": "F16_prop.dml FEX description line 107 ('Net steady-state thrust'); README.html (NESC F-16 package, v6) Table 4",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TMAX-M08-SL",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "thrust_table",
+   "quantity": "Maximum thrust, Mach 0.8, sea level",
+   "value": 28070.0,
+   "units": "lbf",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "page": "F16_prop.dml line 324 (MACH = 0.8 row, first value)",
+   "location_as_recorded": "F16_prop.dml line 324 (MACH = 0.8 row, first value)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "F16-C6"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TMAX-M10-SL",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "thrust_table",
+   "quantity": "Maximum thrust, Mach 1.0, sea level",
+   "value": 28885.0,
+   "units": "lbf",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-PROP-DML",
+   "candidate_source_ids": [],
+   "page": "F16_prop.dml line 325 (MACH = 1.0 row, first value)",
+   "location_as_recorded": "F16_prop.dml line 325 (MACH = 1.0 row, first value)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "F16-C6"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-MIXER",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "fcs_gearing",
+   "quantity": "Check-case pilot-to-surface mixer",
+   "value": "el = -25*stick; ail = -21.5*lat; rdr = -30*pedal + 0.008*ail; PWR = 100*throttle",
+   "units": "deg per unit input",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "page": "F16_control.dml calculation elements of el (line 1117), ail (1133), rdr (1148), PWR (1171)",
+   "location_as_recorded": "F16_control.dml calculation elements of el (line 1117), ail (1133), rdr (1148), PWR (1171)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-LQR",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "fcs_gearing",
+   "quantity": "Check-case LQR gain matrices",
+   "value": "longLQR (2x4: stick and throttle vs airspeed, alpha, q, theta) and latdLQR (2x4: lateral stick and pedal vs phi, beta, p, r)",
+   "units": "mixed (per kt, per deg, per rad/s)",
+   "precision": "as encoded (15 digits)",
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "page": "F16_control.dml variableDefs longLQR11 (line 574) through latdLQR24 (line 651)",
+   "location_as_recorded": "F16_control.dml variableDefs longLQR11 (line 574) through latdLQR24 (line 651)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-ACTUATORS",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "actuator_dynamics",
+   "quantity": "Actuators in the check-case model",
+   "value": "none: controller outputs are applied as surface deflections directly; no rate limits, no position limits beyond aero-table clamping",
+   "units": "-",
+   "precision": "n/a",
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "page": "F16_control.dml outputs el, ail, rdr (lines 1117-1160) feed F16_aero.dml inputs directly; README.html (NESC F-16 package, v6) Tables 8 and 1",
+   "location_as_recorded": "F16_control.dml outputs el, ail, rdr (lines 1117-1160) feed F16_aero.dml inputs directly; README.html (NESC F-16 package, v6) Tables 8 and 1",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "F16-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-COND",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "trim_state",
+   "quantity": "Case 11 trim condition",
+   "value": "altitude 10,013 ft MSL; true airspeed 565.6854 ft/s; CM 25.0 % MAC; wings level, un-accelerated, zero flight-path angle",
+   "units": "ft, ft/s, percent MAC",
+   "precision": "as printed",
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "page": "README.html (NESC F-16 package, v6) Table 11 (HTML lines 1841-1865) and the paragraph before it",
+   "location_as_recorded": "README.html (NESC F-16 package, v6) Table 11 (HTML lines 1841-1865) and the paragraph before it",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-THETA",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "trim_state",
+   "quantity": "Case 11 trimmed pitch attitude (= alpha)",
+   "value": 2.6538,
+   "units": "deg (+ANU)",
+   "precision": "0.0001 deg (README); 16 digits (control file)",
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "page": "README.html (NESC F-16 package, v6) Table 11 (HTML line 1870); F16_control.dml line 471 designAngleOfAttack 2.653813535191715",
+   "location_as_recorded": "README.html (NESC F-16 package, v6) Table 11 (HTML line 1870); F16_control.dml line 471 designAngleOfAttack 2.653813535191715",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "F16-C7"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-TAIL",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "trim_state",
+   "quantity": "Case 11 trimmed horizontal tail",
+   "value": -3.241,
+   "units": "deg (+TED)",
+   "precision": "0.0001 deg",
+   "source_id": "NESC-F16-PACKAGE-README",
+   "candidate_source_ids": [],
+   "page": "README.html (NESC F-16 package, v6) Table 11 (HTML line 1880)",
+   "location_as_recorded": "README.html (NESC F-16 package, v6) Table 11 (HTML line 1880)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-STICK",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "trim_state",
+   "quantity": "Case 11 trimmed longitudinal stick",
+   "value": 0.1296382327486013,
+   "units": "fraction (+aft)",
+   "precision": "16 digits",
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "page": "F16_control.dml line 231 trimmedPilotControl_long; README.html (NESC F-16 package, v6) Table 11 line 1875 (12.96 %)",
+   "location_as_recorded": "F16_control.dml line 231 trimmedPilotControl_long; README.html (NESC F-16 package, v6) Table 11 line 1875 (12.96 %)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-TRIM11-THROTTLE",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "trim_state",
+   "quantity": "Case 11 trimmed throttle / power-lever angle",
+   "value": 0.1390191130965607,
+   "units": "fraction (= 13.9019 % PLA)",
+   "precision": "16 digits",
+   "source_id": "NESC-F16-CONTROL-DML",
+   "candidate_source_ids": [],
+   "page": "F16_control.dml line 226 trimmedPilotControl_throttle; README.html (NESC F-16 package, v6) Table 11 lines 1885-1890",
+   "location_as_recorded": "F16_control.dml line 226 trimmedPilotControl_throttle; README.html (NESC F-16 package, v6) Table 11 lines 1885-1890",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "ALLOWED",
+   "implementation_allowed": true,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": null,
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-CASE11-INIT",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "trim_state",
+   "quantity": "Case 11 initial pitch attitude in the three reference simulations",
+   "value": "2.64333 (sim 02), 2.63873 (sim 04), 2.63893 (sim 05)",
+   "units": "deg",
+   "precision": "as recorded",
+   "source_id": "NESC-F16-CHECKCASE-TRAJECTORIES",
+   "candidate_source_ids": [],
+   "page": "Atmos_11_sim_02/04/05.csv, first data row, column eulerAngle_deg_Pitch",
+   "location_as_recorded": "Atmos_11_sim_02/04/05.csv, first data row, column eulerAngle_deg_Pitch",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "F16-C7"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-CHECKCASES",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "check_case_dataset",
+   "quantity": "NESC F-16 trajectory check cases",
+   "value": "cases 11, 12, 13.1-13.4, 15, 16; simulations 02, 04, 05 (24 CSV files)",
+   "units": "-",
+   "precision": "as recorded",
+   "source_id": "NESC-F16-CHECKCASE-TRAJECTORIES",
+   "candidate_source_ids": [],
+   "page": "NESC_data/Atmospheric_checkcases/Atmos_11 ... Atmos_16 (see SOURCE_FILES_MANIFEST.json)",
+   "location_as_recorded": "NESC_data/Atmospheric_checkcases/Atmos_11 ... Atmos_16 (see SOURCE_FILES_MANIFEST.json)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-NESC-STATIC-SHOTS",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NESC-CHECKCASE"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "check_case_dataset",
+   "quantity": "DAVE-ML static check-shots",
+   "value": "16 aero shots (nominal, +/- sideslip, +/- p, q, r, +/- surfaces, skewed) and 9 propulsion shots",
+   "units": "-",
+   "precision": "as encoded",
+   "source_id": "NESC-F16-AERO-DML",
+   "candidate_source_ids": [],
+   "page": "F16_aero.dml staticShot elements lines 1564-3919; F16_prop.dml staticShot elements lines 370-856",
+   "location_as_recorded": "F16_aero.dml staticShot elements lines 1564-3919; F16_prop.dml staticShot elements lines 370-856",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "EXACT",
+   "verification_level": "PAGE_VERIFIED",
+   "source_verification_level": "PAGE_VERIFIED",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-TP1538-TMAX-M08-SL",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "thrust_table",
+   "quantity": "Maximum thrust, Mach 0.8, sea level (TP-1538 Table VI)",
+   "value": 26070,
+   "units": "lbf",
+   "precision": "printed integer; SI column 115,959 N",
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "page": null,
+   "location_as_recorded": "Table VI, PDF p.99, report p.93 (per repository transcription)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "source_verification_level": "ABSTRACT_VERIFIED",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F16-C6"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "F16-TP1538-TMAX-M10-SL",
+   "aircraft": "F-16",
+   "configuration": [
+    "F16-CFG-NASA-REF-TP1538"
+   ],
+   "configuration_scope": [
+    "SIMULATION_ONLY"
+   ],
+   "field": "thrust_table",
+   "quantity": "Maximum thrust, Mach 1.0, sea level (TP-1538 Table VI)",
+   "value": 28886,
+   "units": "lbf",
+   "precision": "printed integer; SI column 128,485 N",
+   "source_id": "NASA-TP-1538",
+   "candidate_source_ids": [],
+   "page": null,
+   "location_as_recorded": "Table VI, PDF p.99, report p.93 (per repository transcription)",
+   "provenance": "ORIGINAL_PRIMARY",
+   "value_origin": "ORIGINAL",
+   "exactness": "REPOSITORY_READING",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "source_verification_level": "ABSTRACT_VERIFIED",
+   "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "F16-C6"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.json"
   },
   {
@@ -2677,6 +4356,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2705,6 +4387,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2733,6 +4418,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2761,6 +4449,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2789,6 +4480,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2817,6 +4511,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2846,6 +4543,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2874,6 +4574,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2902,6 +4605,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2930,6 +4636,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2958,6 +4667,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -2986,6 +4698,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -3014,6 +4729,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -3044,6 +4762,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/F22/KNOWN_DATA.json"
   },
   {
@@ -3075,6 +4796,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3106,6 +4830,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3137,6 +4864,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C3"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3168,6 +4900,11 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C3"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3196,6 +4933,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3224,6 +4964,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3252,6 +4995,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3280,6 +5026,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3308,6 +5057,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3336,6 +5088,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3365,6 +5120,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3394,6 +5152,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3423,6 +5184,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3452,6 +5216,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3481,6 +5250,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3510,6 +5284,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3541,6 +5320,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3573,6 +5355,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; source unresolved; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3605,6 +5392,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; source unresolved; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3637,6 +5429,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; source unresolved; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3669,6 +5466,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3698,6 +5498,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3727,6 +5530,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3756,6 +5562,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3787,6 +5596,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3818,6 +5630,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3850,6 +5665,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C8"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3881,6 +5701,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3914,6 +5737,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3945,6 +5771,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; source unresolved; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -3977,6 +5808,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4009,6 +5843,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4037,6 +5874,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4065,6 +5905,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [
+    "FA18-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4093,6 +5938,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4121,6 +5969,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4149,6 +6000,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4178,6 +6032,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4207,6 +6064,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4235,6 +6095,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4264,6 +6127,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4292,6 +6158,9 @@
    "implementation_use": "PROHIBITED",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4324,6 +6193,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4356,6 +6228,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; source unresolved",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4386,6 +6261,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4416,6 +6294,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4444,6 +6325,9 @@
    "implementation_use": "NOT_A_MODEL_PARAMETER",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4472,6 +6356,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4500,6 +6387,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4528,6 +6418,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4556,6 +6449,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4584,6 +6480,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4612,6 +6511,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4640,6 +6542,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4668,6 +6575,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C8"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4696,6 +6608,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4724,6 +6639,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4752,6 +6670,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4780,6 +6701,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C10"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4808,6 +6734,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C10"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4836,6 +6767,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4864,6 +6798,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4892,6 +6829,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4920,6 +6860,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4948,6 +6893,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C8"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -4976,6 +6926,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5004,6 +6957,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5032,6 +6988,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5060,6 +7019,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C10"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5088,6 +7052,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C10"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5116,6 +7085,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5144,6 +7116,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5172,6 +7147,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5200,6 +7178,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5228,6 +7209,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5256,6 +7240,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5284,6 +7273,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C8"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5312,6 +7306,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5340,6 +7337,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5368,6 +7368,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5396,6 +7399,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5424,6 +7430,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5452,6 +7461,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5480,6 +7492,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5508,6 +7523,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C1"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5536,6 +7556,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5564,6 +7589,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5592,6 +7620,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5620,6 +7651,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5648,6 +7682,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C3"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5676,6 +7715,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5704,6 +7746,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5732,6 +7777,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5760,6 +7808,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5788,6 +7839,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5816,6 +7870,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5844,6 +7901,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C2"
+   ],
+   "unresolved_conflict": true,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document; listed in an unresolved conflict",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5874,6 +7936,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C9"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5902,6 +7969,11 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [
+    "FA18-C9"
+   ],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5932,6 +8004,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5960,6 +8035,9 @@
    "implementation_use": "DOMAIN_METADATA_ONLY",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "DOMAIN_METADATA_ONLY: not a model parameter (domain, gap record, dataset or accuracy statement)",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   },
   {
@@ -5990,6 +8068,9 @@
    "implementation_use": "BLOCKED_PENDING_PAGE_VERIFICATION",
    "implementation_allowed": false,
    "has_existing_maverick_analysis": true,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
   }
  ]

@@ -1,0 +1,881 @@
+{
+ "schema": "maverick.aerospace.conflict-register.v1",
+ "library_revision": "r2",
+ "classification_vocabulary": [
+  "SAME_SOURCE_TYPO_OR_REVISION",
+  "DIFFERENT_CONFIGURATION",
+  "DIFFERENT_PHASE",
+  "INSTALLED_VS_UNINSTALLED",
+  "PHYSICAL_VS_REFERENCE_GEOMETRY",
+  "ROUNDING",
+  "LINEAGE_TRANSCRIPTION_DIFFERENCE",
+  "IMPLEMENTATION_DIFFERENCE",
+  "DIFFERENT_DEFINITION",
+  "METADATA_DISAGREEMENT",
+  "NOT_A_CONFLICT",
+  "STILL_UNRESOLVED"
+ ],
+ "status_vocabulary": [
+  "RESOLVED",
+  "RESOLVED_PER_CONFIGURATION",
+  "UNRESOLVED"
+ ],
+ "rule": "Both claims are recorded before any classification. A value listed in an UNRESOLVED conflict can never be implementation-allowed.",
+ "conflicts": [
+  {
+   "conflict_id": "F16-C1",
+   "aircraft": "F-16",
+   "quantity": "Control-surface rate limits / actuator lag",
+   "claims": [
+    {
+     "claim": "No sourced rate limit in the TP-1538 material; stabilator actuator model in fig. 63 not transcribed (repository)",
+     "source_id": "NASA-TP-1538",
+     "configuration_id": "F16-CFG-NASA-REF-TP1538"
+    },
+    {
+     "claim": "60 / 80 / 120 deg/s and a 0.0495 s first-order lag (arXiv extract citing Stevens & Lewis)",
+     "source_id": "ARXIV-1907-11913",
+     "configuration_id": "F16-CFG-SIM-STEVENS-LEWIS"
+    },
+    {
+     "claim": "No actuator model at all; deflections applied directly (file-verified)",
+     "source_id": "NESC-F16-CONTROL-DML",
+     "configuration_id": "F16-CFG-NESC-CHECKCASE"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_CONFIGURATION",
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "Three configurations, three answers. For the TP-1538 configuration the question 'does fig. 63 print a rate?' is still open; textbook rates stay cross-validation only.",
+   "value_ids": [
+    "F16-ACT-RATE-TP1538",
+    "F16-ACT-RATE-DH-SL",
+    "F16-ACT-RATE-DA-SL",
+    "F16-ACT-RATE-DR-SL",
+    "F16-ACT-TAU-SL",
+    "F16-NESC-ACTUATORS"
+   ],
+   "source_ids": [
+    "NASA-TP-1538",
+    "ARXIV-1907-11913",
+    "STEVENS-LEWIS-ACS",
+    "NESC-F16-CONTROL-DML"
+   ],
+   "evidence_basis": "MIXED (NESC file-verified; others repository/extract)",
+   "next_check": "Read TP-1538 fig. 63 and its text; read the Stevens & Lewis actuator section and its citation."
+  },
+  {
+   "conflict_id": "F16-C2",
+   "aircraft": "F-16",
+   "quantity": "Nominal mass",
+   "claims": [
+    {
+     "claim": "20,500 lb (637.16 slug), Table I (repository)",
+     "source_id": "NASA-TP-1538",
+     "configuration_id": "F16-CFG-NASA-REF-TP1538"
+    },
+    {
+     "claim": "'approximately 647.2 slug' in 'other NASA F-16 studies' (repository note; study not named)",
+     "source_id": "UNRESOLVED",
+     "configuration_id": "F16-CFG-GENERIC-ACADEMIC"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_CONFIGURATION",
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "Second value has no named source; never used.",
+   "value_ids": [
+    "F16-MASS-W",
+    "F16-MASS-ALT-647"
+   ],
+   "source_ids": [
+    "NASA-TP-1538"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": "Identify the study behind 647.2 slug (Garza & Morelli Table 1 is the first candidate)."
+  },
+  {
+   "conflict_id": "F16-C3",
+   "aircraft": "F-16",
+   "quantity": "Engine identity and bookkeeping behind TP-1538 Table VI",
+   "claims": [
+    {
+     "claim": "Engine variant, installed/uninstalled and gross/net not stated in the repository reading",
+     "source_id": "NASA-TP-1538",
+     "configuration_id": "F16-CFG-NASA-REF-TP1538"
+    }
+   ],
+   "classification": [
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "Table VI stays tied to the simulation configuration, never to a named F100 variant.",
+   "value_ids": [
+    "F16-ENG-TABLE-VI"
+   ],
+   "source_ids": [
+    "NASA-TP-1538"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": "TP-1538 Appendix B text around Table VI."
+  },
+  {
+   "conflict_id": "F16-C4",
+   "aircraft": "F-16 / F-15",
+   "quantity": "Printed 91,188 N",
+   "claims": [
+    {
+     "claim": "TP-1538 Table I weight 20,500 lb = 91,188 N (repository)",
+     "source_id": "NASA-TP-1538",
+     "configuration_id": "F16-CFG-NASA-REF-TP1538"
+    },
+    {
+     "claim": "F-15B reports: 'approximately 25,000 lbf (91,188 N)' (repository)",
+     "source_id": "NASA-TM-2001-210395",
+     "configuration_id": "F15-CFG-NASA836-PFTF"
+    }
+   ],
+   "classification": [
+    "NOT_A_CONFLICT"
+   ],
+   "status": "RESOLVED",
+   "resolution": "Coincidence recorded (register R1-RN4); different quantities and aircraft. No inference drawn.",
+   "value_ids": [
+    "F16-MASS-W",
+    "F15-836-THRUST-25K"
+   ],
+   "source_ids": [],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "F16-C6",
+   "aircraft": "F-16",
+   "quantity": "Sea-level maximum thrust at Mach 0.8 and 1.0",
+   "claims": [
+    {
+     "claim": "TP-1538 Table VI: 26,070 lbf (SI 115,959 N) and 28,886 lbf (SI 128,485 N) (repository two-pass transcription; SI column consistent)",
+     "source_id": "NASA-TP-1538",
+     "configuration_id": "F16-CFG-NASA-REF-TP1538"
+    },
+    {
+     "claim": "NESC F16_prop.dml: 28,070 lbf and 28,885 lbf (file-verified, lines 324-325)",
+     "source_id": "NESC-F16-PROP-DML",
+     "configuration_id": "F16-CFG-NESC-CHECKCASE"
+    }
+   ],
+   "classification": [
+    "LINEAGE_TRANSCRIPTION_DIFFERENCE",
+    "DIFFERENT_CONFIGURATION"
+   ],
+   "status": "RESOLVED_PER_CONFIGURATION",
+   "resolution": "Each configuration keeps its own value: the NESC value is by definition the NESC configuration's value (its trajectories were generated with it). The other 88 of 90 cells agree exactly. TP-1538's SI column (per repository) matches 26,070 and 28,886, so the change most likely entered the textbook lineage; the library cannot prove this until it reads TP-1538 p.99 itself. The NESC table also adds a Mach 0 column absent from TP-1538 Table VI.",
+   "value_ids": [
+    "F16-NESC-TMAX-M08-SL",
+    "F16-TP1538-TMAX-M08-SL",
+    "F16-NESC-TMAX-M10-SL",
+    "F16-TP1538-TMAX-M10-SL"
+   ],
+   "source_ids": [
+    "NASA-TP-1538",
+    "NESC-F16-PROP-DML",
+    "STEVENS-LEWIS-ACS"
+   ],
+   "evidence_basis": "MIXED (NESC file-verified; TP-1538 repository transcription)",
+   "next_check": "Library page read of TP-1538 PDF p.99; Stevens & Lewis thrust table."
+  },
+  {
+   "conflict_id": "F16-C7",
+   "aircraft": "F-16",
+   "quantity": "Case 11 trimmed pitch attitude",
+   "claims": [
+    {
+     "claim": "2.6538 deg (README Table 11; control file design alpha 2.653813535)",
+     "source_id": "NESC-F16-PACKAGE-README",
+     "configuration_id": "F16-CFG-NESC-CHECKCASE"
+    },
+    {
+     "claim": "2.64333 / 2.63873 / 2.63893 deg at t = 0 in simulations 02 / 04 / 05",
+     "source_id": "NESC-F16-CHECKCASE-TRAJECTORIES",
+     "configuration_id": "F16-CFG-NESC-CHECKCASE"
+    }
+   ],
+   "classification": [
+    "IMPLEMENTATION_DIFFERENCE"
+   ],
+   "status": "RESOLVED",
+   "resolution": "The README states that small atmosphere and gravitation differences between tools change the trim values. Use the spread (~0.015 deg) as a tolerance floor.",
+   "value_ids": [
+    "F16-NESC-TRIM11-THETA",
+    "F16-NESC-CASE11-INIT"
+   ],
+   "source_ids": [
+    "NESC-F16-PACKAGE-README",
+    "NESC-F16-CHECKCASE-TRAJECTORIES"
+   ],
+   "evidence_basis": "PAGE_VERIFIED (file)",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "F16-C8",
+   "aircraft": "F-16",
+   "quantity": "Which aerodynamic model the NESC check-cases use",
+   "claims": [
+    {
+     "claim": "Maverick implements the Morelli 1998 global polynomial model",
+     "source_id": "MORELLI-ACC-1998-F16",
+     "configuration_id": "F16-CFG-SIM-MORELLI1998"
+    },
+    {
+     "claim": "NESC aero is Morelli's MATLAB adaptation of the Stevens & Lewis TABLE model (file header)",
+     "source_id": "NESC-F16-AERO-DML",
+     "configuration_id": "F16-CFG-NESC-CHECKCASE"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_CONFIGURATION"
+   ],
+   "status": "RESOLVED_PER_CONFIGURATION",
+   "resolution": "Configuration-incompatible for aerodynamics: NESC trajectories can verify Maverick's EOM only if Maverick runs the NESC table model as a separate validation profile.",
+   "value_ids": [],
+   "source_ids": [
+    "MORELLI-ACC-1998-F16",
+    "NESC-F16-AERO-DML"
+   ],
+   "evidence_basis": "PAGE_VERIFIED (file)",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "F15-X1",
+   "aircraft": "F-15",
+   "quantity": "NASA 836 mass state column",
+   "claims": [
+    {
+     "claim": "37,152 lb, 26.05 % MAC, 27,953 / 190,777 / 213,957 / -460 slug-ft^2 read as baseline (main-branch freeze)",
+     "source_id": "NASA-TM-2012-215978",
+     "configuration_id": "F15-CFG-NASA836-QS"
+    },
+    {
+     "claim": "Baseline column: 37,426 lb, 26.34 % MAC, 30,345 / 198,687 / 223,214 / -5,070 slug-ft^2 (implementation branch, all columns labelled)",
+     "source_id": "NASA-TM-2012-215978",
+     "configuration_id": "F15-CFG-NASA836-PRE-QS"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_CONFIGURATION"
+   ],
+   "status": "RESOLVED",
+   "resolution": "Two columns of the same Table 1. The implementation branch read and labelled all three columns; the first set is the spike-extended column. Not reopened (no primary contradiction). Library page confirmation still pending.",
+   "value_ids": [
+    "F15-836-MASS-W",
+    "F15-836QS-MASS-W",
+    "F15-836-MASS-CG",
+    "F15-836QS-MASS-CG",
+    "F15-836-MASS-IXX",
+    "F15-836QS-MASS-IXX",
+    "F15-836-MASS-IYY",
+    "F15-836QS-MASS-IYY",
+    "F15-836-MASS-IZZ",
+    "F15-836QS-MASS-IZZ",
+    "F15-836-MASS-IXZ",
+    "F15-836QS-MASS-IXZ"
+   ],
+   "source_ids": [
+    "NASA-TM-2012-215978"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": "TM-2012-215978 p.8 Table 1."
+  },
+  {
+   "conflict_id": "F15-X2",
+   "aircraft": "F-15",
+   "quantity": "ARI and roll-yaw crossfeed Mach switch points",
+   "claims": [
+    {
+     "claim": "Figure 5 (rendered, both reports): ARI inputs zero above Mach 1.5; crossfeed AoA input zero above Mach 1.0 (implementation branch)",
+     "source_id": "NASA-TM-2012-215978",
+     "configuration_id": "F15-CFG-NASA836-PRE-QS"
+    },
+    {
+     "claim": "Text with figure 5: ARI operative below Mach 1.0; crossfeed nullified above Mach 1.5 (main branch)",
+     "source_id": "NASA-TM-2012-215978",
+     "configuration_id": "F15-CFG-NASA836-PRE-QS"
+    }
+   ],
+   "classification": [
+    "SAME_SOURCE_TYPO_OR_REVISION",
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "Same report, two readings reversed. Either the report's text and figure disagree or one reading is wrong. Not resolvable without the page.",
+   "value_ids": [
+    "F15-836-ARI-SW-FIG",
+    "F15-836-ARI-SW-TXT",
+    "F15-836-XFEED-SW-FIG",
+    "F15-836-XFEED-SW-TXT"
+   ],
+   "source_ids": [
+    "NASA-TM-2012-215978",
+    "NASA-TM-2009-214651"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": "TM-2012-215978 fig. 5 (PDF p.23) and the paragraph describing it; same in TM-2009-214651."
+  },
+  {
+   "conflict_id": "F15-X3",
+   "aircraft": "F-15",
+   "quantity": "Uninstalled sea-level static thrust per engine",
+   "claims": [
+    {
+     "claim": "approximately 23,500 lbf in full afterburner (TM-2005-213670)",
+     "source_id": "NASA-TM-2005-213670",
+     "configuration_id": "F15-CFG-NASA836-PFTF"
+    },
+    {
+     "claim": "approximately 25,000 lbf (91,188 N), no power setting (TM-2001-210395, TM-2002-210736)",
+     "source_id": "NASA-TM-2001-210395",
+     "configuration_id": "F15-CFG-NASA836-PFTF"
+    }
+   ],
+   "classification": [
+    "SAME_SOURCE_TYPO_OR_REVISION"
+   ],
+   "status": "RESOLVED",
+   "resolution": "Both say uninstalled SLS, so not installed-vs-uninstalled. The 25,000 sentence is internally inconsistent (25,000 lbf = 111,206 N). 23,500 preferred (repository). Both remain PROHIBITED as model inputs.",
+   "value_ids": [
+    "F15-836-THRUST-SLS",
+    "F15-836-THRUST-25K"
+   ],
+   "source_ids": [
+    "NASA-TM-2005-213670",
+    "NASA-TM-2001-210395",
+    "NASA-TM-2002-210736"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "F15-X4",
+   "aircraft": "F-15",
+   "quantity": "NF-15B 837 span",
+   "claims": [
+    {
+     "claim": "42.7 ft reference span (table 1)",
+     "source_id": "NASA-TM-2003-212027",
+     "configuration_id": "F15-CFG-NF15B-837"
+    },
+    {
+     "claim": "42.83 ft on the three-view",
+     "source_id": "NASA-TM-2003-212027",
+     "configuration_id": "F15-CFG-NF15B-837"
+    }
+   ],
+   "classification": [
+    "PHYSICAL_VS_REFERENCE_GEOMETRY"
+   ],
+   "status": "RESOLVED",
+   "resolution": "Reference vs physical span of the same airplane.",
+   "value_ids": [
+    "F15-837-REF-B",
+    "F15-837-PHYS-SPAN"
+   ],
+   "source_ids": [
+    "NASA-TM-2003-212027"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "F15-X5",
+   "aircraft": "F-15",
+   "quantity": "Reference chord 15.94 vs 15.95 ft",
+   "claims": [
+    {
+     "claim": "15.94 ft (837 table 1; AFIT research profile); MAC 191.33 in = 15.944 ft (AFIT datum equation)",
+     "source_id": "NASA-TM-2003-212027",
+     "configuration_id": "F15-CFG-NF15B-837"
+    },
+    {
+     "claim": "15.95 ft (CR-186019 table 1)",
+     "source_id": "NASA-CR-186019",
+     "configuration_id": "F15-CFG-SIM-CR186019"
+    }
+   ],
+   "classification": [
+    "ROUNDING",
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "191.33 in / 12 = 15.944 ft rounds to 15.94, not 15.95, so 15.95 needs a different upstream value (e.g. >= 191.34 in) or a different rounding path. Low impact: neither value belongs to the 836 target.",
+   "value_ids": [
+    "F15-AFIT-REF",
+    "F15-CR186019-REF"
+   ],
+   "source_ids": [
+    "NASA-TM-2003-212027",
+    "NASA-CR-186019",
+    "AFIT-GA-ENY-91D-1"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": "CR-186019 table 1 and its cited source."
+  },
+  {
+   "conflict_id": "F15-X6",
+   "aircraft": "F-15",
+   "quantity": "Stabilator travel",
+   "claims": [
+    {
+     "claim": "15 / -26 deg (preproduction No. 8)",
+     "source_id": "NASA-TM-72861",
+     "configuration_id": "F15-CFG-PREPROD-8"
+    },
+    {
+     "claim": "29 down / 15 up (McDonnell thesis)",
+     "source_id": "AFIT-GAE-ENY-90D-16",
+     "configuration_id": "F15-CFG-SIM-AFIT-AEROBASE"
+    },
+    {
+     "claim": "+20 / -30 (Baumann)",
+     "source_id": "AFIT-GAE-ENY-89D-01",
+     "configuration_id": "F15-CFG-SIM-AFIT-AEROBASE"
+    },
+    {
+     "claim": "+15 / -25 (CR-186019)",
+     "source_id": "NASA-CR-186019",
+     "configuration_id": "F15-CFG-SIM-CR186019"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_CONFIGURATION"
+   ],
+   "status": "RESOLVED_PER_CONFIGURATION",
+   "resolution": "Four lineages; never merged. None is an 836 value (836 surface limits NOT PUBLICLY LOCATED).",
+   "value_ids": [
+    "F15-PP8-STAB-LIM",
+    "F15-AFITM-STAB-LIM",
+    "F15-BAU-STAB-LIM",
+    "F15-CR186019-STAB-LIM"
+   ],
+   "source_ids": [
+    "NASA-TM-72861",
+    "AFIT-GAE-ENY-90D-16",
+    "AFIT-GAE-ENY-89D-01",
+    "NASA-CR-186019"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "F15-X7",
+   "aircraft": "F-15",
+   "quantity": "Throttle-angle convention",
+   "claims": [
+    {
+     "claim": "Military power at PLA 73 deg (F100-PW-100(1) simulation)",
+     "source_id": "NASA-TM-X-3261",
+     "configuration_id": "ENG-F100-PW-100-1"
+    },
+    {
+     "claim": "Top of non-augmented operation at PLA 83 deg (F100-PW-100(3) simulation)",
+     "source_id": "NASA-TP-1034",
+     "configuration_id": "ENG-F100-PW-100-3"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_CONFIGURATION",
+    "DIFFERENT_DEFINITION"
+   ],
+   "status": "RESOLVED_PER_CONFIGURATION",
+   "resolution": "Different builds and different defined points; never averaged.",
+   "value_ids": [
+    "F15-F100-PLA-MIL-73",
+    "F15-F100-PLA-83"
+   ],
+   "source_ids": [
+    "NASA-TM-X-3261",
+    "NASA-TP-1034"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "F15-X8",
+   "aircraft": "F-15",
+   "quantity": "Absolute thrust scale for normalised F100 curves",
+   "claims": [
+    {
+     "claim": "30,000 lbf output-channel full scale (TP-1034 App. C)",
+     "source_id": "NASA-TP-1034",
+     "configuration_id": "ENG-F100-PW-100-3"
+    },
+    {
+     "claim": "111.2 kN gross-thrust axis scale (TP-1373)",
+     "source_id": "NASA-TP-1373",
+     "configuration_id": "ENG-F100-PW-100-2-7-8"
+    }
+   ],
+   "classification": [
+    "NOT_A_CONFLICT"
+   ],
+   "status": "RESOLVED",
+   "resolution": "Neither is engine data; both PROHIBITED as scales.",
+   "value_ids": [
+    "F15-F100-CH-SCALE",
+    "F15-F100-AXIS-111"
+   ],
+   "source_ids": [],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "FA18-C1",
+   "aircraft": "F/A-18",
+   "quantity": "Rudder rate limit",
+   "claims": [
+    {
+     "claim": "82 deg/s (f18harv Tables 6.1/6.2; HARV Phase II Table 1)",
+     "source_id": "NASA-TM-110216",
+     "configuration_id": "FA18-CFG-SIM-F18HARV"
+    },
+    {
+     "claim": "61 deg/s (f18bas Table 8.7)",
+     "source_id": "NASA-TM-107601",
+     "configuration_id": "FA18-CFG-SIM-F18BAS"
+    },
+    {
+     "claim": "56 deg/s no-load (MDC A7813 as reproduced in TM-107601 Table 8.6)",
+     "source_id": "NASA-TM-107601",
+     "configuration_id": "FA18-CFG-SIM-F18BAS"
+    },
+    {
+     "claim": "56 deg/s (AAW actuator table, extract)",
+     "source_id": "NASA-TM-2005-213664",
+     "configuration_id": "FA18-CFG-AAW-853"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_CONFIGURATION",
+    "DIFFERENT_DEFINITION",
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "82 vs 61 are different simulation lineages (resolved per configuration). Whether the AAW 56 deg/s is the same no-load rating as A7813's is not established.",
+   "value_ids": [
+    "FA18-ACT-RUD-RATE",
+    "FA18-ACT-AAW-RUD-RATE",
+    "FA18-BAS-RUD-RATE",
+    "FA18-A7813-RUD-RATE",
+    "FA18-HARV-RUD-RATE",
+    "FA18-P2T1-RUD-RATE"
+   ],
+   "source_ids": [
+    "NASA-TM-110216",
+    "NASA-TM-107601",
+    "NASA-TP-97-206539",
+    "NASA-TM-2005-213664"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": "TM-107601 Tables 8.6/8.7; TM-2005-213664 actuator table wording."
+  },
+  {
+   "conflict_id": "FA18-C2",
+   "aircraft": "F/A-18",
+   "quantity": "HARV inertia sets",
+   "claims": [
+    {
+     "claim": "Phase 2/3: 22,789 / 176,809 / 191,744 slug-ft^2 (extract, TM-4772)",
+     "source_id": "NASA-TM-4772",
+     "configuration_id": "FA18-CFG-HARV-P2-TV"
+    },
+    {
+     "claim": "22,632 / 174,246.3 / 189,336.4 / -2,131.8 (extract, source unresolved)",
+     "source_id": "UNRESOLVED",
+     "configuration_id": "FA18-CFG-HARV-P2-TV"
+    },
+    {
+     "claim": "Phase I Ixz -2,039 (TP-97-206539 Table 3) and f18bas Ixz -2,430 (Table 3.5) (repository)",
+     "source_id": "NASA-TP-97-206539",
+     "configuration_id": "FA18-CFG-HARV-P1-BASIC"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_PHASE",
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "Different loadings/phases are expected; the second extract set is still unattributed.",
+   "value_ids": [
+    "FA18-MASS-P23-IXX",
+    "FA18-MASS-ALT-IXX",
+    "FA18-MASS-P23-IYY",
+    "FA18-MASS-ALT-IYY",
+    "FA18-MASS-P23-IZZ",
+    "FA18-MASS-ALT-IZZ",
+    "FA18-P1-IXZ",
+    "FA18-BAS-MASS-IXZ"
+   ],
+   "source_ids": [
+    "NASA-TM-4772",
+    "NASA-TP-97-206539",
+    "NASA-TM-107601"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": "TM-110216 Table 2.3; TM-4772 mass table."
+  },
+  {
+   "conflict_id": "FA18-C3",
+   "aircraft": "F/A-18",
+   "quantity": "Span",
+   "claims": [
+    {
+     "claim": "37.4 ft (TM-4772 extract; TP-97-206539 Table 3 per repository)",
+     "source_id": "NASA-TM-4772",
+     "configuration_id": "FA18-CFG-HARV-P1-BASIC"
+    },
+    {
+     "claim": "37.42 ft (f18bas Table 3.4, repository)",
+     "source_id": "NASA-TM-107601",
+     "configuration_id": "FA18-CFG-SIM-F18BAS"
+    },
+    {
+     "claim": "37 ft 5 in (NASA fact page, physical)",
+     "source_id": "NASA-FS-002-DFRC",
+     "configuration_id": "FA18-CFG-HARV-P1-BASIC"
+    }
+   ],
+   "classification": [
+    "ROUNDING",
+    "PHYSICAL_VS_REFERENCE_GEOMETRY"
+   ],
+   "status": "RESOLVED",
+   "resolution": "37.42 ft = 37 ft 5.04 in: one span printed at three precisions, one of them as a physical dimension. Printed precision still to page-verify.",
+   "value_ids": [
+    "FA18-GEO-B",
+    "FA18-BAS-GEO-B",
+    "FA18-GEO-SPAN-PHYS"
+   ],
+   "source_ids": [
+    "NASA-TM-4772",
+    "NASA-TM-107601",
+    "NASA-FS-002-DFRC"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "FA18-C4",
+   "aircraft": "F/A-18",
+   "quantity": "NASA-TM-4783 author list",
+   "claims": [
+    {
+     "claim": "Two catalogue extracts disagree",
+     "source_id": "NASA-TM-4783",
+     "configuration_id": "FA18-CFG-HARV-P1-BASIC"
+    }
+   ],
+   "classification": [
+    "METADATA_DISAGREEMENT",
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "Metadata only.",
+   "value_ids": [],
+   "source_ids": [
+    "NASA-TM-4783"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "FA18-C5",
+   "aircraft": "F/A-18",
+   "quantity": "NASA-TP-3111 affiliation",
+   "claims": [
+    {
+     "claim": "One extract says NASA Lewis",
+     "source_id": "NASA-TP-3111",
+     "configuration_id": "FA18-CFG-PROD-AB"
+    }
+   ],
+   "classification": [
+    "METADATA_DISAGREEMENT",
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "Probable catalogue error; not relied on.",
+   "value_ids": [],
+   "source_ids": [
+    "NASA-TP-3111"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "FA18-C6",
+   "aircraft": "F/A-18",
+   "quantity": "Controlled-flight AoA statements (60 / 65-70 / 70 deg)",
+   "claims": [
+    {
+     "claim": "Various overview statements",
+     "source_id": "NASA-TM-4772",
+     "configuration_id": "FA18-CFG-HARV-P2-TV"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_PHASE",
+    "DIFFERENT_DEFINITION"
+   ],
+   "status": "RESOLVED",
+   "resolution": "Different phases, effectors and definitions of 'controlled'. Narrative only; envelopes come from flight data.",
+   "value_ids": [],
+   "source_ids": [],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "FA18-C7",
+   "aircraft": "F/A-18",
+   "quantity": "NASA-TM-110216 author order",
+   "claims": [
+    {
+     "claim": "Strickland first (repository catalogue V0.1)",
+     "source_id": "NASA-TM-110216",
+     "configuration_id": "FA18-CFG-SIM-F18HARV"
+    },
+    {
+     "claim": "Messina first (repository catalogue V0.2)",
+     "source_id": "NASA-TM-110216",
+     "configuration_id": "FA18-CFG-SIM-F18HARV"
+    }
+   ],
+   "classification": [
+    "METADATA_DISAGREEMENT",
+    "STILL_UNRESOLVED"
+   ],
+   "status": "UNRESOLVED",
+   "resolution": "Title page needed.",
+   "value_ids": [],
+   "source_ids": [
+    "NASA-TM-110216"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "FA18-C8",
+   "aircraft": "F/A-18",
+   "quantity": "Aileron position limits",
+   "claims": [
+    {
+     "claim": "-25 / +45 deg (f18bas Table 8.7)",
+     "source_id": "NASA-TM-107601",
+     "configuration_id": "FA18-CFG-SIM-F18BAS"
+    },
+    {
+     "claim": "-25 / +42 deg (f18harv Tables 6.1/6.2)",
+     "source_id": "NASA-TM-110216",
+     "configuration_id": "FA18-CFG-SIM-F18HARV"
+    },
+    {
+     "claim": "24 TEU / 45 TED (TP-97-206539 Table 1)",
+     "source_id": "NASA-TP-97-206539",
+     "configuration_id": "FA18-CFG-HARV-P2-TV"
+    },
+    {
+     "claim": "25 up / 45 down (r0 extract; attribution withdrawn)",
+     "source_id": "UNRESOLVED",
+     "configuration_id": "FA18-CFG-SIM-F18BAS"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_CONFIGURATION"
+   ],
+   "status": "RESOLVED_PER_CONFIGURATION",
+   "resolution": "Three lineage tables kept separately; r0 extract matches f18bas.",
+   "value_ids": [
+    "FA18-ACT-AIL-LIM",
+    "FA18-BAS-AIL-LIM",
+    "FA18-HARV-AIL-LIM",
+    "FA18-P2T1-AIL-LIM"
+   ],
+   "source_ids": [
+    "NASA-TM-107601",
+    "NASA-TM-110216",
+    "NASA-TP-97-206539"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "FA18-C10",
+   "aircraft": "F/A-18",
+   "quantity": "Leading-edge flap limits and rates",
+   "claims": [
+    {
+     "claim": "-3 / +34 deg, 18 deg/s (f18bas Table 8.7)",
+     "source_id": "NASA-TM-107601",
+     "configuration_id": "FA18-CFG-SIM-F18BAS"
+    },
+    {
+     "claim": "-3 / +33 deg, 15 deg/s (f18harv Tables 6.1/6.2; also TP-97-206539 Table 1)",
+     "source_id": "NASA-TM-110216",
+     "configuration_id": "FA18-CFG-SIM-F18HARV"
+    }
+   ],
+   "classification": [
+    "DIFFERENT_CONFIGURATION"
+   ],
+   "status": "RESOLVED_PER_CONFIGURATION",
+   "resolution": "Different simulation lineages (first-order f18bas vs updated Dryden HARV actuators). Never merged.",
+   "value_ids": [
+    "FA18-BAS-LEF-LIM",
+    "FA18-HARV-LEF-LIM",
+    "FA18-BAS-LEF-RATE",
+    "FA18-HARV-LEF-RATE"
+   ],
+   "source_ids": [
+    "NASA-TM-107601",
+    "NASA-TM-110216"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  },
+  {
+   "conflict_id": "FA18-C9",
+   "aircraft": "F/A-18",
+   "quantity": "F404 increasing-PLA rate limits",
+   "claims": [
+    {
+     "claim": "19.03 / 26.81 deg/s (TM-4240, 1990)",
+     "source_id": "NASA-TM-4240",
+     "configuration_id": "ENG-F404-GE-400"
+    },
+    {
+     "claim": "14 / 22 deg/s (TM-110216, 1996)",
+     "source_id": "NASA-TM-110216",
+     "configuration_id": "FA18-CFG-SIM-F18HARV"
+    }
+   ],
+   "classification": [
+    "SAME_SOURCE_TYPO_OR_REVISION",
+    "DIFFERENT_CONFIGURATION"
+   ],
+   "status": "RESOLVED_PER_CONFIGURATION",
+   "resolution": "Two versions of the same simplified engine model; identical time constants. Never averaged.",
+   "value_ids": [
+    "FA18-ENG-PLARATE-4240",
+    "FA18-ENG-PLARATE-110216"
+   ],
+   "source_ids": [
+    "NASA-TM-4240",
+    "NASA-TM-110216"
+   ],
+   "evidence_basis": "REPOSITORY_READING",
+   "next_check": ""
+  }
+ ]
+}

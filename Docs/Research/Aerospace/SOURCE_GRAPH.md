@@ -43,6 +43,8 @@ A number that appears in many places is usually one number copied many times. Be
 | R1-RN5 | **25,000 lbf ≈ 111.2 kN** | F-15 report sentence (25,000 lbf); TP-1373 gross-thrust axis scale (111.2 kN) | Unrelated quantities | Coincidence recorded so nobody treats one as confirming the other (implementation-branch F100 audit §6e) |
 | R1-RN6 | F/A-18 Phase I set (400 ft², 11.52 ft, 37.4 ft, 31,980 lb, 21.9 % MAC, 22,040 / 124,554 / 139,382 slug-ft²) | r0 extract attributed to TM-4772; repository transcription of TP-97-206539 Table 3 | NASA Dryden HARV programme mass-properties data | Two NASA reports from the same programme. **Consistency, not independence** |
 | R1-RN7 | F-15B 836 **42.8 ft** physical span | TM-4782, TM-2005-213670, TM-2006-213674, TM-2006-213675, AIAA 2001-3303 (repository) | NASA Dryden aircraft description | Same organisation describing the same aircraft; consistent, not independent. Physical, never a reference span |
+| R2-RN9 | F-16 thrust table (idle / MIL / MAX, 90 cells at Mach 0.2-1.0) | Repository visual transcription of TP-1538 Table VI; NESC `F16_prop.dml` (NASA digital file, Stevens & Lewis 2003 lineage) | TP-1538 Table VI | **Two independent digitisations of the same table agree in 88 of 90 cells (R2).** That confirms the transcription, not the aircraft. The two differing cells are conflict F16-C6 |
+| R2-RN10 | F-16 mass/inertia/geometry set (20,500 lb; 9,496 / 55,814 / 63,100 / 982; 300 / 30 / 11.32; 35 % MRC) | TP-1538 Table I (repository); NESC `F16_inertia.dml` and `F16_aero.dml` (file-verified) | TP-1538 via Stevens & Lewis | Same numbers, same lineage: **consistent, not independent** |
 | R1-RN8 | F100-PW-100 thrust figures (23,500 / 24,000 / 25,000 lbf) for tail 836 | TM-2005-213670 / 2016 briefing / TM-2001-210395 | Different statements, different epochs (24,000 is the post-2014 PW-220E) | Not three measurements of one quantity. Configuration date travels with each |
 
 ## 3. Cross-aircraft lineage
@@ -100,7 +102,10 @@ VISTA NF-16D (F-16 pack)
     aerodynamics are not F-22 aerodynamics.
 
 NESC 6-DOF check-cases (NASA-TM-2015-218675; NESC-AIAA-2013-5071)
- ├─ F-16 case(s) in DAVE-ML (AIAA-2002-4482 format), textbook lineage ─▶ NASA-SIMUPY-FLIGHT
+ ├─ F-16 model files in DAVE-ML (AIAA-2002-4482 format), textbook lineage ─▶ NASA-SIMUPY-FLIGHT
+ │    R2, file-verified: NESC-F16-AERO-DML (Stevens & Lewis tables via Morelli MATLAB, NOT Morelli 1998),
+ │    NESC-F16-PROP-DML (steady-state thrust), NESC-F16-INERTIA-DML, NESC-F16-CONTROL-DML (LQR check-case controller),
+ │    NESC-F16-GNC-DML, NESC-F16-PACKAGE-README (case 11 trim), NESC-F16-CHECKCASE-TRAJECTORIES
  └─ aircraft-independent atmosphere/EOM cases ─▶ applicable to MavSixDoFBody verification for any aircraft
 
 Langley 1990s history (NASA-SP-2000-4519) spans F/A-18 and YF-22/F-22 test programmes: history only.

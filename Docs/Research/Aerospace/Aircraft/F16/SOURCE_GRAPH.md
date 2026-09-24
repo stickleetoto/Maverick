@@ -1,4 +1,6 @@
-# F-16 Source Graph (R1)
+# F-16 Source Graph (R1, R2 update)
+
+> **R2.** NASA's NESC F-16 check-case files were retrieved from NASA's own redistribution (`nasa/simupy-flight`) and verified at file level. They define a new, fully verified configuration, `F16-CFG-NESC-CHECKCASE`, with 34 implementation-allowed values. **No F-16 PDF page has been verified yet**: TP-1538, Morelli 1998 and Garza & Morelli remain repository readings. See [`../../VERIFICATION_LOG_R2.md`](../../VERIFICATION_LOG_R2.md).
 
 Status: **lineage rebuilt from catalogue records, abstracts, search extracts and the Maverick repository's own page readings.** The library itself has not opened any F-16 PDF. Where an edge depends on a repository reading, the edge says so. Levels are defined in [`SCHEMA.md` §2](../../SCHEMA.md#2-verification-levels).
 
@@ -41,7 +43,8 @@ Detailed sub-graphs:
  └─ Simulation models (never an airframe)
        NASA Langley TP-1538 simulation ............... F16-CFG-NASA-REF-TP1538   ◀ Maverick "NASA Reference F-16"
        Morelli 1998 polynomial fit ................... F16-CFG-SIM-MORELLI1998
-       Stevens & Lewis textbook branch ............... F16-CFG-SIM-STEVENS-LEWIS (NESC check-case F-16, simupy-flight, AeroBench)
+       Stevens & Lewis textbook branch ............... F16-CFG-SIM-STEVENS-LEWIS (AeroBench, academic codes)
+         └─ NESC check-case realisation (R2, file-verified) F16-CFG-NESC-CHECKCASE    ◀ first fully verified F-16 configuration
        academic re-implementations ................... F16-CFG-GENERIC-ACADEMIC
 ```
 
@@ -95,16 +98,21 @@ This is the question "can the library support CX, CY, CZ, Cl, Cm, Cn without gue
 |---|---|---|---|---|---|---|---|
 | `F16-CFG-NASA-REF-TP1538` (tables) | SOURCED | SOURCED | SOURCED | SOURCED | SOURCED | SOURCED | TP-1538 publishes nonlinear tables with LEF increments (repository App. B / nomenclature reading). The library has not seen the tables. Mach coverage: low-speed database |
 | `F16-CFG-SIM-MORELLI1998` | SOURCED | SOURCED | SOURCED | SOURCED | SOURCED | SOURCED | Eqs. 12-17 and Tables 2-3 (repository page read). **M < 0.6, alpha -10..45, beta +/-30, LEF fixed at 25 deg.** No compressibility term. This is Maverick's implemented model |
-| `F16-CFG-SIM-STEVENS-LEWIS` | SOURCED (textbook) | SOURCED | SOURCED | SOURCED | SOURCED | SOURCED | Textbook reduction of TP-1538 data (alpha typically limited to about 45 deg in the textbook branch; not checked by the library). Repetition of these tables in descendants is not confirmation |
+| `F16-CFG-SIM-STEVENS-LEWIS` | SOURCED (textbook) | SOURCED | SOURCED | SOURCED | SOURCED | SOURCED | Textbook reduction of TP-1538 data. Repetition of these tables in descendants is not confirmation |
+| `F16-CFG-NESC-CHECKCASE` **(R2)** | **VERIFIED** | **VERIFIED** | **VERIFIED** | **VERIFIED** | **VERIFIED** | **VERIFIED** | `F16_aero.dml` Mod P: Morelli's MATLAB adaptation of the Stevens & Lewis tables (file header). alpha -10..45, beta +/-30, elevator +/-24 deg, all clamped; no Mach term; stated envelope near 10,000 ft and Mach 0.5. **A different model from Morelli 1998** (conflict F16-C8) |
 | `F16-CFG-VISTA-NF16D` | CANDIDATE | CANDIDATE | CANDIDATE | CANDIDATE | CANDIDATE | CANDIDATE | `DTIC-ADA327869` claims a full nonlinear low-speed model to alpha +90. Numeric content not seen. `AIAA-2018-0525` is flight-identified for this airframe. Neither is a production block |
 | `F16-CFG-PROD-AB` / `-PROD-CD` | NOT LOCATED | NOT LOCATED | NOT LOCATED | NOT LOCATED | NOT LOCATED | NOT LOCATED | No public manufacturer aero database located. `AIAA-2013-0972` (SEEK EAGLE CFD) may print F-16C derivatives; unassessed |
 | `F16-CFG-AFTI` | PARTIAL (derivatives) | PARTIAL | PARTIAL | PARTIAL | PARTIAL | PARTIAL | Flight-derived *derivatives* at test points (`AIAA-84-2085`). Not a global model |
 | `F16-CFG-F16XL` | tunnel/identified, **different aircraft** | | | | | | Never transferred to F-16 |
 | Transonic/supersonic for any F-16 | NOT LOCATED | | | | | | `NASA-TP-3355` is a derivative planform (Falcon 21) with an F-16C comparison; comparison curves only |
 
-**Verdict for this question:** a six-axis coefficient model *without guessed coefficients* is supported for the **TP-1538 / Morelli simulation configuration below Mach 0.6**. No other F-16 configuration is supported yet. See [`IMPLEMENTATION_FEASIBILITY.md`](IMPLEMENTATION_FEASIBILITY.md) verdict A.
+**Verdict for this question:** a six-axis coefficient model *without guessed coefficients* is supported for the **TP-1538 / Morelli simulation configuration below Mach 0.6** (repository readings, library verification pending). After R2 it is **file-verified and implementation-allowed for the NESC check-case configuration**, which uses the Stevens & Lewis table model. See [`IMPLEMENTATION_FEASIBILITY.md`](IMPLEMENTATION_FEASIBILITY.md) verdict A.
 
-## 4. Conflicts found in R1
+## 4. Conflicts
+
+R2 moved every conflict into the library [`CONFLICT_REGISTER.md`](../../CONFLICT_REGISTER.md) with both claims and a classification. R2 added F16-C6 (two thrust cells: NESC vs TP-1538, `RESOLVED_PER_CONFIGURATION`), F16-C7 (case 11 trim spread between tools, `RESOLVED`) and F16-C8 (NESC table aero vs Maverick's Morelli polynomial, configuration-incompatible). The R1 table is kept below for the record.
+
+### R1 table
 
 | # | Quantity | Values | Configurations | Likely reason | Status |
 |---|---|---|---|---|---|
@@ -118,4 +126,5 @@ This is the question "can the library support CX, CY, CZ, Cl, Cm, Cn without gue
 
 - **Morelli 1998, Garza & Morelli, Stevens & Lewis, NESC, simupy-flight, AeroBench and most academic models all descend from TP-1538 data.** Agreement among them checks transcription and implementation. It does not check the aircraft.
 - **Independent evidence about a real F-16** comes only from flight data: AFTI (`AIAA-84-2085`, AFTI airframe), VISTA/X-62A (`AIAA-2018-0525`, VISTA airframe), MATV flight test (`NTRS-19950007831`), pacer and air-data calibrations (`DTIC-ADA495484`, `AFFTC-TIM-04-01`) and engine flight tests (`CHILDRE-MCCOY-JPP-1989`, `ICAS-2008-286`). Each describes its own configuration.
-- The NESC check-cases (`NASA-TM-2015-218675`) are **implementation-verification** evidence. A match proves the equations of motion and the table handling. It does not prove the aerodynamic data.
+- The NESC check-cases (`NASA-TM-2015-218675`; files `NESC-F16-*`) are **implementation-verification** evidence. A match proves the equations of motion and the table handling. It does not prove the aerodynamic data.
+- **R2 cross-check.** The NESC thrust tables (NASA digital files) agree with the repository's visual transcription of TP-1538 Table VI in 88 of 90 cells. That is evidence the transcription is right, from an independent digitisation of the same data. It is not independent evidence about the aircraft, and it does not page-verify TP-1538.

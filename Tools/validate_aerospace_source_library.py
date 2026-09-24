@@ -22,7 +22,15 @@ Known data
   configuration, units, precision, convention and a field from the vocabulary
 * a value's verification level never exceeds its source's level
 * REPOSITORY_READING values stay at SEARCH_LEAD_ONLY and cite the repository
-* ALLOWED only with a PAGE_VERIFIED source AND value and a captured location
+* ALLOWED (implementation_allowed = true) only with: a PAGE_VERIFIED source AND
+  value, a page/table/figure/file-line locator, a resolved source ID, a known
+  configuration scope, units, a non-empty provenance grade, and no UNRESOLVED
+  conflict (CONFLICT_REGISTER.json)
+
+Conflicts and retrieved files
+* every conflicts_with pair is registered; conflict enums and references resolve
+* every retrieved source (sha256 set) is listed in SOURCE_FILES_MANIFEST.json and
+  its hash matches (single file) or equals the digest of its files (dataset)
 
 Views and documents
 * AIRCRAFT_NUMERIC_FIELD_INDEX.json covers every value, and
@@ -36,6 +44,7 @@ Standard library only. Exit code 0 = pass, 1 = failures (all listed).
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import re
@@ -48,6 +57,8 @@ LIB = ROOT / "Docs/Research/Aerospace"
 INDEX_JSON = LIB / "SOURCE_INDEX.json"
 INDEX_MD = LIB / "SOURCE_INDEX.md"
 NUMERIC_INDEX = LIB / "AIRCRAFT_NUMERIC_FIELD_INDEX.json"
+CONFLICTS_JSON = LIB / "CONFLICT_REGISTER.json"
+FILES_MANIFEST = LIB / "SOURCE_FILES_MANIFEST.json"
 BUILDER = ROOT / "Tools/build_aerospace_source_views.py"
 
 SOURCE_SCHEMA = "maverick.aerospace.source-index.v2"
@@ -113,6 +124,12 @@ EXACTNESS = {
     "ABSTRACT_STATEMENT", "PUBLIC_FACT_SHEET", "REPOSITORY_READING",
 }
 PAGE_EXACTNESS = {"EXACT", "APPROXIMATE", "DIGITIZED"}
+# A locator must name a page, table, figure, section, equation or file line.
+LOCATOR = re.compile(r"(\bp\.\s*\d|\bpage\b|\bTable\b|\bFig|\bline[s]?\s+\d|\bsection\b|\bEq)", re.I)
+CONFLICT_CLASSES = {"SAME_SOURCE_TYPO_OR_REVISION", "DIFFERENT_CONFIGURATION", "DIFFERENT_PHASE", "INSTALLED_VS_UNINSTALLED",
+                    "PHYSICAL_VS_REFERENCE_GEOMETRY", "ROUNDING", "LINEAGE_TRANSCRIPTION_DIFFERENCE", "IMPLEMENTATION_DIFFERENCE",
+                    "DIFFERENT_DEFINITION", "METADATA_DISAGREEMENT", "NOT_A_CONFLICT", "STILL_UNRESOLVED"}
+CONFLICT_STATUS = {"RESOLVED", "RESOLVED_PER_CONFIGURATION", "UNRESOLVED"}
 NUMERIC_RECORD_FIELDS = (
     "value_id", "aircraft", "configuration", "configuration_scope", "field", "value", "units", "precision", "source_id",
     "page", "provenance", "verification_level", "implementation_allowed",
@@ -232,6 +249,7 @@ def validate_sources(index, rep: Report) -> dict:
 
 def validate_known(files, sources: dict, rep: Report):
     all_cfg: dict = {}
+    cfg_scope: dict = {}
     all_vals: dict = {}
     docs = {}
     for path in files:
@@ -251,6 +269,7 @@ def validate_known(files, sources: dict, rep: Report):
             rep.check(c.get("configuration_scope") in SCOPE, f"{rel}:{cid}: configuration_scope '{c.get('configuration_scope')}'")
             rep.check(cid not in all_cfg, f"{rel}: configuration_id {cid} already defined in {all_cfg.get(cid)}")
             all_cfg[cid] = rel
+            cfg_scope[cid] = c.get("configuration_scope")
     try:
         builder = load_builder()
         fields = builder.ALL_FIELDS
@@ -298,12 +317,18 @@ def validate_known(files, sources: dict, rep: Report):
                               f"{rel}:{vid}: value level {v.get('verification_level')} exceeds source level {sources[src].get('verification_level')}")
             if v.get("implementation_use") == "ALLOWED":
                 s = sources.get(src, {})
+                rep.check(src not in (None, "", "UNRESOLVED"), f"{rel}:{vid}: ALLOWED requires a resolved source ID")
                 rep.check(s.get("verification_level") == "PAGE_VERIFIED", f"{rel}:{vid}: ALLOWED requires a PAGE_VERIFIED source")
                 rep.check(v.get("verification_level") == "PAGE_VERIFIED", f"{rel}:{vid}: ALLOWED requires the value itself PAGE_VERIFIED")
-                rep.check(v.get("location") not in (None, "", "NOT_CAPTURED"), f"{rel}:{vid}: ALLOWED requires a captured page/table/figure")
+                loc = v.get("location") or ""
+                rep.check(loc not in ("", "NOT_CAPTURED") and bool(LOCATOR.search(loc)),
+                          f"{rel}:{vid}: ALLOWED requires a page/table/figure/line locator (got '{loc[:40]}')")
                 rep.check(v.get("exactness") in PAGE_EXACTNESS, f"{rel}:{vid}: ALLOWED requires page-level exactness")
                 rep.check(v.get("reference_convention") not in (None, "", "n/a"), f"{rel}:{vid}: ALLOWED requires a stated convention")
                 rep.check(v.get("units") not in (None, "", "-"), f"{rel}:{vid}: ALLOWED requires units")
+                rep.check(bool(s.get("provenance_grade")), f"{rel}:{vid}: ALLOWED requires a non-empty provenance grade")
+                for cid in v.get("configuration_ids", []):
+                    rep.check(cfg_scope.get(cid) in SCOPE - {"UNKNOWN"}, f"{rel}:{vid}: ALLOWED requires a known configuration scope for {cid}")
     for path, doc in docs.items():
         rel = path.relative_to(ROOT)
         for v in doc.get("values", []):
@@ -331,8 +356,82 @@ def validate_numeric_index(all_vals: dict, rep: Report) -> None:
         if r.get("implementation_allowed"):
             rep.check(r.get("verification_level") == "PAGE_VERIFIED" and r.get("source_verification_level") == "PAGE_VERIFIED" and bool(r.get("page")),
                       f"numeric index {vid}: implementation_allowed=true without page verification")
+        if r.get("implementation_allowed"):
+            rep.check(not r.get("unresolved_conflict"), f"numeric index {vid}: implementation_allowed=true with an unresolved conflict")
+            rep.check(bool(r.get("provenance")) and r.get("provenance") != "UNRESOLVED", f"numeric index {vid}: implementation_allowed=true without provenance")
+            rep.check(r.get("configuration_scope") and "UNKNOWN" not in r.get("configuration_scope"), f"numeric index {vid}: implementation_allowed=true without configuration scope")
         if r.get("page") is not None:
             rep.check(r.get("verification_level") == "PAGE_VERIFIED", f"numeric index {vid}: page set without PAGE_VERIFIED")
+
+
+def validate_conflicts(sources: dict, cfgs: dict, vals: dict, docs: dict, rep: Report) -> None:
+    rep.check(CONFLICTS_JSON.exists(), "CONFLICT_REGISTER.json missing")
+    if not CONFLICTS_JSON.exists():
+        return
+    doc = load(CONFLICTS_JSON, rep)
+    if doc is None:
+        return
+    seen: set = set()
+    unresolved: set = set()
+    pairs_covered: list = []
+    for c in doc.get("conflicts", []):
+        cid = c.get("conflict_id", "<missing>")
+        rep.check(cid not in seen, f"conflict {cid}: duplicate id")
+        seen.add(cid)
+        rep.check(len(c.get("claims", [])) >= 1, f"conflict {cid}: needs its claims recorded")
+        for cl in c.get("claims", []):
+            rep.check(bool(cl.get("claim")), f"conflict {cid}: empty claim")
+            rep.check(cl.get("source_id") == "UNRESOLVED" or cl.get("source_id") in sources, f"conflict {cid}: claim source '{cl.get('source_id')}' not in index")
+            rep.check(cl.get("configuration_id") in cfgs, f"conflict {cid}: claim configuration '{cl.get('configuration_id')}' unknown")
+        classes = c.get("classification", [])
+        rep.check(bool(classes) and all(x in CONFLICT_CLASSES for x in classes), f"conflict {cid}: classification {classes}")
+        rep.check(c.get("status") in CONFLICT_STATUS, f"conflict {cid}: status '{c.get('status')}'")
+        if c.get("status") == "UNRESOLVED":
+            rep.check("STILL_UNRESOLVED" in classes, f"conflict {cid}: UNRESOLVED status needs the STILL_UNRESOLVED classification")
+            unresolved |= set(c.get("value_ids", []))
+        else:
+            rep.check("STILL_UNRESOLVED" not in classes, f"conflict {cid}: resolved conflict cannot carry STILL_UNRESOLVED")
+            rep.check(bool(c.get("resolution")), f"conflict {cid}: resolved conflict needs a resolution text")
+        for v in c.get("value_ids", []):
+            rep.check(v in vals, f"conflict {cid}: value '{v}' not found")
+        for s in c.get("source_ids", []):
+            rep.check(s in sources, f"conflict {cid}: source '{s}' not in index")
+        pairs_covered.append(set(c.get("value_ids", [])))
+    for path, kd in docs.items():
+        rel = path.relative_to(ROOT)
+        for v in kd.get("values", []):
+            for other in v.get("conflicts_with", []):
+                rep.check(any({v["value_id"], other} <= s for s in pairs_covered),
+                          f"{rel}:{v['value_id']}: conflict with '{other}' is not registered in CONFLICT_REGISTER.json")
+            if v.get("implementation_use") == "ALLOWED":
+                rep.check(v["value_id"] not in unresolved, f"{rel}:{v['value_id']}: ALLOWED value is listed in an UNRESOLVED conflict")
+
+
+def validate_files_manifest(sources: dict, rep: Report) -> None:
+    rep.check(FILES_MANIFEST.exists(), "SOURCE_FILES_MANIFEST.json missing")
+    if not FILES_MANIFEST.exists():
+        return
+    doc = load(FILES_MANIFEST, rep)
+    if doc is None:
+        return
+    by_src: dict = {}
+    for f in doc.get("files", []):
+        for k in ("source_id", "filename", "source_url", "sha256", "size_bytes", "acquisition_date", "stored_at", "report_or_file_id"):
+            rep.check(k in f and f[k] not in (None, ""), f"SOURCE_FILES_MANIFEST: {f.get('filename')}: missing '{k}'")
+        rep.check(bool(SHA256.match(str(f.get("sha256", "")))), f"SOURCE_FILES_MANIFEST: {f.get('filename')}: bad sha256")
+        rep.check(f.get("source_id") in sources, f"SOURCE_FILES_MANIFEST: {f.get('filename')}: source '{f.get('source_id')}' not in index")
+        by_src.setdefault(f.get("source_id"), []).append(f)
+    for sid, s in sources.items():
+        sha = s.get("sha256")
+        if s.get("verification_level") == "PAGE_VERIFIED":
+            rep.check(sid in by_src, f"{sid}: PAGE_VERIFIED source has no file in SOURCE_FILES_MANIFEST.json")
+        if sha and sid in by_src:
+            fs = by_src[sid]
+            if len(fs) == 1:
+                rep.check(fs[0]["sha256"] == sha, f"{sid}: sha256 differs from SOURCE_FILES_MANIFEST.json")
+            else:
+                lines = "".join(f"{f['sha256']}  {f['repository_path']}\n" for f in sorted(fs, key=lambda x: x["repository_path"]))
+                rep.check(hashlib.sha256(lines.encode()).hexdigest() == sha, f"{sid}: dataset digest differs from its manifest files")
 
 
 def graph_documents():
@@ -395,6 +494,8 @@ def main() -> int:
         for cid in s.get("configuration_ids", []):
             rep.check(cid in cfgs, f"{sid}: configuration '{cid}' not defined in any Aircraft/*/KNOWN_DATA.json")
     validate_numeric_index(vals, rep)
+    validate_conflicts(sources, cfgs, vals, _docs, rep)
+    validate_files_manifest(sources, rep)
     validate_generated(rep)
     validate_graph_refs(sources, cfgs, vals, rep)
     validate_pack_docs(rep)

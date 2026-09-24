@@ -1,4 +1,4 @@
-# F-16 Model Lineage (R1)
+# F-16 Model Lineage (R1, R2 update)
 
 Which F-16 "model" is which, where its numbers came from, and what each one may be used for. Parent: [`SOURCE_GRAPH.md`](SOURCE_GRAPH.md).
 
@@ -17,7 +17,8 @@ The library has read none of these PDFs itself. A row marked *repository* relies
 | Garza & Morelli MATLAB collection | `NASA-TM-2003-212145` | `F16-CFG-NASA-REF-TP1538`, `F16-CFG-SIM-MORELLI1998` | DERIVED_SIMULATOR | TP-1538 mass set; Morelli polynomials; engine lag | as parents | ABS | Table 1 and engine-model section page read | Engine power-lag structure (Pc gearing, RTAU) in the repository |
 | Garza & Morelli software package | `NASA-SW-LAR-17463-1` | `F16-CFG-NASA-REF-TP1538` | DERIVED_SIMULATOR | as TM | — | LEAD | release-status note | **PROHIBITED** (U.S.-release-only). Use the public TM text instead |
 | Stevens & Lewis textbook model | `STEVENS-LEWIS-ACS` | `F16-CFG-SIM-STEVENS-LEWIS` | DERIVED_SIMULATOR | TP-1538 data reduced for a textbook | textbook alpha/beta grid | CAT | none | Cross-validation only |
-| NESC check-case F-16 | `NASA-TM-2015-218675`, `NESC-AIAA-2013-5071` | `F16-CFG-SIM-STEVENS-LEWIS` | ORIGINAL_PRIMARY (as a check-case) | textbook lineage in DAVE-ML (S-119 names) | case-specific | ABS / CAT | none | EOM and table-handling verification target (case 11 trim) |
+| NESC check-case F-16 report | `NASA-TM-2015-218675`, `NESC-AIAA-2013-5071` | `F16-CFG-NESC-CHECKCASE` | ORIGINAL_PRIMARY (as a check-case) | — | case-specific | ABS / CAT | none | Report PDF still unread |
+| **NESC check-case F-16 model files (R2)** | `NESC-F16-AERO-DML`, `-PROP-DML`, `-INERTIA-DML`, `-CONTROL-DML`, `-GNC-DML`, `-PACKAGE-README`, `-CHECKCASE-TRAJECTORIES` | `F16-CFG-NESC-CHECKCASE` | ORIGINAL_PRIMARY | **Verified lineage (file header and README):** TP-1538 data → Stevens & Lewis (1992 aero; 2003 prop and inertia) → Morelli MATLAB `f16_aero.m` (1995) / Garza & Morelli TM → DAVE-ML (Jackson, NASA LaRC, 2003-2013) | alpha -10..45, beta +/-30, el +/-24 (clamped); no Mach | **PAGE (file)** | none | **34 values implementation-allowed** for a NESC validation profile. Not the Morelli 1998 model |
 | simupy-flight | `NASA-SIMUPY-FLIGHT` | `F16-CFG-SIM-STEVENS-LEWIS` | CROSS_VALIDATION_ONLY | NESC check-cases | case-specific | ABS | none | Independent implementation of the check-cases with regression data |
 | AeroBench / AeroBenchVV | `ARCH-2018-HEIDLAUF` | `F16-CFG-SIM-STEVENS-LEWIS` | CROSS_VALIDATION_ONLY | Stevens, Lewis & Johnson (2015) | textbook | ABS | external-validation-only policy | Behavioural oracle only. **No code, tables or coefficients copied** |
 | Academic re-implementations | `RUSSELL-UMN-2003-F16`, `ISRLAB-F16-MODEL-MATLAB`, `EVANGELOU-AERJ-2001`, `AFIT-GGC-EE-77-7`, `ARXIV-1907-11913` | `F16-CFG-SIM-STEVENS-LEWIS` / `-GENERIC-ACADEMIC` | DERIVED / XVAL | textbook | textbook | CAT / EXTRACT / LEAD | none | Cross-validation only |
@@ -40,6 +41,14 @@ These come from the repository's reading of TP-1538 and Morelli. They are record
 | Rate normalisation | p-hat = pb/2V, q-hat = qcbar/2V, r-hat = rb/2V | Morelli Eq. 18 |
 | alpha-dot | Folded into the q terms by the way the data were collected | Morelli section 3 |
 | Mach | No Mach term. The model is Mach-independent inside its band and invalid above about 0.6 | Morelli section 3 |
+
+## 2a. R2: two F-16 aero models, not one
+
+Maverick's implemented reference aero is the **Morelli 1998 global polynomial** (`F16-CFG-SIM-MORELLI1998`). The NESC check-case aero is the **Stevens & Lewis table model** as adapted by Morelli in 1995 MATLAB scripts (`F16-CFG-NESC-CHECKCASE`). Both trace to TP-1538 data, but they are different models with different functional forms. Consequences:
+
+- NESC trajectories can verify Maverick's EOM, atmosphere and integration **only if Maverick runs the NESC table model** as a separate validation profile.
+- Agreement between Morelli-model Maverick and NESC trajectories would be a coincidence-grade comparison, not a check of either.
+- The NESC control-power derivatives are labelled "per degree" in the file but are multiplied by normalised deflections (aileron/20, rudder/30). Implement the calculation elements, not the labels (`F16-NESC-BUILDUP`).
 
 ## 3. What would add a new lineage (not a copy of TP-1538)
 

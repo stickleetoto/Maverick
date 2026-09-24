@@ -1,4 +1,6 @@
-# F-16 Flight-Control Source Graph (R1)
+# F-16 Flight-Control Source Graph (R1, R2 update)
+
+> **R2.** The only F-16-named control system the library has verified is the **NESC check-case LQR SAS/autopilot** (`F16-CFG-NESC-CHECKCASE`). It is a verification controller designed by NASA for one flight condition, with a simple pilot-to-surface mixer (el = -25 x stick, ail = -21.5 x lateral, rdr = -30 x pedal + 0.008 x ail) and **no actuator model**. It is not an F-16 FCS and adds nothing to Layers 1-2 below. TP-1538 fig. 63 (F16-Q-C2) is still unread, so conflict F16-C1 stays open.
 
 Parent: [`SOURCE_GRAPH.md`](SOURCE_GRAPH.md). Library rule (inherited from the FDM architecture): **no controller is called the real F-16 FLCS unless it is sourced and validated.** Nothing below meets that bar for a production block.
 

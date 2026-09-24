@@ -1,4 +1,6 @@
-# F-16 Validation Source Graph (R1)
+# F-16 Validation Source Graph (R1, R2 update)
+
+> **R2.** The NESC F-16 model files and check-case trajectories were retrieved from NASA's `nasa/simupy-flight` redistribution and verified at file level. Questions F16-Q-V1 and F16-Q-V2 are answered below. Case 11 trim values and all model parameters of the check-case configuration are now implementation-allowed for a validation profile.
 
 Parent: [`SOURCE_GRAPH.md`](SOURCE_GRAPH.md). Vocabulary: [`../../Validation/README.md`](../../Validation/README.md#validation-vocabulary-for-maverick-claims). A source-faithful model of a simulator is not a physically validated model of an aircraft.
 
@@ -34,14 +36,25 @@ NASA-TP-1538 data ─▶ STEVENS-LEWIS-ACS ─▶ F-16 in DAVE-ML (ANSI/AIAA S-1
                            NASA-SIMUPY-FLIGHT (NASA open source; regression data)
 ```
 
-**Caveat recorded in R1.** A third-party note claims that the NESC F-16 propulsion file is a bounded static-thrust surface from the Stevens & Lewis lineage. The library has **not** verified this and does not rely on it.
+**R1 caveat resolved in R2.** The NESC propulsion file (`F16_prop.dml`, verified) is Stevens & Lewis (2003) **steady-state net thrust**: idle, military and maximum tables on Mach 0-1.0 x 0-50,000 ft, with linear power-lever interpolation (MIL at 50 %), thrust along body +X and zero thrust moments. It has no engine lag.
+
+### R2 verified check-case content
+
+| Item | Value | Locator |
+|---|---|---|
+| Configuration | `F16-CFG-NESC-CHECKCASE` (CG 25 % MAC; MRC 35 % MAC; mass 637.1595 slug) | `F16_inertia.dml`, package README |
+| Case 11 trim | 10,013 ft MSL, 565.6854 ft/s, pitch = alpha 2.6538 deg, tail -3.2410 deg (+TED), stick 0.1296382, throttle 0.1390191 | README Table 11; `F16_control.dml` lines 226, 231, 471 |
+| Tool spread at t = 0 (case 11) | pitch 2.64333 / 2.63873 / 2.63893 deg (sims 02 / 04 / 05) | CSV first rows (conflict F16-C7) |
+| Trajectory cases | 11, 12, 13.1-13.4, 15, 16; three tools each | 24 CSV files |
+| Case 12 | Mach 2.01 at 30,013 ft with the Mach-independent subsonic model: **EOM test only** | CSV first rows |
+| Unit-level checks | 16 aero and 9 propulsion static check-shots | `F16_aero.dml` lines 1564-3919; `F16_prop.dml` lines 370-856 |
 
 ## 3. Verdicts for trim and trajectory validation (verdicts E and F)
 
 | Verdict | Supported for | Evidence | Not supported for |
 |---|---|---|---|
-| **E: trim validation** | `F16-CFG-SIM-STEVENS-LEWIS` (and, via the shared data lineage, a consistency check of the TP-1538/Morelli implementation) | NESC case 11; simupy-flight regression data | A real F-16. No public production-F-16 trim table was located |
-| **F: trajectory validation** | Same textbook configuration (NESC time histories; AeroBench behaviour) | Check-case time histories | Production F-16 trajectories. VISTA/AFTI flight data are configuration-specific |
+| **E: trim validation** | **`F16-CFG-NESC-CHECKCASE`: SUPPORTED and file-verified (R2)** | README Table 11 + control-file trim inputs; tool spread gives the tolerance floor | Maverick's Morelli-model configuration (different aero model); any real F-16 |
+| **F: trajectory validation** | **`F16-CFG-NESC-CHECKCASE`: SUPPORTED as implementation verification (R2)** | 8 cases x 3 tools (file-verified) | Production F-16 trajectories. VISTA/AFTI flight data are configuration-specific |
 
 A Maverick claim built on these must read "implementation-verified against the NESC F-16 check-case", never "validated against the F-16".
 
@@ -49,7 +62,7 @@ A Maverick claim built on these must read "implementation-verified against the N
 
 | ID | Question | Where to look |
 |---|---|---|
-| F16-Q-V1 | Which NESC F-16 cases exist besides case 11, and do they include time histories suited to the Morelli model (same aero data)? | NESC Vol. II, check-case files |
-| F16-Q-V2 | Is the NESC F-16 aero data identical to Morelli 1998, or the textbook table set? | NESC Vol. II; DAVE-ML file header |
+| F16-Q-V1 | **Answered (R2):** cases 11, 12, 13.1-13.4, 15, 16 with three tools each. None uses the Morelli 1998 model | check-case files (verified) |
+| F16-Q-V2 | **Answered (R2):** the textbook table set, via Morelli's 1995 MATLAB adaptation, not Morelli 1998 | `F16_aero.dml` header (verified) |
 | F16-Q-V3 | Does `AIAA-2018-0525` publish numeric identified parameters? | Author-hosted copy |
 | F16-Q-V4 | Does `AIAA-84-2085` tabulate derivatives with flight conditions? | NTRS 19840059553 |

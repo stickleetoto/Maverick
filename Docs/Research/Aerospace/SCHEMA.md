@@ -1,10 +1,12 @@
-# Source Library Metadata Schema v2 (R1)
+# Source Library Metadata Schema v2 (R1, R2 additions)
 
 Schema IDs:
 - `maverick.aerospace.source-index.v2`: `SOURCE_INDEX.json`
 - `maverick.aerospace.known-data.v2`: `Aircraft/<type>/KNOWN_DATA.json`
 - `maverick.aerospace.pack-sources.v1`: `Aircraft/<type>/SOURCES.json` (generated)
-- `maverick.aerospace.numeric-field-index.v1`: `AIRCRAFT_NUMERIC_FIELD_INDEX.json` (generated)
+- `maverick.aerospace.numeric-field-index.v2`: `AIRCRAFT_NUMERIC_FIELD_INDEX.json` (generated)
+- `maverick.aerospace.conflict-register.v1`: `CONFLICT_REGISTER.json` (canonical; R2)
+- `maverick.aerospace.source-files.v1`: `SOURCE_FILES_MANIFEST.json` (canonical; R2)
 
 `Tools/validate_aerospace_source_library.py` enforces everything marked **(validated)**. `Tools/build_aerospace_source_views.py` generates the views; the validator fails if any view is stale **(validated)**.
 
@@ -71,7 +73,9 @@ This axis records how far **the library** has checked the source itself. It is s
 | `CONTENT_EXTRACT_VERIFIED` | L3 | A specific content item (value, range, statement) seen in a search or index extract; page not confirmed | Lead for verification; never code |
 | `PAGE_VERIFIED` | L4 / L5 | Document retrieved and hashed by the library; the page, table or figure checked by a reader (L5-style transcription with cross-check is recorded in the value's notes) | Implementation, for the matching configuration |
 
-`PAGE_VERIFIED` requires `retrieval_status = RETRIEVED_*` and a `sha256` **(validated)**. A value's own `verification_level` may not exceed its source's level **(validated)**.
+`PAGE_VERIFIED` requires `retrieval_status = RETRIEVED_*`, a `sha256`, and the file(s) listed in `SOURCE_FILES_MANIFEST.json` with matching hashes **(validated)**. A value's own `verification_level` may not exceed its source's level **(validated)**.
+
+**Machine-readable primary files (R2).** For a data file (DAVE-ML, CSV) the "page" is the file element. `PAGE_VERIFIED` then means the cited element (`variableDef`, `griddedTableDef`, calculation, check-shot, CSV row) was read in the hashed file, and the value's `location` gives the file name and line number. A multi-file dataset record carries as its `sha256` the SHA-256 of the sorted lines `"<file sha256>  <repository path>\n"` of its files **(validated)**.
 
 ## 3. Public access status
 
@@ -151,13 +155,41 @@ Plus `value`, `conflicts_with[]` (**validated**: must resolve across all packs),
 
 Gap records are allowed: a value such as `NOT PUBLICLY LOCATED` with `implementation_use = NOT_A_MODEL_PARAMETER` documents a failed search so it is not repeated blindly.
 
+### 6.1 When `implementation_use = ALLOWED` (R2 rule, validated)
+
+All of these must hold:
+
+1. the source is `PAGE_VERIFIED` and the value is `PAGE_VERIFIED`;
+2. `location` names a page, table, figure, section, equation or file line;
+3. `source_id` is a real source (not `UNRESOLVED`);
+4. every configuration in `configuration_ids` has a known `configuration_scope` (not `UNKNOWN`);
+5. `units` and `reference_convention` are stated;
+6. the source has a non-empty `provenance_grade`;
+7. the value is not listed in any `UNRESOLVED` conflict in `CONFLICT_REGISTER.json`.
+
 ## 6a. Numeric field index (`AIRCRAFT_NUMERIC_FIELD_INDEX.json`, generated)
 
-One record per value across all packs: `value_id`, `aircraft`, `configuration`, `configuration_scope`, `field`, `quantity`, `value`, `units`, `precision`, `source_id`, `candidate_source_ids`, `page`, `location_as_recorded`, `provenance` (source provenance grade), `value_origin`, `exactness`, `verification_level`, `source_verification_level`, `implementation_use`, `implementation_allowed`, `has_existing_maverick_analysis`, `known_data_file`.
+One record per value across all packs: `value_id`, `aircraft`, `configuration`, `configuration_scope`, `field`, `quantity`, `value`, `units`, `precision`, `source_id`, `candidate_source_ids`, `page`, `location_as_recorded`, `provenance` (source provenance grade), `value_origin`, `exactness`, `verification_level`, `source_verification_level`, `implementation_use`, `implementation_allowed`, `has_existing_maverick_analysis`, `conflict_ids`, `unresolved_conflict`, `why_not_allowed` (plain-language reason when not allowed), `known_data_file`.
 
 - `page` is `null` unless both the source and the value are `PAGE_VERIFIED` **(validated)**.
 - `implementation_allowed` is `true` only when `implementation_use = ALLOWED` and the page is verified **(validated)**.
 - Every KNOWN_DATA value appears exactly once **(validated)**.
+
+## 6b. Conflict register (`CONFLICT_REGISTER.json`, R2)
+
+One entry per conflict: `conflict_id`, `aircraft`, `quantity`, `claims[]` (`claim`, `source_id`, `configuration_id`), `classification[]`, `status`, `resolution`, `value_ids[]`, `source_ids[]`, `evidence_basis`, `next_check`.
+
+- Classifications: `SAME_SOURCE_TYPO_OR_REVISION`, `DIFFERENT_CONFIGURATION`, `DIFFERENT_PHASE`, `INSTALLED_VS_UNINSTALLED`, `PHYSICAL_VS_REFERENCE_GEOMETRY`, `ROUNDING`, `LINEAGE_TRANSCRIPTION_DIFFERENCE`, `IMPLEMENTATION_DIFFERENCE`, `DIFFERENT_DEFINITION`, `METADATA_DISAGREEMENT`, `NOT_A_CONFLICT`, `STILL_UNRESOLVED` **(validated)**.
+- Status: `RESOLVED`, `RESOLVED_PER_CONFIGURATION`, `UNRESOLVED` **(validated)**. `UNRESOLVED` requires `STILL_UNRESOLVED`; a resolved entry must not carry it and must have a resolution text **(validated)**.
+- Every `conflicts_with` pair in any `KNOWN_DATA.json` must appear together in one entry **(validated)**.
+
+## 6c. Source-file manifest (`SOURCE_FILES_MANIFEST.json`, R2)
+
+One record per retrieved file: `source_id`, `filename`, `repository_path`, `source_url`, `retrieved_via`, `report_or_file_id`, `sha256`, `size_bytes`, `acquisition_date`, `stored_at` **(validated: present, hash format, source resolves)**. Files are stored outside Git. The manifest also records the hosts that were blocked in the session.
+
+## 6d. Field vocabulary additions (R2)
+
+`Ixy`, `Iyz`, `aero_coefficient_definition`, `aero_coefficient_table`, `rate_normalization`, `control_input_definition`, `aero_domain_control`, `trim_state`, `check_case_dataset` (see `FIELD_GROUPS` in the generator).
 
 ## 7. Digitized datasets (future)
 
