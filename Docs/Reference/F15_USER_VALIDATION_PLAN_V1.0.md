@@ -9,7 +9,7 @@
 ## Phase 1 — open, compile, run the existing suites
 
 1. Open the project in Unity 6000.3.16f1 on branch `claude/f15-full-implementation`. Let it import.
-2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 319 runtime scripts, 0 errors.
+2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 327 runtime + 33 editor scripts, 0 errors.
 3. **Close the Editor** (batch mode needs the project unlocked). Run each F-15 suite headless. PowerShell, one line per suite:
 
    ```
@@ -25,7 +25,10 @@
    | `f15-transcription` | `MavF15BaumannTranscriptionValidation` | 28 / 0 |
    | `f15-controlpath` | `MavF15ControlPathValidation` | 79 / 0 |
    | `f15-propulsion` | `MavF15PropulsionValidation` | 198 / 0 |
-   | **total** | | **401 / 0** |
+   | `f15-contamination` | `MavF15ResearchContaminationValidation` | 32 / 0 |
+   | `f15-research-profile` | `MavF15ResearchProfileValidation` | 35 / 0 |
+   | `f15-research-pipeline` | `MavF15ResearchPipelineValidation` (editor-only) | 13 / 0 |
+   | **total** | | **481 / 0** |
 
 4. **Inspect the logs.**
    - Each JSON must say `"status": "PASS"`.
@@ -39,9 +42,24 @@ The F-15 suites are **not** on the `Maverick/Flight Dynamics` menu. "Run All Fli
 
 ## Phase 2 — research-mode PlayMode smoke test
 
-**Status: NOT RUNNABLE AS A FLIGHT TODAY.**
+**Status after WP-1:** a separate research profile exists and reaches structural readiness. `f15-research-pipeline` already drives the real `MavSixDoFBody` through the editor seam (not PlayMode) and checks finite loads.
 
-`MavSixDoFBody` prepares only when its profile is valid **and** the aerodynamic model's reference geometry matches the profile. The only F-15 profile is the exact one (`MavF15FlightDynamicsProfile`), and it is invalid by design, so the body never becomes structurally prepared. It computes nothing, even in Shadow mode. No research-tagged profile provider exists yet (see the opportunities doc, C).
+**Optional user PlayMode smoke, unsaved scratch scene only:**
+- Put `MavSixDoFBody`, `MavF15AfitResearchFlightDynamicsProfile`, `MavF15AeroModel` (six-axis research mode, `allowCrossValidationResearchModel` on), `MavF15ControlActuator`, `MavManualPilotCommandSource`, `MavF15ControlLaw` and `MavF15AfitResearchFixedThrust` on one GameObject.
+- Wire them as the pipeline suite's rig does.
+- Place it at 6,096 m moving +Z at Mach 0.6.
+- Set `simulationEnabled` and `allowStructuralOnlyLoadApplication`.
+
+**Expect:**
+- the research profile ID in the status;
+- STRUCTURALLY_PREPARED, not live-ready;
+- finite loads;
+- neutral surfaces (zero travel), so the aircraft is **uncontrolled**;
+- aero and thrust refusing the moment Mach or altitude leaves the source condition, which happens almost immediately in free flight.
+
+Check only finiteness, identity and envelope refusal. Claim no handling or trajectory.
+
+The **exact** path is still fail-closed; the check below still applies.
 
 **What can be checked now, in an unsaved scratch scene** (do not save scenes or prefabs):
 
@@ -63,17 +81,18 @@ The F-15 suites are **not** on the `Maverick/Flight Dynamics` menu. "Run All Fli
 |---|---|---|
 | Static ground checks (weight on gear, taxi) | **NO** | no F-15 ground-contact or landing-gear model is part of this branch |
 | Control direction / sign — control law → actuator → surface state | **YES**, headless | covered by `MavF15ControlPathValidation` (routing, sole actual-state owner, neutral output) |
-| Control direction / sign — surface → aircraft response | **NO** (exact) · **blocked** (research) | exact sign conventions and hard stops are unavailable. Research-mode sign conventions come from Davison's listing (CX +fwd, CY +right, CZ +down, Cl right-wing-down, Cm nose-up, Cn nose-right) but need a research profile to fly. |
-| Left/right engine independence | **YES**, headless | `[E*]` propulsion checks, independent slot runtimes. In PlayMode, only independence of per-engine state can be observed: thrust is zero in every mode. |
+| Control direction / sign — surface → aircraft response | **NO** (exact) · **blocked** (research) | exact sign conventions and hard stops are unavailable. Research-mode sign conventions come from Davison's listing (CX +fwd, CY +right, CZ +down, Cl right-wing-down, Cm nose-up, Cn nose-right). The research profile now exists (WP-1), but it holds every surface at **zero travel**, so no surface response can be observed until a research-scoped travel decision is made. |
+| Left/right engine independence | **YES**, headless | `[E*]` propulsion checks, independent slot runtimes. In PlayMode, only independence of per-engine state can be observed: F100 thrust is zero in every mode. The research configuration's fixed thrust is one total force with no engines. |
 | Zero / failed-engine asymmetric loads | **NO** | needs engine mount coordinates (`geometryDeclared = false`) **and** nonzero thrust. Meaningless until both exist. |
 
 ---
 
 ## Phase 4 — trim and response (research mode only, once a research profile exists)
 
-**Prerequisites, none of which exist yet:**
-- a research-tagged profile provider;
-- a research-only thrust input.
+**Prerequisites:**
+- a research-tagged profile provider — **done (WP-1)**;
+- a research-only thrust input — **done (WP-1)**;
+- **research-scoped control-surface travel — NOT available.** Trim needs stabilator deflection, and the research profile holds zero travel.
 
 Baumann's own equilibria use a fixed **8,300 lb** total thrust at 20,000 ft (DTIC ADA217366, PDF p.34 and p.124). That figure is a research-model constant and must never enter R5 propulsion.
 

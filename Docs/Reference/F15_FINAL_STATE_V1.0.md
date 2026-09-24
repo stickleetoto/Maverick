@@ -25,9 +25,12 @@ Precision uses four tags: **exact** (source-stated for 836), **research** (anoth
 | NASA 836 dimensional propulsion anchor | recorded, **not used** | exact 836 aircraft datum | ≈23,500 lbf (104,533 N) uninstalled SLS full augmentation — NASA/TM-2005-213670 | **approximate** | refused as a scale: `MavF100PathSeparation.DimensionalizeForTarget` needs build equivalence and 836's engine sub-configuration, and neither is known |
 | Engine installation geometry | **UNAVAILABLE** | none | — | **unavailable** | `geometryDeclared = false`; no thrust-line moment, no engine-out yaw |
 | Source envelope | exact aero: none · research: fixed | exact envelope is an inverted interval | Baumann/Davison source condition; TP-1034 condition list | exact **unavailable** · **research** | research aero: M 0.6 ± 0.001 at 6,096 ± 1 m, transcribed α/β span. Thrust model: 7 documented points ± 150 m / ± 0.02 M. Off-point queries are refused, not extrapolated. |
-| Live-flight readiness | **FAIL-CLOSED** | — | — | — | profile invalid → not structurally prepared → no live or shadow loads. F15Replacement ownership is not implemented; no scene or prefab is wired. |
+| Live-flight readiness | exact: **FAIL-CLOSED** · research: **structurally prepared, not live-ready** | — | — | — | exact: profile invalid → not structurally prepared → no live or shadow loads. Research (WP-1): the separate profile `F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH` reaches STRUCTURALLY_PREPARED at M 0.6 / 20,000 ft only, with its propulsion non-authoritative and not accepted. F15Replacement ownership is not implemented; no scene or prefab is wired. |
+| **Research configuration (WP-1)** | implemented, **separate** | research-model data only (Davison driver + ARO10 geometry) | `F15_RESEARCH_PROFILE_V1.0.md` | **research** | valid at M 0.6 / 20,000 ft only. Surfaces are held at zero travel, so the aircraft is uncontrolled. Fixed 8,300 lbf **total** thrust with its source's nose-up thrust-line moment. |
 
-**Thrust today, in every mode: zero.** `MavF100ThrustDeck` has no declared scale and no power-lever convention, and `MavF15PropulsionSystem.thrustDeck` is null.
+**Thrust today:**
+- **Exact path and F100 layer:** zero. `MavF100ThrustDeck` has no declared scale and no power-lever convention, and `MavF15PropulsionSystem.thrustDeck` is null.
+- **Research configuration only:** the research model's own constant 8,300 lbf total at its source condition, from `MavF15AfitResearchFixedThrust`, which lives outside `MavF100*` and refuses under any other profile.
 
 ---
 
@@ -59,6 +62,7 @@ Precision uses four tags: **exact** (source-stated for 836), **research** (anoth
 - Baumann / ARO10 aerodynamics at M 0.6 / 20,000 ft (longitudinal, and six-axis)
 - F100-PW-100(3) TP-1034 normalized net-thrust characteristic
 - preproduction and family FCS evidence — **documented only, not wired**
+- **WP-1:** a separate research profile `F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH` with its own geometry (608 ft² / 42.8 ft / 15.94 ft), Davison's mass and inertia (37,000 lb; 25,480 / 166,620 / 186,930 / −1,000 slug-ft²), and the fixed 8,300 lbf total thrust. It reaches generic structural readiness. See `F15_RESEARCH_PROFILE_V1.0.md`.
 
 It exists for research and cross-validation only, and **must not claim NASA 836 exactness**.
 
@@ -66,12 +70,13 @@ It exists for research and cross-validation only, and **must not claim NASA 836 
 
 | Boundary | Mechanism | Test |
 |---|---|---|
-| research aero never becomes exact | `MavF15AeroSourceMode` defaults to `ExactNasa836Unavailable`; research needs `allowCrossValidationResearchModel` | `[G7]` covers the default. **No automated test yet** exercises the `MavF15AeroModel` opt-in refusal — see the opportunities doc, D |
+| research aero never becomes exact | `MavF15AeroSourceMode` defaults to `ExactNasa836Unavailable`; research needs `allowCrossValidationResearchModel` | `[G7]` covers the default; `[X4]` (WP-1) exercises the `MavF15AeroModel` opt-in refusal on a real component |
 | family FCS never becomes exact | `MavF15FcsModes` provenance floor per mode (`ExactNasa836Unavailable`, `F15FamilyReference`, `AFITResearch`) | `[C8]` |
 | research thrust never wears 836 identity | `MavF100PathSeparation`, `MavF100EngineFamilies.MayCombine`, `MavF100Nasa836EngineEvidence.SubConfigurationKnown = false` | `[E22]`–`[E28]` |
 | family geometry never fills exact S/c̄/b | `MavF15ReferenceGeometrySources.TrySelectReferenceSet` accepts only `DirectExact836` / `ExplicitProductionReferenceUsedBy836Model` from one set | `[G2]`–`[G8]` |
 | physical span never normalizes | `PhysicalWingSpanM` is separate from `MavAeroReferenceGeometry.wingSpanM` | `[G4]` |
 | wrong mass column never returns | `MavF15Table1MassStates` labels all three columns; the spike-extended tuple is pinned | `[M1]`, `[M5]` |
+| research profile never aliases or contaminates the exact one | separate ID, mass state, provider and thrust type; research thrust refuses under any other identity | `MavF15ResearchContaminationValidation` `[X1]`–`[X6]` |
 
 ---
 

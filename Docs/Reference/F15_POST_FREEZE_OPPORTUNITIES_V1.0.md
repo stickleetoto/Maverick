@@ -46,8 +46,8 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 
 | # | Opportunity | Class | Why | closure | exact | research | validation | effort |
 |---|---|---|---|---|---|---|---|---|
-| C1 | **Research-tagged profile provider** — Baumann/ARO10 reference geometry, plus the research model's **own** version-matched mass/inertia from Davison's driver (37,000 lb; Ix 25,480, Iy 166,620, Iz 186,930, Ixz −1,000 slug-ft²; DTIC ADA256613) rather than 836's Table 1, under an explicit research ID | **HIGH VALUE** | Without it the research model can never run in a `MavSixDoFBody` (a structural readiness requirement). Every research PlayMode, trim and perturbation test depends on it. | n/a | none (by design) | **high** | **high** | M |
-| C2 | **Research-only thrust input at the source condition** — the research model's own fixed 8,300 lb (Baumann PDF p.34, p.124), tagged research, never entering R5 | **HIGH VALUE** (with C1) | Every research trim needs thrust. The source states the figure it used. Must stay outside `MavF100*`. | certain | none | high | high | S |
+| C1 | ✅ **DONE (WP-1)** — **Research-tagged profile provider** — Baumann/ARO10 reference geometry, plus the research model's **own** version-matched mass/inertia from Davison's driver (37,000 lb; Ix 25,480, Iy 166,620, Iz 186,930, Ixz −1,000 slug-ft²; DTIC ADA256613) rather than 836's Table 1, under an explicit research ID | **HIGH VALUE** | Without it the research model can never run in a `MavSixDoFBody` (a structural readiness requirement). Every research PlayMode, trim and perturbation test depends on it. | n/a | none (by design) | **high** | **high** | M |
+| C2 | ✅ **DONE (WP-1)** — **Research-only thrust input at the source condition** — the research model's own fixed 8,300 lb (Baumann PDF p.34, p.124), tagged research, never entering R5 | **HIGH VALUE** (with C1) | Every research trim needs thrust. The source states the figure it used. Must stay outside `MavF100*`. | certain | none | high | high | S |
 | C3 | F100-PW-100(3) component-map digitization | **BLOCKED / NOT WORTH PURSUING** | The maps behind TP-1034 (CCD1103-1.0) are unpublished. R5 found turbine/fan torque unavailable. | very low | none | — | — | — |
 | C4 | TP-1069 / TP-1228 | **LOW VALUE** | Public NASA TPs, likely obtainable. They would fill the family-B dimensional gross-thrust dataset, but contain **no static point** and so cannot supply the TP-1034 normalizer. Family B cannot combine with A or C. | high | none | low | low | M |
 | C5 | TP-1056 follow-on engine data | **LOW VALUE** | TP-1056 is held. Follow-ons would concern the same restricted-spec gap. | low | none | low | low | S |
@@ -56,7 +56,7 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 
 | # | Opportunity | Class | Why | effort |
 |---|---|---|---|---|
-| D1 | **Exact-vs-research contamination tests across modules** — research geometry never reaches the exact profile; research thrust never reaches R5; family FCS never passes the exact floor; research profile IDs never carry the 836 target ID; `MavF15AeroModel` refuses research without opt-in (**no automated test covers this today**) | **HIGH VALUE** | Cheap, and it guards the whole architecture. **Must precede or accompany C1**, which is the change most likely to leak. | S |
+| D1 | ✅ **DONE (WP-1)** — **Exact-vs-research contamination tests across modules** — research geometry never reaches the exact profile; research thrust never reaches R5; family FCS never passes the exact floor; research profile IDs never carry the 836 target ID; `MavF15AeroModel` refuses research without opt-in (now covered by `[X4]`) | **HIGH VALUE** | Cheap, and it guards the whole architecture. **Must precede or accompany C1**, which is the change most likely to leak. | S |
 | D2 | **Research-mode trim validation vs Baumann Table VII** (ADA217366 PDF pp.124–129: equilibria against stabilator at 8,300 lb and 20,000 ft) | **HIGH VALUE** (after C1+C2) | The only sourced trim reference for the research model. Report differences; no tolerance can be asserted while Maverick's Davison-version transcription differs from Baumann's 1989 original. | M |
 | D3 | Research-mode static-derivative checks (Cmα, Cnβ, Clβ, Cmq from the transcribed polynomials at the source condition, against the thesis curves; McDonnell 1990 fig. 4-2 Cmq) | **MEDIUM VALUE** | Headless, no PlayMode needed. Needs curve digitization. | S–M |
 | D4 | Source-envelope validation (refusal at the M/altitude/α/β edges, in PlayMode) | **MEDIUM VALUE** | Headless coverage exists for the domain gate; PlayMode confirmation follows C1. | S |
@@ -67,7 +67,11 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 
 ## 5. Next three work packages (recommended — not implemented)
 
-**WP-1 — Research-mode flight enablement, with contamination guards first** (C1 + C2 + D1)
+**WP-1 — Research-mode flight enablement, with contamination guards first** (C1 + C2 + D1) — ✅ **COMPLETE.** Structural research readiness reached (`F15_RESEARCH_PROFILE_V1.0.md`).
+- Findings from doing it: the 8,300 lbf is TOTAL thrust and carries a nose-up thrust-line moment (THRUST × 0.25 in); Davison's inertia lines are commented but reproduced by his active constants.
+- Shortfall against the original outcome line: true PlayMode was not run (the batch Play Mode bridge is hard-wired to the scheduler probe). An editor-seam pipeline smoke runs instead.
+
+**Original scope:**
 - Add a separately tagged research profile provider: Baumann/ARO10 geometry, the research model's own version-matched mass/inertia, and an explicit research ID.
 - Add a research-only fixed-thrust input (8,300 lb at the source condition).
 - Before either lands, add the cross-module contamination tests.
@@ -80,6 +84,7 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 - No source hunt needed: everything is already held.
 
 **WP-3 — Research-mode validation against its own sources** (D2 + D3 + D5, after WP-1)
+- **New prerequisite found in WP-1:** the research aircraft has zero surface travel. Baumann's Table VII equilibria need stabilator around −10°, so the D2 trim comparison needs a *research-scoped* surface-authority decision first. Baumann's own Table VI prints stabilator +20/−30°, but it conflicts with the other public sets. D3 (static derivatives, headless) is **not** blocked by this.
 - Compare trim against Baumann Table VII.
 - Check static derivatives against the thesis curves.
 - Run deterministic perturbation runs inside the source envelope.
