@@ -9,7 +9,7 @@
 ## Phase 1 — open, compile, run the existing suites
 
 1. Open the project in Unity 6000.3.16f1 on branch `claude/f15-full-implementation`. Let it import.
-2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 344 runtime + 33 editor scripts, 0 errors.
+2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 348 runtime + 33 editor scripts, 0 errors.
 3. **Close the Editor** (batch mode needs the project unlocked). Run each F-15 suite headless. PowerShell, one line per suite:
 
    ```
@@ -34,7 +34,8 @@
    | `f15-source-condition` | `MavF15BaumannSourceConditionValidation` | 26 / 0 |
    | `f15-research-trim` | `MavF15ResearchTrimSolverValidation` | 34 / 0 |
    | `f15-turning-trim` | `MavF15ResearchTurningTrimValidation` | 31 / 0 |
-   | **total** | | **633 / 0** |
+   | `f15-stability` | `MavF15ResearchStabilityValidation` | 40 / 0 |
+   | **total** | | **673 / 0** |
 
 4. **Inspect the logs.**
    - Each JSON must say `"status": "PASS"`.
@@ -101,6 +102,7 @@ The **exact** path is still fail-closed; the check below still applies.
 - **research-scoped control-surface travel — NOT available.** Trim needs stabilator deflection, and the research profile holds zero travel. WP-2 declared a research *demonstrated* range (−25…−5°) for static evaluation only; it is not travel.
 - ~~a research speed-domain decision~~ — **resolved in WP-3A.** Set `conditionMode = SourceReproduction` on the research profile to admit the source-exercised 218.5–699.7 ft/s at 6,096 m. Every coefficient away from Mach 0.6 is flagged as extrapolated.
 - **Static reference already reproduced:** `f15-source-condition` `[W4]` evaluates all 170 assembled Table VII equilibria and reports residuals against print precision.
+- **Source stability off the body (WP-3D):** `f15-stability` `[S12]` prints every equilibrium's class and its largest-real-part eigenvalue. `[S13]` gives the source comparison, and `[S14]`/`[S15]`/`[S18]` the folds, the pitchfork and the Hopf points. The same method with `-fdmMethod ExportDataset` writes the CSV dataset into the log; extract it with `Docs/Reference/Data/F15/stability/extract_from_log.py`. These are the SOURCE MODEL's eigenvalues, not the aircraft's.
 - **Turning trim solved off the body (WP-3C):** `f15-turning-trim` `[H9]` recovers the 80 non-symmetric turning states with φ fixed. Per state it prints the eight printed/recovered values, ψ̇, the print floor and the numerical uncertainty.
 - **Research trim solved off the body (WP-3B):** `f15-research-trim` `[R5]` recovers the 89 symmetric states from perturbed starts, and prints per-state differences against the print-resolution floor.
 - **Runtime density gap — NOT closed:** the body computes q from ISA density (`[R13]`), so a flying research trim does not yet reproduce the source's fixed-density q. See D11.

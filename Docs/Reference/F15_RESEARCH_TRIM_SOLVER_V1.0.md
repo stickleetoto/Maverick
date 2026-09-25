@@ -293,7 +293,12 @@ Aileron, rudder and differential tail stay 0, as the caption states.
 - a print-resolution floor over all eight printed inputs;
 - the same no-answer-read, determinism and multiple-root discipline as WP-3B.
 
-Stability (eigenvalues) stays unassessed. Table VII lists stable equilibria, and the solver finds all equilibria regardless of stability.
+Stability (eigenvalues) stays unassessed here. Table VII lists stable equilibria, and the solver finds all equilibria regardless of stability.
+
+> **WP-3D assessed it** (`F15_RESEARCH_STABILITY_ANALYSIS_V1.0.md`), from the source's FUNX time-derivative system rather than this residual.
+> - **Symmetric recovered states:** 71 of 89 are stable.
+> - **Unstable:** 18 at α 13.0–14.1° carry a longitudinal pair with Re > 0, driven by the source's positive pitch-damping fit CMMQ.
+> - **Beyond the table:** the branch loses stability through a lateral Hopf at stabilator −19.33°. Baumann states −19.73°.
 
 **Justified?** Yes. The symmetric solver is stable: 356/356 converged in ≤ 3 iterations, bit-deterministic. The six-axis equations already reproduce the turning states statically. The pitchfork structure is the one thing WP-3C must design for.
 
@@ -324,6 +329,7 @@ Stability (eigenvalues) stays unassessed. Table VII lists stable equilibria, and
 
 - **No flying:** no Rigidbody is flown and no PlayMode run is made.
 - **No turning trim** here (done later in WP-3C, `F15_RESEARCH_TURNING_TRIM_V1.0.md`).
+- **No stability** here (done later in WP-3D, `F15_RESEARCH_STABILITY_ANALYSIS_V1.0.md`; the trim solver was not changed for it).
 - **Nothing changed** in the Baumann coefficients, CFX2 included; mass or inertia; NASA 836 data; F100 R5; or the generic trim solver, `MavAtmosphereModel` or `MavSixDoFBody`.
 - **No authority invented:** no hard stops, no actuator rates, and no surface travel for the flying research body.
 - **Untouched:** scenes and prefabs. F15Replacement is not enabled.

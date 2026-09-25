@@ -1,6 +1,6 @@
 # F-15 — Research Turning / Helical Trim (V1.0, WP-3C)
 
-> **Research configuration only** (`F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH`). **Not NASA 836. Not flying trim.** No Rigidbody, no continuation, no stability analysis.
+> **Research configuration only** (`F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH`). **Not NASA 836. Not flying trim.** No Rigidbody, no continuation, no stability analysis here — the stability of these equilibria is WP-3D, `F15_RESEARCH_STABILITY_ANALYSIS_V1.0.md`.
 
 **Headline:** with only its printed bank angle φ fixed, every one of Baumann Table VII's **80** non-symmetric turning equilibria is recovered from the source equations.
 - **Convergence:** 320 / 320 solves converge (80 states × 4 perturbations), in 3–7 iterations.
@@ -262,15 +262,16 @@ Here u, v, w = V (cos α cos β, sin β, sin α cos β).
   - But it cannot pass through φ = 0, and its conditioning collapses there (§9).
   - Reproducing the source's own diagram needs arclength (AUTO's method): continuation in the stabilator, which folds at every stabilator extremum along the printed branch (points 124, 136, 182, 193, and the fork at 165). Crossing between the symmetric and turning branches also needs it.
   - Arclength is also the tool to settle §8's unresolved high-α stalls.
-- **WP-3D stability analysis — now meaningful.**
-  - 170 source equilibria are now reproduced to print precision: 89 symmetric, 80 turning, and the pitchfork.
-  - Table VII labels its points **stable**. Linearizing the source's 8 state equations (α̇, β̇, ṗ, q̇, ṙ, θ̇, φ̇, V̇) at them gives a direct, sourced check.
-  - An eigenvalue should cross zero at point 165, the pitchfork.
-  - This needs the time-derivative form, which inverts the inertia coupling for ṗ and ṙ. The trim residual form is not it.
+- **WP-3D stability analysis — ✅ DONE** (`F15_RESEARCH_STABILITY_ANALYSIS_V1.0.md`).
+  - The source's own FUNX is linearized at all 170 equilibria (not the trim residual): **127 stable, 40 unstable, 3 near-neutral.**
+  - **The turning branch** is a saddle between the printed stabilator extrema, 125–135 and 183–193. The extrema 124/136/182/194 are real-eigenvalue zeros, located by φ-bisection to within 4e-7° of the printed stabilator.
+  - **Point 165** is a supercritical pitchfork: a lateral real eigenvalue changes sign on the symmetric branch, not on the turning branches.
+  - **Mirror spectra** are identical.
+  - **Disagreements with Table VII's "stable" caption:** the fold saddles, and 18 symmetric rows at α 13.0–14.1°, where the source's printed CMMQ is positive.
 
 ## 13. Not done
 
-- **Not built:** Rigidbody flight, PlayMode, continuation, eigenvalues, the density override (D11).
+- **Not built:** Rigidbody flight, PlayMode, continuation, the density override (D11). Eigenvalues: later, in WP-3D.
 - **Not changed:** Baumann coefficients, mass, thrust, source density or gravity, F100, NASA 836, `MavSteadyFlightTrimSolver`, `MavAtmosphereModel`, `MavSixDoFBody`.
 - **No authority invented:** no hard stops, no rates, no surface travel.
 - **Untouched:** scenes and prefabs. F15Replacement is not enabled.

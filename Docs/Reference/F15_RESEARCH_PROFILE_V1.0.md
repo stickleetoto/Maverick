@@ -102,7 +102,8 @@ The profile now carries `conditionMode`, and every mode keeps the same α/β spa
   - This is exposed in `[Q1]`, not bypassed.
 - **Not live-ready.** The research propulsion is non-authoritative and not accepted. There is no operational command source.
 - **One coefficient-fit condition; no throttle or altitude variation.** The source's own model does vary true velocity (WP-3A). In `SourceReproduction` mode Maverick admits the velocities the source ran, at the source's fixed-density altitude only.
-- **Static reproduction done (WP-3A); research trim solver done (WP-3B symmetric, WP-3C turning); flying trim not started.**
+- **Static reproduction done (WP-3A); research trim solver done (WP-3B symmetric, WP-3C turning); source-model stability done (WP-3D); flying trim not started.**
+  - **WP-3D:** the source's own FUNX (`MavF15AfitResearchSourceDynamics`, called only from Validation/) is linearized at all 170 equilibria. The result is 127 stable, 40 unstable and 3 near-neutral, against "all stable" in the source (`F15_RESEARCH_STABILITY_ANALYSIS_V1.0.md`). These are the **source model's** open-loop eigenvalues, with no CAS. They are not this flying configuration's, whose q is ISA-based and whose surfaces hold zero travel.
   - **WP-3C:** `SolveTurning`, with the printed bank angle fixed, recovers all 80 non-symmetric turning (helical) Table VII states within print resolution plus the solver's own termination uncertainty. Point 165 is the pitchfork, solved symmetric (`F15_RESEARCH_TURNING_TRIM_V1.0.md`).
   - Baumann's Table VII equilibria close to print precision in all six axes when fed through this configuration's aero, mass, inertia and thrust (`F15_TABLE_VII_EQUILIBRIUM_VALIDATION_V1.0.md`).
   - **WP-3B:** `MavF15AfitResearchTrimSolver` solves the source's own symmetric equilibrium off the body. It uses the fixed source density, 8,300 lbf total thrust and the thrust-line moment. From perturbed starts it recovers all 89 symmetric Table VII states within print resolution (`F15_RESEARCH_TRIM_SOLVER_V1.0.md`).
@@ -120,6 +121,7 @@ The profile now carries `conditionMode`, and every mode keeps the same α/β spa
 | `MavF15AfitResearchFlightDynamicsProfile` | the research provider (exact provider untouched) |
 | `MavF15AfitResearchThrustSource`, `MavF15AfitResearchFixedThrust` | research-only thrust |
 | `MavF15AfitResearchTrimSolver`, `MavF15AfitResearchSourceEnvironment` | WP-3B/3C research trim (symmetric; turning with φ fixed), off the body, in the source's own units and environment |
+| `MavF15AfitResearchSourceDynamics` | WP-3D: the source's FUNX x-dot = f(x, stabilator), for stability analysis only; nothing outside Validation/ calls it |
 
 | Suite | Checks | Result |
 |---|---:|---|
@@ -128,5 +130,6 @@ The profile now carries `conditionMode`, and every mode keeps the same α/β spa
 | `MavF15ResearchPipelineValidation` — `[Q1]`–`[Q3]`, editor seam, **not PlayMode** | 13 | PASS |
 | `MavF15ResearchTrimSolverValidation` — `[R1]`–`[R13]` (WP-3B) | 34 | PASS |
 | `MavF15ResearchTurningTrimValidation` — `[H1]`–`[H19]` (WP-3C) | 31 | PASS |
+| `MavF15ResearchStabilityValidation` — `[S1]`–`[S19]` (WP-3D) | 40 | PASS |
 
 No flight-performance tolerance is asserted anywhere.
