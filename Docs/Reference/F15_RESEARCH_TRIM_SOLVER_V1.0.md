@@ -244,7 +244,9 @@ Its status must be visible in telemetry (`debugStatus`).
 
 **Answer to the brief:** **yes**, a future Rigidbody source-reproduction mode still needs a density override. Without it the body flies ISA density, which is 6.83e-4 off at 6,096 m and diverges with any altitude change.
 
-## 11. Turning equilibria — WP-3C candidate (prepared, not solved)
+## 11. Turning equilibria — WP-3C candidate (prepared here; **done in WP-3C**)
+
+> **WP-3C implemented this plan** with φ as the parameter: `SolveTurning` in the same class. All 80 non-symmetric turning states were recovered, and point 165 was classified as the pitchfork. See `F15_RESEARCH_TURNING_TRIM_V1.0.md`. The text below is the WP-3B plan, kept as written.
 
 WP-3A already shows the six-axis equations reproduce all 81 assembled turning states to print precision. Solving them is WP-3C.
 
@@ -321,7 +323,7 @@ Stability (eigenvalues) stays unassessed. Table VII lists stable equilibria, and
 ## 13. What WP-3B does not do
 
 - **No flying:** no Rigidbody is flown and no PlayMode run is made.
-- **No turning trim** (WP-3C).
+- **No turning trim** here (done later in WP-3C, `F15_RESEARCH_TURNING_TRIM_V1.0.md`).
 - **Nothing changed** in the Baumann coefficients, CFX2 included; mass or inertia; NASA 836 data; F100 R5; or the generic trim solver, `MavAtmosphereModel` or `MavSixDoFBody`.
 - **No authority invented:** no hard stops, no actuator rates, and no surface travel for the flying research body.
 - **Untouched:** scenes and prefabs. F15Replacement is not enabled.

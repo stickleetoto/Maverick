@@ -161,6 +161,164 @@ namespace MaverickFresh.FlightDynamics.F15
         public bool pitchAttitudeAtSearchBound;
     }
 
+    /// <summary>What a search bound is. A numerical box must never read as a limit of anything.</summary>
+    public enum MavF15ResearchSearchBoundKind
+    {
+        /// <summary>
+        /// A bound the research semantics already define: V's source-exercised span, the stabilator's
+        /// demonstrated range, alpha/beta's transcribed breakpoint span. Not broadened here.
+        /// </summary>
+        SourceSemantic = 0,
+
+        /// <summary>
+        /// NUMERICAL_SEARCH_BOUND: a finite box the bounded Newton solver needs where no source defines
+        /// one. Not an aircraft limit, not a model-validity limit, not a physical limit.
+        /// </summary>
+        NumericalSearchBound = 1
+    }
+
+    /// <summary>One unknown's search box, labelled with what it is.</summary>
+    public struct MavF15ResearchSearchBound
+    {
+        public const string NumericalSearchBoundLabel = "NUMERICAL_SEARCH_BOUND";
+
+        public string unknown;
+        public string units;
+        public float min;
+        public float max;
+        public MavF15ResearchSearchBoundKind kind;
+        public string basis;
+
+        /// <summary>Always false: neither kind of search bound is a physical limit.</summary>
+        public bool IsPhysicalLimit
+        {
+            get { return false; }
+        }
+
+        public string Label
+        {
+            get { return kind == MavF15ResearchSearchBoundKind.NumericalSearchBound ? NumericalSearchBoundLabel : "SOURCE_SEMANTIC_BOUND"; }
+        }
+    }
+
+    /// <summary>
+    /// The eight turning (helical) equilibrium equations of the research source at one state, with
+    /// the terms that enter them. Source units: ft, slug, lbf, s; body axes X forward, Y right, Z down.
+    /// </summary>
+    public struct MavF15ResearchTurningTrimResidual
+    {
+        public bool evaluated;
+        public string reason;
+
+        /// <summary>The fixed bank angle. An input, never an unknown.</summary>
+        public double phiDeg;
+
+        public double alphaDeg;
+        public double betaDeg;
+        public double pRadSec;
+        public double qRadSec;
+        public double rRadSec;
+        public double thetaDeg;
+        public double trueAirspeedFtPerSec;
+        public double symmetricStabilatorDeg;
+
+        /// <summary>0.5 * RHO * V^2 from the fixed source density, with the state's own V.</summary>
+        public double dynamicPressurePsf;
+
+        /// <summary>The transcribed routine's coefficients (no thrust inside), at the source's pHat/qHat/rHat.</summary>
+        public double aeroCx;
+        public double aeroCy;
+        public double aeroCz;
+        public double aeroCl;
+        public double aeroCm;
+        public double aeroCn;
+
+        public double thrustForceLbf;
+        public double thrustPitchingMomentFtLbf;
+
+        /// <summary>Body force balance over weight: aero + thrust + gravity + omega x V. Source F(1), F(2), F(8).</summary>
+        public double forceXOverWeight;
+        public double forceYOverWeight;
+        public double forceZOverWeight;
+
+        /// <summary>Moment balance with the inertial coupling. Source F(3), F(4), F(5).</summary>
+        public double rollOverQSb;
+        public double pitchOverQSc;
+        public double yawOverQSb;
+
+        /// <summary>Euler kinematics, rad/s. Source F(6), F(7).</summary>
+        public double thetaDotRadSec;
+        public double phiDotRadSec;
+
+        /// <summary>
+        /// psi-dot = (q sin phi + r cos phi) / cos theta. An OUTPUT: a steady helical turn has a
+        /// constant heading rate, so it is never driven to zero.
+        /// </summary>
+        public double headingRateRadSec;
+
+        /// <summary>
+        /// Flight-path angle from the state alone:
+        /// sin(gamma) = cos(a)cos(b)sin(theta) - (sin(b)sin(phi) + sin(a)cos(b)cos(phi))cos(theta).
+        /// </summary>
+        public double flightPathAngleDeg;
+
+        public double DrivenNorm
+        {
+            get
+            {
+                double n = Math.Max(Math.Abs(forceXOverWeight), Math.Abs(forceYOverWeight));
+                n = Math.Max(n, Math.Abs(forceZOverWeight));
+                n = Math.Max(n, Math.Max(Math.Abs(rollOverQSb), Math.Abs(pitchOverQSc)));
+                n = Math.Max(n, Math.Abs(yawOverQSb));
+                return Math.Max(n, Math.Max(Math.Abs(thetaDotRadSec), Math.Abs(phiDotRadSec)));
+            }
+        }
+    }
+
+    /// <summary>A starting point for the turning solve: every unknown, and nothing else. Phi is not in it.</summary>
+    public struct MavF15ResearchTurningTrimGuess
+    {
+        public float alphaDeg;
+        public float betaDeg;
+        public float pRadSec;
+        public float qRadSec;
+        public float rRadSec;
+        public float thetaDeg;
+        public float trueAirspeedFtPerSec;
+        public float symmetricStabilatorDeg;
+    }
+
+    /// <summary>One turning research trim, as found. Research only; nothing here is a surface command.</summary>
+    public struct MavF15ResearchTurningTrimResult
+    {
+        public bool refused;
+        public string refusalReason;
+
+        public MavNewtonOutcome outcome;
+        public bool converged;
+        public int iterations;
+
+        /// <summary>Largest of the eight residuals at the returned point.</summary>
+        public float drivenResidualNorm;
+
+        /// <summary>Fixed, exactly as given. Never solved.</summary>
+        public double phiDeg;
+
+        public MavF15ResearchTurningTrimGuess initialGuess;
+        public MavF15ResearchTurningTrimGuess solution;
+        public MavF15ResearchTurningTrimResidual residual;
+
+        /// <summary>+1 right turn (psi-dot > 0, nose moving right), -1 left, 0 none. Output only.</summary>
+        public int TurnDirection
+        {
+            get { return residual.headingRateRadSec > 0.0 ? 1 : residual.headingRateRadSec < 0.0 ? -1 : 0; }
+        }
+
+        /// <summary>The unknown whose bound the solution sits on, or null. See <see cref="MavF15ResearchSearchBound"/>.</summary>
+        public string boundReached;
+        public MavF15ResearchSearchBoundKind boundReachedKind;
+    }
+
     /// <summary>
     /// Symmetric (wings-level, straight) trim of the AFIT/Baumann/Davison research model, solving the
     /// source's own equilibrium problem.
@@ -185,10 +343,13 @@ namespace MaverickFresh.FlightDynamics.F15
     /// CONTROLS: the stabilator enters only through a <see cref="MavF15ResearchStaticControlState"/>,
     /// and its search box is the research DEMONSTRATED range, never a hard stop.
     ///
+    /// TURNING (WP-3C): <see cref="SolveTurning"/> solves the full eight-equation equilibrium with the
+    /// bank angle fixed; see its summary.
+    ///
     /// SCOPE: research reproduction only. Every result away from Mach 0.6 applies the Mach 0.6 fit
     /// at a speed the source exercised; that is source-exercised, not aerodynamically validated.
     /// Refused for any configuration id but the research one, and for V outside the
-    /// source-exercised span. Turning trim is not solved here (WP-3C candidate).
+    /// source-exercised span.
     /// </summary>
     public static class MavF15AfitResearchTrimSolver
     {
@@ -404,6 +565,377 @@ namespace MaverickFresh.FlightDynamics.F15
             if (r.alphaAtSearchBound || r.pitchAttitudeAtSearchBound)
                 s.Append(" | at search bound");
             return s.ToString();
+        }
+
+        // ------------------------------------------------------------------ turning (WP-3C)
+
+        /// <summary>A turning result within this fraction of an unknown's box of either end is reported at that bound.</summary>
+        public const float BoundProximityFraction = 1e-3f;
+
+        /// <summary>Numerical search box for p, q and r. No source bounds the rates.</summary>
+        public const float RateSearchLimitRadSec = 1f;
+
+        /// <summary>Central-difference steps for the turning unknowns, in each unknown's own unit.</summary>
+        public const float FiniteDifferenceStepBetaDeg = 1e-3f;
+        public const float FiniteDifferenceStepRateRadSec = 1e-4f;
+        public const float FiniteDifferenceStepSpeedFtPerSec = 1e-1f;
+
+        private const string TurningStaticControlNote = "WP-3C research turning trim (static evaluation only)";
+
+        /// <summary>
+        /// The eight turning unknowns' search boxes, in solve order (alpha, beta, p, q, r, theta, V,
+        /// stabilator), each labelled as source-semantic or NUMERICAL_SEARCH_BOUND.
+        ///
+        /// Source audit: Baumann 1989 reads AUTO's parameter and norm bounds (RL0/RL1, A0/A1) from a
+        /// data file whose values are not printed (DTIC ADA217366 PDF p.98). Davison's bifurcation
+        /// driver prints -8 &lt;= alpha &lt;= 50 and |beta| &lt;= 30 deg, but only writes a message and
+        /// continues (ADA256613 PDF pp.92-93); the simulator has the same check commented out (p.125).
+        /// No source bounds p, q, r, theta, phi or V. So alpha, beta, V and the stabilator keep the
+        /// research semantics already in the code, and p, q, r and theta get numerical boxes.
+        /// </summary>
+        public static MavF15ResearchSearchBound[] TurningSearchBounds()
+        {
+            MavF15ResearchDemonstratedSurfaceRange stabilator = StabilatorSearchRange();
+            const string rateBasis =
+                "no source bounds the body rates; wide enough that no Table VII turning state (|p|, |q|, |r| "
+                + "<= 0.093 rad/s) comes near it";
+
+            return new[]
+            {
+                Bound("alpha", "deg", AlphaSearchMinDeg, AlphaSearchMaxDeg, MavF15ResearchSearchBoundKind.SourceSemantic,
+                    "the transcribed routine's breakpoint span (MavF15BaumannMach06Domain); Davison's advisory "
+                    + "-8..50 deg is recorded, not adopted"),
+                Bound("beta", "deg", -MavF15BaumannMach06Domain.SourceAbsBetaMaxDeg, MavF15BaumannMach06Domain.SourceAbsBetaMaxDeg,
+                    MavF15ResearchSearchBoundKind.SourceSemantic,
+                    "the transcribed routine's beta breakpoint span; Davison's advisory +/-30 deg is recorded, not adopted"),
+                Bound("p", "rad/s", -RateSearchLimitRadSec, RateSearchLimitRadSec, MavF15ResearchSearchBoundKind.NumericalSearchBound, rateBasis),
+                Bound("q", "rad/s", -RateSearchLimitRadSec, RateSearchLimitRadSec, MavF15ResearchSearchBoundKind.NumericalSearchBound, rateBasis),
+                Bound("r", "rad/s", -RateSearchLimitRadSec, RateSearchLimitRadSec, MavF15ResearchSearchBoundKind.NumericalSearchBound, rateBasis),
+                Bound("theta", "deg", -PitchAttitudeSearchLimitDeg, PitchAttitudeSearchLimitDeg, MavF15ResearchSearchBoundKind.NumericalSearchBound,
+                    "the source's Euler kinematics (STHE/CTHE) are singular at +/-90 deg"),
+                Bound("V", "ft/s", MavF15SourceExercisedOperatingDomain.MinTabulatedTrueAirspeedFtPerSec,
+                    MavF15SourceExercisedOperatingDomain.MaxTabulatedTrueAirspeedFtPerSec, MavF15ResearchSearchBoundKind.SourceSemantic,
+                    "the source-exercised true-airspeed span; no extrapolation beyond what the source ran"),
+                Bound("stabilator", "deg", stabilator.minDeg, stabilator.maxDeg, MavF15ResearchSearchBoundKind.SourceSemantic,
+                    "the research DEMONSTRATED range; not a hard stop")
+            };
+        }
+
+        /// <summary>
+        /// The eight turning equilibrium equations at one state, with phi given. Public so validation
+        /// can compare them with the independent WP-3A evaluator.
+        ///
+        /// Forces (body axes, over weight), exactly as the source's F(1), F(2), F(8) balance them:
+        ///   X/m - g sin(theta)             + r v - q w
+        ///   Y/m + g cos(theta) sin(phi)    + p w - r u
+        ///   Z/m + g cos(theta) cos(phi)    + q u - p v
+        /// with u, v, w = V (cos a cos b, sin b, sin a cos b). Moments, with the source's inertia tensor
+        /// [Ix 0 -Ixz; 0 Iy 0; -Ixz 0 Iz]:
+        ///   L + (Iy - Iz) q r + Ixz p q
+        ///   M + T.arm + (Iz - Ix) p r + Ixz (r^2 - p^2)
+        ///   N + (Ix - Iy) p q - Ixz q r
+        /// Kinematics F(6), F(7): theta-dot = q cos(phi) - r sin(phi);
+        /// phi-dot = p + (q sin(phi) + r cos(phi)) tan(theta). Rates enter the routine as the source
+        /// normalizes them: pHat = p b / 2V, qHat = q cbar / 2V, rHat = r b / 2V.
+        /// </summary>
+        public static MavF15ResearchTurningTrimResidual EvaluateTurningResidual(
+            double phiDeg,
+            double alphaDeg,
+            double betaDeg,
+            double pRadSec,
+            double qRadSec,
+            double rRadSec,
+            double thetaDeg,
+            double trueAirspeedFtPerSec,
+            double symmetricStabilatorDeg)
+        {
+            MavF15ResearchTurningTrimResidual r = new MavF15ResearchTurningTrimResidual
+            {
+                phiDeg = phiDeg,
+                alphaDeg = alphaDeg,
+                betaDeg = betaDeg,
+                pRadSec = pRadSec,
+                qRadSec = qRadSec,
+                rRadSec = rRadSec,
+                thetaDeg = thetaDeg,
+                trueAirspeedFtPerSec = trueAirspeedFtPerSec,
+                symmetricStabilatorDeg = symmetricStabilatorDeg
+            };
+
+            if (!(trueAirspeedFtPerSec > 0.0))
+            {
+                r.reason = "true airspeed must be positive";
+                return r;
+            }
+
+            MavF15ResearchStaticControlState controls;
+            string reason;
+            if (!MavF15ResearchStaticControlState.TryCreate(
+                    MavF15ResearchDemonstratedControlRange.AfitBaumannTabulatedEquilibria(),
+                    (float)symmetricStabilatorDeg, 0f, 0f, 0f, TurningStaticControlNote,
+                    out controls, out reason))
+            {
+                r.reason = reason;
+                return r;
+            }
+
+            double S = MavF15BaumannMach06Reference.WingAreaFt2;
+            double b = MavF15BaumannMach06Reference.WingSpanFt;
+            double c = MavF15BaumannMach06Reference.MeanAerodynamicChordFt;
+            double g = MavF15AfitResearchSourceEnvironment.GravityFtPerSec2;
+            double weight = MavF15AfitResearchMassReference.WeightLb;
+            double mass = weight / g;
+            double ix = MavF15AfitResearchMassReference.IxxSlugFt2;
+            double iy = MavF15AfitResearchMassReference.IyySlugFt2;
+            double iz = MavF15AfitResearchMassReference.IzzSlugFt2;
+            double ixz = MavF15AfitResearchMassReference.IxzSlugFt2;
+            double thrust = MavF15AfitResearchThrustSource.SourceTotalThrustLbf;
+            double thrustArmFt = MavF15AfitResearchThrustSource.SourceThrustLineOffsetIn / 12.0;
+
+            double V = trueAirspeedFtPerSec;
+            double alpha = alphaDeg * DegToRad;
+            double beta = betaDeg * DegToRad;
+            double theta = thetaDeg * DegToRad;
+            double phi = phiDeg * DegToRad;
+            double p = pRadSec, q = qRadSec, rr = rRadSec;
+
+            double qbar = MavF15AfitResearchSourceEnvironment.DynamicPressurePsf(V);
+            double qS = qbar * S;
+
+            float pHat = (float)(p * b / (2.0 * V));
+            float qHat = (float)(q * c / (2.0 * V));
+            float rHat = (float)(rr * b / (2.0 * V));
+
+            MavF15BaumannSurfaceState surfaces = controls.ToBaumannSurfaceStateForStaticEvaluation();
+            MavAeroCoefficients lon = MavF15BaumannMach06Longitudinal.Evaluate(
+                (float)alpha, surfaces.symmetricStabilatorDeg, qHat);
+            MavAeroCoefficients lat = MavF15BaumannMach06LateralDirectional.Evaluate(
+                (float)alpha, (float)beta, surfaces, pHat, rHat);
+
+            r.dynamicPressurePsf = qbar;
+            r.aeroCx = lon.cx;
+            r.aeroCy = lat.cy;
+            r.aeroCz = lon.cz;
+            r.aeroCl = lat.cl;
+            r.aeroCm = lon.cm;
+            r.aeroCn = lat.cn;
+            r.thrustForceLbf = thrust;
+            r.thrustPitchingMomentFtLbf = thrust * thrustArmFt;
+
+            double X = qS * lon.cx + r.thrustForceLbf;
+            double Y = qS * lat.cy;
+            double Z = qS * lon.cz;
+            double L = qS * b * lat.cl;
+            double M = qS * c * lon.cm + r.thrustPitchingMomentFtLbf;
+            double N = qS * b * lat.cn;
+
+            double u = V * Math.Cos(alpha) * Math.Cos(beta);
+            double v = V * Math.Sin(beta);
+            double w = V * Math.Sin(alpha) * Math.Cos(beta);
+
+            r.forceXOverWeight = (X / mass - g * Math.Sin(theta) + rr * v - q * w) / g;
+            r.forceYOverWeight = (Y / mass + g * Math.Cos(theta) * Math.Sin(phi) + p * w - rr * u) / g;
+            r.forceZOverWeight = (Z / mass + g * Math.Cos(theta) * Math.Cos(phi) + q * u - p * v) / g;
+
+            r.rollOverQSb = (L + (iy - iz) * q * rr + ixz * p * q) / (qS * b);
+            r.pitchOverQSc = (M + (iz - ix) * p * rr + ixz * (rr * rr - p * p)) / (qS * c);
+            r.yawOverQSb = (N + (ix - iy) * p * q - ixz * q * rr) / (qS * b);
+
+            r.thetaDotRadSec = q * Math.Cos(phi) - rr * Math.Sin(phi);
+            r.phiDotRadSec = p + (q * Math.Sin(phi) + rr * Math.Cos(phi)) * Math.Tan(theta);
+
+            r.headingRateRadSec = (q * Math.Sin(phi) + rr * Math.Cos(phi)) / Math.Cos(theta);
+            double sinGamma = Math.Cos(alpha) * Math.Cos(beta) * Math.Sin(theta)
+                              - (Math.Sin(beta) * Math.Sin(phi) + Math.Sin(alpha) * Math.Cos(beta) * Math.Cos(phi)) * Math.Cos(theta);
+            r.flightPathAngleDeg = Math.Asin(Math.Max(-1.0, Math.Min(1.0, sinGamma))) / DegToRad;
+
+            r.evaluated = IsFinite(r.forceXOverWeight) && IsFinite(r.forceYOverWeight) && IsFinite(r.forceZOverWeight)
+                          && IsFinite(r.rollOverQSb) && IsFinite(r.pitchOverQSc) && IsFinite(r.yawOverQSb)
+                          && IsFinite(r.thetaDotRadSec) && IsFinite(r.phiDotRadSec);
+            r.reason = r.evaluated ? "evaluated" : "non-finite residual";
+            return r;
+        }
+
+        /// <summary>
+        /// Solves the turning (helical) research equilibrium with the bank angle FIXED.
+        ///
+        /// Unknowns (8): alpha, beta, p, q, r, theta, V, symmetric stabilator. Residuals (8): body X, Y,
+        /// Z force, roll, pitch and yaw moment, theta-dot and phi-dot. Heading rate is an output. Aileron,
+        /// rudder and differential tail stay 0, as Table VII's caption states.
+        ///
+        /// WHY PHI. At a fixed V above the pitchfork there are three equilibria (the symmetric one and a
+        /// left/right mirror pair), and with phi fixed at 0 the whole symmetric branch solves the
+        /// equations, so the Jacobian is singular there. A nonzero phi picks one side of the pair. It is
+        /// a recovery parameterization, not a proof that each phi has one root.
+        ///
+        /// Refused for phi = 0 exactly: that is the symmetric branch; use <see cref="SolveSymmetric"/>.
+        /// Deterministic; the answer comes from the equations alone.
+        /// </summary>
+        public static MavF15ResearchTurningTrimResult SolveTurning(
+            string configurationId,
+            double phiDeg,
+            MavF15ResearchTurningTrimGuess initialGuess)
+        {
+            MavF15ResearchTurningTrimResult result = new MavF15ResearchTurningTrimResult
+            {
+                phiDeg = phiDeg,
+                initialGuess = initialGuess,
+                outcome = MavNewtonOutcome.NonFiniteResidual,
+                drivenResidualNorm = float.PositiveInfinity
+            };
+
+            string refusal = TurningRefusal(configurationId, phiDeg, initialGuess);
+            if (refusal != null)
+            {
+                result.refused = true;
+                result.refusalReason = refusal;
+                return result;
+            }
+
+            MavF15ResearchSearchBound[] bounds = TurningSearchBounds();
+            float[] unknowns =
+            {
+                initialGuess.alphaDeg, initialGuess.betaDeg, initialGuess.pRadSec, initialGuess.qRadSec,
+                initialGuess.rRadSec, initialGuess.thetaDeg, initialGuess.trueAirspeedFtPerSec,
+                initialGuess.symmetricStabilatorDeg
+            };
+            float[] lower = new float[8];
+            float[] upper = new float[8];
+            for (int i = 0; i < 8; i++)
+            {
+                lower[i] = bounds[i].min;
+                upper[i] = bounds[i].max;
+            }
+
+            float[] steps =
+            {
+                FiniteDifferenceStepDeg, FiniteDifferenceStepBetaDeg, FiniteDifferenceStepRateRadSec,
+                FiniteDifferenceStepRateRadSec, FiniteDifferenceStepRateRadSec, FiniteDifferenceStepDeg,
+                FiniteDifferenceStepSpeedFtPerSec, FiniteDifferenceStepDeg
+            };
+
+            MavNewtonResidualFunction residualFunction = delegate (float[] x, float[] res)
+            {
+                MavF15ResearchTurningTrimResidual e =
+                    EvaluateTurningResidual(phiDeg, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]);
+                if (!e.evaluated)
+                {
+                    for (int i = 0; i < 8; i++)
+                        res[i] = float.NaN;
+                    return;
+                }
+
+                res[0] = (float)e.forceXOverWeight;
+                res[1] = (float)e.forceYOverWeight;
+                res[2] = (float)e.forceZOverWeight;
+                res[3] = (float)e.rollOverQSb;
+                res[4] = (float)e.pitchOverQSc;
+                res[5] = (float)e.yawOverQSb;
+                res[6] = (float)e.thetaDotRadSec;
+                res[7] = (float)e.phiDotRadSec;
+            };
+
+            int iterations;
+            float norm;
+            result.outcome = MavDampedNewtonSolver.Solve(
+                8, residualFunction, unknowns, lower, upper, steps,
+                MaxIterations, NumericalSolverTolerance, MaxLineSearchHalvings,
+                out iterations, out norm);
+
+            result.converged = result.outcome == MavNewtonOutcome.Converged;
+            result.iterations = iterations;
+            result.drivenResidualNorm = norm;
+            result.solution = new MavF15ResearchTurningTrimGuess
+            {
+                alphaDeg = unknowns[0],
+                betaDeg = unknowns[1],
+                pRadSec = unknowns[2],
+                qRadSec = unknowns[3],
+                rRadSec = unknowns[4],
+                thetaDeg = unknowns[5],
+                trueAirspeedFtPerSec = unknowns[6],
+                symmetricStabilatorDeg = unknowns[7]
+            };
+            result.residual = EvaluateTurningResidual(
+                phiDeg, unknowns[0], unknowns[1], unknowns[2], unknowns[3], unknowns[4], unknowns[5],
+                unknowns[6], unknowns[7]);
+
+            // "At a bound" means within 0.1% of that unknown's box: a clamped line search can stall
+            // just inside a bound without landing exactly on it.
+            for (int i = 0; i < 8; i++)
+            {
+                float epsilon = BoundProximityFraction * (upper[i] - lower[i]);
+                if (unknowns[i] <= lower[i] + epsilon || unknowns[i] >= upper[i] - epsilon)
+                {
+                    result.boundReached = bounds[i].unknown;
+                    result.boundReachedKind = bounds[i].kind;
+                }
+            }
+
+            return result;
+        }
+
+        public static string Describe(MavF15ResearchTurningTrimResult r)
+        {
+            StringBuilder s = new StringBuilder(320);
+            s.Append("research turning trim phi=").Append(r.phiDeg.ToString("F3")).Append(" deg: ");
+            if (r.refused)
+                return s.Append("REFUSED - ").Append(r.refusalReason).ToString();
+
+            MavF15ResearchTurningTrimGuess x = r.solution;
+            s.Append(r.outcome).Append(" in ").Append(r.iterations).Append(" it | alpha ").Append(x.alphaDeg.ToString("F5"))
+             .Append(" beta ").Append(x.betaDeg.ToString("E3")).Append(" p ").Append(x.pRadSec.ToString("E3"))
+             .Append(" q ").Append(x.qRadSec.ToString("E3")).Append(" r ").Append(x.rRadSec.ToString("E3"))
+             .Append(" theta ").Append(x.thetaDeg.ToString("F4")).Append(" V ").Append(x.trueAirspeedFtPerSec.ToString("F2"))
+             .Append(" stab ").Append(x.symmetricStabilatorDeg.ToString("F5"))
+             .Append(" | psi-dot ").Append(r.residual.headingRateRadSec.ToString("F5"))
+             .Append(" | norm ").Append(r.drivenResidualNorm.ToString("E2"));
+            if (r.boundReached != null)
+                s.Append(" | at ").Append(r.boundReachedKind).Append(" of ").Append(r.boundReached);
+            return s.ToString();
+        }
+
+        private static MavF15ResearchSearchBound Bound(
+            string unknown, string units, float min, float max, MavF15ResearchSearchBoundKind kind, string basis)
+        {
+            return new MavF15ResearchSearchBound
+            {
+                unknown = unknown,
+                units = units,
+                min = min,
+                max = max,
+                kind = kind,
+                basis = basis
+            };
+        }
+
+        private static string TurningRefusal(
+            string configurationId, double phiDeg, MavF15ResearchTurningTrimGuess guess)
+        {
+            if (configurationId != MavF15AfitResearchIdentity.ConfigurationId)
+            {
+                return "research trim is for " + MavF15AfitResearchIdentity.ConfigurationId
+                       + " only; '" + configurationId + "' has no research trim";
+            }
+
+            if (!IsFinite(phiDeg))
+                return "bank angle is not finite";
+
+            if (phiDeg == 0.0)
+            {
+                return "phi = 0 is the symmetric branch: with phi fixed at 0 every symmetric equilibrium "
+                       + "solves these equations, so the turning problem is singular there; use SolveSymmetric";
+            }
+
+            if (!IsFinite(guess.alphaDeg) || !IsFinite(guess.betaDeg) || !IsFinite(guess.pRadSec)
+                || !IsFinite(guess.qRadSec) || !IsFinite(guess.rRadSec) || !IsFinite(guess.thetaDeg)
+                || !IsFinite(guess.trueAirspeedFtPerSec) || !IsFinite(guess.symmetricStabilatorDeg))
+                return "initial guess is not finite";
+
+            if (!StabilatorSearchRange().declared)
+                return "no research demonstrated stabilator range is declared";
+
+            return null;
         }
 
         private static string Refusal(

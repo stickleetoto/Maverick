@@ -174,4 +174,31 @@ In the turning region, the second half's r, θ, φ and V columns are printed **t
 - **Point 165** — the symmetric pitchfork state printed inside the turning section — is also recovered within its floor.
 - **Other roots:** a 455-start grid finds no second root at any V probed.
 
-**What this does not add:** anything about validity away from Mach 0.6, and anything about the turning states. Those are WP-3C (`F15_RESEARCH_TRIM_SOLVER_V1.0.md` §11).
+**What this does not add:** anything about validity away from Mach 0.6, and anything about the turning states. Those are WP-3C (§8).
+
+## 8. WP-3C — the turning states recovered by trim
+
+**Solver:** `MavF15AfitResearchTrimSolver.SolveTurning` (`F15_RESEARCH_TURNING_TRIM_V1.0.md`).
+- **Fixed:** only the printed φ.
+- **Unknowns:** α, β, p, q, r, θ, V, stabilator.
+- **Residuals:** all six force/moment equations plus θ̇ and φ̇.
+- **Output:** ψ̇.
+
+**Dataset:** the §2 pairing, unchanged. It gives 81 turning states.
+- **Point 165** is the one place the printed φ changes sign. It is classified as the **pitchfork** and solved by the WP-3B symmetric solver.
+- **Points 175 and 194** stay unavailable (print damage).
+- **That leaves 80.**
+
+**Results:**
+- **320 / 320 converged** (4 perturbed starts each, every unknown moved), in 3–7 iterations.
+- **Floor:** 69 states within the print floor in all eight unknowns. 11 are within it once the solver's own termination uncertainty (|J⁻¹r|) is added: α and the stabilator, which are printed to 7 digits, where φ barely moves them. **None** exceeds both.
+- **Largest differences:**
+
+  | α | β | V | stabilator | θ |
+  |---|---|---|---|---|
+  | 1.5e-3° | 1.2e-5° | 0.12 ft/s | 1.4e-3° | 5.7e-3° |
+
+- **ψ̇:** −0.1027 … +0.1014 rad/s.
+- **Mirror parity** (derived from the equations): exact, 80 / 80.
+- **Other roots:** none found at 8 probed φ.
+- **CFX2:** inactive at every turning root (α ≤ 10.6°).
