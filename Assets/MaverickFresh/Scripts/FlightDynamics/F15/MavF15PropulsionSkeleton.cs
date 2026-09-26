@@ -3,74 +3,65 @@ using UnityEngine;
 namespace MaverickFresh.FlightDynamics.F15
 {
     /// <summary>
-    /// F-15 twin-engine installation SKELETON.
+    /// NASA 836 F-15 twin-engine installation SKELETON.
     ///
-    /// This file exists to prove the architecture can DESCRIBE a twin-engine aircraft. It does not
-    /// contain an F-15 engine model, and nothing in it may be read as F-15 performance data.
+    /// The target engine IDENTITY is frozen: two Pratt & Whitney F100-PW-100 engines on the
+    /// pre-Quiet-Spike NASA F-15B 836 configuration.
     ///
-    /// Everything real is deliberately absent:
+    /// What is NOT frozen is the numeric engine PERFORMANCE model:
+    ///   - no exact-target thrust deck;
+    ///   - no accepted exact-target spool/transient law;
+    ///   - no fuel-flow map;
+    ///   - no inlet-recovery schedule;
+    ///   - no exact mount/thrust-line coordinates.
     ///
-    ///   - ENGINE VARIANT is not frozen. "F100" is not one numeric engine (ENG-006): the public
-    ///     record spans research, EMD, DEEC, PW-100/220/229 and modified research aircraft, and those
-    ///     are different data sets. So the engine profile here carries provenance Unavailable and the
-    ///     no-sourced-transient power law. It does NOT select the F-16 Garza/Morelli law, because
-    ///     nobody has shown that law describes an F100-family engine.
+    /// Therefore the engine profile remains data-provenance Unavailable, uses the explicit
+    /// no-sourced-transient plumbing law, carries no thrust deck, and produces zero dimensional
+    /// thrust. This file must not be read as a performance model merely because the variant identity
+    /// is now known.
     ///
-    ///   - THRUST DECK is not frozen. No deck is attached, so thrust is exactly zero.
-    ///
-    ///   - MOUNT COORDINATES are not frozen. The left/right lateral offsets are ZERO here and
-    ///     geometryDeclared is FALSE. A plausible-looking spacing would be a guessed aircraft
-    ///     dimension, which the repository rules forbid, and a zero offset makes the absence visible:
-    ///     an engine-out condition on this skeleton produces NO yawing moment, which is obviously
-    ///     wrong and therefore cannot be mistaken for a working F-15.
-    ///
-    /// What the skeleton does establish, and what the P-002/P-003 validations exercise with clearly
-    /// labelled SYNTHETIC geometry instead:
-    ///
-    ///   - two slots, two independent runtime states, one shared engine profile object
-    ///   - differential throttle channels, 0 for left and 1 for right
-    ///   - asymmetric thrust producing a yawing moment through r x F with no special-case yaw term
-    ///
-    /// Per the F-15 roadmap this is F15-R1 territory: a propulsion installation with two engine slots,
-    /// "initially allowed to use null/zero engine data". Freezing real values is F15-R0/F15-R4 work.
+    /// The installation still proves the common architecture can describe:
+    ///   - two slots;
+    ///   - two independent runtime states;
+    ///   - one shared engine-profile object;
+    ///   - differential throttle channels;
+    ///   - r x F installation moments once sourced mount coordinates exist.
     /// </summary>
     public static class MavF15PropulsionSkeleton
     {
-        public const string EngineProfileId = "f15-engine-UNFROZEN";
-        public const string InstallationId = "f15-twin-installation-SKELETON";
+        public const string EngineProfileId = "f15-f100-pw-100-nasa836-PERFORMANCE-UNAVAILABLE";
+        public const string InstallationId = "f15-nasa836-twin-installation-SKELETON";
 
         /// <summary>
-        /// A placeholder engine profile with no engine data in it.
-        ///
-        /// Returns ONE object which both slots share, because that is the real intent for a twin
-        /// running two matching engines - and because it is the configuration that proves runtime state
-        /// is not carried on the profile. Two slots, one profile, two independent power states.
+        /// Creates the frozen engine identity with deliberately unavailable performance data.
+        /// Both installed slots share this ONE profile object; runtime state remains per-slot.
         /// </summary>
         public static MavEngineProfile CreateUnfrozenEngineProfile()
         {
             MavEngineProfile profile = MavEngineProfile.CreateInMemory(EngineProfileId);
 
-            profile.displayName = "F-15 engine (NOT FROZEN - no engine data)";
+            profile.displayName =
+                "NASA 836 F100-PW-100 (performance data unavailable)";
 
-            // Named so nothing can read this as a variant selection.
             profile.engineVariantIdentity =
-                "UNFROZEN: F-15 engine variant not yet selected. F100-PW-100/220/229, EMD and DEEC "
-                + "research configurations are distinct data sets and must not be merged (ENG-006).";
+                "Pratt & Whitney F100-PW-100; NASA F-15B 836 pre-Quiet-Spike baseline";
 
             profile.sourceIdentity =
-                "UNAVAILABLE. See Docs/Reference/F15_SOURCE_PACK_V0.1.md; configuration freeze is "
-                + "F15-R0 and engine-profile freeze is F15-R4.";
+                "ENGINE IDENTITY FROZEN by Docs/Reference/F15_FULL_SCALE_TARGET_FREEZE_V0.1.md "
+                + "(NASA/TM-2012-215978 and same-aircraft NASA source chain). "
+                + "Numeric thrust/transient/inlet/install data remain UNAVAILABLE for exact target.";
 
+            // Identity is known, but this object is a numeric engine-performance definition and those
+            // numbers are still missing. Keep overall data provenance unavailable until a real deck /
+            // dynamics source is accepted for the target.
             profile.provenance = MavEngineDataProvenance.Unavailable;
 
-            // NOT the F-16 law. That law is F-16 reference-engine behaviour and applying it to an
-            // F100-family engine would be an unproven claim.
+            // Deliberately NOT the F-16 Garza/Morelli law.
             profile.powerDynamicsLaw = MavEnginePowerDynamicsLaw.InstantNoSourcedTransient;
             profile.powerDynamicsProvenance = MavEngineDataProvenance.Unavailable;
-
             profile.augmentation = MavEngineAugmentationSemantics.Unavailable;
 
-            // No deck: thrust is exactly zero.
+            // No exact-target thrust deck: dimensional thrust is exactly zero.
             profile.thrustDeck = null;
 
             profile.sourceEnvelope = MavEngineSourceEnvelope.Undeclared;
@@ -81,10 +72,8 @@ namespace MaverickFresh.FlightDynamics.F15
         }
 
         /// <summary>
-        /// A twin-engine installation shape with NO frozen mount coordinates.
-        ///
-        /// Both slots reference the SAME engine-profile object. Lateral offsets are zero and
-        /// undeclared - see the class comment for why a plausible number is not acceptable here.
+        /// A two-slot installation with frozen engine identity but UNDECLARED mount coordinates.
+        /// Zero positions are not measured centrelines; geometryDeclared=false is the authority bit.
         /// </summary>
         public static MavPropulsionInstallationProfile CreateTwinSkeleton()
         {
@@ -94,29 +83,30 @@ namespace MaverickFresh.FlightDynamics.F15
             left.slotId = 0;
             left.slotName = "left";
             left.engineProfile = shared;
-            left.positionAeroBodyM = Vector3.zero;          // UNFROZEN, not a measured centreline
+            left.positionAeroBodyM = Vector3.zero;
             left.thrustDirectionAeroBody = new Vector3(1f, 0f, 0f);
             left.geometryDeclared = false;
-            left.geometryProvenance = "UNAVAILABLE";
+            left.geometryProvenance = "UNAVAILABLE: exact NASA 836 left engine mount/thrust line";
             left.throttleChannel = 0;
             left.enabled = true;
 
             MavEngineInstallation right = new MavEngineInstallation();
             right.slotId = 1;
             right.slotName = "right";
-            right.engineProfile = shared;                   // same profile object, by design
-            right.positionAeroBodyM = Vector3.zero;         // UNFROZEN
+            right.engineProfile = shared;
+            right.positionAeroBodyM = Vector3.zero;
             right.thrustDirectionAeroBody = new Vector3(1f, 0f, 0f);
             right.geometryDeclared = false;
-            right.geometryProvenance = "UNAVAILABLE";
-            right.throttleChannel = 1;                      // separate channel: differential throttle
+            right.geometryProvenance = "UNAVAILABLE: exact NASA 836 right engine mount/thrust line";
+            right.throttleChannel = 1;
             right.enabled = true;
 
             MavPropulsionInstallationProfile installation = new MavPropulsionInstallationProfile();
             installation.installationId = InstallationId;
-            installation.displayName = "F-15 twin-engine installation (SKELETON, no engine data)";
+            installation.displayName =
+                "NASA F-15B 836 twin F100-PW-100 installation (performance/geometry incomplete)";
             installation.aircraftConfiguration =
-                "UNFROZEN: first Maverick F-15 reference configuration not yet selected (F15-R0)";
+                MavF15ReferenceData.TargetConfigurationId;
             installation.engines = new MavEngineInstallation[] { left, right };
 
             return installation;
