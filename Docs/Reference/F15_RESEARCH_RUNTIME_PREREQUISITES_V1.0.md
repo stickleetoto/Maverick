@@ -271,6 +271,18 @@ Example (`[U13]`, V 533.37 ft/s at geometric 7,000 m, SourceReproduction): prepa
 
 ## 12. Remaining blockers before the first research PlayMode flight
 
+> **RESOLVED by the final research runtime closeout** (`F15_RESEARCH_BASELINE_FREEZE_V1.0.md`). The research body was flown in Play Mode and the baseline is **FROZEN**. Per blocker:
+> 1. **Ownership:** resolved. New owner `F15AfitResearch`, validation only, safety hold OFF by default, exact id, one armed body. The environment is re-checked every step, with Fault on loss.
+> 2. **Harness:** resolved. `MavF15ResearchRuntimeFlightValidation` is deterministic, with byte-identical reruns.
+> 3. **Integrator fidelity:** resolved. Unity − source RK4 is first order in dt (orders 0.95–1.08), and the holds stay on the equilibrium up to that error.
+> 4. **Gyroscopic compensation with the research Ixz:** resolved. (ṗ, q̇, ṙ) matches the source RHS to 3e-7, a flipped Ixz would be 1.7e-2 away, and turning off the compensation gives 13× the departure.
+> 5. **Physics settings:** recorded. Sleep 0.005, max angular speed 50, damping 0/0, `useGravity` off.
+> 6. **Source environment:** mandatory. The owner refuses without it and faults on loss.
+> 7. **Surfaces:** still static by design.
+> 8. **Mass convention:** unchanged; recorded.
+>
+> The text below is the WP-4A record as written.
+
 1. **Ownership authority.**
    - The ownership gate knows only `F16Replacement` as a replacement owner, and F15Replacement is not enabled (it must not be here).
    - A research owner state needs its own reviewed change, and an arming decision.

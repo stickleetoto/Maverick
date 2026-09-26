@@ -2,6 +2,12 @@
 
 Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was run to produce this list. Every item is judged from what the V1 passes already hold or have already searched.
 
+> **Status after the final research runtime closeout: F-15 AFIT/BAUMANN/DAVISON RESEARCH BASELINE V1 — FROZEN** (`F15_RESEARCH_BASELINE_FREEZE_V1.0.md`). No further work package is required.
+> - **Nothing below blocks the baseline.**
+> - D16 (continuation) and D3 (CMMQ) are **OPTIONAL RESEARCH EXTENSIONS**.
+> - A pilot-controlled F-15 is **A NEW PHASE**, not a continuation of this one.
+> - Exact-836 items (A*) and family items (B*) remain the open list for the exact path, which stays fail-closed.
+
 **Value classes:**
 - **HIGH VALUE**
 - **MEDIUM VALUE**
@@ -60,7 +66,7 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 | D2 | ✅ **DONE (WP-3A static, WP-3B symmetric trim, WP-3C turning trim)** — **Research-mode trim validation vs Baumann Table VII** (ADA217366 PDF pp.124–129: equilibria against stabilator at 8,300 lb and 20,000 ft) | **HIGH VALUE** (after C1+C2) | All 89 symmetric states (WP-3B) and all 80 non-symmetric turning states (WP-3C) were recovered from perturbed starts, within print resolution. For 11 turning states that holds once the solver's termination uncertainty is added. The pitchfork, point 165, is solved symmetric. Differences are reported; no tolerance is asserted. | M |
 | D3 | Research-mode static-derivative checks (Cmα, Cnβ, Clβ, Cmq from the transcribed polynomials at the source condition, against the thesis curves; McDonnell 1990 fig. 4-2 Cmq). *(WP-3D: raised for Cmq. The printed CMMQ is +19.8/rad at α 13° and positive over α ≈ 10.6–14.3°. All three printings agree and the transcription matches. It makes a longitudinal pair unstable at α 11–14°, where Baumann's Figure C-7 draws the branch stable. A printed Cmq curve would show which the executed model had. Never tune it. **WP-3E:** the nonlinear dynamics confirm the instability; every source-supported alternative reading is ruled out; Davison's Figure 7 also draws α 11–14° stable. Verdict: PUBLIC PRINTINGS AGREE — EXECUTED AUTO MODEL MAY DIFFER. Next: McDonnell 1990 (ADA230462) pp.41–42 and Fig. 4-2, the repository's lineage record of a Cmq refit against the aero database. Needs download permission.)* | **HIGH VALUE** (Cmq) · MEDIUM (rest) | Headless, no PlayMode needed. Needs curve digitization. | S–M |
 | D4 | Source-envelope validation (refusal at the M/altitude/α/β edges, in PlayMode) | **MEDIUM VALUE** | Headless coverage exists for the domain gate; PlayMode confirmation follows C1. | S |
-| D5 | Automated deterministic trajectory / perturbation tests (pinned `Time.captureFramerate`) | **MEDIUM VALUE** (after C1) | Makes research-mode regressions bit-exact; no pass criteria beyond "bounded, finite, inside span" until D2 exists | M |
+| D5 | ✅ **DONE (final closeout)** — Automated deterministic trajectory / perturbation tests (pinned `Time.captureFramerate`). `MavF15ResearchRuntimeFlightValidation`: two holds and two perturbed cases at dt, dt/2, dt/4, compared with the source RK4; byte-identical reruns. | **MEDIUM VALUE** (after C1) | Makes research-mode regressions bit-exact; no pass criteria beyond "bounded, finite, inside span" until D2 exists | M |
 | D6 | F-15 suites on the Unity `Maverick/Flight Dynamics` menu | **LOW VALUE** | Convenience for the user's Phase-1 run | S |
 | D7 | *(new, WP-2)* **Re-run the reconstructed digitization scripts** against the public PDFs and diff the regenerated `MavF15Nasa836ValidationData.cs` | **MEDIUM VALUE** | The scripts in `Data/F15/wp2_digitization/` were rebuilt verbatim after the scratch copies were lost, and have not been re-run. Needs the two PDFs downloaded again. | S |
 | D8 | *(new, WP-2)* Route the stall inhibitor through the pitch CAS in exact mode, as 836's pitch diagram draws it | **LOW VALUE** now | Structural; can only remove output. No numeric consequence until a gain exists. | S |
@@ -70,8 +76,15 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
 | D12 | *(new, WP-3A)* CFX2 constant: which printing is right (0.09833617 in Baumann and Davison App. B, 0.09833517 in Davison App. C) | **LOW VALUE** | 1e-6 in the high-AoA drag fit, inactive below α 20°. Matters only for high-α research reproduction; a decision, not a hunt. | S |
 | D14 | ✅ **DONE (WP-3C)** — *(new, WP-3B)* **WP-3C — turning trim** for Table VII's 81 turning states | **HIGH VALUE** (research) | 8 unknowns (α, β, p, q, r, θ, φ, stabilator) and 8 residuals (X, Y, Z, L, M, N, θ̇, φ̇). The turns leave the symmetric branch in a pitchfork at point 165 (V 377.4 ft/s). At fixed V there are three roots and a singular Jacobian at the fork, so parameterize by φ. The six-axis equations already reproduce these states statically (WP-3A). Plan: `F15_RESEARCH_TRIM_SOLVER_V1.0.md` §11. | M |
 | D15 | ✅ **DONE (WP-3D)** — *(new, WP-3C)* **WP-3D — stability eigenvalues** at the recovered equilibria. **127 / 40 / 3** (stable / unstable / near-neutral), with every disagreement explained. The folds and the fork are eigenvalue zeros. `F15_RESEARCH_STABILITY_ANALYSIS_V1.0.md` | **HIGH VALUE** (research) | 170 source equilibria are now reproduced. Table VII labels them *stable*, a sourced qualitative check. An eigenvalue should cross zero at the pitchfork, point 165. Needs the source's time-derivative form (inverting the Ixz coupling for ṗ, ṙ), not the trim residual form. `F15_RESEARCH_TURNING_TRIM_V1.0.md` §12. | M |
-| D16 | *(new, WP-3C; sharpened in WP-3D)* **Pseudo-arclength continuation** in the stabilator (AUTO's method). WP-3D has located every special point it must pass: 4 folds, the pitchfork, and 3 Hopf points (stabilator −6.96, −10.88, −19.33). It is also the way to map the untabulated symmetric segment −6.49…−9.43, and the periodic orbits from the Hopf points | **MEDIUM VALUE** (research) | Not needed to recover printed states: φ-parameterized Newton recovers all 80. Needed to reproduce the source's diagrams: continuation in the stabilator folds at points 124, 136, 182 and 193, and at the fork at 165. The φ parameterization cannot cross φ = 0, and its conditioning collapses near it (numerical uncertainty ~1e-3° at \|φ\| ≤ 1e-4°). Also the tool for WP-3C's unresolved high-α stalls. | M–L |
-| D17 | *(new, WP-3D)* **Staged research-only flight.** (1) ✅ **DONE (WP-3E):** integrate the source RHS off the body, with no Rigidbody, and check the eigenvalue predictions in time. All 35 cases agree within 1 % (`F15_RESEARCH_TIME_DOMAIN_STABILITY_V1.0.md`). (2) Only then fly a Rigidbody. **WP-4A** built the prerequisites and verified them statically: D11, fixed-thrust semantics on the body, a static source-defined stabilator, and equilibrium injection. Still open: a research ownership/arming decision, a deterministic PlayMode harness, and a dt study against WP-3E (`F15_RESEARCH_RUNTIME_PREREQUISITES_V1.0.md` §12). Surface travel is needed only for manoeuvring, not for open-loop flight from an equilibrium. Either result compares against the SOURCE MODEL, never the aircraft. | **HIGH VALUE** (research) | M |
+| D16 | **OPTIONAL RESEARCH EXTENSION — not a blocker** *(new, WP-3C; sharpened in WP-3D)* **Pseudo-arclength continuation** in the stabilator (AUTO's method). WP-3D has located every special point it must pass: 4 folds, the pitchfork, and 3 Hopf points (stabilator −6.96, −10.88, −19.33). It is also the way to map the untabulated symmetric segment −6.49…−9.43, and the periodic orbits from the Hopf points | **MEDIUM VALUE** (research) | Not needed to recover printed states: φ-parameterized Newton recovers all 80. Needed to reproduce the source's diagrams: continuation in the stabilator folds at points 124, 136, 182 and 193, and at the fork at 165. The φ parameterization cannot cross φ = 0, and its conditioning collapses near it (numerical uncertainty ~1e-3° at \|φ\| ≤ 1e-4°). Also the tool for WP-3C's unresolved high-α stalls. | M–L |
+| D17 | ✅ **DONE (both stages; final closeout)** *(new, WP-3D)* **Staged research-only flight.** **Stage 2 (Play Mode):**
+  - the research body is the sole owner under `F15AfitResearch`;
+  - symmetric point 36 and turning point 150 hold;
+  - Unity − RK4 is first order in dt;
+  - the Ixz / frame-sign check passes;
+  - `F15_RESEARCH_BASELINE_FREEZE_V1.0.md`.
+
+  (1) ✅ **DONE (WP-3E):** integrate the source RHS off the body, with no Rigidbody, and check the eigenvalue predictions in time. All 35 cases agree within 1 % (`F15_RESEARCH_TIME_DOMAIN_STABILITY_V1.0.md`). (2) Only then fly a Rigidbody. **WP-4A** built the prerequisites and verified them statically: D11, fixed-thrust semantics on the body, a static source-defined stabilator, and equilibrium injection. Still open: a research ownership/arming decision, a deterministic PlayMode harness, and a dt study against WP-3E (`F15_RESEARCH_RUNTIME_PREREQUISITES_V1.0.md` §12). Surface travel is needed only for manoeuvring, not for open-loop flight from an equilibrium. Either result compares against the SOURCE MODEL, never the aircraft. | **HIGH VALUE** (research) | M |
 | D13 | *(new, WP-3A)* Coefficient-by-coefficient diff of Baumann 1989 vs Davison App. C `COEFF` for channels Table VII never exercises (aileron, rudder, differential tail, high-α, asymmetric) | **MEDIUM VALUE** (research) | Table VII verifies only the exercised channels. The text layers are too noisy to diff automatically, so this means reading rendered pages. | M |
 
 ---
@@ -132,8 +145,16 @@ Ranked follow-on work after the V1 freeze checkpoint. No broad source hunt was r
   - **Semantics on the body:** the research fixed thrust and its moment enter once; a static source-defined stabilator hold with no travel, rate or gearing.
   - **Injection and guards:** equilibrium injection through the body's own initializer; a single research authority that refuses NASA 836 by name.
   - **Verified statically:** all 170 equilibria inject and balance on the body to 3.9e-6 g in the source environment.
-- **Next candidates:** McDonnell 1990 for CMMQ (D3); pseudo-arclength continuation (D16); the research Rigidbody phase (D17 stage 2) after the §12 blockers — ownership/arming, a PlayMode harness, a dt study.
-- **Flying trim / open-loop research flight:** the environment, thrust, static stabilator and injection are ready (WP-4A). Manoeuvring still needs research surface travel, which is unsourced.
+- **FINAL RESEARCH RUNTIME CLOSEOUT — ✅ COMPLETE.** `F15_RESEARCH_BASELINE_FREEZE_V1.0.md`.
+  - **Ownership:** a research validation owner, `F15AfitResearch`.
+  - **Harness:** a deterministic Play Mode harness.
+  - **Holds:** symmetric and turning equilibria held on the Rigidbody.
+  - **Integration:** dt refinement is first order, with A/B/C against the source RK4.
+  - **Checks:** the Ixz / frame-sign audit and environment fail-closed pass.
+  - **Bugs:** no runtime bug was found.
+  - **Verdict:** **F-15 AFIT/BAUMANN/DAVISON RESEARCH BASELINE V1 — FROZEN.**
+- **Optional research extensions (not blockers):** pseudo-arclength continuation (D16); McDonnell 1990 for CMMQ (D3).
+- **A new phase (not this baseline):** a pilot-controlled F-15, i.e. manoeuvring flight. It needs research surface travel, rates, a pilot mapping and an FCS, and all are unsourced.
 - Compare trim against Baumann Table VII.
 - Check static derivatives against the thesis curves.
 - Run deterministic perturbation runs inside the source envelope.

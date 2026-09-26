@@ -9,7 +9,7 @@
 ## Phase 1 — open, compile, run the existing suites
 
 1. Open the project in Unity 6000.3.16f1 on branch `claude/f15-full-implementation`. Let it import.
-2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 359 runtime + 33 editor scripts, 0 errors.
+2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 361 runtime + 34 editor scripts, 0 errors.
 3. **Close the Editor** (batch mode needs the project unlocked). Run each F-15 suite headless. PowerShell, one line per suite:
 
    ```
@@ -39,7 +39,15 @@
    | `f15-runtime-prereq` | `MavF15ResearchRuntimePrerequisitesValidation` (editor-only) | 54 / 0 |
    | **total** | | **757 / 0** |
 
-   **F-16 / shared regression (WP-4A touched the shared body).** Run the 22 synchronous suites of `Tools/fdm_validation_baseline_v1.json` (`fdm_phase1..3`, `f16_reference`, `f16_propulsion`, `f16_tp1538_runtime`, `gyroscopic_moment`, `shared_propulsion`, `fdm_integration`, `fdm_freeze_hardening`, `shared_propulsion_unity`, the ownership/identity scans, …) with `-fdmMethod AUTO`: **1,247 / 0**, as before WP-4A. The three PlayMode baseline suites were not run for WP-4A, whose brief forbids entering PlayMode.
+   **Research Play Mode closeout (final; its own driver, not the batch adapter).** Do **not** pass `-quit`: the driver leaves Play Mode and exits by itself. It enters Play Mode on the empty unsaved batch scene and refuses if a saved scene is open.
+
+   ```
+   & "D:\unitys\6000.3.16f1\Editor\Unity.exe" -batchmode -nographics -projectPath "E:\unity project\Maverick" -executeMethod MaverickFresh.FlightDynamics.EditorTools.MavF15ResearchRuntimeFlightValidation.RunBatch -f15rtOut "E:\f15-results\f15rt.txt" -logFile "E:\f15-results\f15rt.log"
+   ```
+
+   Expect `RESULT: PASS passed=39 failed=0` as the last line of `f15rt.txt`. Two runs must give byte-identical reports. It is also on the menu: `Maverick/Flight Dynamics/Run F-15 Research Runtime Closeout (Play Mode)`. Results and their meaning: `F15_RESEARCH_BASELINE_FREEZE_V1.0.md`.
+
+   **F-16 / shared regression (WP-4A touched the shared body; the closeout touched the shared ownership authority).** Run the 22 synchronous suites of `Tools/fdm_validation_baseline_v1.json` (`fdm_phase1..3`, `f16_reference`, `f16_propulsion`, `f16_tp1538_runtime`, `gyroscopic_moment`, `shared_propulsion`, `fdm_integration`, `fdm_freeze_hardening`, `shared_propulsion_unity`, the ownership/identity scans, …) with `-fdmMethod AUTO`: **1,247 / 0**, the same as before WP-4A and before the closeout (1,247 / 0).
 
 4. **Inspect the logs.**
    - Each JSON must say `"status": "PASS"`.
@@ -52,6 +60,8 @@ The F-15 suites are **not** on the `Maverick/Flight Dynamics` menu. "Run All Fli
 ---
 
 ## Phase 2 — research-mode PlayMode smoke test
+
+> **Superseded for the research configuration by the final closeout** (§1, `MavF15ResearchRuntimeFlightValidation`). That closeout flies the research body in Play Mode under the `F15AfitResearch` validation owner, from two source equilibria, with the source environment mandatory. The manual smoke below is kept for reference only.
 
 **Status after WP-1:** a separate research profile exists and reaches structural readiness. `f15-research-pipeline` already drives the real `MavSixDoFBody` through the editor seam (not PlayMode) and checks finite loads.
 
