@@ -5,12 +5,30 @@ namespace MaverickFresh.FlightDynamics.F15
     /// <summary>
     /// Physical surface-state owner for the F-15 reference path.
     ///
-    /// The shape intentionally mirrors MavF16ControlActuator so both aircraft use the same
-    /// law -> actuator -> aero -> SixDoF ownership pipeline. No Rigidbody torque is applied here.
+    /// This is the ONLY owner of actual F-15 surface positions. A control law states what it
+    /// wants; this decides what the aircraft actually did. Nothing downstream may reconstruct a
+    /// surface position by other means, and nothing here touches the Rigidbody - surfaces reach
+    /// the physics only as aerodynamic coefficients through MavSixDoFBody.
     ///
-    /// Unlike the F-16 reference, exact NASA 836 hard-stop and actuator-rate authority is not yet
-    /// frozen. Therefore this actuator refuses all surface motion unless a valid active profile
-    /// supplies physical limits. The fallback is zero deflection, not a borrowed preproduction value.
+    /// TWO SURFACE SETS, DELIBERATELY
+    /// ------------------------------
+    /// The generic <see cref="MavControlInput"/> is still published, because MavSixDoFBody and the
+    /// shared readiness/telemetry path speak that contract and it carries throttle. Alongside it
+    /// the actuator owns a four-channel <see cref="MavF15SurfaceState"/>, which is the real
+    /// physical state: the F-15 drives its stabilators symmetrically AND differentially, and the
+    /// differential half has no generic field to live in.
+    ///
+    /// The generic elevator/aileron/rudder fields mirror the F-15 symmetric stabilator, aileron
+    /// and rudder. Differential stabilator exists only in the F-15 set - it is not folded into
+    /// the generic aileron field, because a consumer reading that field would then be reading two
+    /// different physical surfaces added together.
+    ///
+    /// FAIL-CLOSED
+    /// -----------
+    /// Exact NASA 836 travel, sign authority and actuator dynamics are not frozen. Every channel
+    /// therefore refuses to move until its authority is declared, with the provenance of that
+    /// declaration attached. Refusing is not the same as having zero travel: the difference is
+    /// visible in <see cref="debugRefusedChannels"/> and in each channel's source note.
     /// </summary>
     [DefaultExecutionOrder(-200)]
     [DisallowMultipleComponent]
@@ -19,20 +37,36 @@ namespace MaverickFresh.FlightDynamics.F15
         [Header("Target")]
         public MavSixDoFBody sixDoFBody;
 
-        [Header("Commanded Surface Deflection")]
-        public MavControlInput command;
+        [Header("Commanded Surface Deflection (F-15 physical channels)")]
+        [Tooltip("What the control law is asking for. A REQUEST, not a position - the actual state is published separately and is the only one the aerodynamic model may read.")]
+        public MavF15RequestedSurfaceState requested;
 
-        [Header("Optional Rate Limits (deg/s, <= 0 = unlimited)")]
-        [Min(0f)] public float elevatorRateLimitDegSec;
-        [Min(0f)] public float aileronRateLimitDegSec;
-        [Min(0f)] public float rudderRateLimitDegSec;
-        [Min(0f)] public float leadingEdgeFlapRateLimitDegSec;
+        [Range(0f, 1f)]
+        public float requestedThrottle01;
+
+        [Header("Physical Authority")]
+        [Tooltip("Travel and rate authority per channel, each carrying its own provenance. Default is fully unavailable, which refuses all surface motion. Populate a channel only from a source you can name, and mark what that source is.")]
+        public MavF15SurfaceLimits limits = MavF15SurfaceLimits.UnavailableExactTarget();
 
         [Header("Debug / Actual Surface State")]
+        [Tooltip("What the aircraft's surfaces are actually doing. Owned here, read-only everywhere else. Only this component may construct a MavF15ActualSurfaceState.")]
+        public MavF15ActualSurfaceState actualF15Surfaces;
+
+        [Tooltip("The same state projected onto the shared contract, plus throttle. Differential stabilator is NOT represented here and must be read from actualF15Surfaces.")]
         public MavControlInput actual;
+
+        [Header("Research Static Surface Hold (research configuration only)")]
+        [Tooltip("WP-4A. Resolved from this GameObject. When present, engaged and granted by the research runtime authority, the actual surfaces are HELD at its source-defined static setting and every command is ignored. It carries no travel, hard stop, rate or gearing. Present but not granted: surfaces held NEUTRAL and the status says why - never the command.")]
+        public MavF15AfitResearchStaticSurfaceHold researchStaticHold;
+
+        [Tooltip("True when the last step published a granted research static setting as the actual surface state.")]
+        public bool debugResearchStaticHold;
+
+        public bool debugAnyChannelRefused;
+        public int debugAvailableChannelCount;
+        public int debugRefusedChannels;
         public bool debugCommandClamped;
-        public bool debugUsingPhysicalProfileLimits;
-        public bool debugRefusedWithoutValidProfile;
+        public string debugStatus = "not stepped";
 
         private void Awake()
         {
@@ -55,99 +89,229 @@ namespace MaverickFresh.FlightDynamics.F15
             get { return actual; }
         }
 
+        /// <summary>
+        /// The four-channel physical state. Consumers that need differential stabilator - which
+        /// means any real F-15 aerodynamic model - must read this rather than
+        /// <see cref="ActualSurfaceState"/>.
+        ///
+        /// The return type is deliberately not <see cref="MavF15RequestedSurfaceState"/>: they
+        /// carry the same four numbers, and keeping them as distinct types is what makes handing
+        /// a request to the aerodynamic model a compile error rather than a quiet bug.
+        /// </summary>
+        public MavF15ActualSurfaceState ActualF15SurfaceState
+        {
+            get { return actualF15Surfaces; }
+        }
+
         public override MavSixDoFBody BoundBody
         {
             get { return sixDoFBody; }
         }
 
-        public override void SetCommand(MavControlInput input)
+        /// <summary>
+        /// Shared-contract entry point. Symmetric stabilator, aileron and rudder map across;
+        /// differential stabilator has no generic field and is left UNCHANGED rather than being
+        /// derived from aileron here.
+        ///
+        /// Deriving it would bake the AFIT research relation DTALD = 0.3*DAILD into the physical
+        /// actuator, where it would look like aircraft behaviour instead of a research-model
+        /// bridge. That relation belongs to the research aero adapter, and only until a real
+        /// F-15 control law owns the channel.
+        /// </summary>
+        public override void SetCommand(MavControlInput command)
         {
-            command = input;
+            requestedThrottle01 = Mathf.Clamp01(command.throttle01);
+            requested.channels.symmetricStabilatorDeg = command.elevatorDeg;
+            requested.channels.aileronDeg = command.aileronDeg;
+            requested.channels.rudderDeg = command.rudderDeg;
+        }
+
+        /// <summary>F-15-native entry point: a control law states all four channels explicitly.</summary>
+        public void SetF15Command(MavF15RequestedSurfaceState command, float throttle01)
+        {
+            requested = command;
+            requestedThrottle01 = Mathf.Clamp01(throttle01);
         }
 
         public void StepActuator(float deltaTime)
         {
             Resolve();
             Step(deltaTime);
-
-            if (sixDoFBody != null)
-                sixDoFBody.SetControlInput(actual);
+            Publish();
         }
 
         public void SnapToBoundedCommand()
         {
-            MavControlInput bounded = BoundCommand(command, out debugCommandClamped);
-            actual = bounded;
+            if (TryHoldResearchStaticSetting())
+            {
+                Publish();
+                return;
+            }
 
-            if (sixDoFBody != null)
-                sixDoFBody.SetControlInput(actual);
+            bool refused;
+            actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(BoundCommand(out refused));
+            Publish();
         }
 
         public void Step(float deltaTime)
         {
-            MavControlInput bounded = BoundCommand(command, out debugCommandClamped);
-            float dt = Mathf.Max(0f, deltaTime);
+            if (TryHoldResearchStaticSetting())
+                return;
 
-            actual.throttle01 = bounded.throttle01;
-            actual.elevatorDeg =
-                MoveSurface(actual.elevatorDeg, bounded.elevatorDeg, elevatorRateLimitDegSec, dt);
-            actual.aileronDeg =
-                MoveSurface(actual.aileronDeg, bounded.aileronDeg, aileronRateLimitDegSec, dt);
-            actual.rudderDeg =
-                MoveSurface(actual.rudderDeg, bounded.rudderDeg, rudderRateLimitDegSec, dt);
-            actual.leadingEdgeFlapDeg =
-                MoveSurface(
-                    actual.leadingEdgeFlapDeg,
-                    bounded.leadingEdgeFlapDeg,
-                    leadingEdgeFlapRateLimitDegSec,
-                    dt
-                );
+            bool refused;
+            MavF15SurfaceState bounded = BoundCommand(out refused);
+            actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(
+                StepChannels(actualF15Surfaces.channels, bounded, limits, deltaTime));
         }
 
-        private MavControlInput BoundCommand(MavControlInput source, out bool wasClamped)
+        /// <summary>
+        /// Moves each channel from its current position toward an already-bounded target,
+        /// respecting whatever actuator rate has been sourced for that channel.
+        ///
+        /// Pure and static so the rate behaviour can be exercised deterministically without a
+        /// GameObject, a Rigidbody or a play-mode session - the same way the rest of the FDM
+        /// validation reaches production code.
+        ///
+        /// A channel moves at a finite rate ONLY when a rate has actually been sourced. Without
+        /// one it steps instantly. That is the honest behaviour for an aircraft whose actuator
+        /// dynamics are unknown, and <see cref="MavF15SurfaceChannelLimits.HasSourcedRate"/>
+        /// makes it inspectable rather than an unexplained teleport.
+        /// </summary>
+        public static MavF15SurfaceState StepChannels(
+            MavF15SurfaceState current,
+            MavF15SurfaceState boundedTarget,
+            MavF15SurfaceLimits limits,
+            float deltaTime)
         {
-            debugUsingPhysicalProfileLimits =
-                sixDoFBody != null
-                && sixDoFBody.activeProfile != null
-                && sixDoFBody.debugProfileValid;
+            float dt = Mathf.Max(0f, deltaTime);
+            MavF15SurfaceState next = current;
 
-            MavControlInput bounded;
-            if (debugUsingPhysicalProfileLimits)
+            for (int i = 0; i < 4; i++)
             {
-                bounded = sixDoFBody.activeProfile.controlSurfaceLimits.Clamp(source);
-                debugRefusedWithoutValidProfile = false;
+                MavF15SurfaceChannel channel = (MavF15SurfaceChannel)i;
+                MavF15SurfaceChannelLimits channelLimits = limits.Get(channel);
+
+                float target = boundedTarget.Get(channel);
+                float from = current.Get(channel);
+
+                // MoveTowards handles dt == 0 correctly by itself - it returns `from`. Guarding
+                // the rate branch on dt > 0 instead would fall through to the instant branch on a
+                // zero timestep and teleport a rate-limited surface to its target, which is the
+                // exact defect the finite rate exists to prevent.
+                next.Set(
+                    channel,
+                    channelLimits.HasSourcedRate
+                        ? Mathf.MoveTowards(from, target, channelLimits.rateLimitDegSec * dt)
+                        : target
+                );
+            }
+
+            return next;
+        }
+
+        /// <summary>
+        /// WP-4A. When a research static hold is on this GameObject, it - not the command - decides
+        /// the actual surfaces: its source-defined setting when granted, NEUTRAL when not. Returns
+        /// false only when no hold is present (or it is disabled), leaving the normal bounded-command
+        /// path, and every aircraft without a hold, exactly as before.
+        ///
+        /// The travel and rate limits are not consulted and not changed: a static setting is not
+        /// travel, so the channels keep reporting no declared authority.
+        /// </summary>
+        private bool TryHoldResearchStaticSetting()
+        {
+            debugResearchStaticHold = false;
+            if (researchStaticHold == null || !researchStaticHold.enabled)
+                return false;
+
+            debugAvailableChannelCount = limits.AvailableChannelCount;
+            debugRefusedChannels = 4 - debugAvailableChannelCount;
+            debugAnyChannelRefused = debugAvailableChannelCount < 4;
+            debugCommandClamped = false;
+
+            MavF15SurfaceState held;
+            string reason;
+            if (!researchStaticHold.TryResolveHeldState(out held, out reason))
+            {
+                actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(MavF15SurfaceState.Neutral);
+                debugStatus = "RESEARCH STATIC HOLD REFUSED - surfaces held neutral: " + reason;
+                return true;
+            }
+
+            actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(held);
+            debugResearchStaticHold = true;
+            debugStatus = reason;
+            return true;
+        }
+
+        private MavF15SurfaceState BoundCommand(out bool anyRefused)
+        {
+            MavF15SurfaceState source = requested.channels;
+            if (!source.IsFinite())
+            {
+                // A non-finite request is a fault upstream. Holding the last good position would
+                // hide it; commanding neutral is the safe, visible response.
+                source = MavF15SurfaceState.Neutral;
+                debugStatus = "REFUSED: non-finite surface request";
+            }
+
+            MavF15SurfaceState bounded = limits.Clamp(source, out anyRefused);
+
+            debugAnyChannelRefused = anyRefused;
+            debugAvailableChannelCount = limits.AvailableChannelCount;
+            debugRefusedChannels = 4 - debugAvailableChannelCount;
+            debugCommandClamped =
+                !Mathf.Approximately(bounded.symmetricStabilatorDeg, source.symmetricStabilatorDeg)
+                || !Mathf.Approximately(bounded.differentialStabilatorDeg, source.differentialStabilatorDeg)
+                || !Mathf.Approximately(bounded.aileronDeg, source.aileronDeg)
+                || !Mathf.Approximately(bounded.rudderDeg, source.rudderDeg);
+
+            if (debugAvailableChannelCount == 0)
+            {
+                debugStatus =
+                    "REFUSED: no F-15 surface channel has declared travel authority; "
+                    + "exact NASA 836 control travel is not frozen";
+            }
+            else if (anyRefused)
+            {
+                debugStatus =
+                    "PARTIAL: " + debugAvailableChannelCount + "/4 channels have declared authority";
             }
             else
             {
-                // Exact-target travel/sign authority is not frozen yet. Preserve throttle plumbing
-                // but refuse aerodynamic surface motion rather than borrow F-16 or preproduction data.
-                bounded = new MavControlInput();
-                bounded.throttle01 = Mathf.Clamp01(source.throttle01);
-                debugRefusedWithoutValidProfile = true;
+                debugStatus = "OK: all 4 channels have declared authority";
             }
-
-            wasClamped =
-                !Mathf.Approximately(bounded.throttle01, source.throttle01)
-                || !Mathf.Approximately(bounded.elevatorDeg, source.elevatorDeg)
-                || !Mathf.Approximately(bounded.aileronDeg, source.aileronDeg)
-                || !Mathf.Approximately(bounded.rudderDeg, source.rudderDeg)
-                || !Mathf.Approximately(bounded.leadingEdgeFlapDeg, source.leadingEdgeFlapDeg);
 
             return bounded;
         }
 
-        private static float MoveSurface(float current, float target, float rateDegSec, float dt)
+        /// <summary>
+        /// Projects the owned F-15 state onto the shared contract and hands it to the body.
+        /// Throttle is passed through untouched: the actuator owns surfaces, propulsion owns
+        /// thrust, and this is only the channel the shared contract uses to carry the demand.
+        /// </summary>
+        private void Publish()
         {
-            if (rateDegSec <= 0f || dt <= 0f)
-                return target;
+            actual = new MavControlInput
+            {
+                throttle01 = requestedThrottle01,
+                elevatorDeg = actualF15Surfaces.channels.symmetricStabilatorDeg,
+                aileronDeg = actualF15Surfaces.channels.aileronDeg,
+                rudderDeg = actualF15Surfaces.channels.rudderDeg,
+                leadingEdgeFlapDeg = 0f
+            };
 
-            return Mathf.MoveTowards(current, target, rateDegSec * dt);
+            if (sixDoFBody != null)
+                sixDoFBody.SetControlInput(actual);
         }
 
         private void Resolve()
         {
             if (sixDoFBody == null)
                 sixDoFBody = GetComponent<MavSixDoFBody>();
+
+            if (researchStaticHold == null)
+                researchStaticHold = GetComponent<MavF15AfitResearchStaticSurfaceHold>();
         }
     }
 }

@@ -1,0 +1,18 @@
+{
+ "image": "tm2008_fig15_raw.png", "overlay": "tm2008_fig15_overlay.png", "output": "tm2008_fig15.json", "dt": 0.1,
+ "time_axis": {"x0": 302, "x1": 1019, "grid_values": [1,2,3,4,5,6,7], "t_min": 0.0, "t_max": 8.0},
+ "panels": [
+  {"name": "sideslip", "units": "deg", "y0": 17, "y1": 169, "top": 2, "bottom": -2, "grid_values": [0],
+   "traces": [{"name": "flight", "colour": "blue", "kind": "flight"}, {"name": "baseline simulation", "colour": "green", "kind": "simulation", "max_gap_px": 6}]},
+  {"name": "roll rate", "units": "deg/s", "y0": 211, "y1": 363, "top": 5, "bottom": -10, "grid_values": [0, -5],
+   "traces": [{"name": "flight", "colour": "blue", "kind": "flight"}, {"name": "baseline simulation", "colour": "green", "kind": "simulation", "max_gap_px": 6}]},
+  {"name": "yaw rate", "units": "deg/s", "y0": 405, "y1": 557, "top": 2, "bottom": -4, "grid_values": [0, -2],
+   "traces": [{"name": "flight", "colour": "blue", "kind": "flight"}, {"name": "baseline simulation", "colour": "green", "kind": "simulation", "max_gap_px": 6}]},
+  {"name": "lateral acceleration", "units": "g", "y0": 599, "y1": 751, "top": 0.5, "bottom": -0.5, "grid_values": [0],
+   "traces": [{"name": "flight", "colour": "blue", "kind": "flight"}, {"name": "baseline simulation", "colour": "green", "kind": "simulation", "max_gap_px": 6}]},
+  {"name": "surface deflection", "units": "deg", "y0": 793, "y1": 945, "top": 5, "bottom": -5, "grid_values": [0],
+   "traces": [{"name": "rudder (flight-measured)", "colour": "orange", "kind": "flight", "max_gap_px": 4},
+              {"name": "aileron (flight-measured)", "colour": "red", "kind": "flight", "max_gap_px": 7},
+              {"name": "differential stabilator (flight-measured)", "colour": "black", "kind": "flight", "max_gap_px": 8}]}
+ ]
+}

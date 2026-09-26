@@ -49,6 +49,14 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (0.10114579 * dstbr * dstbr);
 
             // The source explicitly calls this conversion a curve-fitting artifact.
+            //
+            // F15-AUDIT-008 (CLOSED - SOURCE-CONFIRMED). The divisor looks like a stray
+            // rad->deg conversion. It is not. Davison Appendix C, printed page 130, has the
+            // statement verbatim as "CL=CFZ1/57.29578", followed by the source's own
+            // explanation: the curve fit took every independent variable in radians, and for
+            // CFX1 one of those variables was not an angle but a dimensionless coefficient.
+            // The divisor is that artifact, and the polar coefficients below only produce sane
+            // drag for an argument of this scale.
             double clArtifact = cfz / LiftFitArtifactDivisor;
 
             double cfxLow =
@@ -66,7 +74,24 @@ namespace MaverickFresh.FlightDynamics.F15
                 + (1.34148193 * Pow(ral, 4))
                 + (0.20978902 * dstbr)
                 + (0.30604211 * dstbr * dstbr)
-                + 0.09833617;
+                // F15-AUDIT-005 (CLOSED) + F15-AUDIT-010 (CORRECTED).
+                //
+                // The second bare constant is real: Davison Appendix C, printed page 130, ends
+                // the CFX2 statement with a trailing "+0.09833517" after the DSTBR**2 term. So
+                // the duplicated-constant shape was NOT an OCR artifact.
+                //
+                // The digit was wrong, though: the source reads 0.0983 *5* 17, not 0.0983 *6* 17.
+                // Confirmed at 12x on the page image - the glyph has the flat top bar and open
+                // upper-left of a 5, where the adjacent 3s and a 6 are plainly different.
+                //
+                // WP-3A VERSION FINDING (recorded, not acted on): the other two printings of this
+                // routine read 0.09833 *6* 17 - Baumann 1989 (DTIC ADA217366 PDF p.108) and Davison's
+                // own Appendix B bifurcation listing (ADA256613 PDF p.110). This value follows the
+                // Appendix C simulator listing that the whole transcription is taken from. The 1e-6
+                // difference sits in the high-AoA drag fit, which carries no weight below 20 deg AoA,
+                // so Baumann's Table VII cannot discriminate. See
+                // Docs/Reference/F15_TABLE_VII_EQUILIBRIUM_VALIDATION_V1.0.md.
+                + 0.09833517;
 
             double cfx = BlendLowHighAoaDrag(ral, cfxLow, cfxHigh);
 

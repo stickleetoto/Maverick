@@ -46,8 +46,12 @@ namespace MaverickFresh.FlightDynamics.F15
         [Tooltip("Explicit opt-in required because the Baumann model is CROSS-VALIDATION only, not the exact NASA 836 target.")]
         public bool allowCrossValidationResearchModel;
 
-        [Header("F-15 Research Surface Adapter")]
-        [Tooltip("The Appendix C routine carries differential tail as its own state. Until the F-15 control path exposes that channel, the default adapter uses the documented DTALD = 0.3 * DAILD relation. Enable only for research/debug injection.")]
+        [Header("F-15 Surface State Source")]
+        [Tooltip("The actuator that owns actual F-15 surface positions, including differential stabilator. Resolved from this GameObject when left empty. When one is bound it is ALWAYS preferred over the research adapter below.")]
+        public MavF15ControlActuator surfaceOwner;
+
+        [Header("F-15 Research Surface Adapter (fallback only)")]
+        [Tooltip("Used ONLY when no actuator is bound. The Appendix C routine carries differential tail as its own state; with no owner for that channel the adapter falls back to the documented DTALD = 0.3 * DAILD research relation. Enable this to inject a differential tail for research/debug instead.")]
         public bool useIndependentDifferentialTailResearchInput;
 
         [Tooltip("Research/debug differential-tail state in source degrees. Ignored unless the independent-input toggle is enabled.")]
@@ -59,9 +63,25 @@ namespace MaverickFresh.FlightDynamics.F15
 
         [Header("Debug")]
         public bool debugRefused;
+
+        [Tooltip("True when the state is AT the Mach 0.6 / 20,000 ft coefficient-fit condition.")]
         public bool debugAtFixedSourceCondition;
+
+        [Tooltip("The research condition mode in force. SourceReproduction is honoured only through a research profile that is this body's provider; anything else is strict.")]
+        public MavF15ResearchConditionMode debugConditionMode = MavF15ResearchConditionMode.StrictFitCondition;
+
+        [Tooltip("True when the coefficients just published were evaluated AWAY from the Mach 0.6 fit condition (SourceReproduction only): source-exercised, not aerodynamically validated.")]
+        public bool debugExtrapolatedFromFitCondition;
+
+        [Tooltip("True when alpha/beta are inside the span of breakpoints the transcribed routine itself declares. NOT a claimed F-15 validity envelope - see MavF15BaumannMach06Domain.")]
+        public bool debugInsideTranscribedSpan;
+
         public bool debugLongitudinalOnly;
         public bool debugSixAxisResearch;
+
+        [Tooltip("Where the surface positions fed to the aerodynamic routine came from: the actuator that owns them, or the research fallback adapter.")]
+        public string debugSurfaceSource = "not evaluated";
+
         public string debugStatus = "not evaluated";
         public float debugPHat;
         public float debugQHat;
@@ -91,12 +111,16 @@ namespace MaverickFresh.FlightDynamics.F15
         {
             debugRefused = false;
             debugAtFixedSourceCondition = false;
+            debugExtrapolatedFromFitCondition = false;
+            debugConditionMode = MavF15ResearchConditionMode.StrictFitCondition;
+            debugInsideTranscribedSpan = false;
             debugLongitudinalOnly = false;
             debugSixAxisResearch = false;
             debugPHat = 0f;
             debugQHat = 0f;
             debugRHat = 0f;
             debugDifferentialTailUsedDeg = 0f;
+            debugSurfaceSource = "not evaluated";
             debugLastCoefficients = MavAeroCoefficients.Zero;
 
             if (sourceMode == MavF15AeroSourceMode.ExactNasa836Unavailable)
@@ -114,16 +138,40 @@ namespace MaverickFresh.FlightDynamics.F15
                 );
             }
 
+            // Strict unless a research profile that this body actually flies asks for source
+            // reproduction. See MavF15BaumannSourceSemantics.
+            debugConditionMode = ResolveConditionMode();
+
             string conditionReason;
-            debugAtFixedSourceCondition =
-                MavF15BaumannMach06Reference.IsAtSourceCondition(
-                    state,
-                    atmosphere,
-                    out conditionReason
+            bool insideFitCondition;
+            bool admitted = MavF15ResearchConditionGate.Admits(
+                debugConditionMode,
+                state,
+                atmosphere,
+                out insideFitCondition,
+                out conditionReason
+            );
+
+            debugAtFixedSourceCondition = admitted && insideFitCondition;
+            if (!admitted)
+                return Refuse(conditionReason);
+
+            debugExtrapolatedFromFitCondition = !insideFitCondition;
+
+            // F15-AUDIT-002: Mach and altitude were already fail-closed, alpha and beta were not.
+            // The research fits are 6th- to 9th-order polynomials and diverge outside the span
+            // the transcription itself declares - Cm reaches -730 at alpha=180 deg, which the
+            // finiteness check below cannot see. Refuse instead of publishing it.
+            string spanReason;
+            debugInsideTranscribedSpan =
+                MavF15BaumannMach06Domain.IsInsideTranscribedSpan(
+                    state.alphaRad,
+                    state.betaRad,
+                    out spanReason
                 );
 
-            if (!debugAtFixedSourceCondition)
-                return Refuse(conditionReason);
+            if (!debugInsideTranscribedSpan)
+                return Refuse(spanReason);
 
             // The research fit owns its own reference geometry. It is deliberately
             // separate from the exact NASA 836 profile, whose S/cbar remain unresolved.
@@ -148,12 +196,7 @@ namespace MaverickFresh.FlightDynamics.F15
                     * halfInverseSpeed;
             }
 
-            MavF15BaumannSurfaceState surface =
-                MavF15BaumannSurfaceState.FromCommonInput(
-                    input,
-                    useIndependentDifferentialTailResearchInput,
-                    independentDifferentialTailResearchDeg
-                );
+            MavF15BaumannSurfaceState surface = ResolveSurfaceState(input);
             debugDifferentialTailUsedDeg = surface.differentialTailDeg;
 
             MavAeroCoefficients longitudinal =
@@ -192,6 +235,65 @@ namespace MaverickFresh.FlightDynamics.F15
                 conditionReason,
                 "SIX-AXIS RESEARCH"
             );
+        }
+
+        /// <summary>
+        /// Where the surface positions fed to the research routine come from.
+        ///
+        /// The actuator is preferred whenever one is bound, because it is the declared owner of
+        /// actual surface state and it carries a real differential-stabilator channel. Only when
+        /// no actuator is present does this fall back to expanding the shared input through the
+        /// AFIT research relation DTALD = 0.3 * DAILD, and the fallback says so in the status
+        /// string so a research bridge is never mistaken for a measured surface position.
+        /// </summary>
+        private MavF15BaumannSurfaceState ResolveSurfaceState(MavControlInput input)
+        {
+            ResolveActuator();
+
+            if (surfaceOwner != null)
+            {
+                debugSurfaceSource = "actuator (owns differential stabilator)";
+                return MavF15BaumannSurfaceState.FromPhysicalSurfaceState(
+                    surfaceOwner.ActualF15SurfaceState
+                );
+            }
+
+            debugSurfaceSource =
+                useIndependentDifferentialTailResearchInput
+                    ? "no actuator bound; shared input + injected research differential tail"
+                    : "no actuator bound; shared input + AFIT research relation DTALD = 0.3*DAILD";
+
+            return MavF15BaumannSurfaceState.FromCommonInput(
+                input,
+                useIndependentDifferentialTailResearchInput,
+                independentDifferentialTailResearchDeg
+            );
+        }
+
+        /// <summary>
+        /// SourceReproduction takes effect only when a research profile on this GameObject asks for
+        /// it AND is the provider of the six-DoF body here. The exact NASA 836 profile, a missing
+        /// body, or a research profile the body does not fly all leave the gate strict.
+        /// </summary>
+        private MavF15ResearchConditionMode ResolveConditionMode()
+        {
+            MavF15AfitResearchFlightDynamicsProfile research =
+                GetComponent<MavF15AfitResearchFlightDynamicsProfile>();
+            if (research == null
+                || research.conditionMode != MavF15ResearchConditionMode.SourceReproduction)
+                return MavF15ResearchConditionMode.StrictFitCondition;
+
+            MavSixDoFBody body = GetComponent<MavSixDoFBody>();
+            if (body == null || body.profileProvider != research)
+                return MavF15ResearchConditionMode.StrictFitCondition;
+
+            return MavF15ResearchConditionMode.SourceReproduction;
+        }
+
+        private void ResolveActuator()
+        {
+            if (surfaceOwner == null)
+                surfaceOwner = GetComponent<MavF15ControlActuator>();
         }
 
         private MavAeroCoefficients ValidateAndPublish(
