@@ -224,7 +224,8 @@ The following were **not** promoted:
 | Major quantity | Status after closure | Implementable without guessing? |
 |---|---|---|
 | Target identity | `FROZEN_DIRECT` | yes |
-| Length/span/height | `FROZEN_DIRECT` + `FROZEN_DERIVED` | yes |
+| Length / **physical** span / height | `FROZEN_DIRECT` + `FROZEN_DERIVED` | yes (physical geometry only) |
+| Coefficient reference span `b` | `UNAVAILABLE` — the physical span is a different quantity (later correction) | **no** |
 | 8,000-lb fuel mass/CG/inertia state | `FROZEN_DIRECT` + `FROZEN_DERIVED` | yes |
 | Engine identity/count | `FROZEN_DIRECT` | yes, identity only |
 | Primary control identities | `FROZEN_DIRECT` | yes |

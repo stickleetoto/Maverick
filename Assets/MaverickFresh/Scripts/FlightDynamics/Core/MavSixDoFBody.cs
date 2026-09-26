@@ -118,6 +118,24 @@ namespace MaverickFresh.FlightDynamics
         public int debugRejectedDuplicateApplications;
         public int debugRejectedNonFiniteApplications;
 
+        [Header("Debug / Environment")]
+        [Tooltip("The environment the last step ran in: where density and gravity came from. Standard atmosphere and Unity project gravity unless the profile provider is a research configuration that explicitly opted in.")]
+        public MavFlightEnvironment debugEnvironment;
+
+        [Tooltip("Steps on which nothing was computed or applied because the profile provider refused its own environment request. A refused override never falls back to the standard atmosphere.")]
+        public int debugRejectedEnvironmentSteps;
+
+        [Tooltip("Steps refused by the gravity-ownership guard: Unity gravity still on while the environment owns gravity through the load set (duplicate), or off after the environment handed it back (none).")]
+        public int debugRejectedGravityOwnershipSteps;
+
+        public string debugGravityStatus = "not evaluated";
+
+        [Header("Debug / Initial State")]
+        [Tooltip("How many times an initial pose and motion were set through TryApplyInitialKinematicState. Only possible while the body is not armed.")]
+        public int debugInitialStateApplications;
+
+        public string debugInitialStateStatus = "none";
+
         [Header("Debug / Readiness")]
         public bool debugReadyForLiveFdm;
         public string debugReadinessReason = "not evaluated";
@@ -166,6 +184,8 @@ namespace MaverickFresh.FlightDynamics
         private bool loggedStructuralOnlyOverride;
         private int lastReadinessMask = -1;
         private bool readinessEvaluatedOnce;
+        private bool gravityHandedToLoadSetAtInitialization;
+        private bool loggedGravityOwnershipRejection;
 
         private const int LegacyOwnershipScanIntervalSteps = 25;
         private const int ShadowReadinessRefreshIntervalSteps = 10;
@@ -245,6 +265,19 @@ namespace MaverickFresh.FlightDynamics
                 return false;
             }
 
+            // A profile provider that refused its own environment request (a research override it
+            // may not honour) gets nothing computed and nothing applied. Falling back to the
+            // standard atmosphere here would fly a model in air it was never meant to see.
+            if (!debugEnvironment.valid)
+            {
+                debugRejectedEnvironmentSteps++;
+                if (shadowComputeOnly)
+                    debugShadowLoadSetFinite = false;
+                ClearLoadDebug();
+                PublishTelemetry(false);
+                return false;
+            }
+
             // A shadow run may be operationally blocked by the legacy owner by design: legacy MUST
             // remain active while the replacement observes. It still has to be structurally complete
             // before we execute it. The normal live path keeps the full operational readiness gate.
@@ -296,6 +329,19 @@ namespace MaverickFresh.FlightDynamics
                 );
 
                 debugLoadSet.AddPropulsive(propulsive);
+            }
+
+            // GRAVITY, when - and only when - the environment owns it through the load set. It
+            // leaves through the same single application as everything else; Unity's own gravity is
+            // off in that case, so the aircraft feels it exactly once.
+            if (!TryAddEnvironmentGravity(shadowComputeOnly))
+            {
+                debugRejectedGravityOwnershipSteps++;
+                if (shadowComputeOnly)
+                    debugShadowLoadSetFinite = false;
+                ClearLoadDebug();
+                PublishTelemetry(false);
+                return false;
             }
 
             // RIGID-BODY INERTIAL COUPLING.
@@ -427,8 +473,10 @@ namespace MaverickFresh.FlightDynamics
                 return false;
             }
 
+            // AppliedForceAeroBodyN is totalForceAeroBodyN, bit for bit, unless the environment owns
+            // gravity through the load set - then it also carries that gravity, applied here once.
             debugUnityLocalForceN = MavFlightDynamicsMath.AeroBodyVectorToUnityLocal(
-                debugLoadSet.totalForceAeroBodyN
+                debugLoadSet.AppliedForceAeroBodyN
             );
             debugUnityLocalTorqueNm = MavFlightDynamicsMath.AeroBodyMomentToUnityLocal(
                 debugLoadSet.totalMomentAeroBodyNm
@@ -587,6 +635,15 @@ namespace MaverickFresh.FlightDynamics
             if (zeroAngularDamping)
                 rb.angularDamping = 0f;
 
+            // The environment decides WHO applies gravity - Unity, or this body through the load
+            // set - never both. Resolved here as well as in the step, because this can run from
+            // OnEnable before any step has resolved it.
+            debugEnvironment = ResolveEnvironment(transform.position.y);
+            gravityHandedToLoadSetAtInitialization =
+                useGravity && debugEnvironment.valid && debugEnvironment.OwnsGravityThroughLoadSet;
+            if (gravityHandedToLoadSetAtInitialization)
+                useGravity = false;
+
             rb.useGravity = useGravity;
 
             if (propulsionModel != null)
@@ -601,7 +658,8 @@ namespace MaverickFresh.FlightDynamics
                 return;
 
             float altitudeM = transform.position.y;
-            debugAtmosphere = MavAtmosphereModel.Sample(altitudeM);
+            debugEnvironment = ResolveEnvironment(altitudeM);
+            debugAtmosphere = debugEnvironment.atmosphere;
 
             Vector3 worldVelocity = rb.linearVelocity;
             Vector3 unityLocalVelocity = transform.InverseTransformDirection(worldVelocity);
@@ -617,6 +675,182 @@ namespace MaverickFresh.FlightDynamics
                 transform.right,
                 debugAtmosphere
             );
+        }
+
+        /// <summary>
+        /// The environment for a step at <paramref name="altitudeM"/>: the shared standard
+        /// atmosphere, handed to the profile provider, which returns it unchanged unless it is a
+        /// research configuration that explicitly opted into its own source environment.
+        /// </summary>
+        public MavFlightEnvironment ResolveEnvironment(float altitudeM)
+        {
+            MavAtmosphereSample standard = MavAtmosphereModel.Sample(altitudeM);
+            return profileProvider != null
+                ? profileProvider.ResolveEnvironment(this, standard, altitudeM)
+                : MavFlightEnvironment.Standard(standard, altitudeM);
+        }
+
+        /// <summary>
+        /// Adds gravity to the load set when the environment owns it, and enforces that exactly one
+        /// party applies gravity. Returns false - and the step then applies nothing - when:
+        ///   - the environment owns gravity but Unity's gravity is still on (it would be applied
+        ///     twice), or
+        ///   - gravity was handed to the load set at initialization and the environment no longer
+        ///     owns it, while Unity's gravity is still off (it would not be applied at all).
+        /// Shadow steps apply nothing anyway and leave Rigidbody.useGravity to the legacy owner, so
+        /// only the load set is filled for observation there.
+        /// </summary>
+        private bool TryAddEnvironmentGravity(bool shadowComputeOnly)
+        {
+            if (!debugEnvironment.OwnsGravityThroughLoadSet)
+            {
+                if (!shadowComputeOnly && ownershipInitialized
+                    && gravityHandedToLoadSetAtInitialization && !rb.useGravity)
+                {
+                    debugGravityStatus =
+                        "REFUSED: gravity was handed to the load set at initialization, the environment "
+                        + "no longer owns it, and Rigidbody.useGravity is off - no gravity would be applied";
+                    LogGravityOwnershipRejection();
+                    return false;
+                }
+
+                debugGravityStatus = rb.useGravity
+                    ? "Unity project gravity (Rigidbody.useGravity); not part of the load set"
+                    : "no gravity applied by Unity (Rigidbody.useGravity off); not part of the load set";
+                return true;
+            }
+
+            if (activeProfile != null && debugProfileValid && !activeProfile.useGravity)
+            {
+                debugGravityStatus = "the profile disables gravity; none added";
+                return true;
+            }
+
+            if (!shadowComputeOnly && rb.useGravity)
+            {
+                debugGravityStatus =
+                    "REFUSED: the environment owns gravity through the load set but Rigidbody.useGravity "
+                    + "is on - gravity would be applied twice";
+                LogGravityOwnershipRejection();
+                return false;
+            }
+
+            Vector3 gravityAeroBody = ComputeGravitationalForceAeroBody(
+                transform.InverseTransformDirection(Vector3.down),
+                rb.mass,
+                debugEnvironment.loadSetGravityMps2);
+
+            if (!debugLoadSet.AddGravitational(gravityAeroBody))
+            {
+                debugGravityStatus = "REFUSED: gravity was already added to this step's load set";
+                return false;
+            }
+
+            // Built only when the value changes, so a research body does not allocate every step.
+            if (cachedGravityStatus == null || cachedGravityStatusMps2 != debugEnvironment.loadSetGravityMps2)
+            {
+                cachedGravityStatusMps2 = debugEnvironment.loadSetGravityMps2;
+                cachedGravityStatus = "environment gravity " + cachedGravityStatusMps2.ToString("F7")
+                    + " m/s^2 through the load set, applied once; Rigidbody.useGravity off";
+            }
+
+            debugGravityStatus = cachedGravityStatus;
+            return true;
+        }
+
+        private float cachedGravityStatusMps2;
+        private string cachedGravityStatus;
+
+        private void LogGravityOwnershipRejection()
+        {
+            if (loggedGravityOwnershipRejection)
+                return;
+
+            loggedGravityOwnershipRejection = true;
+            Debug.LogError("[Maverick/FDM] Load application refused by the gravity-ownership guard: "
+                + debugGravityStatus, this);
+        }
+
+        /// <summary>
+        /// Weight in aero body axes: world down, carried into Unity local by the caller's transform,
+        /// then across the single Unity-to-aero boundary, times m * g. A true vector, so the
+        /// true-vector conversion applies.
+        /// </summary>
+        public static Vector3 ComputeGravitationalForceAeroBody(
+            Vector3 unityLocalDownUnit, float massKg, float gravityMps2)
+        {
+            return MavFlightDynamicsMath.UnityLocalVectorToAeroBody(unityLocalDownUnit) * (massKg * gravityMps2);
+        }
+
+        /// <summary>
+        /// Puts the Rigidbody in a given pose and motion - the one sanctioned way for anything but
+        /// the physics itself to set the aircraft's state, so a research initializer never needs a
+        /// Rigidbody write of its own.
+        ///
+        /// INITIALIZATION ONLY. Refused while the body is armed, while it is only shadowing, and
+        /// while an ownership gate has not granted the replacement stack physics, so it can never
+        /// become a per-step state override. Nothing is applied unless every input is finite and
+        /// the rotation is a unit quaternion.
+        /// </summary>
+        public bool TryApplyInitialKinematicState(
+            Vector3 worldPositionM,
+            Quaternion worldRotation,
+            Vector3 worldVelocityMps,
+            Vector3 worldAngularVelocityRadSec,
+            out string reason)
+        {
+            Resolve();
+
+            if (rb == null)
+                reason = "no Rigidbody";
+            else if (simulationEnabled)
+                reason = "the body is armed; an initial state is set only before arming";
+            else if (IsShadowComputeOnly())
+                reason = "the body is shadowing a legacy owner, which owns the Rigidbody";
+            else if (!ReplacementOwnershipGranted())
+                reason = "the ownership gate has not granted the replacement stack physics";
+            else if (!IsFiniteVector(worldPositionM) || !IsFiniteVector(worldVelocityMps)
+                     || !IsFiniteVector(worldAngularVelocityRadSec)
+                     || !IsFiniteQuaternion(worldRotation))
+                reason = "a non-finite position, rotation, velocity or angular velocity";
+            else if (Mathf.Abs(Mathf.Sqrt(worldRotation.x * worldRotation.x + worldRotation.y * worldRotation.y
+                         + worldRotation.z * worldRotation.z + worldRotation.w * worldRotation.w) - 1f) > 1e-4f)
+                reason = "the rotation is not a unit quaternion";
+            else
+                reason = null;
+
+            if (reason != null)
+            {
+                reason = "initial state refused: " + reason;
+                debugInitialStateStatus = reason;
+                return false;
+            }
+
+            transform.SetPositionAndRotation(worldPositionM, worldRotation);
+            rb.position = worldPositionM;
+            rb.rotation = worldRotation;
+            rb.linearVelocity = worldVelocityMps;
+            rb.angularVelocity = worldAngularVelocityRadSec;
+
+            debugInitialStateApplications++;
+            reason = "initial state applied (not armed; no load applied)";
+            debugInitialStateStatus = reason;
+            return true;
+        }
+
+        private static bool IsFiniteVector(Vector3 v)
+        {
+            return !float.IsNaN(v.x) && !float.IsInfinity(v.x)
+                && !float.IsNaN(v.y) && !float.IsInfinity(v.y)
+                && !float.IsNaN(v.z) && !float.IsInfinity(v.z);
+        }
+
+        private static bool IsFiniteQuaternion(Quaternion q)
+        {
+            return !float.IsNaN(q.x) && !float.IsInfinity(q.x)
+                && !float.IsNaN(q.y) && !float.IsInfinity(q.y)
+                && !float.IsNaN(q.z) && !float.IsInfinity(q.z)
+                && !float.IsNaN(q.w) && !float.IsInfinity(q.w);
         }
 
         public static MavFlightState BuildFlightState(
@@ -1096,7 +1330,11 @@ namespace MaverickFresh.FlightDynamics
 
             MavFlightDynamicsTelemetrySample sample = new MavFlightDynamicsTelemetrySample();
             sample.timeSeconds = Time.fixedTime;
-            sample.altitudeM = debugAtmosphere.altitudeM;
+            // A research source-density sample is labelled with the altitude its density belongs
+            // to, not where the body is; telemetry reports where the body is.
+            sample.altitudeM = debugEnvironment.OverridesDensity
+                ? debugEnvironment.geometricAltitudeM
+                : debugAtmosphere.altitudeM;
             sample.trueAirspeedMps = debugState.trueAirspeedMps;
             sample.mach = debugState.mach;
             sample.dynamicPressurePa = debugState.dynamicPressurePa;

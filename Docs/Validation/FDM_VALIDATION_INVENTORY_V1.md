@@ -91,3 +91,59 @@ failure there too.
 | 40 | `sixdof_body_inspector` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavSixDoFBodyInspector.cs` — editor-only custom Inspector: it draws existing debug fields of `MavSixDoFBody` to reduce repaint cost and contains no assertions, so it is not an independent assertion surface |
 
 No other blob pin changed: no validation surface drifted between `460713aeb9` and `ef25b91857`.
+
+## F-15 V1 integration, 2026-09-27
+
+The frozen F-15 V1 research stack (#24–#27, frozen at `6970b43`) was integrated onto `main` at `e0d2b0e`. It adds **31 C# files** under the declared `FlightDynamics/Validation` and `FlightDynamics/Editor` roots:
+- 17 F-15 validation suites;
+- the F-15 research Play Mode closeout driver and runner;
+- 10 F-15 helper/data files;
+- 2 validation-only numerical helpers (`MavValidationEigenSolver`, `MavValidationRk4Integrator`).
+
+The HEAD enumeration therefore listed 69 surfaces against the manifest's 38, and the runner refused to start (`HEAD C# surface count drift`).
+
+**Resolution.** Each of the 31 is listed explicitly. `expected_head_cs_surface_count` is now 69. The existing convention for post-authority surfaces is followed:
+- `EXCLUDED_WITH_REASON`, `execution_mode: EXCLUDED`, `counted: false`;
+- `pinned_at: HEAD`;
+- the file's blob;
+- a mandatory reason.
+
+**Why excluded.** They are F-15 research validation, outside the F-16/shared scope of Baseline v1. The F-15 suites run through their own documented procedure (`Docs/Reference/F15_USER_VALIDATION_PLAN_V1.0.md` §1: 17 suites, 757 / 0, plus the Play Mode closeout, 39 / 0).
+
+**Unchanged.** The authority commit, the 41 earlier entries (38 C# + 3 Python) and their blobs, the counted set, the execution modes and the Baseline v1 totals. No validator semantics changed. Every one of the 31 is now hash-verified by the runner, as for any other surface.
+
+Rows are numbered in manifest order. Entry 41 is `fdm_validation_batch_adapter`, which is listed under `implementation_paths`.
+
+| # | ID | Classification | Counted | Source cardinality | Path / role |
+|---:|---|---|:---:|---:|---|
+| 42 | `f15_research_runtime_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15ResearchRuntimeFlightValidation.cs` — F-15 research Play Mode closeout driver |
+| 43 | `f15_baumann_source_condition_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15BaumannSourceConditionValidation.cs` — F-15 research validation suite |
+| 44 | `f15_baumann_table_vii` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15BaumannTableVii.cs` — F-15 research validation helper/data |
+| 45 | `f15_baumann_table_vii_data` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15BaumannTableViiData.cs` — F-15 research validation helper/data |
+| 46 | `f15_baumann_transcription_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15BaumannTranscriptionValidation.cs` — F-15 research validation suite |
+| 47 | `f15_control_path_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ControlPathValidation.cs` — F-15 research validation suite |
+| 48 | `f15_mass_reference_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15MassReferenceValidation.cs` — F-15 research validation suite |
+| 49 | `f15_nasa836_fcs_structure_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15Nasa836FcsStructureValidation.cs` — F-15 research validation suite |
+| 50 | `f15_nasa836_validation_data` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15Nasa836ValidationData.cs` — F-15 research validation helper/data |
+| 51 | `f15_nasa836_validation_data_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15Nasa836ValidationDataValidation.cs` — F-15 research validation suite |
+| 52 | `f15_nasa836_validation_series` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15Nasa836ValidationSeries.cs` — F-15 research validation helper/data |
+| 53 | `f15_propulsion_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PropulsionValidation.cs` — F-15 research validation suite |
+| 54 | `f15_reference_geometry_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ReferenceGeometryValidation.cs` — F-15 research validation suite |
+| 55 | `f15_research_contamination_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchContaminationValidation.cs` — F-15 research validation suite |
+| 56 | `f15_research_control_authority_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchControlAuthorityValidation.cs` — F-15 research validation suite |
+| 57 | `f15_research_pipeline_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchPipelineValidation.cs` — F-15 research validation suite |
+| 58 | `f15_research_profile_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchProfileValidation.cs` — F-15 research validation suite |
+| 59 | `f15_research_runtime_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchRuntimeFlightValidationRunner.cs` — F-15 research Play Mode closeout runner |
+| 60 | `f15_research_runtime_prerequisites_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchRuntimePrerequisitesValidation.cs` — F-15 research validation suite |
+| 61 | `f15_research_stability_analysis` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchStabilityAnalysis.cs` — F-15 research validation helper/data |
+| 62 | `f15_research_stability_conflict_audit` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchStabilityConflictAudit.cs` — F-15 research validation helper/data |
+| 63 | `f15_research_stability_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchStabilityValidation.cs` — F-15 research validation suite |
+| 64 | `f15_research_time_domain_stability` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchTimeDomainStability.cs` — F-15 research validation helper/data |
+| 65 | `f15_research_time_domain_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchTimeDomainValidation.cs` — F-15 research validation suite |
+| 66 | `f15_research_trim_solver_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchTrimSolverValidation.cs` — F-15 research validation suite |
+| 67 | `f15_research_turning_trim_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15ResearchTurningTrimValidation.cs` — F-15 research validation suite |
+| 68 | `f15_table_vii_equilibrium_reproduction` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15TableViiEquilibriumReproduction.cs` — F-15 research validation helper/data |
+| 69 | `f15_table_vii_trim_recovery` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15TableViiTrimRecovery.cs` — F-15 research validation helper/data |
+| 70 | `f15_table_vii_turning_recovery` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15TableViiTurningRecovery.cs` — F-15 research validation helper/data |
+| 71 | `validation_eigen_solver` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavValidationEigenSolver.cs` — F-15 research validation helper/data |
+| 72 | `validation_rk4_integrator` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavValidationRk4Integrator.cs` — F-15 research validation helper/data |

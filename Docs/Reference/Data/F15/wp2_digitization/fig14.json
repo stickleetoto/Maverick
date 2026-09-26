@@ -1,0 +1,14 @@
+{
+ "image": "tm2008_fig14_raw.png", "overlay": "tm2008_fig14_overlay.png", "output": "tm2008_fig14.json", "dt": 0.1,
+ "time_axis": {"x0": 320, "x1": 1065, "grid_values": [1,2,3,4,5,6,7,8], "t_min": 0.0, "t_max": 9.0},
+ "panels": [
+  {"name": "alpha", "units": "deg", "y0": 16, "y1": 213, "top": 10, "bottom": 0, "grid_values": [5],
+   "traces": [{"name": "flight", "colour": "blue", "kind": "flight"}, {"name": "baseline simulation", "colour": "green", "kind": "simulation", "max_gap_px": 6}]},
+  {"name": "pitch rate", "units": "deg/s", "y0": 260, "y1": 460, "top": 10, "bottom": -10, "grid_values": [5, 0, -5],
+   "traces": [{"name": "flight", "colour": "blue", "kind": "flight"}, {"name": "baseline simulation", "colour": "green", "kind": "simulation", "max_gap_px": 6}]},
+  {"name": "normal acceleration", "units": "g", "y0": 506, "y1": 703, "top": 3, "bottom": 0, "grid_values": [2, 1],
+   "traces": [{"name": "flight", "colour": "blue", "kind": "flight"}, {"name": "baseline simulation", "colour": "green", "kind": "simulation", "max_gap_px": 6}]},
+  {"name": "stabilator", "units": "deg", "y0": 750, "y1": 948, "top": 0, "bottom": -6, "grid_values": [-2, -4],
+   "traces": [{"name": "stabilator (flight-measured)", "colour": "red", "kind": "flight"}]}
+ ]
+}
