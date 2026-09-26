@@ -1,6 +1,6 @@
 # Library Source Graph: lineage rules and cross-aircraft map
 
-This file defines how lineage is recorded, and holds the lineage that crosses aircraft (shared engines, shared airframes, shared methods). Each aircraft's own graph is in `Aircraft/<type>/SOURCE_GRAPH.md`: [F/A-18](Aircraft/FA18/SOURCE_GRAPH.md), [F-16](Aircraft/F16/SOURCE_GRAPH.md), [F-15](Aircraft/F15/SOURCE_GRAPH.md), [F-22](Aircraft/F22/SOURCE_GRAPH.md).
+This file defines how lineage is recorded, and holds the lineage that crosses aircraft (shared engines, shared airframes, shared methods). Each aircraft's own graph is in `Aircraft/<type>/SOURCE_GRAPH.md`: [F/A-18](Aircraft/FA18/SOURCE_GRAPH.md), [F-16](Aircraft/F16/SOURCE_GRAPH.md), [F-15](Aircraft/F15/SOURCE_GRAPH.md), [F-22](Aircraft/F22/SOURCE_GRAPH.md), [Su-27](Aircraft/SU27/SOURCE_GRAPH.md).
 
 The validator checks that every library ID named in a `*SOURCE_GRAPH*` or `*LINEAGE*` document resolves to a source, configuration or value.
 

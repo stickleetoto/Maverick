@@ -90,7 +90,7 @@ SCOPE = {
     "EXACT_AIRFRAME", "PRODUCTION_FAMILY", "PREPRODUCTION", "RESEARCH_MODIFIED",
     "WIND_TUNNEL_MODEL", "SIMULATION_ONLY", "UNKNOWN",
 }
-PACKS = {"FA18", "F16", "F15", "F22", "F14", "FUNDAMENTALS", "OTHER"}
+PACKS = {"FA18", "F16", "F15", "F22", "SU27", "F14", "FUNDAMENTALS", "OTHER"}
 NON_AIRCRAFT_PACKS = {"FUNDAMENTALS", "OTHER"}
 REPO_LEVELS = {"REPO_PAGE_READ", "REPO_PAGE_TRANSCRIBED_CROSSCHECKED", "REPO_CITATION_ONLY"}
 EMA_FIELDS = ("path", "branch", "relationship", "locator", "level", "note")
@@ -448,7 +448,7 @@ def validate_graph_refs(sources: dict, cfgs: dict, vals: dict, rep: Report) -> N
         for tok in sorted(set(GRAPH_TOKEN.findall(text))):
             rep.check(tok in known, f"{p.relative_to(ROOT)}: graph references unknown ID '{tok}'")
         for tok in sorted(set(re.findall(r"`([A-Z0-9][A-Z0-9\-]{3,})`", text))):
-            if "-" in tok and (tok.startswith(("FA18-", "F16-", "F15-", "F22-", "ENG-")) or GRAPH_TOKEN.fullmatch(tok)):
+            if "-" in tok and (tok.startswith(("FA18-", "F16-", "F15-", "F22-", "SU27-", "ENG-")) or GRAPH_TOKEN.fullmatch(tok)):
                 rep.check(tok in known, f"{p.relative_to(ROOT)}: graph references unknown ID '{tok}'")
 
 

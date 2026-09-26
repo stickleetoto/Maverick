@@ -31,7 +31,7 @@ Every field is required **(validated)**. Unknown values are `null`, `"unknown"`,
 | `public_access_status` | See §3 **(validated)** |
 | `retrieval_status` | `NOT_RETRIEVED_EGRESS_BLOCKED`, `NOT_RETRIEVED`, `RETRIEVED_EXTERNAL_STORE`, `RETRIEVED_IN_REPO` **(validated)** |
 | `verification_level` | See §2 **(validated)** |
-| `aircraft_packs[]` | `FA18`, `F16`, `F15`, `F22`, `F14`, `FUNDAMENTALS`, `OTHER` **(validated: non-empty, enum)**. A source may belong to several packs (e.g. the F100 lineage is in `F15` and `F16`) |
+| `aircraft_packs[]` | `FA18`, `F16`, `F15`, `F22`, `SU27`, `F14`, `FUNDAMENTALS`, `OTHER` **(validated: non-empty, enum)**. A source may belong to several packs (e.g. the F100 lineage is in `F15` and `F16`) |
 | `index_group` | Heading under which `SOURCE_INDEX.md` lists the source **(validated: non-empty)** |
 | `existing_maverick_analysis[]` | Cross-references to Maverick documents that analysed this source (§1a) **(validated: structure)** |
 | `aircraft`, `aircraft_variant`, `serial_or_tail_number`, `research_configuration`, `engine_configuration`, `FCS_configuration`, `date_or_phase` | Configuration identity: airframe/block, modifications, engine, FCS, date (see §5). For a source in any aircraft pack, `aircraft`, `aircraft_variant`, `research_configuration`, `engine_configuration`, `FCS_configuration` and `date_or_phase` must be non-empty; write `NOT_STATED` rather than leaving them null **(validated)** |

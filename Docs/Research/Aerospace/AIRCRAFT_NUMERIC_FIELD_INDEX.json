@@ -4,25 +4,26 @@
  "library_revision": "r1",
  "rule": "implementation_allowed is true only when implementation_use is ALLOWED, which the validator permits only for a value whose source content was inspected by the library at PAGE_VERIFIED, with configuration, units, convention and page/table/figure recorded. 'page' is null unless both the source and the value are PAGE_VERIFIED; 'location_as_recorded' may carry a repository or extract locator that the library has not checked.",
  "summary": {
-  "records": 251,
+  "records": 254,
   "implementation_allowed": 34,
   "by_aircraft": {
    "F-15": 56,
    "F-16": 79,
    "F-22": 14,
-   "F/A-18": 102
+   "F/A-18": 102,
+   "Su-27": 3
   },
   "by_verification_level": {
    "SEARCH_LEAD_ONLY": 137,
    "ABSTRACT_VERIFIED": 15,
-   "CONTENT_EXTRACT_VERIFIED": 51,
+   "CONTENT_EXTRACT_VERIFIED": 54,
    "PAGE_VERIFIED": 40,
    "CATALOGUE_VERIFIED": 8
   },
   "by_implementation_use": {
    "BLOCKED_PENDING_PAGE_VERIFICATION": 156,
-   "NOT_A_MODEL_PARAMETER": 30,
-   "PROHIBITED": 16,
+   "NOT_A_MODEL_PARAMETER": 32,
+   "PROHIBITED": 17,
    "DOMAIN_METADATA_ONLY": 15,
    "ALLOWED": 34
   },
@@ -8072,6 +8073,99 @@
    "unresolved_conflict": false,
    "why_not_allowed": "source page not inspected by the library; value known only from another Maverick document",
    "known_data_file": "Docs/Research/Aerospace/Aircraft/FA18/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "SU27-AL31F-THRUST-CLASS",
+   "aircraft": "Su-27",
+   "configuration": [
+    "ENG-AL-31F"
+   ],
+   "configuration_scope": [
+    "PRODUCTION_FAMILY"
+   ],
+   "field": "thrust_class",
+   "quantity": "AL-31F thrust class (official statement; rating condition not stated)",
+   "value": 12500,
+   "units": "kgf",
+   "precision": "stated as '12 500 кгс' (class figure)",
+   "source_id": "SU27-UEC-2017-AL31F-NEWS",
+   "candidate_source_ids": [],
+   "page": null,
+   "location_as_recorded": "news text: 'АЛ-31Ф тягой 12 500 кгс устанавливается на самолеты семейства Су-27' (search extract; page not opened)",
+   "provenance": "BACKGROUND_ONLY",
+   "value_origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "source_verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "implementation_use": "PROHIBITED",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "PROHIBITED: identity/fact-sheet figure or non-public source",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/SU27/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "SU27-TSAGI-T105-ALPHA-RANGE",
+   "aircraft": "Su-27",
+   "configuration": [
+    "SU27-CFG-WT-TSAGI-MODELS"
+   ],
+   "configuration_scope": [
+    "WIND_TUNNEL_MODEL"
+   ],
+   "field": "aero_domain_alpha",
+   "quantity": "Angle-of-attack range of the 1987 TsAGI T-105 tests of Su-27 models",
+   "value": "0 to 180",
+   "units": "deg",
+   "precision": "as stated",
+   "source_id": "SU27-NIZH-2008-ZHELNIN",
+   "candidate_source_ids": [],
+   "page": null,
+   "location_as_recorded": "article text (search extract; page not opened)",
+   "provenance": "BACKGROUND_ONLY",
+   "value_origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "source_verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/SU27/KNOWN_DATA.json"
+  },
+  {
+   "value_id": "SU27-TSAGI-T105-BETA-RANGE",
+   "aircraft": "Su-27",
+   "configuration": [
+    "SU27-CFG-WT-TSAGI-MODELS"
+   ],
+   "configuration_scope": [
+    "WIND_TUNNEL_MODEL"
+   ],
+   "field": "aero_domain_beta",
+   "quantity": "Sideslip range of the 1987 TsAGI T-105 tests of Su-27 models",
+   "value": "-90 to +90",
+   "units": "deg",
+   "precision": "as stated",
+   "source_id": "SU27-NIZH-2008-ZHELNIN",
+   "candidate_source_ids": [],
+   "page": null,
+   "location_as_recorded": "article text (search extract; page not opened)",
+   "provenance": "BACKGROUND_ONLY",
+   "value_origin": "ORIGINAL",
+   "exactness": "SEARCH_EXTRACT",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "source_verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "implementation_use": "NOT_A_MODEL_PARAMETER",
+   "implementation_allowed": false,
+   "has_existing_maverick_analysis": false,
+   "conflict_ids": [],
+   "unresolved_conflict": false,
+   "why_not_allowed": "NOT_A_MODEL_PARAMETER: not a model parameter (domain, gap record, dataset or accuracy statement)",
+   "known_data_file": "Docs/Research/Aerospace/Aircraft/SU27/KNOWN_DATA.json"
   }
  ]
 }

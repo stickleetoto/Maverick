@@ -68,3 +68,4 @@ Source IDs are in [`SOURCE_INDEX.json`](SOURCE_INDEX.json); values in [`AIRCRAFT
 - **F-15:** exact-airframe mass, FCS structure and validation data (repository readings), and **no** public aerodynamics, geometry reference or dimensional thrust.
 - **F/A-18:** rich public research record, but the baseline aero arrays are not printed and most numeric content sits in configuration-specific research states.
 - **F-22:** identity and development narrative only.
+- **Su-27 (SU27-R0, not a column here):** a separate feasibility study with its own six-class field table for the baseline Su-27 / Su-27S: engine identity only; every model-defining number `NOT_PUBLICLY_LOCATED`. See [`Aircraft/SU27/PUBLIC_SOURCE_FEASIBILITY.md`](Aircraft/SU27/PUBLIC_SOURCE_FEASIBILITY.md).

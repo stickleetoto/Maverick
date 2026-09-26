@@ -38,8 +38,8 @@ CONFLICTS_JSON = LIB / "CONFLICT_REGISTER.json"
 CONFLICTS_MD = LIB / "CONFLICT_REGISTER.md"
 GENERATOR = "Tools/build_aerospace_source_views.py"
 
-PACK_FOLDERS = {"FA18": "FA18", "F16": "F16", "F15": "F15", "F22": "F22"}
-PACK_ORDER = ["FA18", "F16", "F15", "F22", "F14", "FUNDAMENTALS", "OTHER"]
+PACK_FOLDERS = {"FA18": "FA18", "F16": "F16", "F15": "F15", "F22": "F22", "SU27": "SU27"}
+PACK_ORDER = ["FA18", "F16", "F15", "F22", "SU27", "F14", "FUNDAMENTALS", "OTHER"]
 LEVELS = ["SEARCH_LEAD_ONLY", "CATALOGUE_VERIFIED", "ABSTRACT_VERIFIED", "CONTENT_EXTRACT_VERIFIED", "PAGE_VERIFIED"]
 LEVEL_SHORT = {"SEARCH_LEAD_ONLY": "LEAD", "CATALOGUE_VERIFIED": "CAT", "ABSTRACT_VERIFIED": "ABS",
                "CONTENT_EXTRACT_VERIFIED": "EXTRACT", "PAGE_VERIFIED": "**PAGE**"}
@@ -227,7 +227,7 @@ def source_link(s) -> str:
 def short_cfg(ids) -> str:
     if not ids:
         return "—"
-    return ", ".join(re.sub(r"^(FA18|F16|F15|F22)-CFG-", "", c) for c in ids)
+    return ", ".join(re.sub(r"^(FA18|F16|F15|F22|SU27)-CFG-", "", c) for c in ids)
 
 
 def index_md_blocks(index) -> dict[str, str]:

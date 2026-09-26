@@ -42,6 +42,7 @@ Docs/Research/Aerospace/
 │  ├─ F16/    R1 deep pack                    (+ F16_MODEL_LINEAGE, F16_FCS_/F16_PROPULSION_/F16_VALIDATION_SOURCE_GRAPH)
 │  ├─ F15/    R1 consolidation                (+ F15_PUBLIC_DATA_MATRIX, F15_PROPULSION_SOURCE_GRAPH)
 │  ├─ F22/    R1 feasibility audit            (PUBLIC_SOURCE_FEASIBILITY instead of IMPLEMENTATION_FEASIBILITY)
+│  ├─ SU27/   SU27-R0 public-source feasibility (PUBLIC_SOURCE_FEASIBILITY; no model)
 │  └─ F14/  Other/                     status stubs
 ├─ Aerodynamics/README.md              fundamentals: axes, derivatives, high alpha, identification, mass properties
 ├─ FlightControls/README.md            fundamentals: SAS/CAS, scheduling, actuators, PIO, trim, linearization

@@ -1,0 +1,1751 @@
+{
+ "schema": "maverick.aerospace.pack-sources.v1",
+ "generated_by": "Tools/build_aerospace_source_views.py",
+ "generated_from": "Docs/Research/Aerospace/SOURCE_INDEX.json",
+ "library_revision": "r1",
+ "pack": "SU27",
+ "note": "Generated slice of SOURCE_INDEX.json (records whose aircraft_packs contains this pack). Edit SOURCE_INDEX.json, then regenerate.",
+ "source_count": 20,
+ "verification_levels": {
+  "CONTENT_EXTRACT_VERIFIED": 5,
+  "SEARCH_LEAD_ONLY": 6,
+  "CATALOGUE_VERIFIED": 7,
+  "ABSTRACT_VERIFIED": 2
+ },
+ "sources": [
+  {
+   "source_id": "ICAS-2002-POGOSYAN-SU27",
+   "title": "Generation of Su-27 Fighter (title as indexed)",
+   "authors": [
+    "Pogosyan (Pogossyan), M. A.",
+    "Simonov, M. P.",
+    "Zagainov, G. I."
+   ],
+   "organization": "Sukhoi Design Bureau / TsAGI (author affiliations UNCONFIRMED)",
+   "year": 2002,
+   "report_number": "ICAS2002-R72 (archive file name; congress paper number UNCONFIRMED)",
+   "ntrs_id": null,
+   "public_url": "https://www.icas.org/icas_archive/ICAS2002/PAPERS/R72.PDF",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: aerodynamics and high-alpha research",
+   "aircraft": "Su-27",
+   "aircraft_variant": "NOT_STATED in extract (development history T-10 to production; configuration of each figure unknown)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "Development history; paper 2002",
+   "configuration_ids": [
+    "SU27-CFG-FAMILY-UNSPECIFIED",
+    "SU27-CFG-T10-PROTOTYPE",
+    "SU27-CFG-T10S-DEVELOPMENT",
+    "SU27-CFG-WT-TSAGI-MODELS"
+   ],
+   "topics": [
+    "design history",
+    "high-alpha aerodynamic model",
+    "unsteady aerodynamics",
+    "asymmetric vortex breakdown",
+    "stall and spin",
+    "thrust-vector control requirements",
+    "wind tunnel",
+    "flight test"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "likely",
+    "tables": "unknown",
+    "plots": "likely",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "LOW_UNTIL_READ",
+    "note": "Strongest located Su-27 aerodynamics source: a designer-authored account of the Sukhoi/TsAGI mathematical model built from systematic tunnel tests and flight tests at the Sukhoi design bureau and LII. The extract does not show whether any coefficient, table, reference geometry or model parameter is printed. A congress overview is unlikely to print a complete data set."
+   },
+   "validation_usefulness": {
+    "rating": "MEDIUM_IF_PRINTED",
+    "note": "Possible figure-level high-alpha behaviour for a Su-27 configuration that must be identified per figure."
+   },
+   "limitations": [
+    "Known only from search-index extracts; the PDF was not opened (icas.org blocked).",
+    "Title as indexed ('Generation of Su-27 fighter'); the full title may be longer.",
+    "Author list differs between extracts: three names in one, a fourth (Tarasov, A. Z.) in another. Affiliations UNCONFIRMED.",
+    "Configuration of each figure (T-10, T-10S, production, derivative, tunnel model) unknown."
+   ],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "JAIRCRAFT-1994-GOMAN-KHRABROV",
+     "relation": "method family: TsAGI state-space unsteady high-alpha aerodynamics (application to the Su-27 not established)"
+    },
+    {
+     "source_id": "SU27-SUKHOI-TSAGI-AERO-MASS-DATA",
+     "relation": "describes the model built on this data set, which is not public"
+    },
+    {
+     "source_id": "PAS-1997-GOMAN-ZAGAINOV-KHRAMTSOVSKY",
+     "relation": "shared author (Zagainov); that review has no Su-27 example"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "Extract statements (as rendered by the search tool; wording may be paraphrased): the TsAGI team elaborated a mathematical model of aerodynamics describing asymmetric flow and asymmetric vortex breakdown at high angle of attack, with dynamic lag and static and dynamic hysteresis in lift, side force and the pitch, yaw and roll moments; the model 'was developed on the base of systematical wind tunnel investigations, flight tests in Su-ADB and Flight Research Institute (LII)' and uses additional differential equations for flow-state parameters; the work covered stall, spin and the effectiveness required of aerodynamic and thrust-vector control. First target for page verification.",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-NIZH-2008-ZHELNIN",
+   "title": "Полёт «хвостом вперёд» и сверхманёвренность (Flight 'tail first' and supermanoeuvrability)",
+   "authors": [
+    "Zhelnin, Yu. (Желнин Ю.), Cand. Tech. Sci."
+   ],
+   "organization": "Nauka i Zhizn (popular-science magazine); author affiliation UNCONFIRMED",
+   "year": 2008,
+   "report_number": "Nauka i Zhizn, 2008, No. 11",
+   "ntrs_id": null,
+   "public_url": "https://www.nkj.ru/archive/articles/14891/",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: aerodynamics and high-alpha research",
+   "aircraft": "Su-27",
+   "aircraft_variant": "NOT_STATED (scale models)",
+   "serial_or_tail_number": null,
+   "research_configuration": "TsAGI T-105 wind-tunnel models (scale and geometry state not stated in extract)",
+   "engine_configuration": "n/a (tunnel models)",
+   "FCS_configuration": "n/a",
+   "date_or_phase": "Tests 1987 (per extract); article 2008",
+   "configuration_ids": [
+    "SU27-CFG-WT-TSAGI-MODELS"
+   ],
+   "topics": [
+    "supermanoeuvrability",
+    "full-envelope tunnel testing",
+    "T-105 tunnel",
+    "cobra"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "WIND_TUNNEL_MODEL",
+   "implementation_usefulness": {
+    "rating": "NONE",
+    "note": "Popular-science account. States that Su-27 models were tested in TsAGI's T-105 tunnel in 1987 over angle of attack 0-180 deg and sideslip +/-90 deg. No data set is published as far as the extract shows."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": "Domain statement only: where full-envelope Su-27 tunnel data were generated, not what they are."
+   },
+   "limitations": [
+    "Search extract only; page not opened (nkj.ru blocked).",
+    "Model scale, geometry state (T-10 or T-10S) and data not in the extract."
+   ],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "ICAS-2002-POGOSYAN-SU27",
+     "relation": "the designer-side account of the model those tests fed"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-KQDLXXB-2020-POSTSTALL-MODEL-FLIGHT",
+   "title": "先进战斗机过失速机动模型飞行试验技术 (Model flight-test technology for post-stall manoeuvres of advanced fighters)",
+   "authors": [
+    "UNCONFIRMED"
+   ],
+   "organization": "Acta Aerodynamica Sinica (空气动力学学报), 2020, issue 1",
+   "year": 2020,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": "https://html.rhhz.net/KQDLXXB/2020-01-9.htm",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: aerodynamics and high-alpha research",
+   "aircraft": "Soviet/Russian free-flight model programme (Su-27 link UNCONFIRMED)",
+   "aircraft_variant": "NOT_STATED",
+   "serial_or_tail_number": null,
+   "research_configuration": "Free-flight scale models",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "Programme from 1975 over about 15 years (per search summary)",
+   "configuration_ids": [
+    "SU27-CFG-FAMILY-UNSPECIFIED"
+   ],
+   "topics": [
+    "free-flight model testing",
+    "post-stall",
+    "cobra discovery history"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "NONE",
+    "note": "Chinese survey. Background history only."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": "History of how the Cobra was first found in model flight; no data."
+   },
+   "limitations": [
+    "Search summary only. The statement below could not be attributed with certainty to this article rather than to the 2022 survey '战斗机大迎角气动特性研究技术的发展与应用' (html.rhhz.net/KQDLXXB/2022-01-1.htm)."
+   ],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "Search-summary statement: the USSR/Russia ran a model free-flight programme from 1975 for 15 years, with three batches totalling 15 models and more than 150 model flights, and first observed the initial form of the 'Cobra' in model flight. The models are not stated to be Su-27 models.",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-BYUSHGENS-1998-TSAGI-MONOGRAPH",
+   "title": "Аэродинамика, устойчивость и управляемость сверхзвуковых самолётов (Aerodynamics, stability and controllability of supersonic aircraft)",
+   "authors": [
+    "Byushgens, G. S. (ed.)"
+   ],
+   "organization": "TsAGI authors; Nauka / Fizmatlit, Moscow",
+   "year": 1998,
+   "report_number": "ISBN 5-02-015111-4",
+   "ntrs_id": null,
+   "public_url": "https://library.bmstu.ru/Catalog/Details/86214",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: aerodynamics and high-alpha research",
+   "aircraft": "Su-27 coverage UNCONFIRMED (general monograph)",
+   "aircraft_variant": "NOT_STATED",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "1998 monograph",
+   "configuration_ids": [
+    "SU27-CFG-FAMILY-UNSPECIFIED"
+   ],
+   "topics": [
+    "supersonic aircraft aerodynamics",
+    "stability and control",
+    "control-system design",
+    "TsAGI"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "UNKNOWN_UNTIL_READ",
+    "note": "TsAGI reference monograph (about 810 pp.). Whether it prints Su-27 data, and for which configuration, is not established."
+   },
+   "validation_usefulness": {
+    "rating": "UNKNOWN",
+    "note": ""
+   },
+   "limitations": [
+    "Catalogue records only (BMSTU library, Great Russian Encyclopedia).",
+    "Unlicensed scans are offered on file-sharing sites. The library does not use them; only a lawfully obtained copy may be read."
+   ],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-SUKHOI-HISTORY-PAGES",
+   "title": "Sukhoi Company history and press pages on the Su-27 (sukhoi.org)",
+   "authors": [
+    "PJSC Sukhoi Company"
+   ],
+   "organization": "Sukhoi Company (UAC)",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": "https://www.sukhoi.org/company/istoriya/",
+   "pdf_url": null,
+   "mirror_url": "https://www.sukhoi.org/press/smi-o-nas/sozdatel-su-27-mikhail-simonov-aviakonstruktor-operezhavshiy-vremya.html",
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: identity, history and configuration lineage",
+   "aircraft": "Su-27",
+   "aircraft_variant": "T-10 (T-10-1) and T-10S lineage",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "T-10S first flight 1981 (per extract)",
+   "configuration_ids": [
+    "SU27-CFG-T10-PROTOTYPE",
+    "SU27-CFG-T10S-DEVELOPMENT"
+   ],
+   "topics": [
+    "programme history",
+    "T-10 to T-10S redesign",
+    "configuration lineage"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "no",
+    "cg": "no",
+    "inertia": "no",
+    "aerodynamic_coefficients": "no",
+    "static_derivatives": "no",
+    "rate_derivatives": "no",
+    "control_derivatives": "no",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "no",
+    "actuator_limits": "no",
+    "actuator_rates": "no",
+    "propulsion": "unknown",
+    "thrust_data": "no",
+    "source_code": "no",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "no",
+    "trim_data": "no",
+    "validation_data": "no"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "PREPRODUCTION",
+   "implementation_usefulness": {
+    "rating": "DOMAIN_METADATA_ONLY",
+    "note": "Establishes the configuration break: the original T-10 was superseded by the redesigned T-10S (first flight 1981 per the extract), which led to the production aircraft. T-10 data never transfer to the production Su-27."
+   },
+   "validation_usefulness": {
+    "rating": "NONE",
+    "note": ""
+   },
+   "limitations": [
+    "The press pages ('СМИ о нас') are media articles republished by the manufacturer, not engineering statements.",
+    "Search extracts only (sukhoi.org blocked)."
+   ],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-GORDON-2007-MIDLAND",
+   "title": "Sukhoi Su-27 (Famous Russian Aircraft)",
+   "authors": [
+    "Gordon, Yefim"
+   ],
+   "organization": "Midland Publishing (Midland Counties Publications)",
+   "year": 2007,
+   "report_number": "ISBN 9781857802474",
+   "ntrs_id": null,
+   "public_url": "https://books.google.com/books/about/Sukhoi_Su_27.html?id=n_fjAAAACAAJ",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: identity, history and configuration lineage",
+   "aircraft": "Su-27 family",
+   "aircraft_variant": "Whole family, prototypes to derivatives",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "History to 2007",
+   "configuration_ids": [
+    "SU27-CFG-T10-PROTOTYPE",
+    "SU27-CFG-T10S-DEVELOPMENT",
+    "SU27-CFG-BASELINE-SU27S",
+    "SU27-CFG-DERIV-SU30",
+    "SU27-CFG-DERIV-OTHER"
+   ],
+   "topics": [
+    "programme history",
+    "variants"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "NONE",
+    "note": "Secondary history (544 pp.). Useful to keep prototypes and variants apart; any number it quotes is a historian's secondary figure and never model authority."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": ""
+   },
+   "limitations": [
+    "Catalogue record only; not read."
+   ],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "A 2019 expanded edition (Gordon & Komissarov, 'Sukhoi Su-27 & 30/33/34/35', ISBN 9781910809181) treats derivatives in the same volume: never take a number from it without the variant it belongs to.",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-TSAGI-CENTENARY-ARTICLE",
+   "title": "Су-27 — к 100-летию ЦАГИ в истории авиации (Su-27: TsAGI's centenary in aviation history)",
+   "authors": [
+    "UNCONFIRMED"
+   ],
+   "organization": "Aviatsiya Rossii (aviation21.ru) republication; original author and organisation UNCONFIRMED (TsAGI centenary material)",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": "https://aviation21.ru/su-27-k-100-letiyu-cagi-v-istorii-aviacii/",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: flight control",
+   "aircraft": "Su-27",
+   "aircraft_variant": "NOT_STATED (design-phase narrative)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "Fly-by-wire with stability augmentation; subsonic static instability; AoA-scheduled leading-edge flaps (per extract)",
+   "date_or_phase": "Design phase (TsAGI proposals adopted)",
+   "configuration_ids": [
+    "SU27-CFG-T10S-DEVELOPMENT",
+    "SU27-CFG-FAMILY-UNSPECIFIED"
+   ],
+   "topics": [
+    "TsAGI contributions",
+    "relaxed static stability",
+    "fly-by-wire",
+    "leading-edge flap schedule"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "yes",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "DOMAIN_METADATA_ONLY",
+    "note": "Architecture facts usable as design features to reproduce, never as numbers: fly-by-wire control with stability augmentation, static instability at subsonic speed, leading-edge flap deflection increasing continuously with angle of attack."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": "Qualitative."
+   },
+   "limitations": [
+    "Search extract only.",
+    "The same search summary also described SDU modes ('flight', 'take-off/landing', emergency direct link), g/AoA limiting and control of 'canards'. That text could not be attributed to this article, and canards indicate a derivative, so it is not recorded as baseline Su-27 data."
+   ],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-SPACEPHYS-SDU-10MK",
+   "title": "Система дистанционного управления СДУ-10МК (самолет СУ-30МК) (SDU-10MK fly-by-wire system, Su-30MK)",
+   "authors": [
+    "UNCONFIRMED"
+   ],
+   "organization": "spacephys.ru ('Лаборатория космических исследований'); organisation identity UNCONFIRMED",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": "http://www.spacephys.ru/sistema-distantsionnogo-upravleniya-sdu-10mk-samolet-su-30mk",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: derivatives (never baseline authority)",
+   "aircraft": "Su-30MK (derivative)",
+   "aircraft_variant": "Su-30MK",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "SDU-10MK",
+   "date_or_phase": "NOT_STATED",
+   "configuration_ids": [
+    "SU27-CFG-DERIV-SU30"
+   ],
+   "topics": [
+    "derivative FCS"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "implementation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": "Su-30MK FCS. DERIVATIVE_ONLY: never baseline Su-27 authority, whatever the page contains."
+   },
+   "validation_usefulness": {
+    "rating": "NONE",
+    "note": ""
+   },
+   "limitations": [
+    "Title only."
+   ],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-UEC-2017-AL31F-NEWS",
+   "title": "ОДК возобновила производство двигателей палубных истребителей Су-33 (UEC resumed production of engines for Su-33 carrier fighters)",
+   "authors": [
+    "United Engine Corporation (UEC)"
+   ],
+   "organization": "United Engine Corporation (Rostec)",
+   "year": 2017,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": "https://www.uecrus.com/rus/presscenter/odk_news/2017/?ELEMENT_ID=2725",
+   "pdf_url": null,
+   "mirror_url": "https://rostec.ru/media/news/4519134/",
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_WEB_PAGE",
+   "retrieval_status": "NOT_RETRIEVED_EGRESS_BLOCKED",
+   "verification_level": "CONTENT_EXTRACT_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: AL-31F propulsion",
+   "aircraft": "Su-27 family (engine statement); the news concerns Su-33 engines",
+   "aircraft_variant": "Family statement ('самолеты семейства Су-27')",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "AL-31F afterburning turbofan with variable nozzle; AL-31FP (vectoring) and AL-31FN named as variants",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "2017 news",
+   "configuration_ids": [
+    "ENG-AL-31F",
+    "SU27-CFG-DERIV-OTHER"
+   ],
+   "topics": [
+    "engine identity",
+    "thrust class"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "yes",
+    "thrust_data": "no",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "implementation_usefulness": {
+    "rating": "DOMAIN_METADATA_ONLY",
+    "note": "Official identity statement: AL-31F afterburning turbofan with variable nozzle, 12,500 kgf class, installed on Su-27-family aircraft. Rating condition not stated in the extract. A class figure, not a deck."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": "Order-of-magnitude sanity bound only."
+   },
+   "limitations": [
+    "The same sentence is indexed on the UEC and Rostec pages and reposts; attribution to the UEC page rests on the search index, not a page read.",
+    "The news is about Su-33 engines; only the general AL-31F sentence is used."
+   ],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "AIAA-93-0183",
+   "title": "What Makes the Cobra Maneuver Possible?",
+   "authors": [
+    "Ericsson, L. E."
+   ],
+   "organization": "Lockheed Missiles & Space Co.",
+   "year": 1993,
+   "report_number": "AIAA 93-0183 (31st Aerospace Sciences Meeting, Reno)",
+   "ntrs_id": null,
+   "public_url": "https://doi.org/10.2514/6.1993-183",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: aerodynamics and high-alpha research",
+   "aircraft": "Su-27 (demonstrated manoeuvre; aircraft data source NOT_STATED)",
+   "aircraft_variant": "NOT_STATED",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "1993 paper",
+   "configuration_ids": [
+    "SU27-CFG-FAMILY-UNSPECIFIED"
+   ],
+   "topics": [
+    "cobra",
+    "unsteady aerodynamics",
+    "post-stall"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "NONE",
+    "note": "Western analysis of the unsteady aerodynamics that make the Cobra possible. Not Sukhoi data."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": "Physical reasoning for a qualitative cross-check of post-stall pitch behaviour."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "JAIRCRAFT-1995-ERICSSON-COBRA",
+     "relation": "same author; follow-on note"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "JAIRCRAFT-1995-ERICSSON-COBRA",
+   "title": "Cobra Maneuver Unsteady Aerodynamic Considerations",
+   "authors": [
+    "Ericsson, L. E."
+   ],
+   "organization": "UNCONFIRMED (Lockheed Missiles & Space Co. in the 1993 paper)",
+   "year": 1995,
+   "report_number": "J. Aircraft 32(1):214-216",
+   "ntrs_id": null,
+   "public_url": "https://doi.org/10.2514/3.46706",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: aerodynamics and high-alpha research",
+   "aircraft": "Su-27 (demonstrated manoeuvre; aircraft data source NOT_STATED)",
+   "aircraft_variant": "NOT_STATED",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "1995 note",
+   "configuration_ids": [
+    "SU27-CFG-FAMILY-UNSPECIFIED"
+   ],
+   "topics": [
+    "cobra",
+    "unsteady aerodynamics"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "NONE",
+    "note": "Engineering note on Cobra unsteady aerodynamics. Not Sukhoi data."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": "As AIAA-93-0183."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "AIAA-93-0183",
+     "relation": "same author; earlier paper"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "JAIRCRAFT-1994-GOMAN-KHRABROV",
+   "title": "State-Space Representation of Aerodynamic Characteristics of an Aircraft at High Angles of Attack",
+   "authors": [
+    "Goman, M.",
+    "Khrabrov, A."
+   ],
+   "organization": "TsAGI",
+   "year": 1994,
+   "report_number": "J. Aircraft (1994); volume, issue and DOI not captured",
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: generic / not-Su-27 configurations",
+   "aircraft": "Not a Su-27 source (method; test articles not captured)",
+   "aircraft_variant": "NOT_STATED",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "1994 paper",
+   "configuration_ids": [
+    "SU27-CFG-NOT-SU27-GENERIC"
+   ],
+   "topics": [
+    "unsteady aerodynamics",
+    "state-space model",
+    "flow-separation state variable",
+    "high angle of attack"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "yes",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "METHOD_ONLY",
+    "note": "The TsAGI state-space formulation (an internal flow-state variable with its own lag equation) of the kind the Su-27 papers describe. A method to implement with Maverick-owned or tuned parameters, not a source of Su-27 parameters."
+   },
+   "validation_usefulness": {
+    "rating": "NONE",
+    "note": ""
+   },
+   "limitations": [
+    "Journal, year and title from search extracts; volume, pages and DOI not captured."
+   ],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "ICAS-2002-POGOSYAN-SU27",
+     "relation": "describes a Su-27 model of this general kind (link not established from the paper itself)"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "PAS-1997-GOMAN-ZAGAINOV-KHRAMTSOVSKY",
+   "title": "Application of Bifurcation Methods to Nonlinear Flight Dynamics Problems",
+   "authors": [
+    "Goman, M. G.",
+    "Zagainov, G. I.",
+    "Khramtsovsky, A. V."
+   ],
+   "organization": "TsAGI",
+   "year": 1997,
+   "report_number": "Prog. Aerosp. Sci. 33:539-586",
+   "ntrs_id": null,
+   "public_url": "https://www.sciencedirect.com/science/article/abs/pii/S0376042197000018",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: generic / not-Su-27 configurations",
+   "aircraft": "Not a Su-27 source: examples F-4, F-14, F-15 and HIRM (per abstract extract)",
+   "aircraft_variant": "NOT_STATED",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "1997 review",
+   "configuration_ids": [
+    "SU27-CFG-NOT-SU27-GENERIC"
+   ],
+   "topics": [
+    "bifurcation analysis",
+    "roll coupling",
+    "stall",
+    "spin"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "METHOD_ONLY",
+    "note": "Global stability and bifurcation analysis. Its aircraft examples are F-4, F-14, F-15 and HIRM, with no Su-27 data despite TsAGI authorship; one author also wrote the ICAS 2002 Su-27 paper."
+   },
+   "validation_usefulness": {
+    "rating": "METHOD_ONLY",
+    "note": "A method to check a model's high-alpha equilibria; not Su-27 evidence."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "JAIRCRAFT-2020-WANG-QUASI-COBRA",
+   "title": "Numerical Virtual Flight Simulation of Quasi-Cobra Maneuver of a Fighter Aircraft",
+   "authors": [
+    "Wang, Nianhua",
+    "Ma, Rong",
+    "Chang, Xinghua",
+    "Zhang, Laiping"
+   ],
+   "organization": "UNCONFIRMED",
+   "year": 2020,
+   "report_number": "J. Aircraft (2020), doi 10.2514/1.C035687",
+   "ntrs_id": null,
+   "public_url": "https://doi.org/10.2514/1.C035687",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_RELEASE_PAYWALLED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "ABSTRACT_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: generic / not-Su-27 configurations",
+   "aircraft": "'A fighter aircraft' (not identified as a Su-27 in the abstract extract)",
+   "aircraft_variant": "NOT_STATED",
+   "serial_or_tail_number": null,
+   "research_configuration": "CFD virtual-flight model",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "User-defined control law (per abstract)",
+   "date_or_phase": "2020 paper",
+   "configuration_ids": [
+    "SU27-CFG-NOT-SU27-GENERIC"
+   ],
+   "topics": [
+    "CFD",
+    "virtual flight",
+    "quasi-cobra",
+    "unsteady aerodynamics"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "BACKGROUND_ONLY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "NONE",
+    "note": "CFD virtual-flight simulation of a simplified quasi-Cobra; configuration not identified as a Su-27. Recorded so it is not mistaken for Su-27 data."
+   },
+   "validation_usefulness": {
+    "rating": "LOW",
+    "note": "Phenomenology of unsteady loads in a Cobra-like pitch-up, for a different or unidentified shape."
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-FLIGHTGEAR-SU27SK-YANES19",
+   "title": "SU-27SK: Su-27SK fighter aircraft implementation for FlightGear flight simulator",
+   "authors": [
+    "yanes19 (GitHub user)"
+   ],
+   "organization": "Community (FlightGear / JSBSim)",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": "https://github.com/yanes19/SU-27SK",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_AUTHOR_HOSTED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: game and enthusiast models (prohibited as authority)",
+   "aircraft": "Su-27SK (export variant) as modelled by an enthusiast",
+   "aircraft_variant": "Su-27SK",
+   "serial_or_tail_number": null,
+   "research_configuration": "Enthusiast JSBSim model, v0.3 early development (January 2017 per extract)",
+   "engine_configuration": "As modelled",
+   "FCS_configuration": "As modelled",
+   "date_or_phase": "2017",
+   "configuration_ids": [
+    "SU27-CFG-ENTHUSIAST-GAME"
+   ],
+   "topics": [
+    "enthusiast model"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "yes",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "CROSS_VALIDATION_ONLY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": "Enthusiast model of the export Su-27SK with undocumented data provenance. Never a source of Su-27 parameters."
+   },
+   "validation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": "Not independent evidence. Do not use even as a cross-check reference."
+   },
+   "limitations": [
+    "Not cloned or read; recorded only to block its use."
+   ],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-DCS-FLIGHT-MANUAL",
+   "title": "DCS: Su-27 Flanker Flight Manual",
+   "authors": [
+    "Eagle Dynamics"
+   ],
+   "organization": "Eagle Dynamics (game developer)",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": "https://www.digitalcombatsimulator.com/upload/iblock/ed7/Su-27%20DCS%20Flaming%20Cliffs%20Flight%20Manual%20EN.pdf",
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "PUBLIC_AUTHOR_HOSTED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "CATALOGUE_VERIFIED",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: game and enthusiast models (prohibited as authority)",
+   "aircraft": "Su-27 as modelled in a commercial game",
+   "aircraft_variant": "As modelled",
+   "serial_or_tail_number": null,
+   "research_configuration": "Game flight model",
+   "engine_configuration": "As modelled",
+   "FCS_configuration": "As modelled",
+   "date_or_phase": "NOT_STATED",
+   "configuration_ids": [
+    "SU27-CFG-ENTHUSIAST-GAME"
+   ],
+   "topics": [
+    "game manual"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "CROSS_VALIDATION_ONLY",
+   "configuration_scope": "SIMULATION_ONLY",
+   "implementation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": "Game data. Never authority for any Su-27 value, limit or behaviour target."
+   },
+   "validation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": "Not independent evidence."
+   },
+   "limitations": [
+    "Not opened; recorded only to block its use."
+   ],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: web-search index extracts only. icas.org, tsagi.ru, nkj.ru, sukhoi.org, uecrus.com, aviation21.ru, html.rhhz.net, cse.dmu.ac.uk, NTRS and DTIC are blocked by this session's egress policy; the library has not opened this document."
+  },
+  {
+   "source_id": "SU27-SUKHOI-TSAGI-AERO-MASS-DATA",
+   "title": "Sukhoi / TsAGI Su-27 aerodynamic database, reference geometry, mass and inertia data",
+   "authors": [
+    "Sukhoi Design Bureau",
+    "TsAGI"
+   ],
+   "organization": "Sukhoi Design Bureau; TsAGI",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "NOT_PUBLICLY_LOCATED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: not public / not located",
+   "aircraft": "Su-27",
+   "aircraft_variant": "Production and development states (unknown split)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "Development and production",
+   "configuration_ids": [
+    "SU27-CFG-BASELINE-SU27S",
+    "SU27-CFG-T10S-DEVELOPMENT",
+    "SU27-CFG-WT-TSAGI-MODELS"
+   ],
+   "topics": [
+    "aerodynamic database",
+    "mass properties"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": "The data set behind the model described in ICAS 2002 and the T-105 tests. No public release located."
+   },
+   "validation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [
+    {
+     "source_id": "ICAS-2002-POGOSYAN-SU27",
+     "relation": "describes a model built on it"
+    },
+    {
+     "source_id": "SU27-NIZH-2008-ZHELNIN",
+     "relation": "names the 1987 T-105 tests that fed it"
+    }
+   ],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: gap record. Existence inferred from the public sources named in notes; no public copy located or sought."
+  },
+  {
+   "source_id": "SU27-SDU10-FCS-DESIGN-DATA",
+   "title": "Production Su-27 fly-by-wire control laws, gains, limiter settings, surface travel and actuator data",
+   "authors": [
+    "Sukhoi Design Bureau"
+   ],
+   "organization": "Sukhoi Design Bureau (FCS supplier UNCONFIRMED)",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "NOT_PUBLICLY_LOCATED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: not public / not located",
+   "aircraft": "Su-27",
+   "aircraft_variant": "Production Su-27 / Su-27S",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "Production FBW (designation 'SDU-10' in secondary sources)",
+   "date_or_phase": "Production",
+   "configuration_ids": [
+    "SU27-CFG-BASELINE-SU27S"
+   ],
+   "topics": [
+    "FCS gains",
+    "limiters",
+    "actuators"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "implementation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": "No public statement of control laws, gains, limiter settings, surface travel or actuator rates located."
+   },
+   "validation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: gap record. Existence inferred from the public sources named in notes; no public copy located or sought."
+  },
+  {
+   "source_id": "SU27-AL31F-PERFORMANCE-DECK",
+   "title": "AL-31F performance deck: thrust, fuel flow, installation losses and transient model",
+   "authors": [
+    "Lyulka / UEC-Saturn"
+   ],
+   "organization": "UEC-Saturn",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "NOT_PUBLICLY_LOCATED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: not public / not located",
+   "aircraft": "Su-27 family",
+   "aircraft_variant": "AL-31F (build not identified)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "AL-31F",
+   "FCS_configuration": "n/a",
+   "date_or_phase": "NOT_STATED",
+   "configuration_ids": [
+    "ENG-AL-31F"
+   ],
+   "topics": [
+    "thrust deck",
+    "engine dynamics"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "PRODUCTION_FAMILY",
+   "implementation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": "No public deck located. Do not estimate one from the class figure."
+   },
+   "validation_usefulness": {
+    "rating": "UNAVAILABLE",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: gap record. Existence inferred from the public sources named in notes; no public copy located or sought."
+  },
+  {
+   "source_id": "SU27-RLE-FLIGHT-MANUAL",
+   "title": "Su-27 flight operations manual (Руководство по лётной эксплуатации) and technical description",
+   "authors": [
+    "UNCONFIRMED"
+   ],
+   "organization": "Soviet / Russian Air Force (issuing authority UNCONFIRMED)",
+   "year": null,
+   "report_number": null,
+   "ntrs_id": null,
+   "public_url": null,
+   "pdf_url": null,
+   "mirror_url": null,
+   "local_filename": null,
+   "sha256": null,
+   "public_access_status": "NOT_PUBLICLY_LOCATED",
+   "retrieval_status": "NOT_RETRIEVED",
+   "verification_level": "SEARCH_LEAD_ONLY",
+   "aircraft_packs": [
+    "SU27"
+   ],
+   "index_group": "Su-27: not public / not located",
+   "aircraft": "Su-27",
+   "aircraft_variant": "Production (edition unknown)",
+   "serial_or_tail_number": null,
+   "research_configuration": "NOT_STATED",
+   "engine_configuration": "NOT_STATED",
+   "FCS_configuration": "NOT_STATED",
+   "date_or_phase": "NOT_STATED",
+   "configuration_ids": [
+    "SU27-CFG-BASELINE-SU27S"
+   ],
+   "topics": [
+    "operating limits",
+    "procedures"
+   ],
+   "contains": {
+    "geometry": "unknown",
+    "mass": "unknown",
+    "cg": "unknown",
+    "inertia": "unknown",
+    "aerodynamic_coefficients": "unknown",
+    "static_derivatives": "unknown",
+    "rate_derivatives": "unknown",
+    "control_derivatives": "unknown",
+    "reference_geometry": "unknown",
+    "FCS_architecture": "unknown",
+    "FCS_numeric_gains": "unknown",
+    "actuator_limits": "unknown",
+    "actuator_rates": "unknown",
+    "propulsion": "unknown",
+    "thrust_data": "unknown",
+    "source_code": "unknown",
+    "equations": "unknown",
+    "tables": "unknown",
+    "plots": "unknown",
+    "flight_data": "unknown",
+    "trim_data": "unknown",
+    "validation_data": "unknown"
+   },
+   "important_pages": [],
+   "important_figures": [],
+   "important_tables": [],
+   "page_index_status": "NOT_INDEXED_R0",
+   "provenance_grade": "ORIGINAL_PRIMARY",
+   "configuration_scope": "UNKNOWN",
+   "implementation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": "No official public release located. Unofficial copies may circulate; their release status is not established. The library neither sought nor used them, and they may not be used as a source."
+   },
+   "validation_usefulness": {
+    "rating": "PROHIBITED",
+    "note": ""
+   },
+   "limitations": [],
+   "known_conflicts": [],
+   "related_sources": [],
+   "existing_maverick_analysis": [],
+   "notes": "",
+   "verification_notes": "SU27-R0 2026-09-26: gap record. Existence inferred from the public sources named in notes; no public copy located or sought."
+  }
+ ]
+}
