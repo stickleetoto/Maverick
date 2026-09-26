@@ -268,6 +268,9 @@ Here u, v, w = V (cos α cos β, sin β, sin α cos β).
   - **Point 165** is a supercritical pitchfork: a lateral real eigenvalue changes sign on the symmetric branch, not on the turning branches.
   - **Mirror spectra** are identical.
   - **Disagreements with Table VII's "stable" caption:** the fold saddles, and 18 symmetric rows at α 13.0–14.1°, where the source's printed CMMQ is positive.
+- **WP-3E nonlinear time-domain check — ✅ DONE** (`F15_RESEARCH_TIME_DOMAIN_STABILITY_V1.0.md`).
+  - **Folds:** these turning equilibria really are saddles between the printed folds. At all four folds the fold mode grows on one side and decays on the other, at the predicted rates.
+  - **Pitchfork:** perturbed on the unstable symmetric side, the nonlinear model departs into mirror-image turns and settles on WP-3C turning equilibria (φ = ±62.82°).
 
 ## 13. Not done
 

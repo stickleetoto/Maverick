@@ -1,0 +1,9 @@
+state,parity,largest_gap,largest_excursion,bitwise
+alpha,even,0,0.0087480515017202276,true
+beta,odd,0,0.0052359877559829881,true
+p,odd,0,0.0698331152535052,true
+q,even,0,0.016196753709629211,true
+r,odd,0,0.02000615296250146,true
+theta,even,0,0.042141775089947958,true
+phi,odd,0,0.076006353146611638,true
+V,even,0,13.337653131286686,true

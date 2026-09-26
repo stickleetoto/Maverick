@@ -10,7 +10,7 @@ target_config_id:  NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100
 mass_state_id:     NASA_F15B_836_BASELINE_8K_FUEL_MASS_STATE
 unity:             6000.3.16f1
 edit_scope:        Assets/MaverickFresh/Scripts/FlightDynamics/**, Docs/Reference/**
-known_good:        673 passed / 0 failed (15 headless suites); 348 runtime + 33 editor scripts compile, 0 errors
+known_good:        703 passed / 0 failed (16 headless suites); 352 runtime + 33 editor scripts compile, 0 errors
 playmode_flight:   NOT RUN
 exact_path:        FAIL-CLOSED
 research_path:     WP-1 done - F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH, structurally prepared at M0.6/20k only; uncontrolled (zero surface travel); 8,300 lbf total fixed thrust
@@ -19,6 +19,8 @@ wp3a:              done - M0.6 = coefficient-fit condition (source varies V, fix
 wp3b:              done - source-faithful research trim solver (symmetric), off the body; 89 symmetric Table VII states recovered from perturbed starts, 356/356 converged, all within print resolution; runtime q still ISA-based (recorded gap, D11)
 wp3c:              done - turning/helical trim with phi fixed; 80 non-symmetric Table VII states recovered (320/320), all within print floor + numerical uncertainty; pitchfork 165 solved symmetric; mirror parity exact; no extra root found
 wp3d:              done - source stability (FUNX eigenvalues) at all 170 equilibria: 127 stable / 40 unstable / 3 near-neutral vs "all stable" in the source; disagreements = fold saddles (22) + printed-CMMQ longitudinal pair at alpha 13-14 deg (18); folds/pitchfork are eigenvalue zeros; supercritical pitchfork; Baumann's -19.73 deg Hopf found at -19.33; SOURCE MODEL ONLY
+wp3e:              done - nonlinear RK4 time-domain verification of WP-3D (35 cases, within 1 %; CMMQ band grows +0.81/s, fold saddles real, pitchfork breaks symmetry, mirror bit-identical) + source stability conflict audit: PUBLIC PRINTINGS AGREE - EXECUTED AUTO MODEL MAY DIFFER; no model change
+research_source_path: FROZEN as a research reference (as printed, fully characterized off the body); not flight-ready (D11, surface travel)
 sources:           E:\f15-sources\ (Baumann ADA217366, Davison ADA256613 - outside the repo)
 ```
 
@@ -41,11 +43,12 @@ sources:           E:\f15-sources\ (Baumann ADA217366, Davison ADA256613 - outsi
 | **Table VII** (WP-3A) | `Validation/MavF15BaumannTableVii` (+ generated data), `MavF15TableViiEquilibriumReproduction` — validation only |
 | **research trim** (WP-3B / 3C) | `MavF15AfitResearchTrimSolver.cs`: `SolveSymmetric` / `EvaluateSymmetricResidual`, `SolveTurning` / `EvaluateTurningResidual` / `TurningSearchBounds`, `MavF15AfitResearchSourceEnvironment`; round trips in `Validation/MavF15TableViiTrimRecovery` and `Validation/MavF15TableViiTurningRecovery` |
 | **research source dynamics / stability** (WP-3D) | `MavF15AfitResearchSourceDynamics.cs`: `EvaluateStateDerivative`, `KConstants` (research-only, called only from Validation/); analysis in `Validation/MavF15ResearchStabilityAnalysis`, eigensolver `Validation/MavValidationEigenSolver`, dataset export `MavF15ResearchStabilityValidation.ExportDataset` |
+| **time-domain stability / conflict audit** (WP-3E) | `Validation/MavValidationRk4Integrator`, `Validation/MavF15ResearchTimeDomainStability` (catalogue, ±eigenvector experiments, symmetry breaking, mirror), `Validation/MavF15ResearchStabilityConflictAudit`; dataset export `MavF15ResearchTimeDomainValidation.ExportDataset` |
 | **research configuration** (WP-1) | `MavF15AfitResearchFlightDynamicsProfile`, `MavF15AfitResearchMassReference`, `MavF15AfitResearchFixedThrust` / `MavF15AfitResearchThrustSource`, `MavF15AfitResearchIdentity`, `MavF15InertiaBasis` |
 
 ## Validation suites — `…/FlightDynamics/Validation/`
 
-`MavF15MassReferenceValidation` (45) · `MavF15ReferenceGeometryValidation` (51) · `MavF15BaumannTranscriptionValidation` (28) · `MavF15ControlPathValidation` (79) · `MavF15PropulsionValidation` (198) · `MavF15ResearchContaminationValidation` (32) · `MavF15ResearchProfileValidation` (35) · `MavF15ResearchPipelineValidation` (13, editor-only, drives the real body through the `StepPhysicsForValidation` seam — **not PlayMode**) · `MavF15Nasa836FcsStructureValidation` (24) · `MavF15Nasa836ValidationDataValidation` (16) · `MavF15ResearchControlAuthorityValidation` (21) · `MavF15BaumannSourceConditionValidation` (26) · `MavF15ResearchTrimSolverValidation` (34) · `MavF15ResearchTurningTrimValidation` (31) · `MavF15ResearchStabilityValidation` (40)
+`MavF15MassReferenceValidation` (45) · `MavF15ReferenceGeometryValidation` (51) · `MavF15BaumannTranscriptionValidation` (28) · `MavF15ControlPathValidation` (79) · `MavF15PropulsionValidation` (198) · `MavF15ResearchContaminationValidation` (32) · `MavF15ResearchProfileValidation` (35) · `MavF15ResearchPipelineValidation` (13, editor-only, drives the real body through the `StepPhysicsForValidation` seam — **not PlayMode**) · `MavF15Nasa836FcsStructureValidation` (24) · `MavF15Nasa836ValidationDataValidation` (16) · `MavF15ResearchControlAuthorityValidation` (21) · `MavF15BaumannSourceConditionValidation` (26) · `MavF15ResearchTrimSolverValidation` (34) · `MavF15ResearchTurningTrimValidation` (31) · `MavF15ResearchStabilityValidation` (40) · `MavF15ResearchTimeDomainValidation` (30)
 
 Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidationBatchAdapter.RunBatch`. The exact command line is in `F15_USER_VALIDATION_PLAN_V1.0.md` §1.
 
@@ -65,7 +68,9 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 | Table VII dataset and static reproduction | `F15_TABLE_VII_EQUILIBRIUM_VALIDATION_V1.0.md` |
 | research trim solver; runtime density gap | `F15_RESEARCH_TRIM_SOLVER_V1.0.md` |
 | turning / helical trim; pitchfork; mirror parity | `F15_RESEARCH_TURNING_TRIM_V1.0.md` |
-| source stability / eigenvalues; dataset; next WPs | `F15_RESEARCH_STABILITY_ANALYSIS_V1.0.md` (data: `Data/F15/stability/`) |
+| source stability / eigenvalues; dataset | `F15_RESEARCH_STABILITY_ANALYSIS_V1.0.md` (data: `Data/F15/stability/`) |
+| nonlinear time-domain verification; next WPs | `F15_RESEARCH_TIME_DOMAIN_STABILITY_V1.0.md` (data: `Data/F15/stability_time_domain/`) |
+| why the printed equations and the thesis stability presentation disagree | `F15_RESEARCH_STABILITY_CONFLICT_AUDIT_V1.0.md` |
 | target freeze, mass correction | `F15_FULL_SCALE_TARGET_FREEZE_V0.1.md` |
 | S / c̄ / b audit | `F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md` |
 | McDonnell lineage | `F15_A4172_SOURCE_LINEAGE_V0.1.md`, `F15_DN1180_SOURCE_LINEAGE_V0.1.md` |
@@ -104,10 +109,10 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 ## Next developer's first action
 
 1. Check out the branch.
-2. Run the fifteen suites (validation plan §1) and confirm **673 / 0**.
-3. WP-1, WP-2 and WP-3A–3D are complete. Every assembled Table VII equilibrium (89 symmetric, 80 turning, the pitchfork) is recovered off the body, and its source-model stability is known (`F15_RESEARCH_STABILITY_ANALYSIS_V1.0.md`). Next:
-   - **The CMMQ question (D3)**: the printed pitch-damping fit makes α 11–14° unstable where Baumann's Figure C-7 draws it stable. Compare against any printed Cmq curve; never tune it.
-   - **Pseudo-arclength continuation (D16)**, to reproduce the source's diagrams through the located folds, fork and Hopf points (analysis §16).
-   - **A staged research flight (D17)**: first integrate the source RHS off the body against the eigenvalue predictions, then a Rigidbody phase only after the prerequisites below.
+2. Run the sixteen suites (validation plan §1) and confirm **703 / 0**.
+3. WP-1, WP-2 and WP-3A–3E are complete. Every assembled Table VII equilibrium (89 symmetric, 80 turning, the pitchfork) is recovered off the body. Its source-model stability is known (WP-3D) and verified in the nonlinear time domain (WP-3E). The source-model research path is frozen as a research reference. Next:
+   - **The CMMQ question (D3)**: read McDonnell 1990 (DTIC ADA230462) pp.41–42 and Fig. 4-2 (needs download permission). All public printings agree, and the executed AUTO model may differ (`F15_RESEARCH_STABILITY_CONFLICT_AUDIT_V1.0.md`). Never tune CMMQ.
+   - **Pseudo-arclength continuation (D16)**, to reproduce the source's diagrams through the located folds, fork and Hopf points, and to see whether AUTO's own logic flags the α 11/14° Hopf points.
+   - **A research Rigidbody phase (D17 stage 2)**, only after the prerequisites below. Stage 1 (off-body integration) is done.
    - **D11**, the research-only runtime environment policy (`F15_RESEARCH_TRIM_SOLVER_V1.0.md` §10). Any flying source reproduction needs it first.
    - Still open for flying trim: research surface travel.

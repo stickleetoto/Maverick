@@ -17,6 +17,14 @@
   - they **disagree** on the α 11–14° longitudinal pair and on the fold saddles.
 - **Mirror spectra:** identical. A(mirror) = S·A·S to 2.5e-14.
 
+> **WP-3E verified these eigenvalues in the nonlinear source dynamics** (`F15_RESEARCH_TIME_DOMAIN_STABILITY_V1.0.md`), by RK4 integration of this unchanged RHS over 35 cases.
+> - **Agreement:** rates and frequencies match within 1 % (typically 0.001–0.4 %).
+> - **The CMMQ band** grows at the predicted +0.81 /s.
+> - **The fold saddles** grow and their neighbours decay.
+> - **Pitchfork:** it breaks symmetry into opposite turns.
+>
+> The source conflict is audited in `F15_RESEARCH_STABILITY_CONFLICT_AUDIT_V1.0.md`: **PUBLIC PRINTINGS AGREE — EXECUTED AUTO MODEL MAY DIFFER.**
+
 | | |
 |---|---|
 | Source RHS | `F15/MavF15AfitResearchSourceDynamics.cs`: `EvaluateStateDerivative`, `KConstants`. Pure and research-only; nothing outside Validation/ calls it. |
@@ -259,6 +267,12 @@ Against this figure:
 - **The fold disagreement** cannot be reconciled with any smooth 8-state model that has these equilibria, at the figure's resolution.
 - **Neither is resolved by tuning.** The coefficients are the source's as printed.
 
+> **WP-3E follow-up** (`F15_RESEARCH_STABILITY_CONFLICT_AUDIT_V1.0.md`).
+> - **Nonlinear confirmation:** both instabilities hold in the nonlinear time domain.
+> - **Davison agrees with Baumann's presentation:** his Figure 7 (12-state, CAS off; the same equilibria) also draws α 11–14° stable.
+> - **Every source-supported alternative reading is ruled out** by the source's own turning equilibria: sign, normalization, units, inertia, actuator states and Jacobian construction.
+> - **Unresolved:** which CMMQ the executed AUTO runs used.
+
 ## 9. Folds (`[S14]`)
 
 **Method.** Each fold is bracketed by the printed neighbours of a printed stabilator extremum. Along φ, where WP-3C's parameterization passes through folds smoothly:
@@ -409,7 +423,7 @@ Agreement with the source is reported, never asserted.
 - **Figure C-7:** it can check whether the source's full diagram (C-1…C-9) reproduces with the printed CMMQ.
 - **Periodic orbits:** AUTO also computed periodic solutions from the Hopf points, which needs continuation.
 
-**A research-only runtime flight phase — justified only in stages.**
+**A research-only runtime flight phase — justified only in stages.** Stage 1 (off-body integration) was **done in WP-3E**, and it confirmed every prediction below.
 - **What the eigenvalues now predict**, as concrete time-domain checks:
   - hold at stable points (e.g. 20, 150);
   - drift at the saddles (doubling ≈ 46 s at 128);
