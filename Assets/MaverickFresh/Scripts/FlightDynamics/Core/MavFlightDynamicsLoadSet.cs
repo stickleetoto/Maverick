@@ -36,6 +36,12 @@ namespace MaverickFresh.FlightDynamics
         [Tooltip("How many times the inertial coupling correction was added this step. Must be 0 or 1.")]
         public int inertialContributions;
 
+        [Tooltip("Gravity, in aero body axes, ONLY when a research environment owns gravity through the load set (Rigidbody.useGravity off). Zero otherwise. Deliberately NOT part of totalForceAeroBodyN, which stays the non-gravitational (specific) force an accelerometer feels.")]
+        public Vector3 gravitationalForceAeroBodyN;
+
+        [Tooltip("How many times gravity was added this step. Must be 0 or 1, and is always 0 unless the environment owns gravity.")]
+        public int gravitationalContributions;
+
         [Tooltip("Set once the accumulated total has been handed to the load-application boundary.")]
         public bool applied;
 
@@ -55,6 +61,26 @@ namespace MaverickFresh.FlightDynamics
         public bool HasInertialCorrection
         {
             get { return inertialContributions > 0; }
+        }
+
+        public bool HasGravitational
+        {
+            get { return gravitationalContributions > 0; }
+        }
+
+        /// <summary>
+        /// The force handed to the Rigidbody: the non-gravitational total, plus gravity when - and
+        /// only when - the load set owns gravity. Bit-identical to <see cref="totalForceAeroBodyN"/>
+        /// whenever gravity is Unity's, which is every aircraft except an opted-in research one.
+        /// </summary>
+        public Vector3 AppliedForceAeroBodyN
+        {
+            get
+            {
+                return gravitationalContributions > 0
+                    ? totalForceAeroBodyN + gravitationalForceAeroBodyN
+                    : totalForceAeroBodyN;
+            }
         }
 
         /// <summary>
@@ -81,7 +107,8 @@ namespace MaverickFresh.FlightDynamics
             {
                 return aerodynamicContributions <= 1
                        && propulsiveContributions <= 1
-                       && inertialContributions <= 1;
+                       && inertialContributions <= 1
+                       && gravitationalContributions <= 1;
             }
         }
 
@@ -99,6 +126,8 @@ namespace MaverickFresh.FlightDynamics
             aerodynamicContributions = 0;
             propulsiveContributions = 0;
             inertialContributions = 0;
+            gravitationalForceAeroBodyN = Vector3.zero;
+            gravitationalContributions = 0;
             applied = false;
             stepIndex = physicsStepIndex;
         }
@@ -163,6 +192,28 @@ namespace MaverickFresh.FlightDynamics
         }
 
         /// <summary>
+        /// Adds gravity as its own channel. Returns false (and adds nothing) if gravity was already
+        /// contributed this step or the set was already applied.
+        ///
+        /// Called only by <see cref="MavSixDoFBody"/>, and only when the environment owns gravity
+        /// through the load set - in which case Unity's own gravity is off, so the aircraft still
+        /// feels gravity exactly once. It is NOT added to <see cref="totalForceAeroBodyN"/>: gravity
+        /// is not a specific force, and an accelerometer does not measure it.
+        /// </summary>
+        public bool AddGravitational(Vector3 forceAeroBodyN)
+        {
+            if (applied || gravitationalContributions > 0)
+            {
+                gravitationalContributions++;
+                return false;
+            }
+
+            gravitationalForceAeroBodyN = forceAeroBodyN;
+            gravitationalContributions = 1;
+            return true;
+        }
+
+        /// <summary>
         /// Marks the accumulated total as handed to the Rigidbody boundary.
         /// Returns false when application must be refused: already applied, or a source
         /// contributed more than once.
@@ -180,7 +231,9 @@ namespace MaverickFresh.FlightDynamics
                 reason = "duplicate load contribution detected (aero="
                          + aerodynamicContributions
                          + ", propulsion=" + propulsiveContributions
-                         + ", inertial=" + inertialContributions + ")";
+                         + ", inertial=" + inertialContributions
+                         + (gravitationalContributions > 0 ? ", gravity=" + gravitationalContributions : "")
+                         + ")";
                 return false;
             }
 
@@ -196,7 +249,8 @@ namespace MaverickFresh.FlightDynamics
         /// </summary>
         public bool IsFinite()
         {
-            return IsFiniteVector(totalForceAeroBodyN) && IsFiniteVector(totalMomentAeroBodyNm);
+            return IsFiniteVector(totalForceAeroBodyN) && IsFiniteVector(totalMomentAeroBodyNm)
+                && IsFiniteVector(gravitationalForceAeroBodyN);
         }
 
         private static bool IsFiniteVector(Vector3 v)

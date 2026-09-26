@@ -213,7 +213,7 @@ The source does bifurcation work, so one V was never assumed to have one equilib
 - **Gravity differs too:** Unity's project gravity is 9.81 m/s², against the source's G = 32.174 ft/s² = 9.80664 m/s², a relative +3.43e-4.
 - **WP-3B does not touch the shared six-DoF atmosphere path** (`[R13]`: bit-identical atmosphere samples before and after).
 
-**Follow-up design:** a research-only runtime environment policy (not implemented; D11).
+**Follow-up design:** a research-only runtime environment policy (D11). **Implemented in WP-4A** (`F15_RESEARCH_RUNTIME_PREREQUISITES_V1.0.md` §1–2). As built, the policy is honoured in either condition mode and gravity is included; the design below is kept as written.
 
 **1. Where it lives.** A `MavResearchEnvironmentPolicy` on the **research profile**: `StandardAtmosphere` (default), or `SourceFixedDensity`.
 
@@ -225,7 +225,7 @@ The source does bifurcation work, so one V was never assumed to have one equilib
 This is the same gating as `conditionMode` (`MavF15AeroModel.ResolveConditionMode`). The exact 836 id is refused.
 
 **3. What it changes.** Only the `MavAtmosphereSample` the body passes to `BuildFlightState`:
-- **Density** becomes RHO in SI, 0.653142 kg/m³, at every altitude.
+- **Density** becomes RHO in SI, 0.6531396 kg/m³ (corrected in WP-4A; this line first said 0.653142), at every altitude.
 - **The altitude gate:** `SourceReproduction`'s ±1 m altitude gate can then be dropped for density purposes. Altitude has no meaning in the source.
 - **Speed of sound** stays ISA at 6,096 m, labelled "report-only". The source computes no Mach, and the research gate only uses Mach to flag the fit condition.
 

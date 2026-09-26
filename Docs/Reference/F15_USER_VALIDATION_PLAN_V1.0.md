@@ -9,7 +9,7 @@
 ## Phase 1 — open, compile, run the existing suites
 
 1. Open the project in Unity 6000.3.16f1 on branch `claude/f15-full-implementation`. Let it import.
-2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 352 runtime + 33 editor scripts, 0 errors.
+2. **Compile.** The Console must show **0 compile errors**. The branch was checked at 359 runtime + 33 editor scripts, 0 errors.
 3. **Close the Editor** (batch mode needs the project unlocked). Run each F-15 suite headless. PowerShell, one line per suite:
 
    ```
@@ -36,7 +36,10 @@
    | `f15-turning-trim` | `MavF15ResearchTurningTrimValidation` | 31 / 0 |
    | `f15-stability` | `MavF15ResearchStabilityValidation` | 40 / 0 |
    | `f15-time-domain` | `MavF15ResearchTimeDomainValidation` | 30 / 0 |
-   | **total** | | **703 / 0** |
+   | `f15-runtime-prereq` | `MavF15ResearchRuntimePrerequisitesValidation` (editor-only) | 54 / 0 |
+   | **total** | | **757 / 0** |
+
+   **F-16 / shared regression (WP-4A touched the shared body).** Run the 22 synchronous suites of `Tools/fdm_validation_baseline_v1.json` (`fdm_phase1..3`, `f16_reference`, `f16_propulsion`, `f16_tp1538_runtime`, `gyroscopic_moment`, `shared_propulsion`, `fdm_integration`, `fdm_freeze_hardening`, `shared_propulsion_unity`, the ownership/identity scans, …) with `-fdmMethod AUTO`: **1,247 / 0**, as before WP-4A. The three PlayMode baseline suites were not run for WP-4A, whose brief forbids entering PlayMode.
 
 4. **Inspect the logs.**
    - Each JSON must say `"status": "PASS"`.
@@ -100,14 +103,15 @@ The **exact** path is still fail-closed; the check below still applies.
 **Prerequisites:**
 - a research-tagged profile provider — **done (WP-1)**;
 - a research-only thrust input — **done (WP-1)**;
-- **research-scoped control-surface travel — NOT available.** Trim needs stabilator deflection, and the research profile holds zero travel. WP-2 declared a research *demonstrated* range (−25…−5°) for static evaluation only; it is not travel.
+- **research-scoped control-surface travel — NOT available.** The research profile holds zero travel. WP-2 declared a research *demonstrated* range (−25…−5°) for static evaluation only; it is not travel. **WP-4A** adds a source-defined *static* stabilator hold, placed before arming, which is enough to sit at a known equilibrium. It is still not travel.
 - ~~a research speed-domain decision~~ — **resolved in WP-3A.** Set `conditionMode = SourceReproduction` on the research profile to admit the source-exercised 218.5–699.7 ft/s at 6,096 m. Every coefficient away from Mach 0.6 is flagged as extrapolated.
 - **Static reference already reproduced:** `f15-source-condition` `[W4]` evaluates all 170 assembled Table VII equilibria and reports residuals against print precision.
+- **Research runtime prerequisites on the body (WP-4A):** `f15-runtime-prereq` `[U11]` injects all 170 equilibria into a hidden research body and reads them back; `[U12]` prints the body's own load residual there for three environments (source / density-only / standard); `[U13]` prints a full preparation report. Nothing is flown - loads are computed in shadow and never applied.
 - **Nonlinear time-domain check off the body (WP-3E):** `f15-time-domain` `[T4]`–`[T10]` print predicted vs measured growth, decay and frequency for 35 cases, `[T8]` the symmetry-breaking runs, and `[T14]` the source-conflict hypotheses. `-fdmMethod ExportDataset` writes the time-domain CSVs into the log; extract them with `Docs/Reference/Data/F15/stability/extract_from_log.py <log> Docs/Reference/Data/F15/stability_time_domain`. Nothing is flown: it integrates the source equations only.
 - **Source stability off the body (WP-3D):** `f15-stability` `[S12]` prints every equilibrium's class and its largest-real-part eigenvalue. `[S13]` gives the source comparison, and `[S14]`/`[S15]`/`[S18]` the folds, the pitchfork and the Hopf points. The same method with `-fdmMethod ExportDataset` writes the CSV dataset into the log; extract it with `Docs/Reference/Data/F15/stability/extract_from_log.py`. These are the SOURCE MODEL's eigenvalues, not the aircraft's.
 - **Turning trim solved off the body (WP-3C):** `f15-turning-trim` `[H9]` recovers the 80 non-symmetric turning states with φ fixed. Per state it prints the eight printed/recovered values, ψ̇, the print floor and the numerical uncertainty.
 - **Research trim solved off the body (WP-3B):** `f15-research-trim` `[R5]` recovers the 89 symmetric states from perturbed starts, and prints per-state differences against the print-resolution floor.
-- **Runtime density gap — NOT closed:** the body computes q from ISA density (`[R13]`), so a flying research trim does not yet reproduce the source's fixed-density q. See D11.
+- **Runtime density gap — closed as an opt-in (WP-4A, D11):** with `densityPolicy = SourceFixedDensity` and `gravityPolicy = SourceGravity` on the research profile, the body flies the source's RHO and G. The default remains the standard atmosphere (`[R13]`'s 6.83e-4 gap).
 
 Baumann's own equilibria use a fixed **8,300 lb** total thrust at 20,000 ft (DTIC ADA217366, PDF p.34 and p.124). That figure is a research-model constant and must never enter R5 propulsion.
 

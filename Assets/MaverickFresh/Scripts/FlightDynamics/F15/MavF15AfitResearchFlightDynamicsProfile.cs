@@ -21,7 +21,13 @@ namespace MaverickFresh.FlightDynamics.F15
     /// Control-surface travel is UNAVAILABLE here too. Public F-15 sources give four conflicting
     /// travel sets (see Docs/Reference/F15_DN1180_SOURCE_LINEAGE_V0.1.md), and picking one would be
     /// invention, so the research aircraft is held at zero travel: structurally flyable, surfaces
-    /// neutral, uncontrolled. That limitation is reported, not bypassed.
+    /// neutral, uncontrolled. That limitation is reported, not bypassed. (WP-4A adds one thing and
+    /// only one: a source-defined STATIC surface setting, placed before arming, for reproducing a
+    /// known equilibrium - <see cref="MavF15AfitResearchStaticSurfaceHold"/>. It is still no travel.)
+    ///
+    /// WP-4A also lets this profile supply the source's own environment - fixed density and source
+    /// gravity - to its body, opt-in and OFF by default: see <see cref="densityPolicy"/>,
+    /// <see cref="gravityPolicy"/> and <see cref="MavF15AfitResearchRuntimeEnvironment"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MavF15AfitResearchFlightDynamicsProfile : MavFlightDynamicsProfileProvider
@@ -34,10 +40,34 @@ namespace MaverickFresh.FlightDynamics.F15
         [Tooltip("StrictFitCondition (default): Mach 0.6 / 20,000 ft only - the coefficient-fit condition. SourceReproduction: the true airspeeds Baumann's own model ran (218.5-699.7 ft/s) at its fixed 20,000-ft density, with every coefficient extrapolated from the Mach 0.6 fit and reported as such. Research only; never NASA 836. See Docs/Reference/F15_BAUMANN_SOURCE_CONDITION_AUDIT_V1.0.md.")]
         public MavF15ResearchConditionMode conditionMode = MavF15ResearchConditionMode.StrictFitCondition;
 
+        [Header("Research Runtime Environment (WP-4A; research only, OFF by default)")]
+        [Tooltip("StandardAtmosphere (default): the shared MavAtmosphereModel at the body's altitude, like every other aircraft - which does NOT reproduce the source (q 6.83e-4 low even at 6,096 m). SourceFixedDensity: the source's RHO 0.0012673 slug/ft^3 at every state. Honoured only while this profile is the six-DoF body's provider and the research runtime authority grants the body; otherwise the body applies NO loads rather than falling back. See MavF15AfitResearchRuntimeEnvironment.")]
+        public MavF15ResearchDensityPolicy densityPolicy = MavF15ResearchDensityPolicy.StandardAtmosphere;
+
+        [Tooltip("UnityProjectGravity (default): Rigidbody.useGravity with the project gravity (9.81 m/s^2). SourceGravity: the source's G 32.174 ft/s^2 (9.8066352 m/s^2), applied once by MavSixDoFBody through the load set with Rigidbody.useGravity off. Physics.gravity is never changed. Same gating as the density policy.")]
+        public MavF15ResearchGravityPolicy gravityPolicy = MavF15ResearchGravityPolicy.UnityProjectGravity;
+
         [Header("Debug")]
         public MavFlightDynamicsProfile debugBuiltProfile;
         public string debugProfileStatus = "not built";
         public string debugSourceCondition = MavF15AfitResearchIdentity.SourceConditionLabel;
+
+        [Tooltip("What the last environment resolution returned: granted, default, or REFUSED and why.")]
+        public string debugEnvironmentStatus = "not resolved";
+
+        /// <summary>
+        /// The research environment (WP-4A), or the standard one when both policies are at their
+        /// defaults. REFUSED - never the standard atmosphere - when an override was asked for and
+        /// this profile is not the body's provider or the research authority does not grant it.
+        /// </summary>
+        public override MavFlightEnvironment ResolveEnvironment(
+            MavSixDoFBody body, MavAtmosphereSample standardAtmosphere, float geometricAltitudeM)
+        {
+            MavFlightEnvironment environment = MavF15AfitResearchRuntimeEnvironment.Resolve(
+                this, body, densityPolicy, gravityPolicy, standardAtmosphere, geometricAltitudeM);
+            debugEnvironmentStatus = environment.status;
+            return environment;
+        }
 
         public override MavFlightDynamicsProfile BuildProfile()
         {

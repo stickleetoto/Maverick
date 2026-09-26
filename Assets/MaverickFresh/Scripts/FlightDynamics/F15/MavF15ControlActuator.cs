@@ -55,6 +55,13 @@ namespace MaverickFresh.FlightDynamics.F15
         [Tooltip("The same state projected onto the shared contract, plus throttle. Differential stabilator is NOT represented here and must be read from actualF15Surfaces.")]
         public MavControlInput actual;
 
+        [Header("Research Static Surface Hold (research configuration only)")]
+        [Tooltip("WP-4A. Resolved from this GameObject. When present, engaged and granted by the research runtime authority, the actual surfaces are HELD at its source-defined static setting and every command is ignored. It carries no travel, hard stop, rate or gearing. Present but not granted: surfaces held NEUTRAL and the status says why - never the command.")]
+        public MavF15AfitResearchStaticSurfaceHold researchStaticHold;
+
+        [Tooltip("True when the last step published a granted research static setting as the actual surface state.")]
+        public bool debugResearchStaticHold;
+
         public bool debugAnyChannelRefused;
         public int debugAvailableChannelCount;
         public int debugRefusedChannels;
@@ -135,6 +142,12 @@ namespace MaverickFresh.FlightDynamics.F15
 
         public void SnapToBoundedCommand()
         {
+            if (TryHoldResearchStaticSetting())
+            {
+                Publish();
+                return;
+            }
+
             bool refused;
             actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(BoundCommand(out refused));
             Publish();
@@ -142,6 +155,9 @@ namespace MaverickFresh.FlightDynamics.F15
 
         public void Step(float deltaTime)
         {
+            if (TryHoldResearchStaticSetting())
+                return;
+
             bool refused;
             MavF15SurfaceState bounded = BoundCommand(out refused);
             actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(
@@ -191,6 +207,41 @@ namespace MaverickFresh.FlightDynamics.F15
             }
 
             return next;
+        }
+
+        /// <summary>
+        /// WP-4A. When a research static hold is on this GameObject, it - not the command - decides
+        /// the actual surfaces: its source-defined setting when granted, NEUTRAL when not. Returns
+        /// false only when no hold is present (or it is disabled), leaving the normal bounded-command
+        /// path, and every aircraft without a hold, exactly as before.
+        ///
+        /// The travel and rate limits are not consulted and not changed: a static setting is not
+        /// travel, so the channels keep reporting no declared authority.
+        /// </summary>
+        private bool TryHoldResearchStaticSetting()
+        {
+            debugResearchStaticHold = false;
+            if (researchStaticHold == null || !researchStaticHold.enabled)
+                return false;
+
+            debugAvailableChannelCount = limits.AvailableChannelCount;
+            debugRefusedChannels = 4 - debugAvailableChannelCount;
+            debugAnyChannelRefused = debugAvailableChannelCount < 4;
+            debugCommandClamped = false;
+
+            MavF15SurfaceState held;
+            string reason;
+            if (!researchStaticHold.TryResolveHeldState(out held, out reason))
+            {
+                actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(MavF15SurfaceState.Neutral);
+                debugStatus = "RESEARCH STATIC HOLD REFUSED - surfaces held neutral: " + reason;
+                return true;
+            }
+
+            actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(held);
+            debugResearchStaticHold = true;
+            debugStatus = reason;
+            return true;
         }
 
         private MavF15SurfaceState BoundCommand(out bool anyRefused)
@@ -258,6 +309,9 @@ namespace MaverickFresh.FlightDynamics.F15
         {
             if (sixDoFBody == null)
                 sixDoFBody = GetComponent<MavSixDoFBody>();
+
+            if (researchStaticHold == null)
+                researchStaticHold = GetComponent<MavF15AfitResearchStaticSurfaceHold>();
         }
     }
 }
