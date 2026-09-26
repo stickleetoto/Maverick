@@ -173,5 +173,20 @@ namespace MaverickFresh.FlightDynamics
     public abstract class MavFlightDynamicsProfileProvider : MonoBehaviour
     {
         public abstract MavFlightDynamicsProfile BuildProfile();
+
+        /// <summary>
+        /// The environment <paramref name="body"/> flies in this step when this provider is its
+        /// profile provider.
+        ///
+        /// The default returns the shared standard-atmosphere sample exactly as given, with Unity's
+        /// project gravity. Only a research configuration that explicitly opts in overrides this,
+        /// and it must refuse (return an invalid environment) rather than substitute the standard
+        /// atmosphere when it cannot honour its own request.
+        /// </summary>
+        public virtual MavFlightEnvironment ResolveEnvironment(
+            MavSixDoFBody body, MavAtmosphereSample standardAtmosphere, float geometricAltitudeM)
+        {
+            return MavFlightEnvironment.Standard(standardAtmosphere, geometricAltitudeM);
+        }
     }
 }

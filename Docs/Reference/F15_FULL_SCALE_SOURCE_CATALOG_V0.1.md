@@ -247,6 +247,8 @@ A catalog entry is not automatically numeric implementation authority.
 
 ### FS-S020 — McDonnell Douglas MDC A4172 — not acquired
 
+> **Source-lineage pass:** still not public. Seven public AFIT theses cite it and six reproduce data attributed to it; they are traced, graded and page-cited in `F15_A4172_SOURCE_LINEAGE_V0.1.md`.
+
 - **Bibliographic identity:** *F-15 Stability Derivatives Mass and Inertia Characteristics*,
   USAF Series Manual `A-11-2-2-1-1` / Aero-Inertia lineage, initial publication 1976 with later
   supplement; Part II is cited in public USAF work as aerodynamic coefficients and
@@ -259,6 +261,8 @@ A catalog entry is not automatically numeric implementation authority.
   state are verified.
 
 ### FS-S021 — McDonnell Aircraft DN-1180.01-238-458 Rev. D — not acquired
+
+> **Source-lineage pass:** still not public. One public citation (Nolan 1992), no numeric reproduction. NASA TM-72861 is an independent AFFTC-lineage source, not a reproduction. See `F15_DN1180_SOURCE_LINEAGE_V0.1.md`.
 
 - **Title:** *F-15 Flight Control System Description*
 - **Organization:** McDonnell Aircraft

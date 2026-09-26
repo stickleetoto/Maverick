@@ -91,16 +91,21 @@ Only values directly supported for the NASA F-15B research test bed are frozen h
 | Field | Raw source value | SI | Authority/status |
 |---|---:|---:|---|
 | Aircraft length, excluding air-data nose boom | 63.7 ft | **19.41576 m** | FROZEN — NASA/TM-2006-213674 |
-| Wingspan | 42.8 ft | **13.04544 m** | FROZEN — NASA/TM-2006-213674 |
+| Wingspan, **physical** (tip to tip) | 42.8 ft | **13.04544 m** | FROZEN as physical geometry — NASA/TM-2006-213674; also TM-4782, TM-2005-213670. **Not** the coefficient reference span. |
 | Height | 18.7 ft | **5.69976 m** | FROZEN — NASA/TM-2006-213674 |
-| Reference wing area, `S` | UNAVAILABLE for exact 836 baseline authority | UNAVAILABLE | CONFIG_MATCH_PENDING |
-| Mean aerodynamic chord, `cbar` | UNAVAILABLE for exact 836 baseline authority | UNAVAILABLE | CONFIG_MATCH_PENDING |
+| Reference wing area, `S` | UNAVAILABLE for exact 836 baseline authority | UNAVAILABLE | **UNAVAILABLE** — audited, `F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md` |
+| Mean aerodynamic chord, `cbar` | UNAVAILABLE for exact 836 baseline authority | UNAVAILABLE | **UNAVAILABLE** — audited |
+| Coefficient reference span, `b` | UNAVAILABLE for exact 836 baseline authority | UNAVAILABLE | **UNAVAILABLE** — audited; the physical span above is a different quantity |
 | Wing leading-edge sweep | UNAVAILABLE as an exact-target frozen numeric field | UNAVAILABLE | CONFIG_MATCH_PENDING |
 | Absolute aircraft reference datum | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE |
-| Absolute aerodynamic reference point | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE |
+| Absolute aerodynamic reference point (moment reference) | UNAVAILABLE | UNAVAILABLE | UNAVAILABLE — audited; 836's CG statements are not a moment reference |
 | Reference CG definition | percent mean aerodynamic chord | percent MAC | FROZEN — NASA/TM-2012-215978 |
 
 The well-known 608-ft² / approximately 15.94-ft MAC F-15-family values occur in public NASA material for other full-scale research configurations, including preproduction/modified aircraft. They are **not promoted to direct authority for NASA 836 in R0.5** merely because the values appear plausible.
+
+The reference-geometry audit (`F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md`) traced them. The one NASA table printing 608 ft² / 15.94 ft as nondimensionalizing reference dimensions is **NF-15B 837's** (NASA/TM-2003-212027 table 1: preproduction, canards, F100-PW-229, thrust-vectoring nozzles; also 42.7-ft reference span, moment reference FS 557.2 / WL 116.3 / BL 0.0). It is graded `INCOMPATIBLE`. The production-aerobase occurrence (McAir ARO10 via Davison) is `F15_FAMILY_SUPPORT`. No 836 source prints `S`, `c̄`, a reference span or a moment reference, and none names the reference dimensions of its baseline aerodynamic model.
+
+> **Correction — the physical span was in the reference-span field.** Earlier revisions of this table listed the wingspan without saying which span it was, and `CreateExactTargetGeometry()` placed it in the coefficient reference geometry's `wingSpanM`. That field normalizes `Cl`, `Cn`, `p̂` and `r̂`, so it has to belong to the same reference set as `S` and `c̄`. Nothing in the sources makes 42.8 ft a reference span, and NASA/TM-2003-212027 shows the two quantities differing for NF-15B 837 (42.83 ft three-view, 42.7 ft reference). The coefficient reference span is now UNAVAILABLE (zero), like `S` and `c̄`. The physical 42.8 ft is unchanged, correctly named `MavF15ReferenceData.PhysicalWingSpanM`, and no longer normalizes anything. No behaviour changed: the profile already failed closed on `S`/`c̄`.
 
 No geometry is scaled from the 3/8 RPV.
 
@@ -115,15 +120,56 @@ Configuration-state tag:
 | Field | Raw source value | SI conversion | Status |
 |---|---:|---:|---|
 | Fuel state | 8,000 lb | **3,628.73896 kg** | FROZEN raw state; SI DERIVED |
-| Weight | 37,152 lb | **165,260.329 N** | FROZEN raw; SI DERIVED using 4.4482216152605 N/lbf |
-| Mass-equivalent | derived from 37,152 lb | **16,851.86373 kg** | DERIVED; not a separately published mass |
-| CG | **26.05% MAC** | same | FROZEN |
-| `Ixx` | **27,953 slug-ft²** | **37,899.17911 kg m²** | FROZEN raw; SI DERIVED |
-| `Iyy` | **190,777 slug-ft²** | **258,658.88073 kg m²** | FROZEN raw; SI DERIVED |
-| `Izz` | **213,957 slug-ft²** | **290,086.74077 kg m²** | FROZEN raw; SI DERIVED |
-| `Ixz` | **-460 slug-ft²** | **-623.676256 kg m²** | FROZEN raw reported sign; SI DERIVED |
+| Weight | **37,426 lb** | **166,479.14217 N** | FROZEN raw; SI DERIVED using 4.4482216152605 N/lbf |
+| Mass-equivalent | derived from 37,426 lb | **16,976.14804 kg** | DERIVED; not a separately published mass |
+| CG | **26.34% MAC** | same | FROZEN |
+| `Ixx` | **30,345 slug-ft²** | **41,142.29564 kg m²** | FROZEN raw; SI DERIVED |
+| `Iyy` | **198,687 slug-ft²** | **269,383.40070 kg m²** | FROZEN raw; SI DERIVED |
+| `Izz` | **223,214 slug-ft²** | **302,637.54752 kg m²** | FROZEN raw; SI DERIVED |
+| `Ixz` | **-5,070 slug-ft²** | **-6,873.99700 kg m²** | FROZEN raw reported sign; SI DERIVED |
 
 Conversion used for inertia: `1 slug-ft² = 1.3558179483314 kg m²`.
+
+### Correction — the wrong table-1 column was frozen (source-classification fix)
+
+**Earlier revisions of this freeze, and of `MavF15MassReference.cs`, carried NASA/TM-2012-215978
+table 1's "Spike extended" column while labelling it the baseline row.** The error is recorded here
+rather than quietly overwritten.
+
+| field | **previously frozen (wrong column: Spike extended)** | **correct column: Baseline F-15B test airplane** |
+|---|---:|---:|
+| Weight | 37,152 lb | **37,426 lb** |
+| CG | 26.05 % MAC | **26.34 % MAC** |
+| `Ixx` | 27,953 slug-ft² | **30,345 slug-ft²** |
+| `Iyy` | 190,777 slug-ft² | **198,687 slug-ft²** |
+| `Izz` | 213,957 slug-ft² | **223,214 slug-ft²** |
+| `Ixz` | -460 slug-ft² | **-5,070 slug-ft²** |
+
+**Why the baseline column is the one this target requires.** The frozen target is
+`NASA_F15B_836_SN74_0141_PRE_QUIET_SPIKE_BASELINE_F100_PW_100` — explicitly the aircraft *before*
+the Quiet Spike article was fitted. Table 1's other two columns describe the aircraft *with* that
+article fitted, stowed and deployed. They are correct data about a different aircraft
+configuration.
+
+**Why it was not caught.** The six frozen constants carried no column identity, and the numbers give
+no hint: two of the three columns share a weight (37,152 lb), all three CGs sit within 0.3 % MAC, and
+every inertia is the same order of magnitude. Nothing in the code or the tests could tell one column
+from another.
+
+**Affected lineage.** Every commit from the original R1 freeze through `b0a66b6` carried the
+spike-extended values. No downstream tuning was ever performed against them — the F-15 has never
+flown in this repository, the aerodynamic profile fails closed on unavailable `S`/`c̄`, and thrust
+is zero — so nothing was compensated to suit the wrong mass and nothing needs un-compensating.
+
+**What changed to prevent a repeat.** All three table-1 columns are now represented explicitly in
+`MavF15Table1MassStates`, each carrying its printed column heading, and `MavF15MassReference`
+declares which one it selects. `MavF15MassReferenceValidation` pins the tuple
+`(37152, 26.05, 27953, 190777, 213957, -460)` to `QuietSpikeExtended` and asserts it must **not**
+satisfy the frozen baseline target state.
+
+This is a source-classification correction, not aircraft tuning.
+
+
 
 The published `Ixz` sign is preserved as source data. A later implementation must map product-of-inertia sign into Maverick's exact rigid-body tensor convention explicitly; R0.5 does not modify that convention.
 
@@ -259,7 +305,7 @@ The existing F-15 propulsion skeleton remains unchanged.
 - NASA tail / USAF serial identity;
 - pre-Quiet-Spike baseline research-state boundary;
 - exact engine variant and engine count;
-- target length/span/height;
+- target length / **physical** span / height (physical geometry, not coefficient reference quantities);
 - 8,000-lb-fuel reference weight/CG/inertia state;
 - primary control-surface identities;
 - inlet family description;
@@ -268,7 +314,7 @@ The existing F-15 propulsion skeleton remains unchanged.
 ## 14. What is not frozen
 
 - production F-15C/F-15E identity;
-- wing reference area or MAC for exact NASA 836 authority;
+- coefficient reference area, MAC, reference span or moment reference for exact NASA 836 authority (audited UNAVAILABLE: `F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md`);
 - absolute datum/aerodynamic reference station;
 - complete flight-envelope coefficient tables;
 - high-alpha/rotary coefficients;

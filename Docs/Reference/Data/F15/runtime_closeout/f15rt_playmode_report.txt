@@ -1,0 +1,168 @@
+F-15 RESEARCH RUNTIME CLOSEOUT - PLAY MODE (F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH)
+=====================================================================================
+RESEARCH SOURCE MODEL through the Unity runtime path. Not NASA 836, not the production FCS, not gameplay.
+Unity 6000.3.16f1; temporary in-memory rigs on the empty batch scene.
+
+Representative equilibria (WP-3B / WP-3C solves; physical units):
+  symmetric point 36: stab -15.14529 deg, alpha 17.4865, beta 0.00000, p 0.000000, q 0.000000, r 0.000000, theta 14.5460, phi 0.000, V 300.800 ft/s
+  turning   point 150: stab -6.45954 deg, alpha 10.5556, beta -0.03014, p 0.007370, q 0.010680, r -0.027765, theta 13.9152, phi -21.040, V 391.118 ft/s
+  turning WP-3C prediction: heading rate -0.030648 rad/s, flight-path angle 4.0298 deg
+  PASS  EQ  both representative equilibria re-solve from the printed rows (WP-3B / WP-3C)
+
+[O] Research ownership state (minimum): rules, defaults, refusals
+  PASS  O1  F15AfitResearch: replacement writes, legacy gated off, gravity from the replacement load set only, exclusive
+  PASS  O2  Legacy / Shadow / F16Replacement / Fault rules and gravity providers are exactly as before; every mode is exclusive with one gravity source
+  PASS  O3  default ownership unchanged: a new authority is Legacy with the research safety hold ON, and the body stays unarmed
+      e.g. research ownership refused: research validation ownership is disabled by its safety hold (allowResearchValidationOwnership is false)
+      e.g. research ownership refused: fixed source density AND source gravity are mandatory for the research owner (RESEARCH ENVIRONMENT (F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH): density = standard atmosphere at the body's altitude (source density NOT reproduced); gravity = source G 32.174 ft/s^2 (9.8066352 m/s^2) through the load set, Rigidbody.useGravity off)
+  PASS  O4  refused: safety hold on; no / wrong-id grant; NASA 836, trailing-space, lower-case, suffixed and F-16 ids (5/5); standard density; Unity gravity; another armed body; F16Replacement holding physics. Every refusal left the owner Legacy and the body unarmed
+  PASS  O5  the exact research body with the source environment is granted - and armed by the authority itself - and returning to Legacy disarms it
+
+[M] Runtime mechanics of every run (research owner, one armed body, loads every step, source environment)
+  PASS  M  S-HOLD dt 0.0200           1500 steps, 1500 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.0199999921
+  PASS  M  S-HOLD dt 0.0100           3000 steps, 3000 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.009999993
+  PASS  M  S-HOLD dt 0.0050           6000 steps, 6000 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.004999993
+  PASS  M  T-HOLD dt 0.0200           1500 steps, 1500 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.0199999921
+  PASS  M  T-HOLD dt 0.0100           3000 steps, 3000 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.009999993
+  PASS  M  T-HOLD dt 0.0050           6000 steps, 6000 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.004999993
+  PASS  M  S-PERT dt 0.0200           500 steps, 500 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.0199999921
+  PASS  M  S-PERT dt 0.0100           1000 steps, 1000 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.009999993
+  PASS  M  S-PERT dt 0.0050           2000 steps, 2000 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.004999993
+  PASS  M  T-PERT dt 0.0200           500 steps, 500 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.0199999921
+  PASS  M  T-PERT dt 0.0100           1000 steps, 1000 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.009999993
+  PASS  M  T-PERT dt 0.0050           2000 steps, 2000 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.004999993
+  PASS  M  T-HOLD-GYRO-OFF dt 0.0200  1500 steps, 1500 load applications, refusals 0, research owner + armed every step True, exactly one armed body True, Unity gravity off True, fixedDeltaTime 0.0199999921
+    physics settings (first run; the dt series changes fixedDeltaTime only):
+      fixedDeltaTime 0.0199999921 s, captureFramerate 50, maximumDeltaTime 0.333333343, simulationMode FixedUpdate, autoSyncTransforms False, Physics.gravity (0.000, -9.810, 0.000) (NOT used: useGravity off), solverIterations 6/1, sleepThreshold 0.005, defaultMaxAngularSpeed 50 | rigidbody: mass 16782.918 kg, inertia (225906.4, 253451.4, 34537.9) rot (359.6451, 0.0000, 0.0000), centerOfMass (0.000, 0.000, 0.000), useGravity False, damping 0/0, interpolation None, collision Discrete, maxAngularVelocity 50, sleepThreshold 0.005, isKinematic False, colliders 0
+
+[F] Frame / sign audit on the first PhysX step (source body axes X fwd, Y right, Z down vs Unity X right, Y up, Z fwd)
+    T-PERT dt 0.0200: |dv - R F/m dt| / |dv| 3.38E-005; |dx - v1 dt| 9.55E-006; |dw - I^-1 tau dt| / |dw| 4.21E-007
+      measured (p,q,r)-dot (-5.565E-001, -5.339E-004, 9.663E-002) vs source RHS (-5.565E-001, -5.339E-004, 9.663E-002): 3.19E-007 relative; Ixz-flipped inertia would give (-5.491E-001, -5.336E-004, 9.072E-002) (1.67E-002 away)
+  PASS  F1  T-PERT dt 0.0200: force mapping and gravity direction - PhysX's velocity change is exactly R F_local / m dt, with the research gravity inside F_local and no Unity gravity; position integrates the new velocity
+  PASS  F2  T-PERT dt 0.0200: moment mapping - PhysX's angular-velocity change is the Rigidbody inertia's I^-1 R tau dt
+  PASS  F3  T-PERT dt 0.0200: Ixz sign / gyroscopic term - the measured (p,q,r)-dot matches the SOURCE RHS to 3.2E-007, while a flipped Ixz would be 1.7E-002 away
+    T-PERT dt 0.0100: |dv - R F/m dt| / |dv| 6.86E-005; |dx - v1 dt| 6.28E-006; |dw - I^-1 tau dt| / |dw| 1.84E-007
+      measured (p,q,r)-dot (-5.565E-001, -5.339E-004, 9.663E-002) vs source RHS (-5.565E-001, -5.339E-004, 9.663E-002): 7.56E-008 relative; Ixz-flipped inertia would give (-5.491E-001, -5.336E-004, 9.072E-002) (1.67E-002 away)
+  PASS  F1  T-PERT dt 0.0100: force mapping and gravity direction - PhysX's velocity change is exactly R F_local / m dt, with the research gravity inside F_local and no Unity gravity; position integrates the new velocity
+  PASS  F2  T-PERT dt 0.0100: moment mapping - PhysX's angular-velocity change is the Rigidbody inertia's I^-1 R tau dt
+  PASS  F3  T-PERT dt 0.0100: Ixz sign / gyroscopic term - the measured (p,q,r)-dot matches the SOURCE RHS to 7.6E-008, while a flipped Ixz would be 1.7E-002 away
+    T-PERT dt 0.0050: |dv - R F/m dt| / |dv| 1.39E-004; |dx - v1 dt| 4.05E-004; |dw - I^-1 tau dt| / |dw| 3.42E-007
+      measured (p,q,r)-dot (-5.565E-001, -5.339E-004, 9.663E-002) vs source RHS (-5.565E-001, -5.339E-004, 9.663E-002): 5.31E-007 relative; Ixz-flipped inertia would give (-5.491E-001, -5.336E-004, 9.072E-002) (1.67E-002 away)
+  PASS  F1  T-PERT dt 0.0050: force mapping and gravity direction - PhysX's velocity change is exactly R F_local / m dt, with the research gravity inside F_local and no Unity gravity; position integrates the new velocity
+  PASS  F2  T-PERT dt 0.0050: moment mapping - PhysX's angular-velocity change is the Rigidbody inertia's I^-1 R tau dt
+  PASS  F3  T-PERT dt 0.0050: Ixz sign / gyroscopic term - the measured (p,q,r)-dot matches the SOURCE RHS to 5.3E-007, while a flipped Ixz would be 1.7E-002 away
+  PASS  F4  linear-velocity, angular-velocity and Euler-attitude initialization: the body reads back the WP-3C state (alpha, beta, p, q, r, theta, phi, V) to 2.8E-008 and heading 0 at t = 0
+
+[S] Symmetric trim hold - Table VII point 36
+    S-HOLD dt 0.0200 over 30 s:
+      max |x - equilibrium|: alpha 9.4E-008, beta 0.0E+000, p 0.0E+000, q 1.7E-007, r 0.0E+000, theta 3.0E-008, phi 0.0E+000, V 2.3E-008
+      final state:           alpha 17.48645, beta 0.00000, p 0.000000, q 0.000000, r 0.000000, theta 14.54603, phi 0.0000, V 300.8000 ft/s
+      heading rate 0.000000 rad/s (WP-3C 0.000000); flight-path angle -2.94043 deg (predicted -2.94043)
+      world: vertical speed error max 8.37E-006 m/s; horizontal angular velocity max 1.66E-007 rad/s (steady turn: vertical axis only); final position (0.0, 5954.6, 2746.9) m; final velocity (0.000, -4.703, 91.563) m/s; final angular velocity (0.00000, 0.00000, 0.00000) rad/s
+      load residuals: linear max 1.64E-006 g, angular max 3.63E-008 qScbar; fixedDeltaTime used 0.0199999921 s
+  PASS  S  S-HOLD dt 0.0200: the symmetric equilibrium is HELD - every state within 1.7E-007 of it for 30 s (float floor 2E-006), no heading change
+    S-HOLD dt 0.0100 over 30 s:
+      max |x - equilibrium|: alpha 2.5E-008, beta 0.0E+000, p 0.0E+000, q 1.5E-007, r 0.0E+000, theta 3.0E-008, phi 0.0E+000, V 2.3E-008
+      final state:           alpha 17.48646, beta 0.00000, p 0.000000, q 0.000000, r 0.000000, theta 14.54603, phi 0.0000, V 300.8000 ft/s
+      heading rate 0.000000 rad/s (WP-3C 0.000000); flight-path angle -2.94043 deg (predicted -2.94043)
+      world: vertical speed error max 2.59E-007 m/s; horizontal angular velocity max 1.52E-007 rad/s (steady turn: vertical axis only); final position (0.0, 5955.4, 2746.8) m; final velocity (0.000, -4.703, 91.563) m/s; final angular velocity (0.00000, 0.00000, 0.00000) rad/s
+      load residuals: linear max 3.06E-006 g, angular max 3.29E-008 qScbar; fixedDeltaTime used 0.009999993 s
+  PASS  S  S-HOLD dt 0.0100: the symmetric equilibrium is HELD - every state within 1.5E-007 of it for 30 s (float floor 2E-006), no heading change
+    S-HOLD dt 0.0050 over 30 s:
+      max |x - equilibrium|: alpha 2.5E-008, beta 0.0E+000, p 0.0E+000, q 1.5E-007, r 0.0E+000, theta 3.0E-008, phi 0.0E+000, V 2.3E-008
+      final state:           alpha 17.48646, beta 0.00000, p 0.000000, q 0.000000, r 0.000000, theta 14.54603, phi 0.0000, V 300.8000 ft/s
+      heading rate 0.000000 rad/s (WP-3C 0.000000); flight-path angle -2.94043 deg (predicted -2.94043)
+      world: vertical speed error max 2.59E-007 m/s; horizontal angular velocity max 1.52E-007 rad/s (steady turn: vertical axis only); final position (0.0, 5955.4, 2746.7) m; final velocity (0.000, -4.703, 91.563) m/s; final angular velocity (0.00000, 0.00000, 0.00000) rad/s
+      load residuals: linear max 3.06E-006 g, angular max 3.29E-008 qScbar; fixedDeltaTime used 0.004999993 s
+  PASS  S  S-HOLD dt 0.0050: the symmetric equilibrium is HELD - every state within 1.5E-007 of it for 30 s (float floor 2E-006), no heading change
+
+[T] Turning trim hold - Table VII point 150 (also the dynamic Ixz / gyro-sign case)
+    T-HOLD dt 0.0200 over 30 s:
+      max |x - equilibrium|: alpha 1.6E-006, beta 6.4E-007, p 6.9E-006, q 1.3E-005, r 5.3E-006, theta 1.9E-004, phi 8.3E-005, V 7.5E-005
+      final state:           alpha 10.55561, beta -0.03015, p 0.007375, q 0.010681, r -0.027770, theta 13.92591, phi -21.0448, V 391.1136 ft/s
+      heading rate -0.030652 rad/s (WP-3C -0.030648); flight-path angle 4.03575 deg (predicted 4.02976)
+      world: vertical speed error max 2.32E-002 m/s; horizontal angular velocity max 1.35E-005 rad/s (steady turn: vertical axis only); final position (-1323.7, 6347.7, 3178.7) m; final velocity (-89.656, 8.400, 78.119) m/s; final angular velocity (0.00000, -0.03065, 0.00000) rad/s
+      load residuals: linear max 2.00E-004 g, angular max 1.55E-006 qScbar; fixedDeltaTime used 0.0199999921 s
+    T-HOLD dt 0.0100 over 30 s:
+      max |x - equilibrium|: alpha 1.4E-006, beta 9.0E-007, p 9.8E-006, q 6.6E-006, r 4.2E-006, theta 9.5E-005, phi 4.3E-005, V 3.7E-005
+      final state:           alpha 10.55559, beta -0.03019, p 0.007369, q 0.010681, r -0.027767, theta 13.92047, phi -21.0425, V 391.1146 ft/s
+      heading rate -0.030650 rad/s (WP-3C -0.030648); flight-path angle 4.03279 deg (predicted 4.02976)
+      world: vertical speed error max 1.15E-002 m/s; horizontal angular velocity max 1.19E-005 rad/s (steady turn: vertical axis only); final position (-1323.1, 6348.0, 3178.9) m; final velocity (-89.653, 8.389, 78.125) m/s; final angular velocity (0.00000, -0.03065, 0.00000) rad/s
+      load residuals: linear max 1.02E-004 g, angular max 2.62E-006 qScbar; fixedDeltaTime used 0.009999993 s
+    T-HOLD dt 0.0050 over 30 s:
+      max |x - equilibrium|: alpha 1.1E-006, beta 4.9E-007, p 5.0E-006, q 4.5E-006, r 1.6E-006, theta 4.8E-005, phi 2.5E-005, V 1.9E-005
+      final state:           alpha 10.55562, beta -0.03015, p 0.007370, q 0.010681, r -0.027766, theta 13.91797, phi -21.0415, V 391.1161 ft/s
+      heading rate -0.030649 rad/s (WP-3C -0.030648); flight-path angle 4.03128 deg (predicted 4.02976)
+      world: vertical speed error max 5.79E-003 m/s; horizontal angular velocity max 5.79E-006 rad/s (steady turn: vertical axis only); final position (-1322.8, 6348.0, 3179.0) m; final velocity (-89.652, 8.383, 78.127) m/s; final angular velocity (0.00000, -0.03065, 0.00000) rad/s
+      load residuals: linear max 5.47E-005 g, angular max 1.34E-006 qScbar; fixedDeltaTime used 0.004999993 s
+    heading-rate error vs WP-3C 4.18E-006, 2.02E-006, 1.29E-006 rad/s; flight-path error 5.98E-003, 3.03E-003, 1.52E-003 deg; largest state drift 1.91E-004, 9.46E-005, 4.80E-005 (dt, dt/2, dt/4)
+  PASS  T  the steady turn is HELD up to integration error: its heading rate, flight-path angle and largest state drift from the WP-3C equilibrium all shrink at each halving of dt (phi, V, p/q/r stay on the predicted turn; world rotation about the vertical axis only)
+
+[D] Timestep refinement dt, dt/2, dt/4 - max over time of |Unity - source RK4| (rad, rad/s; V relative)
+    Judged per state: at the float floor (2E-006) at every dt, or shrinking at each halving (integration error). No target value is set; the observed order is reported.
+    SymmetricHold
+      alpha 1.09E-007  7.45E-008  7.45E-008  order 0.54/0.00  (float floor)
+      beta  0.00E+000  0.00E+000  0.00E+000  order -  (float floor)
+      p     0.00E+000  0.00E+000  0.00E+000  order -  (float floor)
+      q     1.68E-007  1.57E-007  1.57E-007  order 0.09/0.00  <- dominant  (float floor)
+      r     0.00E+000  0.00E+000  0.00E+000  order -  (float floor)
+      theta 8.52E-008  8.53E-008  8.53E-008  order 0.00/0.00  (float floor)
+      phi   0.00E+000  0.00E+000  0.00E+000  order -  (float floor)
+      V     4.81E-008  4.80E-008  4.80E-008  order 0.00/0.00  (float floor)
+  PASS  D  SymmetricHold: the dominant difference (q) is at the float floor and every other state shrinks net over dt -> dt/4 or sits at the float floor - it behaves like numerical integration error, not a model or runtime mismatch
+    TurningHold
+      alpha 1.63E-006  1.39E-006  1.07E-006  order 0.23/0.39  (float floor)
+      beta  6.38E-007  9.01E-007  4.87E-007  order -0.50/0.89  (float floor)
+      p     6.89E-006  9.79E-006  5.05E-006  order -0.51/0.96  (net decrease; non-monotone at the float32 level)
+      q     1.30E-005  6.61E-006  4.47E-006  order 0.97/0.56
+      r     5.30E-006  4.15E-006  1.64E-006  order 0.35/1.34
+      theta 1.91E-004  9.46E-005  4.80E-005  order 1.01/0.98  <- dominant
+      phi   8.34E-005  4.32E-005  2.54E-005  order 0.95/0.77
+      V     7.45E-005  3.67E-005  1.89E-005  order 1.02/0.96
+  PASS  D  TurningHold: the dominant difference (theta) shrinks at each halving and every other state shrinks net over dt -> dt/4 or sits at the float floor - it behaves like numerical integration error, not a model or runtime mismatch
+    SymmetricPerturbed
+      alpha 1.09E-004  5.43E-005  2.73E-005  order 1.00/1.00  <- dominant
+      beta  0.00E+000  0.00E+000  0.00E+000  order -  (float floor)
+      p     0.00E+000  0.00E+000  0.00E+000  order -  (float floor)
+      q     6.01E-005  3.01E-005  1.51E-005  order 1.00/1.00
+      r     0.00E+000  0.00E+000  0.00E+000  order -  (float floor)
+      theta 1.08E-004  5.37E-005  2.68E-005  order 1.00/1.00
+      phi   0.00E+000  0.00E+000  0.00E+000  order -  (float floor)
+      V     1.05E-005  5.38E-006  2.86E-006  order 0.96/0.91
+  PASS  D  SymmetricPerturbed: the dominant difference (alpha) shrinks at each halving and every other state shrinks net over dt -> dt/4 or sits at the float floor - it behaves like numerical integration error, not a model or runtime mismatch
+    TurningPerturbed
+      alpha 1.45E-005  7.13E-006  3.57E-006  order 1.03/1.00
+      beta  4.28E-004  2.13E-004  1.06E-004  order 1.01/1.00
+      p     2.24E-003  1.06E-003  5.15E-004  order 1.08/1.04  <- dominant
+      q     2.99E-005  1.55E-005  7.99E-006  order 0.95/0.96
+      r     4.44E-004  2.11E-004  1.03E-004  order 1.08/1.03
+      theta 9.37E-005  4.63E-005  2.32E-005  order 1.02/1.00
+      phi   1.14E-003  5.69E-004  2.83E-004  order 1.01/1.01
+      V     9.17E-005  4.52E-005  2.22E-005  order 1.02/1.02
+  PASS  D  TurningPerturbed: the dominant difference (p) shrinks at each halving and every other state shrinks net over dt -> dt/4 or sits at the float floor - it behaves like numerical integration error, not a model or runtime mismatch
+
+[R] WP-3E reference: A = source RHS / RK4 from Unity's own t = 0 state, B = Unity runtime, C = B - A (finest dt)
+    S-HOLD dt 0.0050:
+      A drift from equilibrium: alpha 4.9E-008, beta 0.0E+000, p 0.0E+000, q 5.2E-008, r 0.0E+000, theta 5.6E-008, phi 0.0E+000, V 3.2E-008
+      B drift from equilibrium: alpha 2.5E-008, beta 0.0E+000, p 0.0E+000, q 1.5E-007, r 0.0E+000, theta 3.0E-008, phi 0.0E+000, V 2.3E-008
+      C = max |B - A|:          alpha 7.5E-008, beta 0.0E+000, p 0.0E+000, q 1.6E-007, r 0.0E+000, theta 8.5E-008, phi 0.0E+000, V 4.8E-008
+    T-HOLD dt 0.0050:
+      A drift from equilibrium: alpha 5.6E-009, beta 1.7E-009, p 2.1E-008, q 1.1E-008, r 4.7E-009, theta 2.5E-008, phi 2.8E-008, V 6.1E-008
+      B drift from equilibrium: alpha 1.1E-006, beta 4.9E-007, p 5.0E-006, q 4.5E-006, r 1.6E-006, theta 4.8E-005, phi 2.5E-005, V 1.9E-005
+      C = max |B - A|:          alpha 1.1E-006, beta 4.9E-007, p 5.0E-006, q 4.5E-006, r 1.6E-006, theta 4.8E-005, phi 2.5E-005, V 1.9E-005
+    S-PERT dt 0.0050:
+      A drift from equilibrium: alpha 8.7E-003, beta 0.0E+000, p 0.0E+000, q 7.3E-003, r 0.0E+000, theta 1.0E-002, phi 0.0E+000, V 4.9E-003
+      B drift from equilibrium: alpha 8.7E-003, beta 0.0E+000, p 0.0E+000, q 7.3E-003, r 0.0E+000, theta 1.0E-002, phi 0.0E+000, V 4.9E-003
+      C = max |B - A|:          alpha 2.7E-005, beta 0.0E+000, p 0.0E+000, q 1.5E-005, r 0.0E+000, theta 2.7E-005, phi 0.0E+000, V 2.9E-006
+    T-PERT dt 0.0050:
+      A drift from equilibrium: alpha 4.7E-004, beta 8.7E-003, p 9.9E-002, q 1.1E-003, r 2.2E-002, theta 5.7E-003, phi 2.9E-002, V 2.4E-003
+      B drift from equilibrium: alpha 4.7E-004, beta 8.7E-003, p 9.9E-002, q 1.1E-003, r 2.2E-002, theta 5.7E-003, phi 2.9E-002, V 2.4E-003
+      C = max |B - A|:          alpha 3.6E-006, beta 1.1E-004, p 5.2E-004, q 8.0E-006, r 1.0E-004, theta 2.3E-005, phi 2.8E-004, V 2.2E-005
+
+[N] Negative control and fail-closed environment
+    turning hold at dt 0.020, max |p,q,r - source|: gyroscopic compensation ON 1.30E-005 rad/s, OFF 1.68E-004 rad/s
+  PASS  N1  without the w x (I w) compensation the steady turn departs from the source (13x the compensated difference): the runtime check is sensitive to the gyroscopic term, and with it the body follows the source
+  PASS  N2  the source density switched off mid-run: the next step the research owner faults, the body is disarmed and NO further load is applied - never a fallback to the standard atmosphere or Unity gravity
+
+
+RESULT: PASS passed=39 failed=0
