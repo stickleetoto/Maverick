@@ -188,6 +188,73 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 624064cec8c7da141ba136b3622fad4d, type: 3}
+--- !u!1 &257857918
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 257857920}
+  - component: {fileID: 257857919}
+  m_Layer: 0
+  m_Name: Mav_FlightSession
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &257857919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 257857918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 865e0b20c2b64d24913272e4570fd21c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.Gameplay.MavFlightSessionDirector
+  legacyObjects:
+  - {fileID: 939370117}
+  - {fileID: 1408157545}
+  - {fileID: 1411922570}
+  - {fileID: 1840020929}
+  startTimeoutSeconds: 6
+  groundImpactMarginM: 3
+  buildEnvironment: 1
+  pauseKey: 27
+  restartKeyWhilePaused: 114
+  state: 0
+  request:
+    aircraft: 0
+    mode: 0
+    kind: 0
+    attempt: 0
+  failureTitle: 
+  failureReason: 
+  failureDetail: 
+  physicsReady: 0
+  playerControlActive: 0
+  legacyDevelopmentFlight: 0
+  stateEnteredUnscaledTime: 0
+--- !u!4 &257857920
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 257857918}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -517,7 +584,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &939370118
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -585,7 +652,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1408157546
 Transform:
   m_ObjectHideFlags: 0
@@ -645,6 +712,8 @@ MonoBehaviour:
   casWeapons: {fileID: 0}
   casCCIP: {fileID: 0}
   targetingPod: {fileID: 0}
+  trackOwner: {fileID: 0}
+  engagementView: {fileID: 0}
   wtPolish: {fileID: 1408157557}
   physicalAI: {fileID: 0}
   rewardLogger: {fileID: 0}
@@ -727,6 +796,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39c32feb0ca9f1144916b2004f4ddd83, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavThrustVectorControl
+  physicsOwnership: {fileID: 0}
+  debugWroteLiveForceLastStep: 0
+  debugWriterLastStepIndex: 0
   useThrustVectorControl: 1
   pitchAuthority: 5.5
   rollAuthority: 1.2
@@ -789,6 +861,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f0944056ffbc6c4f9469909729b2c55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavAtmosphericEngine
+  physicsOwnership: {fileID: 0}
+  debugWroteLiveForceLastStep: 0
+  debugWriterLastStepIndex: 0
   useAtmosphericEngine: 1
   engineModelBlend: 0.74
   seaLevelThrustScale: 1
@@ -826,6 +901,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca022cef32c33ef4ab4bdeeedb491348, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavAeroBody
+  physicsOwnership: {fileID: 0}
+  debugWroteLiveForceLastStep: 0
+  debugWriterLastStepIndex: 0
   useAeroBody: 1
   aeroBlend: 0.54
   liftBlend: 0.68
@@ -851,6 +929,12 @@ MonoBehaviour:
   oswaldEfficiency: 0.78
   maxDragG: 2.4
   maxLiftG: 9.8
+  useAeroStaticStability: 0
+  pitchStabilityStrength: 0.055
+  yawStabilityStrength: 0.03
+  stabilityReferenceDynamicPressure: 30000
+  maxStabilityAngularAccel: 3.5
+  usePhase4BTurnAuthority: 0
   velocityAssistFade: 0.58
   aeroSideSlipDamping: 0.1
   provideControlAuthority: 1
@@ -877,6 +961,12 @@ MonoBehaviour:
   debugLiftForce: {x: 0, y: 0, z: 0}
   debugDragForce: {x: 0, y: 0, z: 0}
   debugGravityForce: {x: 0, y: 0, z: 0}
+  debugAeroTurnOwnership: 0
+  debugLegacyVelocityAssistScale: 1
+  debugTurnOwnershipSum: 1
+  debugAeroCurvatureAccel: 0
+  debugAeroCurvatureG: 0
+  debugStaticStabilityAccel: {x: 0, y: 0, z: 0}
 --- !u!114 &1408157555
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -910,6 +1000,7 @@ MonoBehaviour:
   activeVisual: {fileID: 0}
   activeVisualName: none
   lastVisualWasPlaceholder: 0
+  lastVisualError: 
 --- !u!114 &1408157556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -927,6 +1018,8 @@ MonoBehaviour:
   renameObject: 0
   allowGlobalRigLookup: 1
   lastApplied: F-22A RAPTOR / 23:54:43
+  lastApplyError: 
+  debugAppliedAircraft: none
 --- !u!114 &1408157557
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1171,6 +1264,8 @@ MonoBehaviour:
   signedPitchAngle: 0
   speed: 0
   gEstimate: 0
+  nzEstimate: 0
+  debugEffectiveGravity: {x: 0, y: 0, z: 0}
   aoaEstimateDeg: 0
   aosEstimateDeg: 0
   verticalSpeed: 0
@@ -1183,6 +1278,17 @@ MonoBehaviour:
   pitchAuthorityFactor: 1
   rollAuthorityFactor: 1
   instructorState: ready
+  useNegativeEnvelopeProtection: 1
+  aoaNegativeSoftLimitDeg: -7
+  aoaNegativeHardLimitDeg: -10
+  negativeGLimit: -3
+  debugAoAPitchReductionBase: 1
+  debugManualBypassFactor: 0
+  debugEffectiveLimiterReduction: 1
+  debugAoALimiterEngaged: 0
+  debugEnvelopeSide: none
+  debugNegativeAoAReduction: 1
+  debugNegativeGReduction: 1
   aggressiveRoll: 0
   wingsLevelRoll: 0
   wingsLevelInfluence: 0
@@ -1236,6 +1342,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef98df56a97de3e4d8f5db285dbe552e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavMouseFlightJet
+  physicsOwnership: {fileID: 0}
+  debugWroteLiveForceLastStep: 0
+  debugWriterLastStepIndex: 0
   controller: {fileID: 1411922571}
   instructor: {fileID: 1408157558}
   allowGlobalRigLookup: 1
@@ -1375,6 +1484,11 @@ MonoBehaviour:
   angularRateDampingRoll: 0.075
   highAoADragStart: 18
   highAoDampingStart: 12
+  usePhase4BTurnDynamics: 0
+  alignmentAssistFloorAtFullAero: 0.15
+  releaseRateNullingScale: 0.35
+  releaseCommandThreshold: 0.06
+  thrustBoostSuppressionG: 3
   useVelocityTurnAssist: 1
   velocityTurnAssistStrength: 0.018
   velocityTurnAssistMaxAccel: 14
@@ -1526,6 +1640,16 @@ MonoBehaviour:
   aoaAosGuardFactor: 1
   debugFinalTorqueClampActive: 0
   velocityTurnAssistCurrentFactor: 1
+  debugLegacyCurvatureAccel: 0
+  debugAlignmentAssistTorque: 0
+  debugMeasuredAeroCurvatureShare: 0
+  debugAlignmentAssistScale: 1
+  debugThrustBoostAllowance: 1
+  debugRateNullingScale: 1
+  scriptedCommandActive: 0
+  scriptedCommandPitchYawRoll: {x: 0, y: 0, z: 0}
+  scriptedCommandThrottle: 0.85
+  scriptedCommandCountsAsManual: 0
   envelopeDragAmount: 0
   debugControlTorqueBeforeClamp: {x: 0, y: 0, z: 0}
   debugControlTorqueAfterClamp: {x: 0, y: 0, z: 0}
@@ -1748,7 +1872,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1411922571
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1985,7 +2109,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1840020931
 Transform:
   m_ObjectHideFlags: 0
@@ -2018,6 +2142,15 @@ MonoBehaviour:
   genericPlayerName: Mav_Player
   createGenericPlayerIfMissing: 0
   applyLegacyF15Profile: 0
+  applySelectedAircraft: 1
+  aircraftIdentityStatus: not run
+  installTurnDynamicsDiagnostics: 1
+  turnDiagnostics: {fileID: 0}
+  installManeuverDiagnostics: 1
+  maneuverDiagnostics: {fileID: 0}
+  installFlightPhysicsOwnership: 1
+  flightPhysicsOwnership: {fileID: 0}
+  flightPhysicsOwnershipStatus: not run
   setupOnAwake: 1
   disableOldMaverickComponents: 1
   disableOldCameras: 1
@@ -2092,6 +2225,7 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 257857920}
   - {fileID: 330585546}
   - {fileID: 1668255353}
   - {fileID: 1840020931}
