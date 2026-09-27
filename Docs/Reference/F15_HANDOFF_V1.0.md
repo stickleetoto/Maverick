@@ -25,6 +25,8 @@ wp4a:              done - research runtime flight PREREQUISITES, not flown: opt-
 research_flight:   DONE (final closeout) - F15AfitResearch validation owner; symmetric pt 36 held 30 s at float floor; turning pt 150 held up to first-order integration error; Unity vs source RK4 first order in dt; Ixz/frame-sign verified; env loss fails closed; no runtime bug found
 research_baseline: F-15 AFIT/BAUMANN/DAVISON RESEARCH BASELINE V1 - FROZEN (F15_RESEARCH_BASELINE_FREEZE_V1.0.md); no further work package required
 optional:          D16 pseudo-arclength continuation, D3 CMMQ (McDonnell 1990) - OPTIONAL RESEARCH EXTENSIONS; pilot-controlled F-15 = A NEW PHASE
+pilot_control_v2: F15_PILOT_CONTROLLED_V2.md - a second, selectable Maverick closed-loop law (MavF15PilotControlLawV2) on the same pilot-controlled aircraft; NOT the F-15 FCS; V1 unchanged and default
+pilot_controlled:  NEW PHASE V1 - F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1 (F15_PILOT_CONTROLLED_V1.md): frozen research physics + Maverick control approximation (MAVERICK_TUNED_NON_AUTHORITATIVE gearing/envelopes; sourced 0.3 differential tail and sign conventions); trim start Table VII pt 36; owner F15PilotControlledResearch; prefab Assets/MaverickFresh/Prefabs/F15/F15_PilotControlledResearch_V1.prefab; headless 49/0, Play Mode 31/0 (byte-identical reruns); NOT NASA 836, NOT the production F-15 FCS
 sources:           E:\f15-sources\ (Baumann ADA217366, Davison ADA256613 - outside the repo)
 ```
 
@@ -49,6 +51,8 @@ sources:           E:\f15-sources\ (Baumann ADA217366, Davison ADA256613 - outsi
 | **research source dynamics / stability** (WP-3D) | `MavF15AfitResearchSourceDynamics.cs`: `EvaluateStateDerivative`, `KConstants` (research-only, called only from Validation/); analysis in `Validation/MavF15ResearchStabilityAnalysis`, eigensolver `Validation/MavValidationEigenSolver`, dataset export `MavF15ResearchStabilityValidation.ExportDataset` |
 | **time-domain stability / conflict audit** (WP-3E) | `Validation/MavValidationRk4Integrator`, `Validation/MavF15ResearchTimeDomainStability` (catalogue, ±eigenvector experiments, symmetry breaking, mirror), `Validation/MavF15ResearchStabilityConflictAudit`; dataset export `MavF15ResearchTimeDomainValidation.ExportDataset` |
 | **research runtime prerequisites** (WP-4A) | `Core/MavFlightEnvironment` + `MavFlightDynamicsProfileProvider.ResolveEnvironment`; `MavSixDoFBody.debugEnvironment` / gravity channel / `TryApplyInitialKinematicState`; `F15/MavF15ResearchRuntimeAuthority`, `MavF15AfitResearchRuntimeEnvironment` (policies on `MavF15AfitResearchFlightDynamicsProfile`), `MavF15AfitResearchStaticSurfaceHold`, `MavF15AfitResearchStateInjection`, `MavF15AfitResearchRuntimePreparation` |
+| **pilot control V2** (second selectable law) | `F15/MavF15PilotControlLawV2` + `MavF15PilotControlGainsV2`; rig `controlMode` / `TrySetControlMode`; prefab `F15_PilotControlledResearch_V2`; validation `MavF15PilotControlV2Validation` + `MavF15PilotControlledV2FlightValidation` |
+| **pilot-controlled research aircraft V1** (new phase) | `F15/MavF15PilotControlledRig` (the one rig), `MavF15PilotControlLaw` + `MavF15PilotControlApproximation` (`MavF15GameplayControlAuthority`, `MavF15PilotTrimStart`, `MavF15PilotControlMapping`), `MavF15PilotControlledFlightDynamicsProfile` / `…AeroModel` / `…FixedThrust` / `…Authority` / `…Diagnostics` / `…Hud`; `Core/MavKeyboardPilotCommandSource`; owner `MavFlightPhysicsOwner.F15PilotControlledResearch`; editor `MavF15PilotControlledPrefabBuilder`, validation `MavF15PilotControlValidation` + `MavF15PilotControlledFlightValidation` |
 | **research ownership + Play Mode closeout** (final) | `Core/MavFlightPhysicsOwnership.TryEnterF15AfitResearchOwnership` (owner `F15AfitResearch`, `allowResearchValidationOwnership` OFF by default), `IMavResearchOwnershipGrant` ← `F15/MavF15ResearchOwnershipGrant`; harness `Validation/MavF15ResearchRuntimeFlightValidationRunner` + `Editor/MavF15ResearchRuntimeFlightValidation.RunBatch` |
 | **research configuration** (WP-1) | `MavF15AfitResearchFlightDynamicsProfile`, `MavF15AfitResearchMassReference`, `MavF15AfitResearchFixedThrust` / `MavF15AfitResearchThrustSource`, `MavF15AfitResearchIdentity`, `MavF15InertiaBasis` |
 
@@ -80,6 +84,8 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 | nonlinear time-domain verification; next WPs | `F15_RESEARCH_TIME_DOMAIN_STABILITY_V1.0.md` (data: `Data/F15/stability_time_domain/`) |
 | why the printed equations and the thesis stability presentation disagree | `F15_RESEARCH_STABILITY_CONFLICT_AUDIT_V1.0.md` |
 | research runtime prerequisites (density, gravity, thrust, surfaces, injection, guards) | `F15_RESEARCH_RUNTIME_PREREQUISITES_V1.0.md` |
+| **pilot control V2: architecture adapted from the Maverick F-16 law, every tuned value and why, V1 vs V2 comparison, results, limitations (NOT the F-15 FCS)** | `F15_PILOT_CONTROLLED_V2.md` |
+| **pilot-controlled research aircraft V1: SOURCE PHYSICS vs MAVERICK CONTROL APPROXIMATION, every non-authoritative value, trim, tests, how to fly it** | `F15_PILOT_CONTROLLED_V1.md` |
 | **research baseline freeze: Play Mode results, dt study, A/B/C vs RK4, frame/sign/Ixz, what is and is not claimed** | `F15_RESEARCH_BASELINE_FREEZE_V1.0.md` |
 | target freeze, mass correction | `F15_FULL_SCALE_TARGET_FREEZE_V0.1.md` |
 | S / c̄ / b audit | `F15_NASA836_REFERENCE_GEOMETRY_AUDIT_V0.1.md` |
@@ -123,7 +129,7 @@ Run them headless via `MaverickFresh.FlightDynamics.EditorTools.MavFdmValidation
 3. **The research baseline is FROZEN** (`F15_RESEARCH_BASELINE_FREEZE_V1.0.md`). No further work package is required. Everything below is optional or a new phase:
    - **OPTIONAL RESEARCH EXTENSION:** pseudo-arclength continuation (D16).
    - **OPTIONAL RESEARCH EXTENSION:** the CMMQ question (D3), via McDonnell 1990; download permission is needed.
-   - **A NEW PHASE:** a pilot-controlled F-15, which needs sourced surface travel, rates, a pilot mapping and an FCS.
+   - **A NEW PHASE:** a pilot-controlled F-15, which needs sourced surface travel, rates, a pilot mapping and an FCS. **V1 of that phase exists** as a Maverick approximation, not a sourced one (`F15_PILOT_CONTROLLED_V1.md`): research physics unchanged, Maverick-tuned gearing and envelopes, no FCS, throttle inactive. Sourced travel, rates and an FCS are still unavailable.
 
    History: WP-1, WP-2, WP-3A–3E, WP-4A and the final runtime closeout are complete. WP-4A built the research runtime prerequisites without flying (`F15_RESEARCH_RUNTIME_PREREQUISITES_V1.0.md`). Every assembled Table VII equilibrium (89 symmetric, 80 turning, the pitchfork) is recovered off the body. Its source-model stability is known (WP-3D) and verified in the nonlinear time domain (WP-3E). The source-model research path is frozen as a research reference. Next:
    - **The CMMQ question (D3)**: read McDonnell 1990 (DTIC ADA230462) pp.41–42 and Fig. 4-2 (needs download permission). All public printings agree, and the executed AUTO model may differ (`F15_RESEARCH_STABILITY_CONFLICT_AUDIT_V1.0.md`). Never tune CMMQ.

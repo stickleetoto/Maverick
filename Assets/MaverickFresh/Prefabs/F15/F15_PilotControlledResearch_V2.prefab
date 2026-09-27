@@ -1,0 +1,1324 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &878624309778633252
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9120581008339143109}
+  - component: {fileID: 3137342345845805722}
+  - component: {fileID: 6202608275685361915}
+  m_Layer: 0
+  m_Name: Fin L
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9120581008339143109
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 878624309778633252}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.5, y: 2, z: -8}
+  m_LocalScale: {x: 0.25, y: 3.2, z: 3}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6274590761501687451}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &3137342345845805722
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 878624309778633252}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &6202608275685361915
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 878624309778633252}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &2522659116897109378
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7753211403493717514}
+  - component: {fileID: 4952819580161380266}
+  - component: {fileID: 7831533665332701593}
+  m_Layer: 0
+  m_Name: Chase Camera
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7753211403493717514
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2522659116897109378}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.06975647, y: 0, z: 0, w: 0.9975641}
+  m_LocalPosition: {x: 0, y: 5, z: -30}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3227471915099910271}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!20 &4952819580161380266
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2522659116897109378}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 30000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!81 &7831533665332701593
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2522659116897109378}
+  m_Enabled: 1
+--- !u!1 &5584365895386357316
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5071789703655286350}
+  - component: {fileID: 2138377405553232484}
+  - component: {fileID: 7450683844035462863}
+  m_Layer: 0
+  m_Name: Wing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5071789703655286350
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5584365895386357316}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -1}
+  m_LocalScale: {x: 13, y: 0.25, z: 4.5}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6274590761501687451}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &2138377405553232484
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5584365895386357316}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &7450683844035462863
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5584365895386357316}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &5930987931580475400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7684242905752186762}
+  - component: {fileID: 1700660697507280119}
+  - component: {fileID: 2586225399854572869}
+  m_Layer: 0
+  m_Name: Fin R
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7684242905752186762
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5930987931580475400}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.5, y: 2, z: -8}
+  m_LocalScale: {x: 0.25, y: 3.2, z: 3}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6274590761501687451}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &1700660697507280119
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5930987931580475400}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &2586225399854572869
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5930987931580475400}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6243073947374489094
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4756557431647413429}
+  - component: {fileID: 3109855151701583637}
+  - component: {fileID: 8339787659276308862}
+  m_Layer: 0
+  m_Name: Fuselage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4756557431647413429
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6243073947374489094}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2, y: 2, z: 19}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6274590761501687451}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &3109855151701583637
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6243073947374489094}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &8339787659276308862
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6243073947374489094}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6858308790333971268
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3227471915099910271}
+  - component: {fileID: 7878486473792337633}
+  - component: {fileID: 5218755154555611347}
+  - component: {fileID: 7494064987975470137}
+  - component: {fileID: 1605586701223744179}
+  - component: {fileID: 8953445714048910661}
+  - component: {fileID: 5961113959253933246}
+  - component: {fileID: 8249751842603121072}
+  - component: {fileID: 8957274204412159061}
+  - component: {fileID: 9199271583212822719}
+  - component: {fileID: 6085048879323646560}
+  - component: {fileID: 1187078126369831148}
+  m_Layer: 0
+  m_Name: F15_PilotControlledResearch_V2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3227471915099910271
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6274590761501687451}
+  - {fileID: 7753211403493717514}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7878486473792337633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e8b7cc0c5324d7db9b5f30cd4666640, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.F15.MavF15PilotControlledRig
+  commandSourceKind: 0
+  controlMode: 1
+  startOnFirstPhysicsStep: 1
+  releasePilotControlledSafetyHold: 1
+  body3d: {fileID: 5218755154555611347}
+  profile: {fileID: 7494064987975470137}
+  aero: {fileID: 1605586701223744179}
+  commandSource: {fileID: 8953445714048910661}
+  law: {fileID: 5961113959253933246}
+  lawV2: {fileID: 8249751842603121072}
+  actuator: {fileID: 8957274204412159061}
+  thrust: {fileID: 9199271583212822719}
+  body: {fileID: 6085048879323646560}
+  ownership: {fileID: 0}
+  debugStarted: 0
+  debugStartSucceeded: 0
+  debugStartStatus: not started
+--- !u!54 &5218755154555611347
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  serializedVersion: 5
+  m_Mass: 16782.918
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 225906.38, y: 253451.44, z: 34537.848}
+  m_InertiaRotation: {x: -0.0030967705, y: 0, z: 0, w: 0.99999523}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 0
+  m_ImplicitTensor: 0
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!114 &7494064987975470137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a542eddfc5af49408430766429ae4845, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.F15.MavF15PilotControlledFlightDynamicsProfile
+  centerOfMassLocalM: {x: 0, y: 0, z: 0}
+  gameplayControlAuthority:
+    pitchStabilatorDegPerUnit: 10
+    rollAileronDegPerUnit: 20
+    yawRudderDegPerUnit: 15
+    symmetricStabilator:
+      minDeg: -25
+      maxDeg: -5
+      basis: 'MAVERICK_TUNED_NON_AUTHORITATIVE: gameplay command envelope chosen
+        to keep the symmetric stabilator inside the setting region the research source
+        exercised in its tabulated equilibria. It is a command bound of this gameplay
+        layer - NOT a physical hard stop, NOT a sourced travel, and NOT MavF15ResearchDemonstratedControlRange
+        (which stays a separate research fact)'
+    differentialStabilator:
+      minDeg: -6
+      maxDeg: 6
+      basis: 'MAVERICK_TUNED_NON_AUTHORITATIVE: 0.3 x the aileron envelope (the research
+        model''s own differential-tail relation); no sourced differential-tail travel'
+    aileron:
+      minDeg: -20
+      maxDeg: 20
+      basis: 'MAVERICK_TUNED_NON_AUTHORITATIVE: gameplay aileron command envelope
+        inside the region audited as monotonic and finite in the research rolling-moment
+        fit; Table VII exercised 0 deg only'
+    rudder:
+      minDeg: -15
+      maxDeg: 15
+      basis: 'MAVERICK_TUNED_NON_AUTHORITATIVE: gameplay rudder command envelope
+        inside the region audited as monotonic and finite in the research yawing-moment
+        fit; Table VII exercised 0 deg only (flat-spin tables about -3 to +14 deg)'
+  trimStart:
+    tableViiPoint: 36
+    symmetricStabilatorDeg: -15.145285606384277
+    alphaDeg: 17.4864559173584
+    thetaDeg: 14.546023368835447
+    trueAirspeedFtPerSec: 300.8
+    altitudeM: 6096
+    headingDeg: 0
+    sourceNote: 'VALIDATED_RESEARCH_EQUILIBRIUM: Baumann Table VII point 36, recovered
+      by the WP-3B symmetric trim solver (stabilator, alpha, theta at V = 300.8 ft/s;
+      beta = p = q = r = phi = 0), STABLE in WP-3D, held on the Rigidbody in the
+      research closeout'
+  debugBuiltProfile:
+    profileId: F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1
+    displayName: F-15 pilot-controlled research aircraft V1 (AFIT/Baumann/Davison
+      aero, Maverick control approximation) - NOT NASA 836, NOT the production F-15
+      FCS
+    description: 'PILOT-CONTROLLED research aircraft V1. Physics: AFIT/Baumann/Davison
+      research model (F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH physics, frozen
+      research baseline V1): Davison App. C coefficient fits, ARO10 reference geometry,
+      Davison mass/inertia, fixed 8,300 lbf total thrust, source fixed density and
+      source gravity. Control: Maverick-owned pilot-control approximation: direct
+      stick-to-surface gearing about a validated trim, with MAVERICK_TUNED_NON_AUTHORITATIVE
+      gains, command envelopes and slew rates. NOT NASA F-15B 836; NOT the production
+      F-15 FCS (no F-15 CAS / FLCS / NASA 836 control law); NOT source-authoritative
+      actuator travel, hard stops or rates; NOT a sourced thrust deck (throttle inactive).'
+    referenceGeometry:
+      wingAreaM2: 56.48505
+      wingSpanM: 13.04544
+      meanAerodynamicChordM: 4.858512
+    massProperties:
+      massKg: 16782.918
+      centerOfMassLocalM: {x: 0, y: 0, z: 0}
+      inertiaTensorKgM2: {x: 225906.38, y: 253451.44, z: 34537.848}
+      inertiaTensorRotationEulerDeg: {x: -0.35486433, y: 0, z: 0}
+    envelope:
+      alphaMinDeg: -4
+      alphaMaxDeg: 90
+      betaMinDeg: -20
+      betaMaxDeg: 20
+      minMach: 0.21073446
+      maxMach: 0.6748325
+    controlSurfaceLimits:
+      elevatorMinDeg: -25
+      elevatorMaxDeg: -5
+      aileronMinDeg: -20
+      aileronMaxDeg: 20
+      rudderMinDeg: -15
+      rudderMaxDeg: 15
+      leadingEdgeFlapMinDeg: 0
+      leadingEdgeFlapMaxDeg: 0
+    propulsionInstallationId: unspecified
+    declaredEngineCount: 0
+    useGravity: 1
+    zeroUnityLinearDamping: 1
+    zeroUnityAngularDamping: 1
+  debugProfileStatus: 'VALID (pilot-controlled research aircraft): OK | SOURCE REPRODUCTION
+    at the source''s fixed density; coefficients away from Mach 0.6 are the Mach
+    0.6 fit extrapolated, NOT aerodynamically validated'
+  debugEnvironmentStatus: not resolved
+--- !u!114 &1605586701223744179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61f2e735125246949fc9f0608bad38c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.F15.MavF15PilotControlledAeroModel
+  referenceGeometry:
+    wingAreaM2: 56.48505
+    wingSpanM: 13.04544
+    meanAerodynamicChordM: 4.858512
+  acknowledgeResearchAerodynamics: 1
+  surfaceOwner: {fileID: 8957274204412159061}
+  minimumRateNormalizationSpeedMps: 1
+  debugRefused: 1
+  debugAtFixedSourceCondition: 0
+  debugExtrapolatedFromFitCondition: 0
+  debugInsideTranscribedSpan: 0
+  debugStatus: not evaluated
+  debugPHat: 0
+  debugQHat: 0
+  debugRHat: 0
+  debugLastCoefficients:
+    cx: 0
+    cy: 0
+    cz: 0
+    cl: 0
+    cm: 0
+    cn: 0
+--- !u!114 &8953445714048910661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc637cd3aa5840fb964014b5ec249615, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.MavKeyboardPilotCommandSource
+  pitchUpKey: 119
+  pitchUpAltKey: 273
+  pitchDownKey: 115
+  pitchDownAltKey: 274
+  rollLeftKey: 97
+  rollLeftAltKey: 276
+  rollRightKey: 100
+  rollRightAltKey: 275
+  yawLeftKey: 113
+  yawRightKey: 101
+  throttleUpKey: 304
+  throttleDownKey: 306
+  axisRiseRatePerSec: 2.5
+  axisReturnRatePerSec: 4
+  throttleRatePerSec: 0.5
+  pitchAxisLimit: 1
+  rollAxisLimit: 1
+  yawAxisLimit: 1
+  throttle01: 1
+  debugCommand:
+    pitch: 0
+    roll: 0
+    yaw: 0
+    throttle01: 0
+--- !u!114 &5961113959253933246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 817545d2a48d477ca41fcc1e709df3d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.F15.MavF15PilotControlLaw
+  sixDoFBody: {fileID: 6085048879323646560}
+  actuator: {fileID: 8957274204412159061}
+  driveActuatorInFixedUpdate: 1
+  commandSource: {fileID: 8953445714048910661}
+  pilotCommand:
+    pitch: 0
+    roll: 0
+    yaw: 0
+    throttle01: 0
+  debugLastOutput:
+    throttle01: 0
+    elevatorDeg: 0
+    aileronDeg: 0
+    rudderDeg: 0
+    leadingEdgeFlapDeg: 0
+  debugLastCommand:
+    pitch: 0
+    roll: 0
+    yaw: 0
+    throttle01: 0
+  debugUsingCommandSource: 0
+  debugCommandSignalAvailable: 0
+  debugCommandResolution: 0
+  debugLastValidSourceCommand:
+    pitch: 0
+    roll: 0
+    yaw: 0
+    throttle01: 0
+  debugCommandSignalLossEvents: 0
+  debugDroveActuator: 0
+  debugStatus: idle
+  configuration: {fileID: 7494064987975470137}
+  debugRequested:
+    channels:
+      symmetricStabilatorDeg: 0
+      differentialStabilatorDeg: 0
+      aileronDeg: 0
+      rudderDeg: 0
+  debugUnbounded:
+    symmetricStabilatorDeg: 0
+    differentialStabilatorDeg: 0
+    aileronDeg: 0
+    rudderDeg: 0
+  debugEnvelopeLimited: 0
+  debugTrimStabilatorBiasDeg: 0
+  debugThrottleInactive01: 0
+--- !u!114 &8249751842603121072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 233460b80f8c457d94ec005778f9e844, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.F15.MavF15PilotControlLawV2
+  sixDoFBody: {fileID: 6085048879323646560}
+  actuator: {fileID: 8957274204412159061}
+  driveActuatorInFixedUpdate: 1
+  commandSource: {fileID: 8953445714048910661}
+  pilotCommand:
+    pitch: 0
+    roll: 0
+    yaw: 0
+    throttle01: 0
+  debugLastOutput:
+    throttle01: 0
+    elevatorDeg: 0
+    aileronDeg: 0
+    rudderDeg: 0
+    leadingEdgeFlapDeg: 0
+  debugLastCommand:
+    pitch: 0
+    roll: 0
+    yaw: 0
+    throttle01: 0
+  debugUsingCommandSource: 0
+  debugCommandSignalAvailable: 0
+  debugCommandResolution: 0
+  debugLastValidSourceCommand:
+    pitch: 0
+    roll: 0
+    yaw: 0
+    throttle01: 0
+  debugCommandSignalLossEvents: 0
+  debugDroveActuator: 0
+  debugStatus: idle
+  gains:
+    commandedPitchRateAtFullStickDegSec: 7
+    pitchRateFeedForwardDegPerRadSec: 60
+    pitchRateGainDegPerRadSec: 30
+    commandedRollRateAtFullStickDegSec: 15
+    rollRateFeedForwardDegPerRadSec: 20
+    rollRateGainDegPerRadSec: 50
+    commandedSideslipAtFullPedalDeg: 1.5
+    sideslipFeedForwardDegPerDeg: 4
+    sideslipGainDegPerDeg: 4
+    aileronRudderInterconnectDegPerRadSec: 40
+    stabilityAxisYawRateGainDegPerRadSec: 40
+    yawRateWashoutTimeConstantSeconds: 1.5
+    scheduleGainsWithDynamicPressure: 1
+    referenceDynamicPressurePa: 2745.1216
+    minimumGainScale: 0.5
+    maximumGainScale: 2
+  configuration: {fileID: 7494064987975470137}
+  debugRequested:
+    channels:
+      symmetricStabilatorDeg: 0
+      differentialStabilatorDeg: 0
+      aileronDeg: 0
+      rudderDeg: 0
+  debugUnbounded:
+    symmetricStabilatorDeg: 0
+    differentialStabilatorDeg: 0
+    aileronDeg: 0
+    rudderDeg: 0
+  debugEnvelopeLimited: 0
+  debugTrimStabilatorBiasDeg: 0
+  debugLaw:
+    stateUsable: 0
+    gainScale: 0
+    commandedPitchRateRadSec: 0
+    pitchRateErrorRadSec: 0
+    noseUpDemandDeg: 0
+    commandedRollRateRadSec: 0
+    stabilityAxisRollRateRadSec: 0
+    rollRateErrorRadSec: 0
+    rollRightDemandDeg: 0
+    commandedSideslipDeg: 0
+    sideslipErrorDeg: 0
+    interconnectDemandDeg: 0
+    stabilityAxisYawRateRadSec: 0
+    washedOutYawRateRadSec: 0
+    yawRateDemandDeg: 0
+    noseRightDemandDeg: 0
+  lawState:
+    yawRateLowPassRadSec: 0
+  debugThrottleInactive01: 0
+--- !u!114 &8957274204412159061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41f15a8360a14f51a836000000000004, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.F15.MavF15ControlActuator
+  sixDoFBody: {fileID: 6085048879323646560}
+  requested:
+    channels:
+      symmetricStabilatorDeg: 0
+      differentialStabilatorDeg: 0
+      aileronDeg: 0
+      rudderDeg: 0
+  requestedThrottle01: 0
+  limits:
+    symmetricStabilator:
+      minDeg: -25
+      maxDeg: -5
+      rateLimitDegSec: 0
+      travelProvenance: 1
+      rateProvenance: 0
+      sourceNote: 'MAVERICK_TUNED_NON_AUTHORITATIVE: gameplay command envelope of
+        F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1 - not a physical hard stop,
+        not sourced travel; no sourced actuator rate'
+    differentialStabilator:
+      minDeg: -6
+      maxDeg: 6
+      rateLimitDegSec: 0
+      travelProvenance: 1
+      rateProvenance: 0
+      sourceNote: 'MAVERICK_TUNED_NON_AUTHORITATIVE: gameplay command envelope of
+        F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1 - not a physical hard stop,
+        not sourced travel; no sourced actuator rate'
+    aileron:
+      minDeg: -20
+      maxDeg: 20
+      rateLimitDegSec: 0
+      travelProvenance: 1
+      rateProvenance: 0
+      sourceNote: 'MAVERICK_TUNED_NON_AUTHORITATIVE: gameplay command envelope of
+        F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1 - not a physical hard stop,
+        not sourced travel; no sourced actuator rate'
+    rudder:
+      minDeg: -15
+      maxDeg: 15
+      rateLimitDegSec: 0
+      travelProvenance: 1
+      rateProvenance: 0
+      sourceNote: 'MAVERICK_TUNED_NON_AUTHORITATIVE: gameplay command envelope of
+        F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1 - not a physical hard stop,
+        not sourced travel; no sourced actuator rate'
+  actualF15Surfaces:
+    channels:
+      symmetricStabilatorDeg: 0
+      differentialStabilatorDeg: 0
+      aileronDeg: 0
+      rudderDeg: 0
+  actual:
+    throttle01: 0
+    elevatorDeg: 0
+    aileronDeg: 0
+    rudderDeg: 0
+    leadingEdgeFlapDeg: 0
+  researchStaticHold: {fileID: 0}
+  debugResearchStaticHold: 0
+  debugAnyChannelRefused: 0
+  debugAvailableChannelCount: 0
+  debugRefusedChannels: 0
+  debugCommandClamped: 0
+  debugStatus: not stepped
+--- !u!114 &9199271583212822719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71b110bed8ea434ab4b0e67728af973a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.F15.MavF15PilotControlledFixedThrust
+  debugRefused: 1
+  debugStatus: not evaluated
+  debugThrottleIgnored01: 0
+--- !u!114 &6085048879323646560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d1546e73ef4ade40bdaaa6775b26ffc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.MavSixDoFBody
+  simulationEnabled: 0
+  applyMassPropertiesOnEnable: 1
+  zeroUnityDampingWhenEnabled: 1
+  requireOperationalReadinessForLoadApplication: 1
+  allowStructuralOnlyLoadApplication: 0
+  acceptNonAuthoritativePropulsion: 1
+  applyBackendGyroscopicCompensation: 1
+  acknowledgeIncompleteAngularDynamicsForTesting: 0
+  conflictingLegacyPhysicsComponents:
+  - MavAeroBody
+  - MavAtmosphericEngine
+  - MavMouseFlightJet
+  - MavInstructorController
+  - MavThrustVectorControl
+  profileProvider: {fileID: 7494064987975470137}
+  autoApplyProfileConfiguration: 1
+  activeProfile:
+    profileId: F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1
+    displayName: F-15 pilot-controlled research aircraft V1 (AFIT/Baumann/Davison
+      aero, Maverick control approximation) - NOT NASA 836, NOT the production F-15
+      FCS
+    description: 'PILOT-CONTROLLED research aircraft V1. Physics: AFIT/Baumann/Davison
+      research model (F15_AFIT_BAUMANN_DAVISON_MACH06_20K_RESEARCH physics, frozen
+      research baseline V1): Davison App. C coefficient fits, ARO10 reference geometry,
+      Davison mass/inertia, fixed 8,300 lbf total thrust, source fixed density and
+      source gravity. Control: Maverick-owned pilot-control approximation: direct
+      stick-to-surface gearing about a validated trim, with MAVERICK_TUNED_NON_AUTHORITATIVE
+      gains, command envelopes and slew rates. NOT NASA F-15B 836; NOT the production
+      F-15 FCS (no F-15 CAS / FLCS / NASA 836 control law); NOT source-authoritative
+      actuator travel, hard stops or rates; NOT a sourced thrust deck (throttle inactive).'
+    referenceGeometry:
+      wingAreaM2: 56.48505
+      wingSpanM: 13.04544
+      meanAerodynamicChordM: 4.858512
+    massProperties:
+      massKg: 16782.918
+      centerOfMassLocalM: {x: 0, y: 0, z: 0}
+      inertiaTensorKgM2: {x: 225906.38, y: 253451.44, z: 34537.848}
+      inertiaTensorRotationEulerDeg: {x: -0.35486433, y: 0, z: 0}
+    envelope:
+      alphaMinDeg: -4
+      alphaMaxDeg: 90
+      betaMinDeg: -20
+      betaMaxDeg: 20
+      minMach: 0.21073446
+      maxMach: 0.6748325
+    controlSurfaceLimits:
+      elevatorMinDeg: -25
+      elevatorMaxDeg: -5
+      aileronMinDeg: -20
+      aileronMaxDeg: 20
+      rudderMinDeg: -15
+      rudderMaxDeg: 15
+      leadingEdgeFlapMinDeg: 0
+      leadingEdgeFlapMaxDeg: 0
+    propulsionInstallationId: unspecified
+    declaredEngineCount: 0
+    useGravity: 1
+    zeroUnityLinearDamping: 1
+    zeroUnityAngularDamping: 1
+  aerodynamicModel: {fileID: 1605586701223744179}
+  propulsionModel: {fileID: 9199271583212822719}
+  massProperties:
+    massKg: 16782.918
+    centerOfMassLocalM: {x: 0, y: 0, z: 0}
+    inertiaTensorKgM2: {x: 225906.38, y: 253451.44, z: 34537.848}
+    inertiaTensorRotationEulerDeg: {x: -0.35486433, y: 0, z: 0}
+  controlLaw: {fileID: 8249751842603121072}
+  controlSurfaceActuator: {fileID: 8957274204412159061}
+  pilotCommandSource: {fileID: 8953445714048910661}
+  controlInput:
+    throttle01: 0
+    elevatorDeg: 0
+    aileronDeg: 0
+    rudderDeg: 0
+    leadingEdgeFlapDeg: 0
+  telemetry: {fileID: 0}
+  debugProfileValid: 1
+  debugInsideProfileEnvelope: 0
+  debugProfileStatus: 'F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1: OK'
+  debugAtmosphere:
+    altitudeM: 0
+    temperatureK: 0
+    pressurePa: 0
+    densityKgM3: 0
+    speedOfSoundMps: 0
+  debugState:
+    worldPositionM: {x: 0, y: 0, z: 0}
+    worldVelocityMps: {x: 0, y: 0, z: 0}
+    aeroBodyVelocityMps: {x: 0, y: 0, z: 0}
+    aeroBodyRatesRadSec: {x: 0, y: 0, z: 0}
+    trueAirspeedMps: 0
+    mach: 0
+    dynamicPressurePa: 0
+    alphaRad: 0
+    betaRad: 0
+    specificForceAeroBodyG: {x: 0, y: 0, z: 0}
+    specificForceValid: 0
+    attitude:
+      pitchAttitudeRad: 0
+      bankAngleRad: 0
+      headingRad: 0
+      flightPathAngleRad: 0
+      valid: 0
+      nearVerticalSingularity: 0
+      flightPathValid: 0
+  debugCoefficients:
+    cx: 0
+    cy: 0
+    cz: 0
+    cl: 0
+    cm: 0
+    cn: 0
+  debugLoadSet:
+    aerodynamic:
+      forceAeroBodyN: {x: 0, y: 0, z: 0}
+      momentAeroBodyNm: {x: 0, y: 0, z: 0}
+    propulsive:
+      forceAeroBodyN: {x: 0, y: 0, z: 0}
+      momentAeroBodyNm: {x: 0, y: 0, z: 0}
+      reportedThrustN: 0
+      powerState01: 0
+      powerStateSpread01: 0
+      contributingEngineCount: 0
+      hasAuthoritativeData: 0
+    inertialCorrectionMomentAeroBodyNm: {x: 0, y: 0, z: 0}
+    totalForceAeroBodyN: {x: 0, y: 0, z: 0}
+    totalMomentAeroBodyNm: {x: 0, y: 0, z: 0}
+    aerodynamicContributions: 0
+    propulsiveContributions: 0
+    inertialContributions: 0
+    gravitationalForceAeroBodyN: {x: 0, y: 0, z: 0}
+    gravitationalContributions: 0
+    applied: 0
+    stepIndex: 0
+  debugLoads:
+    forceAeroBodyN: {x: 0, y: 0, z: 0}
+    momentAeroBodyNm: {x: 0, y: 0, z: 0}
+  debugUnityLocalForceN: {x: 0, y: 0, z: 0}
+  debugUnityLocalTorqueNm: {x: 0, y: 0, z: 0}
+  debugExternalMomentAeroBodyNm: {x: 0, y: 0, z: 0}
+  debugGyroscopicMomentAeroBodyNm: {x: 0, y: 0, z: 0}
+  debugFinalMomentAeroBodyNm: {x: 0, y: 0, z: 0}
+  debugGyroscopicApplied: 0
+  debugGyroscopicStatus: not evaluated
+  debugPhysicsStepIndex: 0
+  debugLoadApplications: 0
+  debugRejectedDuplicateApplications: 0
+  debugRejectedNonFiniteApplications: 0
+  debugEnvironment:
+    valid: 0
+    atmosphere:
+      altitudeM: 0
+      temperatureK: 0
+      pressurePa: 0
+      densityKgM3: 0
+      speedOfSoundMps: 0
+    densitySource: 0
+    gravitySource: 0
+    loadSetGravityMps2: 0
+    geometricAltitudeM: 0
+    configurationId: 
+    status: 
+  debugRejectedEnvironmentSteps: 0
+  debugRejectedGravityOwnershipSteps: 0
+  debugGravityStatus: not evaluated
+  debugInitialStateApplications: 0
+  debugInitialStateStatus: none
+  debugReadyForLiveFdm: 0
+  debugReadinessReason: not evaluated
+  debugReadiness:
+    level: 0
+    structurallyPrepared: 0
+    operationallyLiveReady: 0
+    structuralReason: 
+    operationalReason: 
+    summary: 
+  debugReadinessInputs:
+    hasRigidbody: 0
+    hasValidProfile: 0
+    hasAerodynamicModel: 0
+    hasControlSurfaceActuator: 0
+    hasControlLaw: 0
+    hasPropulsionModel: 0
+    aerodynamicGeometryMatchesProfile: 0
+    controlLawEnabledAndDriving: 0
+    controlLawBoundToThisBody: 0
+    actuatorEnabledAndBound: 0
+    propulsionAccepted: 0
+    angularDynamicsAccepted: 0
+    commandSourceIdentityMatches: 0
+    hasValidCommandSource: 0
+    singleControlLawEnabled: 0
+    legacyPhysicsOwnershipClear: 0
+  debugLegacyPhysicsOwner: none
+  debugRejectedNotLiveReadyApplications: 0
+  physicsOwnership: {fileID: 0}
+  debugShadowComputeSteps: 0
+  debugRejectedNotOwnerApplications: 0
+  debugShadowLoadSetFinite: 0
+--- !u!114 &1187078126369831148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6858308790333971268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05eece62d54942a290f150fdfd426512, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.FlightDynamics.F15.MavF15PilotControlledHud
+  rig: {fileID: 7878486473792337633}
+  show: 1
+  toggleKey: 282
+  lawSelectKey: 283
+  debugLastLawSwitch: 
+--- !u!1 &7275121377964613961
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4752937125251725933}
+  - component: {fileID: 5270910707530358040}
+  - component: {fileID: 4766470171380685606}
+  m_Layer: 0
+  m_Name: Stabilator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4752937125251725933
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7275121377964613961}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -8}
+  m_LocalScale: {x: 8.6, y: 0.2, z: 2.8}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6274590761501687451}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &5270910707530358040
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7275121377964613961}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &4766470171380685606
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7275121377964613961}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &9016250232823486623
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6274590761501687451}
+  m_Layer: 0
+  m_Name: Visual (primitive shapes, no collider)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6274590761501687451
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9016250232823486623}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4756557431647413429}
+  - {fileID: 5071789703655286350}
+  - {fileID: 4752937125251725933}
+  - {fileID: 9120581008339143109}
+  - {fileID: 7684242905752186762}
+  m_Father: {fileID: 3227471915099910271}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

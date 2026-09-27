@@ -46,7 +46,20 @@ namespace MaverickFresh.FlightDynamics
         /// other configuration, and dropped to Fault the step its preconditions stop holding.
         /// Not gameplay F15Replacement, which does not exist.
         /// </summary>
-        F15AfitResearch = 4
+        F15AfitResearch = 4,
+
+        /// <summary>
+        /// The PILOT-CONTROLLED F-15 research aircraft
+        /// (<see cref="MavFlightPhysicsOwnership.F15PilotControlledConfigurationId"/>, exactly): the frozen
+        /// AFIT/Baumann/Davison research physics flown through a Maverick-owned control approximation. It
+        /// is the sole live owner of physics; legacy is gated off; gravity is the research environment's
+        /// own, carried by the replacement load set. Entered only through
+        /// <see cref="MavFlightPhysicsOwnership.TryEnterF15PilotControlledOwnership"/> behind its own safety
+        /// hold (OFF by default), and dropped to Fault the step its preconditions stop holding. Separate
+        /// from the validation-only <see cref="F15AfitResearch"/> owner; not NASA 836, not the production
+        /// F-15 FCS, and not gameplay F15Replacement.
+        /// </summary>
+        F15PilotControlledResearch = 5
     }
 
     /// <summary>
@@ -315,19 +328,22 @@ namespace MaverickFresh.FlightDynamics
         public static bool IsLegacyPhysicsAllowed(MavFlightPhysicsOwner owner)
         {
             return owner != MavFlightPhysicsOwner.F16Replacement
-                && owner != MavFlightPhysicsOwner.F15AfitResearch;
+                && owner != MavFlightPhysicsOwner.F15AfitResearch
+                && owner != MavFlightPhysicsOwner.F15PilotControlledResearch;
         }
 
         /// <summary>
         /// Pure ownership rule: the replacement stack may write ONLY in F16Replacement, or - for the
-        /// one research configuration, during validation - in F15AfitResearch.
+        /// one research configuration, during validation - in F15AfitResearch, or - for the one
+        /// pilot-controlled research configuration - in F15PilotControlledResearch.
         ///
         /// Shadow returning false here is the entire point of shadow mode.
         /// </summary>
         public static bool IsReplacementPhysicsAllowed(MavFlightPhysicsOwner owner)
         {
             return owner == MavFlightPhysicsOwner.F16Replacement
-                || owner == MavFlightPhysicsOwner.F15AfitResearch;
+                || owner == MavFlightPhysicsOwner.F15AfitResearch
+                || owner == MavFlightPhysicsOwner.F15PilotControlledResearch;
         }
 
         /// <summary>
@@ -344,8 +360,8 @@ namespace MaverickFresh.FlightDynamics
         {
             debugPhysicsStepIndex++;
 
-            // Research ownership is re-verified before anything else, so a research body whose
-            // preconditions stopped holding is disarmed before it can step.
+            // Research and pilot-controlled ownership are re-verified before anything else, so a body
+            // whose preconditions stopped holding is disarmed before it can step.
             VerifyResearchOwnership();
 
             // Gravity first, and before any writer runs. This component has DefaultExecutionOrder
@@ -403,6 +419,7 @@ namespace MaverickFresh.FlightDynamics
                 // The research environment's source gravity is carried by MavSixDoFBody's load set,
                 // with Rigidbody.useGravity off - the one replacement mode that does have its own term.
                 case MavFlightPhysicsOwner.F15AfitResearch:
+                case MavFlightPhysicsOwner.F15PilotControlledResearch:
                     return MavGravityProvider.ReplacementLoadSet;
 
                 case MavFlightPhysicsOwner.Legacy:
@@ -664,7 +681,8 @@ namespace MaverickFresh.FlightDynamics
             }
 
             if (owner == MavFlightPhysicsOwner.F16Replacement
-                || owner == MavFlightPhysicsOwner.F15AfitResearch)
+                || owner == MavFlightPhysicsOwner.F15AfitResearch
+                || owner == MavFlightPhysicsOwner.F15PilotControlledResearch)
             {
                 error = "already in replacement mode; returning to shadow means handing physics back "
                         + "to legacy, which is a separate request";
@@ -715,6 +733,13 @@ namespace MaverickFresh.FlightDynamics
             if (owner == MavFlightPhysicsOwner.F15AfitResearch)
             {
                 error = "the F-15 research validation owner holds physics; return to legacy first";
+                debugRefusedActivations++;
+                return false;
+            }
+
+            if (owner == MavFlightPhysicsOwner.F15PilotControlledResearch)
+            {
+                error = "the F-15 pilot-controlled research owner holds physics; return to legacy first";
                 debugRefusedActivations++;
                 return false;
             }
@@ -782,7 +807,7 @@ namespace MaverickFresh.FlightDynamics
         {
             owner = next;
             ownerReason = reason;
-            if (next != MavFlightPhysicsOwner.F15AfitResearch)
+            if (next != MavFlightPhysicsOwner.F15AfitResearch && next != MavFlightPhysicsOwner.F15PilotControlledResearch)
                 researchBody = null;
             EnforceArmingForCurrentOwner();
         }
@@ -798,8 +823,14 @@ namespace MaverickFresh.FlightDynamics
 
         [TextArea(2, 4)] public string debugResearchOwnershipStatus = "not requested";
 
-        /// <summary>The body the research owner state was granted to. Null in every other mode.</summary>
+        /// <summary>
+        /// The body the research owner state - or the pilot-controlled owner state - was granted to.
+        /// Null in every other mode.
+        /// </summary>
         private MavSixDoFBody researchBody;
+
+        /// <summary>The aircraft-layer grant the pilot-controlled owner was entered with; re-run every step.</summary>
+        private IMavResearchOwnershipGrant pilotControlledGrant;
 
         /// <summary>
         /// Makes the governed F-15 research body the sole live owner of physics, for validation.
@@ -821,7 +852,8 @@ namespace MaverickFresh.FlightDynamics
                         + "(allowResearchValidationOwnership is false)";
             else if (owner == MavFlightPhysicsOwner.Fault)
                 error = "ownership is in a fault; it must be cleared deliberately first";
-            else if (owner == MavFlightPhysicsOwner.F16Replacement || owner == MavFlightPhysicsOwner.F15AfitResearch)
+            else if (owner == MavFlightPhysicsOwner.F16Replacement || owner == MavFlightPhysicsOwner.F15AfitResearch
+                     || owner == MavFlightPhysicsOwner.F15PilotControlledResearch)
                 error = "a replacement stack already owns physics (" + owner + ")";
             else if (body == null || !ReferenceEquals(governedBody, body))
                 error = "the research body must be exactly the body this authority governs";
@@ -877,17 +909,26 @@ namespace MaverickFresh.FlightDynamics
         /// </summary>
         private bool IsResearchBodyStillValid(MavSixDoFBody body, out string reason)
         {
+            return IsBodyStillValidFor(body, F15AfitResearchConfigurationId, "research", out reason);
+        }
+
+        /// <summary>
+        /// The preconditions that must hold on EVERY step while a research-derived owner holds physics:
+        /// the same governed body, exactly <paramref name="configurationId"/>, and the source environment.
+        /// </summary>
+        private bool IsBodyStillValidFor(MavSixDoFBody body, string configurationId, string label, out string reason)
+        {
             if (body == null || !ReferenceEquals(governedBody, body))
             {
-                reason = "the research body is no longer the governed body";
+                reason = "the " + label + " body is no longer the governed body";
                 return false;
             }
 
             if (body.activeProfile == null || !body.debugProfileValid
-                || !string.Equals(body.activeProfile.profileId, F15AfitResearchConfigurationId, System.StringComparison.Ordinal))
+                || !string.Equals(body.activeProfile.profileId, configurationId, System.StringComparison.Ordinal))
             {
                 reason = "the body's profile is '" + (body.activeProfile != null ? body.activeProfile.profileId : "(none)")
-                         + "', not exactly " + F15AfitResearchConfigurationId;
+                         + "', not exactly " + configurationId;
                 return false;
             }
 
@@ -896,7 +937,7 @@ namespace MaverickFresh.FlightDynamics
                 || environment.densitySource != MavDensitySource.ResearchSourceFixedDensity
                 || !environment.OwnsGravityThroughLoadSet)
             {
-                reason = "fixed source density AND source gravity are mandatory for the research owner ("
+                reason = "fixed source density AND source gravity are mandatory for the " + label + " owner ("
                          + environment.status + ")";
                 return false;
             }
@@ -907,12 +948,17 @@ namespace MaverickFresh.FlightDynamics
 
         private static bool AnotherBodyIsArmed(MavSixDoFBody body, out string reason)
         {
+            return AnotherBodyIsArmed(body, "research", out reason);
+        }
+
+        private static bool AnotherBodyIsArmed(MavSixDoFBody body, string label, out string reason)
+        {
             MavSixDoFBody[] bodies = Object.FindObjectsByType<MavSixDoFBody>(FindObjectsSortMode.None);
             for (int i = 0; i < bodies.Length; i++)
             {
                 if (bodies[i] != null && bodies[i] != body && bodies[i].ArmedForLiveFlight)
                 {
-                    reason = "another six-DoF body (" + bodies[i].name + ") is armed; the research body must be "
+                    reason = "another six-DoF body (" + bodies[i].name + ") is armed; the " + label + " body must be "
                              + "the only live FDM owner";
                     return true;
                 }
@@ -929,15 +975,118 @@ namespace MaverickFresh.FlightDynamics
         /// </summary>
         private void VerifyResearchOwnership()
         {
+            string reason;
+            if (owner == MavFlightPhysicsOwner.F15PilotControlledResearch)
+            {
+                if (!IsBodyStillValidFor(researchBody, F15PilotControlledConfigurationId, "pilot-controlled", out reason))
+                {
+                    debugPilotControlledOwnershipStatus = "LOST: " + reason;
+                    EnterFault("pilot-controlled ownership preconditions no longer hold: " + reason);
+                }
+                else if (pilotControlledGrant != null && !pilotControlledGrant.TryGrantResearchOwnership(researchBody, out reason))
+                {
+                    // The aircraft layer's own conditions (e.g. exactly one pilot-control law requesting
+                    // surfaces) are re-checked too, not only at entry.
+                    debugPilotControlledOwnershipStatus = "LOST: " + reason;
+                    EnterFault("pilot-controlled ownership preconditions no longer hold: the aircraft-layer grant refused: " + reason);
+                }
+
+                return;
+            }
+
             if (owner != MavFlightPhysicsOwner.F15AfitResearch)
                 return;
 
-            string reason;
             if (!IsResearchBodyStillValid(researchBody, out reason))
             {
                 debugResearchOwnershipStatus = "LOST: " + reason;
                 EnterFault("research ownership preconditions no longer hold: " + reason);
             }
+        }
+
+        // ==================================================================== pilot-controlled research owner
+
+        /// <summary>The one configuration the pilot-controlled owner state is for, ordinal.</summary>
+        public const string F15PilotControlledConfigurationId = "F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1";
+
+        [Header("Pilot-Controlled Research Ownership")]
+        [Tooltip("OFF by default. The pilot-controlled F-15 research aircraft cannot become the live owner unless this is explicitly enabled on its own rig. No other aircraft is affected.")]
+        public bool allowF15PilotControlledOwnership = false;
+
+        [TextArea(2, 4)] public string debugPilotControlledOwnershipStatus = "not requested";
+
+        /// <summary>
+        /// Makes the governed PILOT-CONTROLLED F-15 research body the sole live owner of physics.
+        ///
+        /// Fails closed, under the same rules as the research owner and its own safety hold: the hold
+        /// <see cref="allowF15PilotControlledOwnership"/> is released; ownership is not in a fault or
+        /// already replacement-owned; <paramref name="body"/> is exactly the governed body; its built
+        /// profile carries <see cref="F15PilotControlledConfigurationId"/> exactly (the research
+        /// validation id, NASA 836, near matches and every other id are refused); its environment is
+        /// the research SOURCE environment - fixed source density AND source gravity, both mandatory;
+        /// no other six-DoF body anywhere is armed; every registered legacy writer is quiet; and the
+        /// aircraft layer's <paramref name="grant"/> for this same id agrees. Nothing is changed when it
+        /// refuses. Re-verified every step; a lost precondition is a Fault.
+        /// </summary>
+        public bool TryEnterF15PilotControlledOwnership(
+            MavSixDoFBody body, IMavResearchOwnershipGrant grant, out string error)
+        {
+            error = null;
+            if (!allowF15PilotControlledOwnership)
+                error = "pilot-controlled ownership is disabled by its safety hold "
+                        + "(allowF15PilotControlledOwnership is false)";
+            else if (owner == MavFlightPhysicsOwner.Fault)
+                error = "ownership is in a fault; it must be cleared deliberately first";
+            else if (owner == MavFlightPhysicsOwner.F16Replacement || owner == MavFlightPhysicsOwner.F15AfitResearch
+                     || owner == MavFlightPhysicsOwner.F15PilotControlledResearch)
+                error = "a replacement stack already owns physics (" + owner + ")";
+            else if (body == null || !ReferenceEquals(governedBody, body))
+                error = "the pilot-controlled body must be exactly the body this authority governs";
+            else if (grant == null
+                     || !string.Equals(grant.ResearchConfigurationId, F15PilotControlledConfigurationId, System.StringComparison.Ordinal))
+                error = "no pilot-controlled ownership grant for " + F15PilotControlledConfigurationId;
+
+            if (error == null)
+            {
+                string reason;
+                if (!IsBodyStillValidFor(body, F15PilotControlledConfigurationId, "pilot-controlled", out reason))
+                    error = reason;
+                else if (AnotherBodyIsArmed(body, "pilot-controlled", out reason))
+                    error = reason;
+                else if (!AllLegacyWritersQuiet(out reason))
+                    error = "legacy physical writers are still active: " + reason;
+                else if (!grant.TryGrantResearchOwnership(body, out reason))
+                    error = "the pilot-controlled grant refused: " + reason;
+            }
+
+            if (error != null)
+            {
+                debugRefusedActivations++;
+                debugPilotControlledOwnershipStatus = "REFUSED: " + error;
+                error = "pilot-controlled ownership refused: " + error;
+                return false;
+            }
+
+            SetOwner(MavFlightPhysicsOwner.F15PilotControlledResearch,
+                "pilot-controlled research aircraft: " + F15PilotControlledConfigurationId + " is the sole live FDM owner");
+            researchBody = body;
+            pilotControlledGrant = grant;
+            EnforceArmingForCurrentOwner();
+
+            if (ViolatesExclusiveOwnership(owner) || !IsReplacementPhysicsAllowed(owner)
+                || IsLegacyPhysicsAllowed(owner) || !body.ArmedForLiveFlight)
+            {
+                debugRolledBackTransitions++;
+                SetOwner(MavFlightPhysicsOwner.Legacy,
+                    "rolled back: pilot-controlled ownership did not settle exclusively on the pilot-controlled body");
+                error = "pilot-controlled ownership could not be confirmed; rolled back to legacy";
+                debugPilotControlledOwnershipStatus = "ROLLED BACK";
+                return false;
+            }
+
+            debugPilotControlledOwnershipStatus = "GRANTED: " + F15PilotControlledConfigurationId
+                + " is the sole live owner; source density + source gravity";
+            return true;
         }
 
         // ==================================================================== reporting
