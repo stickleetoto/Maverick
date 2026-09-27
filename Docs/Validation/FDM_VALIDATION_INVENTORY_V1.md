@@ -185,3 +185,17 @@ It also changes one listed file, the editor prefab builder `MavF15PilotControlle
 | 77 | `f15_pilot_control_v2_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotControlledV2FlightValidation.cs` — F-15 pilot-control V2 Play Mode flight-test driver |
 | 78 | `f15_pilot_control_v2_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlV2Validation.cs` — F-15 pilot-control V2 headless validation suite |
 | 79 | `f15_pilot_control_v2_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlledV2FlightValidationRunner.cs` — F-15 pilot-control V2 Play Mode flight-test runner |
+
+## F-15 pilot physics R2, 2026-09-28
+
+F-15 pilot physics R2 (the research model's own first-order actuator lags as an opt-in revision of the pilot-controlled aircraft) adds **3 C# files** under the declared roots:
+- the headless suite `MavF15PilotPhysicsR2Validation`;
+- the Play Mode flight-test runner and its driver. The driver is editor-only and lives in `Validation/` beside its runner.
+
+`expected_head_cs_surface_count` goes from 76 to 79. Same convention: `EXCLUDED_WITH_REASON`, not counted, `pinned_at: HEAD` with the file's blob; see `Docs/FlightDynamics/F15_PHYSICS_R2.md`. The counted set, the totals, the authority commit and every other entry are unchanged.
+
+| # | ID | Classification | Counted | Source cardinality | Path / role |
+|---:|---|---|:---:|---:|---|
+| 80 | `f15_pilot_physics_r2_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotPhysicsR2Validation.cs` — F-15 pilot physics R2 headless validation suite |
+| 81 | `f15_pilot_physics_r2_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotPhysicsR2FlightValidationRunner.cs` — F-15 pilot physics R2 Play Mode flight-test runner |
+| 82 | `f15_pilot_physics_r2_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotPhysicsR2FlightValidation.cs` — F-15 pilot physics R2 Play Mode flight-test driver |
