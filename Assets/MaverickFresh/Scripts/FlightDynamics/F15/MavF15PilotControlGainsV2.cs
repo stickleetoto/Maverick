@@ -188,7 +188,7 @@ namespace MaverickFresh.FlightDynamics.F15
                     "passes the Dutch roll (period ~2 s) and removes a sustained turn's steady yaw rate within a few seconds; 1 and 2 s behaved alike"),
                 Entry("scheduleGainsWithDynamicPressure", g.scheduleGainsWithDynamicPressure ? 1f : 0f, "bool",
                     "evaluated at research trims 265-400 ft/s: scheduling keeps the half-stick roll rate within ~0.4-1.2 of the command "
-                    + "(unscheduled 0.3-1.5) and removes a 2.3x pitch overshoot at 400 ft/s; Dutch-roll damping stays >= 0.18 either way"),
+                    + "(unscheduled 0.3-1.5) and removes a 2.3x pitch overshoot at 400 ft/s; Dutch-roll damping stays >= 0.16 either way"),
                 Entry("referenceDynamicPressurePa", g.referenceDynamicPressurePa, "Pa",
                     "DERIVED, not a free choice: the source's fixed density x the point-36 trim speed, so the schedule is exactly 1 where the gains were tuned"),
                 Entry("minimumGainScale", g.minimumGainScale, "-",
