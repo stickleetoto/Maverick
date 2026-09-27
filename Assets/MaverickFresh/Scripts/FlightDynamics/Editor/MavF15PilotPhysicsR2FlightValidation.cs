@@ -4,17 +4,19 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using MaverickFresh.FlightDynamics.Validation;
 
-namespace MaverickFresh.FlightDynamics.Validation
+namespace MaverickFresh.FlightDynamics.EditorTools
 {
     /// <summary>
     /// Driver for <see cref="MavF15PilotPhysicsR2FlightValidationRunner"/>: enters Play Mode on the empty unsaved batch
     /// scene, lets the runner fly its temporary rigs, harvests the report and exits. The same machinery as the pilot V1/V2
     /// flight-test drivers, with its own session keys. It refuses to run with a saved scene open, so no production scene,
-    /// gameplay or aircraft starts. Editor-only; it lives beside its runner so the R2 work stays inside Validation/.
+    /// gameplay or aircraft starts. Editor-only, so it lives in an Editor folder like the V1/V2 drivers: in a runtime folder
+    /// its UnityEditor references would enter Assembly-CSharp, which the shared propulsion gate (U-003g) forbids.
     ///
     /// Headless (do NOT pass -quit; the editor exits by itself):
-    ///   -executeMethod MaverickFresh.FlightDynamics.Validation.MavF15PilotPhysicsR2FlightValidation.RunBatch -f15r2Out &lt;path&gt;
+    ///   -executeMethod MaverickFresh.FlightDynamics.EditorTools.MavF15PilotPhysicsR2FlightValidation.RunBatch -f15r2Out &lt;path&gt;
     /// </summary>
     [InitializeOnLoad]
     public static class MavF15PilotPhysicsR2FlightValidation

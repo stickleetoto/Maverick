@@ -1021,13 +1021,13 @@
   },
   {
    "id": "f15_pilot_physics_r2_flight_validation",
-   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotPhysicsR2FlightValidation.cs",
-   "git_blob": "a73d187362fe393d6a29f86899819d2bea8af2fb",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotPhysicsR2FlightValidation.cs",
+   "git_blob": "77e50de14cc5d6146e520edc16769b1995b8a3b4",
    "pinned_at": "HEAD",
    "classification": "EXCLUDED_WITH_REASON",
    "role": "F-15 pilot physics R2 Play Mode flight-test driver",
    "counted": false,
-   "reason": "F-15 pilot physics R2 (research-model actuator lags) Play Mode flight-test driver (editor-only, kept beside its runner), run with the F-15 suites per Docs/FlightDynamics/F15_PHYSICS_R2.md; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "reason": "F-15 pilot physics R2 (research-model actuator lags) Play Mode flight-test driver (editor-only, in an Editor folder like the V1/V2 drivers), run with the F-15 suites per Docs/FlightDynamics/F15_PHYSICS_R2.md; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
    "execution_mode": "EXCLUDED"
   }
  ],

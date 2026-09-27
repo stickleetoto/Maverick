@@ -190,7 +190,7 @@ It also changes one listed file, the editor prefab builder `MavF15PilotControlle
 
 F-15 pilot physics R2 (the research model's own first-order actuator lags as an opt-in revision of the pilot-controlled aircraft) adds **3 C# files** under the declared roots:
 - the headless suite `MavF15PilotPhysicsR2Validation`;
-- the Play Mode flight-test runner and its driver. The driver is editor-only and lives in `Validation/` beside its runner.
+- the Play Mode flight-test runner (`Validation/`) and its editor-only driver (`Editor/`, like the V1/V2 drivers, so no UnityEditor reference enters the runtime assembly).
 
 `expected_head_cs_surface_count` goes from 76 to 79. Same convention: `EXCLUDED_WITH_REASON`, not counted, `pinned_at: HEAD` with the file's blob; see `Docs/FlightDynamics/F15_PHYSICS_R2.md`. The counted set, the totals, the authority commit and every other entry are unchanged.
 
@@ -198,4 +198,4 @@ F-15 pilot physics R2 (the research model's own first-order actuator lags as an 
 |---:|---|---|:---:|---:|---|
 | 80 | `f15_pilot_physics_r2_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotPhysicsR2Validation.cs` — F-15 pilot physics R2 headless validation suite |
 | 81 | `f15_pilot_physics_r2_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotPhysicsR2FlightValidationRunner.cs` — F-15 pilot physics R2 Play Mode flight-test runner |
-| 82 | `f15_pilot_physics_r2_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotPhysicsR2FlightValidation.cs` — F-15 pilot physics R2 Play Mode flight-test driver |
+| 82 | `f15_pilot_physics_r2_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotPhysicsR2FlightValidation.cs` — F-15 pilot physics R2 Play Mode flight-test driver |
