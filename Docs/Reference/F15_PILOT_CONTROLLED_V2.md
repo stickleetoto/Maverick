@@ -184,7 +184,7 @@ A future limiter would be Maverick-owned gameplay protection, not an F-15 limit.
 
 ## 7. Results
 
-### 7.1 Headless — `MavF15PilotControlV2Validation`: **40 / 0**
+### 7.1 Headless — `MavF15PilotControlV2Validation`: **54 / 0** (40 before the final cleanup + 14 in `[W12]`)
 
 Covers:
 - `[W1]` identity;
@@ -197,13 +197,14 @@ Covers:
 - `[W8]` rig selection and in-flight switch rules;
 - `[W9]` ownership (V2 granted; two enabled laws, a disabled bound law, or a non-pilot law refused; V1 still granted);
 - `[W10]` moment signs through the real V2 rig in shadow;
-- `[W11]` source scan.
+- `[W11]` source scan;
+- `[W12]` fail-closed law switch (§8.1).
 
-### 7.2 Play Mode — `MavF15PilotControlledV2FlightValidationRunner`: **52 / 0**, two runs byte-identical
+### 7.2 Play Mode — `MavF15PilotControlledV2FlightValidationRunner`: **57 / 0**, two runs byte-identical (52 before the final cleanup; the 52 earlier lines are unchanged, and the new run adds one `[M]` line and four `[X]` checks)
 
 Conditions: dt 0.02, `captureFramerate` 50, from Table VII point 36, real Unity physics.
 
-- **Mechanics** `[M]`, all 25 runs: owner held, one armed body, one enabled law, one load application per step, no duplicate refusals, finite, no teleport, every surface inside its envelope, no aero refusal.
+- **Mechanics** `[M]`, all 26 runs: owner held, one armed body, one enabled law, one load application per step, no duplicate refusals, finite, no teleport, every surface inside its envelope, no aero refusal.
 - **Neutral** `[H]`:
   - V1 surfaces exactly at the trim bias; every state within 1.7 × 10⁻⁷.
   - V2 every state within 9.4 × 10⁻⁸ for 20 s; surfaces within 2.9 × 10⁻⁶° of trim; V1 and V2 trajectories differ by ≤ 8.7 × 10⁻⁸.
@@ -253,6 +254,12 @@ Conditions: dt 0.02, `captureFramerate` 50, from Table VII point 36, real Unity 
 - V2 → V1 at 8 s is accepted, and V1 then flies its own gearing again (roll +0.5 → aileron exactly 10°, no rudder).
 - Throughout: owner held, exactly one law, 600/600 load applications. The largest surface step across a switch is 0.396°: the residual V2 feedback on decaying rates, since V1 at centred stick is exactly the trim.
 
+**Fail-closed law switch** `[X]` (final cleanup, §8.1), V1 at the trim:
+- The trim holds for the first second, within 9.4 × 10⁻⁸.
+- Four switch attempts are refused, each with its own reason, and change nothing: stick deflected at 1.5 s, command unavailable at 2.0 s, command source missing at 2.5 s, command source disabled at 2.8 s.
+- V1 → V2 at 3 s and V2 → V1 at 6 s are accepted.
+- 400/400 load applications, exactly one law every step, no FAULT; the largest surface step across a switch is 0.000°.
+
 **Fail-closed** `[N]`:
 - Pilot profile removed → FAULT, body disarmed, no further load.
 - The V1 law enabled next to the bound V2 law (a second surface requester) → FAULT, body disarmed, no further load.
@@ -282,6 +289,28 @@ Conditions: dt 0.02, `captureFramerate` 50, from Table VII point 36, real Unity 
 - **In-flight switch.** The rig rebinds only the law (`BindControlLaw`: no mass, profile or physics state is touched).
   - Inside a physics step it evaluates the newly selected law once, immediately, from the same published state it would read at its own turn. Without that, the body re-checks readiness, finds no command from the new law and withholds **every** load for one step, gravity included. The Play Mode test caught this: 598/600 loads before the fix, 600/600 after.
   - V2 then skips its own turn in that step, so its washout never advances twice.
+
+### 8.1 V1/V2 switch fail-closed semantics
+
+Added in the V2 final cleanup. `MavF15PilotControlledRig.TrySetControlMode` handles each case as follows:
+
+| Situation | Result |
+|---|---|
+| Requested mode already selected, bound to the body, active and enabled, other law not enabled | **Success** ("already …"). No command is read and nothing changes. |
+| Command source missing (`commandSource == null`) | **Refused**: "no pilot command source is wired" |
+| Command source disabled, or on an inactive GameObject | **Refused**: "the pilot command source is inactive or disabled" |
+| `TryGetCommand` fails (no signal) | **Refused**: "the current pilot command is unavailable" |
+| A pitch, roll or yaw value that is NaN or infinite | **Refused**: "the current pilot command is not finite" |
+| Any of pitch, roll, yaw outside ±0.05 (`SwitchCentredTolerance`, unchanged) | **Refused**: "centre the stick and pedals first" |
+| All three within ±0.05 (throttle ignored) | **Switch.** Exactly one law is enabled and bound, and the new law starts with zero filter state. |
+
+- **Before the cleanup**, a missing, inactive or silent source skipped the centring check and the switch went ahead. A NaN axis also counted as centred, because `Mathf.Clamp` keeps NaN and `|NaN| > tol` is false.
+- **A refused switch changes nothing**: controlMode, body.controlLaw, which law is enabled, the V2 filter state, the actuator request, the surfaces, either law's request, the owner and its reason, and the arming.
+- **A fake "already" is not accepted.** If the other law is also enabled, the fast path is skipped and the full gate runs. A switch that then succeeds leaves exactly one law enabled.
+- **An accepted switch inside a physics step** still primes the new law in that step (see above), so loads continue without a gap. The body applies exactly one load set per step, with no dropout and no duplicate.
+- Tests:
+  - headless `[W12]` covers each row above, both signs of every axis, a NaN and an infinite axis, and live steps with one load application per step after each accepted switch;
+  - Play Mode `[X]` runs "SWITCH FAIL-CLOSED V1->V2->V1": V1 holds the trim, four refused attempts (deflected, unavailable, missing, disabled) change nothing, then V1 → V2 and V2 → V1 are accepted, with one law and one load application in every step.
 
 ---
 

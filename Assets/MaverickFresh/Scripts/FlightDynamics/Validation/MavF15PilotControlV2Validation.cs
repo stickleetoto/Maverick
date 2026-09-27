@@ -31,6 +31,9 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   [W9] ownership: V2 granted; two enabled laws, or a non-pilot law, refused; V1 still granted
     ///   [W10] sign response through the real V2 rig (law -> actuator -> aero -> load set), SHADOW
     ///   [W11] source scan of the V2 layer: no Rigidbody writes, no arming, no forbidden types, no F-16 type
+    ///   [W12] the in-flight law switch fails closed: a missing, inactive, disabled or silent command source, a
+    ///         non-finite command or any axis outside the centred tolerance refuses it and changes nothing; an
+    ///         already-bound mode succeeds without a command read; an accepted switch keeps one law and one load per step
     /// </summary>
     public static class MavF15PilotControlV2Validation
     {
@@ -58,6 +61,7 @@ namespace MaverickFresh.FlightDynamics.Validation
                 ValidateOwnership(created, report, ref passed, ref failed);
                 ValidateSignsThroughRig(created, report, ref passed, ref failed);
                 ValidateSourceScan(report, ref passed, ref failed);
+                ValidateSwitchFailClosed(created, report, ref passed, ref failed);
             }
             catch (Exception e)
             {
@@ -636,6 +640,259 @@ namespace MaverickFresh.FlightDynamics.Validation
             rig.actuator.StepActuator(Dt);
             rig.body.StepPhysicsForValidation(Dt, Dt * (stepIndex + 1));
             return rig.body.debugLoadSet.totalMomentAeroBodyNm;
+        }
+
+        // ---------------------------------------------------------------- [W12]
+
+        /// <summary>Everything a refused law switch must leave untouched.</summary>
+        private struct SwitchSnapshot
+        {
+            public MavF15PilotControlMode mode;
+            public bool v1Enabled, v2Enabled;
+            public MavFlightControlLawBase bound;
+            public MavFlightPhysicsOwner owner;
+            public string ownerReason;
+            public bool armed;
+            public MavF15SurfaceState actuatorRequest, actualSurfaces, v1Request, v2Request;
+            public float v2Filter;
+
+            public static SwitchSnapshot Of(MavF15PilotControlledRig rig, MavFlightPhysicsOwnership gate)
+            {
+                return new SwitchSnapshot
+                {
+                    mode = rig.controlMode,
+                    v1Enabled = rig.law != null && rig.law.enabled,
+                    v2Enabled = rig.lawV2 != null && rig.lawV2.enabled,
+                    bound = rig.body.controlLaw,
+                    owner = gate.owner,
+                    ownerReason = gate.ownerReason,
+                    armed = rig.body.ArmedForLiveFlight,
+                    actuatorRequest = rig.actuator.requested.channels,
+                    actualSurfaces = rig.actuator.ActualF15SurfaceState.channels,
+                    v1Request = rig.law.debugRequested.channels,
+                    v2Request = rig.lawV2 != null ? rig.lawV2.debugRequested.channels : MavF15SurfaceState.Neutral,
+                    v2Filter = rig.lawV2 != null ? rig.lawV2.lawState.yawRateLowPassRadSec : 0f
+                };
+            }
+
+            public bool SameAs(SwitchSnapshot o)
+            {
+                return mode == o.mode && v1Enabled == o.v1Enabled && v2Enabled == o.v2Enabled && bound == o.bound && owner == o.owner
+                       && ownerReason == o.ownerReason && armed == o.armed && SameSurfaces(actuatorRequest, o.actuatorRequest)
+                       && SameSurfaces(actualSurfaces, o.actualSurfaces) && SameSurfaces(v1Request, o.v1Request)
+                       && SameSurfaces(v2Request, o.v2Request) && v2Filter.Equals(o.v2Filter);
+            }
+        }
+
+        private static bool SameSurfaces(MavF15SurfaceState a, MavF15SurfaceState b)
+        {
+            for (int c = 0; c < 4; c++)
+            {
+                if (!a.Get((MavF15SurfaceChannel)c).Equals(b.Get((MavF15SurfaceChannel)c)))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static double LargestSurfaceStep(MavF15SurfaceState a, MavF15SurfaceState b)
+        {
+            double worst = 0;
+            for (int c = 0; c < 4; c++)
+                worst = Math.Max(worst, Math.Abs(b.Get((MavF15SurfaceChannel)c) - a.Get((MavF15SurfaceChannel)c)));
+            return worst;
+        }
+
+        /// <summary>A refused attempt: false return, the expected reason, and a snapshot identical before and after.</summary>
+        private static bool RefusedUnchanged(MavF15PilotControlledRig rig, MavFlightPhysicsOwnership gate, MavF15PilotControlMode request,
+            string expectedReasonPrefix, out string reason)
+        {
+            SwitchSnapshot before = SwitchSnapshot.Of(rig, gate);
+            bool refused = !rig.TrySetControlMode(request, out reason);
+            return refused && reason != null && reason.StartsWith(expectedReasonPrefix, StringComparison.Ordinal)
+                   && SwitchSnapshot.Of(rig, gate).SameAs(before);
+        }
+
+        /// <summary>One live step of the bound law, the actuator and the body (edit mode: the validation seam, a fresh step time).</summary>
+        private static void LiveStep(MavF15PilotControlledRig rig, ref float fixedTime)
+        {
+            fixedTime += Dt;
+            if (rig.controlMode == MavF15PilotControlMode.AssistedV2)
+                rig.lawV2.StepPilotControlLaw(Dt);
+            else
+                rig.law.StepPilotControlLaw(Dt);
+            rig.actuator.StepActuator(Dt);
+            rig.body.StepPhysicsForValidation(Dt, fixedTime);
+        }
+
+        /// <summary>Steps the bound law live and reports whether every step applied exactly one load, granted, with one law enabled.</summary>
+        private static bool LiveStepsClean(MavF15PilotControlledRig rig, MavFlightPhysicsOwnership gate, int steps, ref float fixedTime,
+            out int applied, out double largestSurfaceStep)
+        {
+            int loads0 = rig.body.debugLoadApplications, dup0 = rig.body.debugRejectedDuplicateApplications;
+            bool ok = true;
+            largestSurfaceStep = 0;
+            MavF15SurfaceState prev = rig.actuator.ActualF15SurfaceState.channels;
+            for (int i = 0; i < steps; i++)
+            {
+                LiveStep(rig, ref fixedTime);
+                MavF15SurfaceState now = rig.actuator.ActualF15SurfaceState.channels;
+                largestSurfaceStep = Math.Max(largestSurfaceStep, LargestSurfaceStep(prev, now));
+                prev = now;
+                string r;
+                int enabled = (rig.law.enabled ? 1 : 0) + (rig.lawV2 != null && rig.lawV2.enabled ? 1 : 0);
+                ok &= enabled == 1 && rig.body.controlLaw == rig.ActiveLaw && rig.body.debugLoadApplications == loads0 + i + 1
+                      && gate.owner == MavFlightPhysicsOwner.F15PilotControlledResearch && rig.body.ArmedForLiveFlight
+                      && MavF15PilotControlledOwnershipGrant.Instance.TryGrantResearchOwnership(rig.body, out r)
+                      && rig.body.debugLoadSet.IsFinite() && now.IsFinite();
+            }
+
+            applied = rig.body.debugLoadApplications - loads0;
+            return ok && rig.body.debugRejectedDuplicateApplications == dup0;
+        }
+
+        private static void ValidateSwitchFailClosed(List<Object> created, StringBuilder report, ref int passed, ref int failed)
+        {
+            float tol = MavF15PilotControlledRig.SwitchCentredTolerance;
+            report.AppendLine();
+            report.AppendLine("[W12] The in-flight law switch fails closed (proceeds only with a wired, active and enabled command source whose "
+                              + "current command reads, is finite and is within " + tol + " on pitch, roll and yaw)");
+            MavF15PilotControlledRig rig = PilotRig(created, "w12-v2", MavF15PilotControlMode.AssistedV2);
+            string reason;
+            bool injected = Inject(rig.body, MavF15PilotTrimStart.TableViiPoint36(), out reason);
+            MavFlightPhysicsOwnership gate = rig.gameObject.AddComponent<MavFlightPhysicsOwnership>();
+            rig.body.physicsOwnership = gate;
+            gate.AttachGovernedBody(rig.body);
+            rig.body.NotifyOwnershipChanged();
+            gate.allowF15PilotControlledOwnership = true;
+            bool entered = gate.TryEnterF15PilotControlledOwnership(rig.body, MavF15PilotControlledOwnershipGrant.Instance, out reason);
+            MavManualPilotCommandSource source = (MavManualPilotCommandSource)rig.commandSource;
+            source.command = MavPilotCommand.Neutral;
+
+            float fixedTime = 0f;
+            int loads0 = rig.body.debugLoadApplications;
+            LiveStep(rig, ref fixedTime);
+            rig.lawV2.lawState.yawRateLowPassRadSec = 0.123f;   // distinctive: any accepted switch would zero it
+            SwitchSnapshot s0 = SwitchSnapshot.Of(rig, gate);
+            Record(injected && entered && s0.armed && s0.owner == MavFlightPhysicsOwner.F15PilotControlledResearch && s0.mode == MavF15PilotControlMode.AssistedV2
+                   && rig.body.debugLoadApplications == loads0 + 1,
+                "set-up: V2 rig at the trim, in F15PilotControlledResearch (armed), one live step applied; a distinctive V2 filter state marks any reset",
+                report, ref passed, ref failed);
+
+            const MavF15PilotControlMode toV1 = MavF15PilotControlMode.DirectV1;
+            string ra, rb1, rb2, rc, rn, r1, r2;
+
+            // A. no command source wired.
+            rig.commandSource = null;
+            bool a = RefusedUnchanged(rig, gate, toV1, MavF15PilotControlledRig.SwitchRefusedNoCommandSource, out ra);
+            rig.commandSource = source;
+            Record(a, "A  command source missing -> refused, nothing changed: \"" + ra + "\"", report, ref passed, ref failed);
+
+            // B. a command source that exists but is disabled, or on an inactive GameObject.
+            source.enabled = false;
+            bool b1 = RefusedUnchanged(rig, gate, toV1, MavF15PilotControlledRig.SwitchRefusedCommandSourceInactive, out rb1);
+            source.enabled = true;
+            GameObject inactiveHost = new GameObject("w12-inactive-source");
+            inactiveHost.hideFlags = HideFlags.HideAndDontSave;
+            created.Add(inactiveHost);
+            inactiveHost.SetActive(false);
+            MavManualPilotCommandSource parked = inactiveHost.AddComponent<MavManualPilotCommandSource>();
+            parked.treatAsOperationalSource = true;
+            rig.commandSource = parked;
+            bool b2 = RefusedUnchanged(rig, gate, toV1, MavF15PilotControlledRig.SwitchRefusedCommandSourceInactive, out rb2);
+            rig.commandSource = source;
+            Record(b1, "B  command source disabled -> refused, nothing changed: \"" + rb1 + "\"", report, ref passed, ref failed);
+            Record(b2, "B  command source on an inactive GameObject -> refused, nothing changed", report, ref passed, ref failed);
+
+            // C. an active source whose TryGetCommand fails; and a command that reads but is not finite.
+            source.commandAvailable = false;
+            bool c = RefusedUnchanged(rig, gate, toV1, MavF15PilotControlledRig.SwitchRefusedCommandUnavailable, out rc);
+            source.commandAvailable = true;
+            Record(c, "C  active source, TryGetCommand fails -> refused, nothing changed: \"" + rc + "\"", report, ref passed, ref failed);
+            source.command = new MavPilotCommand { pitch = float.NaN };
+            bool nan = RefusedUnchanged(rig, gate, toV1, MavF15PilotControlledRig.SwitchRefusedCommandNotFinite, out rn);
+            string rinf;
+            source.command = new MavPilotCommand { yaw = float.PositiveInfinity };
+            bool inf = RefusedUnchanged(rig, gate, toV1, "law switch refused: ", out rinf);
+            Record(nan && inf, "C  a NaN axis -> refused as not finite (\"" + rn + "\"; before this fix NaN passed the centred test); an infinite axis "
+                + "(the manual source clamps it to full deflection) -> refused (\"" + rinf + "\"); nothing changed either time",
+                report, ref passed, ref failed);
+
+            // D, E, F. each axis just outside the tolerance, both signs, the other axes centred.
+            float over = tol + 0.001f;
+            string n = MavF15PilotControlledRig.SwitchRefusedNotCentred;
+            string[] axes = { "D  pitch", "E  roll", "F  yaw" };
+            for (int axis = 0; axis < 3; axis++)
+            {
+                bool both = true;
+                foreach (float sign in new[] { 1f, -1f })
+                {
+                    MavPilotCommand cmd = MavPilotCommand.Neutral;
+                    if (axis == 0) cmd.pitch = sign * over;
+                    else if (axis == 1) cmd.roll = sign * over;
+                    else cmd.yaw = sign * over;
+                    source.command = cmd;
+                    string rr;
+                    both &= RefusedUnchanged(rig, gate, toV1, n, out rr);
+                }
+
+                Record(both, axes[axis] + " at +/-" + over.ToString("R") + " (outside " + tol + ") -> refused, nothing changed", report, ref passed, ref failed);
+            }
+
+            // I. after every refusal: nothing moved since the set-up - mode, bound law, enabled laws, law state, requests, surfaces, ownership.
+            source.command = MavPilotCommand.Neutral;
+            Record(SwitchSnapshot.Of(rig, gate).SameAs(s0) && rig.commandSource == source && rig.lawV2.lawState.yawRateLowPassRadSec == 0.123f,
+                "I  after the 12 refused attempts: controlMode, body.controlLaw, both laws' enabled states, the V2 filter state, the actuator request, "
+                + "the surfaces, both laws' requests, the owner, its reason and the arming are exactly as before", report, ref passed, ref failed);
+
+            // H. the requested mode is already bound and active: success with no command read (source silent AND deflected).
+            source.commandAvailable = false;
+            source.command = new MavPilotCommand { roll = 1f };
+            bool already = rig.TrySetControlMode(MavF15PilotControlMode.AssistedV2, out r1) && SwitchSnapshot.Of(rig, gate).SameAs(s0);
+            // ...but not when "already" is not valid: V1 enabled next to the bound V2 is not a bound-and-active mode.
+            rig.law.enabled = true;
+            SwitchSnapshot invalid = SwitchSnapshot.Of(rig, gate);
+            bool notFooled = !rig.TrySetControlMode(MavF15PilotControlMode.AssistedV2, out r2) && SwitchSnapshot.Of(rig, gate).SameAs(invalid);
+            source.commandAvailable = true;
+            source.command = MavPilotCommand.Neutral;
+            bool repaired = rig.TrySetControlMode(MavF15PilotControlMode.AssistedV2, out r2) && !rig.law.enabled && rig.lawV2.enabled
+                            && rig.body.controlLaw == rig.lawV2 && rig.lawV2.lawState.yawRateLowPassRadSec == 0f;
+            Record(already && r1 == "already AssistedV2",
+                "H  requesting the already bound and active mode succeeds with the source silent and the stick deflected, and disturbs nothing (\"" + r1 + "\")",
+                report, ref passed, ref failed);
+            Record(notFooled && repaired,
+                "H  the fast path is not taken when the other law is also enabled: refused while the source is silent, then with a centred source the "
+                + "switch path runs and leaves exactly one law enabled", report, ref passed, ref failed);
+
+            // G + J. every axis exactly at the tolerance -> accepted; one law, one load per step, no gap, both directions.
+            int applied;
+            double step;
+            bool warm = LiveStepsClean(rig, gate, 3, ref fixedTime, out applied, out step) && applied == 3;
+            MavF15SurfaceState beforeV1 = rig.actuator.ActualF15SurfaceState.channels;
+            source.command = new MavPilotCommand { pitch = tol, roll = -tol, yaw = tol, throttle01 = 1f };
+            bool toV1Ok = rig.TrySetControlMode(toV1, out r1);
+            bool v1Bound = rig.controlMode == toV1 && rig.law.enabled && !rig.lawV2.enabled && rig.body.controlLaw == rig.law
+                           && gate.owner == MavFlightPhysicsOwner.F15PilotControlledResearch && rig.body.ArmedForLiveFlight;
+            Record(toV1Ok && v1Bound, "G  pitch +" + tol + ", roll -" + tol + ", yaw +" + tol + " (exactly at the tolerance, throttle ignored) -> V2 to V1 accepted: \""
+                + r1 + "\"; V1 enabled and bound, V2 disabled, owner and arming kept", report, ref passed, ref failed);
+
+            source.command = MavPilotCommand.Neutral;
+            bool cleanV1 = LiveStepsClean(rig, gate, 5, ref fixedTime, out applied, out step);
+            double jumpV1 = LargestSurfaceStep(beforeV1, rig.actuator.ActualF15SurfaceState.channels);
+            int appliedV1 = applied;
+
+            MavF15SurfaceState beforeV2 = rig.actuator.ActualF15SurfaceState.channels;
+            source.command = new MavPilotCommand { pitch = -tol, roll = tol, yaw = -tol };
+            bool toV2Ok = rig.TrySetControlMode(MavF15PilotControlMode.AssistedV2, out r2);
+            bool v2Bound = rig.lawV2.enabled && !rig.law.enabled && rig.body.controlLaw == rig.lawV2 && rig.lawV2.lawState.yawRateLowPassRadSec == 0f;
+            source.command = MavPilotCommand.Neutral;
+            bool cleanV2 = LiveStepsClean(rig, gate, 5, ref fixedTime, out applied, out step);
+            double jumpV2 = LargestSurfaceStep(beforeV2, rig.actuator.ActualF15SurfaceState.channels);
+            Record(warm && cleanV1 && appliedV1 == 5 && toV2Ok && v2Bound && cleanV2 && applied == 5 && Math.Max(jumpV1, jumpV2) < 1.0,
+                "J  after each accepted switch (V2 -> V1, then V1 -> V2 at the opposite tolerance corner): 5 live steps each, exactly one law enabled and bound, "
+                + "granted, one load application per step (" + appliedV1 + " + " + applied + "), no duplicate refusal, finite; largest surface change across a switch "
+                + Math.Max(jumpV1, jumpV2).ToString("F3") + " deg", report, ref passed, ref failed);
+            gate.ReturnToLegacy("w12 done");
         }
 
         // ---------------------------------------------------------------- [W11]

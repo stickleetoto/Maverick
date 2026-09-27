@@ -978,7 +978,7 @@
   {
    "id": "f15_pilot_control_v2_validation",
    "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlV2Validation.cs",
-   "git_blob": "869c7c8440b77a1d761efbc5ccf172489acef760",
+   "git_blob": "6811872f1646a720c6c3cd7ade2a446b097a98bf",
    "pinned_at": "HEAD",
    "classification": "EXCLUDED_WITH_REASON",
    "role": "F-15 pilot-control V2 headless validation suite",
@@ -989,7 +989,7 @@
   {
    "id": "f15_pilot_control_v2_flight_validation_runner",
    "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlledV2FlightValidationRunner.cs",
-   "git_blob": "227737bf3b32fc1e1f21f5df2b0c1c1fbd7b6cbc",
+   "git_blob": "6c888993f58d828590a76847dc3d100f1af7d0d1",
    "pinned_at": "HEAD",
    "classification": "EXCLUDED_WITH_REASON",
    "role": "F-15 pilot-control V2 Play Mode flight-test runner",

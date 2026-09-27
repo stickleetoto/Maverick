@@ -267,34 +267,34 @@ namespace MaverickFresh.FlightDynamics.F15
         /// <summary>Largest stick / pedal deflection at which a law switch is accepted.</summary>
         public const float SwitchCentredTolerance = 0.05f;
 
+        public const string SwitchRefusedNoCommandSource = "law switch refused: no pilot command source is wired";
+        public const string SwitchRefusedCommandSourceInactive = "law switch refused: the pilot command source is inactive or disabled";
+        public const string SwitchRefusedCommandUnavailable = "law switch refused: the current pilot command is unavailable";
+        public const string SwitchRefusedCommandNotFinite = "law switch refused: the current pilot command is not finite";
+        public const string SwitchRefusedNotCentred = "law switch refused: centre the stick and pedals first";
+
         /// <summary>
         /// Switches the pilot-control law - Direct V1 or Assisted V2 - on this rig, in flight or not.
-        /// Refused, changing nothing, unless the stick and pedals are centred (within
-        /// <see cref="SwitchCentredTolerance"/>): near the trim both laws then request about the trim bias
-        /// and zero lateral surfaces, so the switch does not step the surfaces. The newly selected law
-        /// starts with zero filter state; the other is disabled, so there is never a second requester. The
-        /// ownership grant, re-checked every physics step, accepts either law.
+        ///
+        /// FAIL-CLOSED: unless <paramref name="mode"/> is already bound and active, the switch proceeds only when
+        /// the command source is wired, active and enabled, its current command can be read, and pitch, roll and yaw
+        /// are each finite and within <see cref="SwitchCentredTolerance"/>. Any other case is refused and changes
+        /// nothing - not the mode, the bound law, which law is enabled, the law state, the surface request or the
+        /// ownership. Near the trim both laws request about the trim bias and zero lateral surfaces, so an accepted
+        /// switch does not step the surfaces. The newly selected law starts with zero filter state; the other is
+        /// disabled, so there is never a second requester. The ownership grant, re-checked every physics step,
+        /// accepts either law.
         /// </summary>
         public bool TrySetControlMode(MavF15PilotControlMode mode, out string reason)
         {
-            if (mode == controlMode && body != null && ActiveLaw != null && body.controlLaw == ActiveLaw && ActiveLaw.enabled)
+            if (IsBoundAndActive(mode))
             {
                 reason = "already " + mode;
                 return true;
             }
 
-            MavPilotCommand current;
-            if (commandSource != null && commandSource.isActiveAndEnabled && commandSource.TryGetCommand(out current))
-            {
-                MavPilotCommand c = current.Clamped();
-                if (Mathf.Abs(c.pitch) > SwitchCentredTolerance || Mathf.Abs(c.roll) > SwitchCentredTolerance
-                    || Mathf.Abs(c.yaw) > SwitchCentredTolerance)
-                {
-                    reason = "law switch refused: centre the stick and pedals first (|pitch|, |roll|, |yaw| <= "
-                        + SwitchCentredTolerance + ")";
-                    return false;
-                }
-            }
+            if (!SwitchPreconditionsHold(out reason))
+                return false;
 
             controlMode = mode;
             if (body == null || law == null)
@@ -324,6 +324,63 @@ namespace MaverickFresh.FlightDynamics.F15
             }
             reason = "pilot-control law switched to " + mode + ": " + ActiveLaw.ControlLawName;
             return true;
+        }
+
+        /// <summary>
+        /// The requested law is the selected one, bound to the body, active and enabled, and the other law is not
+        /// enabled: nothing to switch, so no command read is needed.
+        /// </summary>
+        private bool IsBoundAndActive(MavF15PilotControlMode mode)
+        {
+            if (mode != controlMode || body == null)
+                return false;
+            MavFlightControlLawBase active = ActiveLaw;
+            MavFlightControlLawBase other = mode == MavF15PilotControlMode.AssistedV2 ? (MavFlightControlLawBase)law : lawV2;
+            return active != null && body.controlLaw == active && active.isActiveAndEnabled && (other == null || !other.enabled);
+        }
+
+        /// <summary>The switch gate. Reads the command source only; changes nothing.</summary>
+        private bool SwitchPreconditionsHold(out string reason)
+        {
+            if (commandSource == null)
+            {
+                reason = SwitchRefusedNoCommandSource;
+                return false;
+            }
+
+            if (!commandSource.isActiveAndEnabled)
+            {
+                reason = SwitchRefusedCommandSourceInactive + " (" + commandSource.CommandSourceName + ")";
+                return false;
+            }
+
+            MavPilotCommand c;
+            if (!commandSource.TryGetCommand(out c))
+            {
+                reason = SwitchRefusedCommandUnavailable + " (" + commandSource.CommandSourceName + ")";
+                return false;
+            }
+
+            if (!IsFinite(c.pitch) || !IsFinite(c.roll) || !IsFinite(c.yaw))
+            {
+                reason = SwitchRefusedCommandNotFinite;
+                return false;
+            }
+
+            if (Mathf.Abs(c.pitch) > SwitchCentredTolerance || Mathf.Abs(c.roll) > SwitchCentredTolerance
+                || Mathf.Abs(c.yaw) > SwitchCentredTolerance)
+            {
+                reason = SwitchRefusedNotCentred + " (|pitch|, |roll|, |yaw| <= " + SwitchCentredTolerance + ")";
+                return false;
+            }
+
+            reason = null;
+            return true;
+        }
+
+        private static bool IsFinite(float v)
+        {
+            return !float.IsNaN(v) && !float.IsInfinity(v);
         }
 
         private bool Fail(string reason)

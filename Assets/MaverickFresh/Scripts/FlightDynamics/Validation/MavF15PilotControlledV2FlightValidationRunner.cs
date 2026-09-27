@@ -17,7 +17,9 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   signs on every axis and a combined pitch + roll, flown by V1 AND by V2 with identical inputs; the
     ///   sequence neutral - pitch+ - pitch- - roll+ - roll- - yaw+ - yaw- - pitch+roll - neutral under V2 at dt,
     ///   dt/2 and dt/4 (and under V1 at dt, for comparison); an in-flight law switch V1 -> V2 -> V1 (and a switch
-    ///   refused with the stick deflected); an ownership loss; and a second surface requester enabled in flight.
+    ///   refused with the stick deflected); a fail-closed switch run (refused with the stick deflected, the command
+    ///   unavailable, the command source missing and the command source disabled, then V1 -> V2 -> V1 centred); an
+    ///   ownership loss; and a second surface requester enabled in flight.
     ///
     /// Pass criteria are sign, finiteness, continuity, ownership, a single load application per step, bounded
     /// surfaces, no research-domain refusal, decay after release and convergence - never "looks right". The
@@ -65,6 +67,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             Pulse,
             Sequence,
             Switch,
+            SwitchFailClosed,
             OwnershipLoss,
             SecondRequester
         }
@@ -124,6 +127,56 @@ namespace MaverickFresh.FlightDynamics.Validation
             public bool v2BoundAfterSwitch, v1BoundAfterSwitchBack;
             public double maxSurfaceStepAtSwitchDeg;
             public bool v1GearingAfterSwitchBack;
+
+            // Fail-closed switch run.
+            public double trimDriftBeforeAttempts = double.NaN;
+            public int refusalsAttempted, refusalsOk;
+        }
+
+        /// <summary>Everything a refused law switch must leave untouched.</summary>
+        private struct SwitchSnapshot
+        {
+            public MavF15PilotControlMode mode;
+            public bool v1Enabled, v2Enabled;
+            public MavFlightControlLawBase bound;
+            public MavFlightPhysicsOwner owner;
+            public string ownerReason;
+            public bool armed;
+            public MavF15SurfaceState actuatorRequest, actualSurfaces, v1Request, v2Request;
+
+            public static SwitchSnapshot Of(MavF15PilotControlledRig rig, MavFlightPhysicsOwnership gate)
+            {
+                return new SwitchSnapshot
+                {
+                    mode = rig.controlMode,
+                    v1Enabled = rig.law != null && rig.law.enabled,
+                    v2Enabled = rig.lawV2 != null && rig.lawV2.enabled,
+                    bound = rig.body.controlLaw,
+                    owner = gate.owner,
+                    ownerReason = gate.ownerReason,
+                    armed = rig.body.ArmedForLiveFlight,
+                    actuatorRequest = rig.actuator.requested.channels,
+                    actualSurfaces = rig.actuator.ActualF15SurfaceState.channels,
+                    v1Request = rig.law.debugRequested.channels,
+                    v2Request = rig.lawV2 != null ? rig.lawV2.debugRequested.channels : MavF15SurfaceState.Neutral
+                };
+            }
+
+            public bool SameAs(SwitchSnapshot o)
+            {
+                if (mode != o.mode || v1Enabled != o.v1Enabled || v2Enabled != o.v2Enabled || bound != o.bound || owner != o.owner
+                    || ownerReason != o.ownerReason || armed != o.armed)
+                    return false;
+                for (int c = 0; c < 4; c++)
+                {
+                    MavF15SurfaceChannel ch = (MavF15SurfaceChannel)c;
+                    if (!actuatorRequest.Get(ch).Equals(o.actuatorRequest.Get(ch)) || !actualSurfaces.Get(ch).Equals(o.actualSurfaces.Get(ch))
+                        || !v1Request.Get(ch).Equals(o.v1Request.Get(ch)) || !v2Request.Get(ch).Equals(o.v2Request.Get(ch)))
+                        return false;
+                }
+
+                return true;
+            }
         }
 
         private readonly List<Run> runs = new List<Run>();
@@ -197,6 +250,7 @@ namespace MaverickFresh.FlightDynamics.Validation
 
             runs.Add(new Run { id = "SEQUENCE V1 dt 0.0200", kind = Kind.Sequence, mode = MavF15PilotControlMode.DirectV1, dt = BaseDt, steps = Steps(SequenceDurationS, BaseDt) });
             runs.Add(new Run { id = "LAW SWITCH V1->V2->V1", kind = Kind.Switch, mode = MavF15PilotControlMode.DirectV1, dt = BaseDt, steps = Steps(12f, BaseDt) });
+            runs.Add(new Run { id = "SWITCH FAIL-CLOSED V1->V2->V1", kind = Kind.SwitchFailClosed, mode = MavF15PilotControlMode.DirectV1, dt = BaseDt, steps = Steps(8f, BaseDt) });
             runs.Add(new Run { id = "OWNERSHIP-LOSS V2", kind = Kind.OwnershipLoss, mode = MavF15PilotControlMode.AssistedV2, dt = BaseDt, steps = 100, lossStep = 25 });
             runs.Add(new Run { id = "SECOND REQUESTER V2", kind = Kind.SecondRequester, mode = MavF15PilotControlMode.AssistedV2, dt = BaseDt, steps = 100, lossStep = 25 });
         }
@@ -444,6 +498,8 @@ namespace MaverickFresh.FlightDynamics.Validation
 
             if (run.kind == Kind.Switch)
                 StepSwitch(run);
+            else if (run.kind == Kind.SwitchFailClosed)
+                StepSwitchFailClosed(run);
 
             if (stepsDone >= run.steps)
             {
@@ -494,6 +550,73 @@ namespace MaverickFresh.FlightDynamics.Validation
             }
         }
 
+        /// <summary>
+        /// The fail-closed switch script, V1 at centred stick throughout: the trim is checked at 1 s; switch attempts are refused
+        /// at 1.5 s (pitch 0.3 on the stick at the attempt), 2.0 s (command unavailable), 2.5 s (command source missing) and
+        /// 2.8 s (command source disabled) - each condition is restored before the laws step, so the aircraft never sees it;
+        /// then V1 -> V2 at 3 s and V2 -> V1 at 6 s, centred with the source restored.
+        /// </summary>
+        private void StepSwitchFailClosed(Run run)
+        {
+            string reason;
+            if (stepsDone == Steps(1f, run.dt))
+            {
+                run.trimDriftBeforeAttempts = Max(Drift(run));
+            }
+            else if (stepsDone == Steps(1.5f, run.dt))
+            {
+                activeSource.command = new MavPilotCommand { pitch = 0.3f };
+                AttemptRefused(run, "t 1.5 s, pitch 0.3 on the stick", MavF15PilotControlledRig.SwitchRefusedNotCentred);
+                activeSource.command = MavPilotCommand.Neutral;
+            }
+            else if (stepsDone == Steps(2f, run.dt))
+            {
+                activeSource.commandAvailable = false;
+                AttemptRefused(run, "t 2.0 s, command unavailable", MavF15PilotControlledRig.SwitchRefusedCommandUnavailable);
+                activeSource.commandAvailable = true;
+            }
+            else if (stepsDone == Steps(2.5f, run.dt))
+            {
+                MavPilotCommandSourceBase wired = rig.commandSource;
+                rig.commandSource = null;
+                AttemptRefused(run, "t 2.5 s, command source missing", MavF15PilotControlledRig.SwitchRefusedNoCommandSource);
+                rig.commandSource = wired;
+            }
+            else if (stepsDone == Steps(2.8f, run.dt))
+            {
+                activeSource.enabled = false;
+                AttemptRefused(run, "t 2.8 s, command source disabled", MavF15PilotControlledRig.SwitchRefusedCommandSourceInactive);
+                activeSource.enabled = true;
+            }
+            else if (stepsDone == Steps(3f, run.dt))
+            {
+                run.switchToV2Accepted = rig.TrySetControlMode(MavF15PilotControlMode.AssistedV2, out reason);
+                run.switchLog.Add("t 3.0 s, centred, source restored: " + reason);
+                run.v2BoundAfterSwitch = rig.body.controlLaw == rig.lawV2 && rig.lawV2 != null && rig.lawV2.enabled && !rig.law.enabled;
+                switchMark = run.samples.Count - 1;
+            }
+            else if (stepsDone == Steps(6f, run.dt))
+            {
+                run.switchToV1Accepted = rig.TrySetControlMode(MavF15PilotControlMode.DirectV1, out reason);
+                run.switchLog.Add("t 6.0 s, centred: " + reason);
+                run.v1BoundAfterSwitchBack = rig.body.controlLaw == rig.law && rig.law.enabled && !rig.lawV2.enabled;
+                switchMark2 = run.samples.Count - 1;
+            }
+        }
+
+        private void AttemptRefused(Run run, string label, string expectedReasonPrefix)
+        {
+            SwitchSnapshot before = SwitchSnapshot.Of(rig, activeGate);
+            string reason;
+            bool refused = !rig.TrySetControlMode(MavF15PilotControlMode.AssistedV2, out reason);
+            bool unchanged = SwitchSnapshot.Of(rig, activeGate).SameAs(before);
+            bool expected = reason != null && reason.StartsWith(expectedReasonPrefix, StringComparison.Ordinal);
+            run.refusalsAttempted++;
+            if (refused && unchanged && expected)
+                run.refusalsOk++;
+            run.switchLog.Add(label + ": " + (refused ? "refused" : "ACCEPTED") + (unchanged ? ", nothing changed" : ", STATE CHANGED") + " - " + reason);
+        }
+
         private int switchMark = -1, switchMark2 = -1;
         private MavF15SurfaceState switchBefore;
 
@@ -507,7 +630,7 @@ namespace MaverickFresh.FlightDynamics.Validation
                 run.initialStateApplications = activeBody.debugInitialStateApplications;
             }
 
-            if (run.kind == Kind.Switch)
+            if (run.kind == Kind.Switch || run.kind == Kind.SwitchFailClosed)
             {
                 run.maxSurfaceStepAtSwitchDeg = Math.Max(SurfaceStepAround(run, switchMark), SurfaceStepAround(run, switchMark2));
                 switchMark = switchMark2 = -1;
@@ -624,6 +747,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             EvaluateSequence();
             EvaluateConvergence();
             EvaluateSwitch();
+            EvaluateSwitchFailClosed();
             EvaluateFailClosed();
 
             sb.AppendLine();
@@ -1007,6 +1131,33 @@ namespace MaverickFresh.FlightDynamics.Validation
                 "W", "through both switches: the pilot-controlled owner held every step, exactly one law enabled and bound, one load application per step ("
                      + r.loadApplicationsAtEnd + "/" + r.steps + "), and no surface stepped more than " + r.maxSurfaceStepAtSwitchDeg.ToString("F3")
                      + " deg across a switch (the residual V2 feedback on the decaying rates; V1 at centred stick is exactly the trim)");
+        }
+
+        private void EvaluateSwitchFailClosed()
+        {
+            sb.AppendLine();
+            sb.AppendLine("[X] Fail-closed law switch: V1 at the trim; refused with the stick deflected, the command unavailable, the source missing and the source disabled; V1 -> V2 at 3 s and V2 -> V1 at 6 s centred");
+            Run r = runs.Find(x => x.kind == Kind.SwitchFailClosed);
+            if (r == null || !r.completed)
+            {
+                Check(false, "X", "the fail-closed switch run completed" + (r != null && r.failure != null ? " - " + r.failure : ""));
+                return;
+            }
+
+            foreach (string line in r.switchLog)
+                sb.AppendLine("      " + line);
+            Check(r.trimDriftBeforeAttempts <= NeutralTolerance,
+                "X", "V1 holds the trim before any attempt: every state within " + r.trimDriftBeforeAttempts.ToString("E1") + " of the trim over the first second");
+            Check(r.refusalsAttempted == 4 && r.refusalsOk == 4,
+                "X", r.refusalsOk + " of " + r.refusalsAttempted + " attempts refused with their own reason, each leaving the mode, the bound law, both laws' enabled states, "
+                     + "the actuator request, the surfaces, both laws' requests, the owner, its reason and the arming unchanged");
+            Check(r.switchToV2Accepted && r.v2BoundAfterSwitch && r.switchToV1Accepted && r.v1BoundAfterSwitchBack,
+                "X", "with the source restored and the controls centred: V1 -> V2 accepted (V2 bound, V1 disabled), V2 -> V1 accepted (V1 bound, V2 disabled)");
+            Check(r.ownerHeldEveryStep && r.exactlyOneLawEveryStep && r.exactlyOneArmedEveryStep && r.duplicateRejections == 0
+                  && r.loadApplicationsAtEnd == r.steps && r.finiteEveryStep && r.aeroRefusedSteps == 0 && r.maxSurfaceStepAtSwitchDeg < 1.0,
+                "X", "through the refusals and both switches: no FAULT (the pilot-controlled owner held every step), exactly one law enabled and bound every step, "
+                     + "one load application per step (" + r.loadApplicationsAtEnd + "/" + r.steps + ", no gap, no duplicate), finite, and no surface stepped more than "
+                     + r.maxSurfaceStepAtSwitchDeg.ToString("F3") + " deg across a switch");
         }
 
         private void EvaluateFailClosed()
