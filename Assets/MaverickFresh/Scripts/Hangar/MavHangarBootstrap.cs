@@ -1,8 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
+using MaverickFresh.Gameplay;
 
 namespace MaverickFresh
 {
+    /// <summary>
+    /// The hangar: pick an aircraft, see what it is and whether it can fly, press FLY.
+    ///
+    /// Player-facing aircraft come from <see cref="MavPlayableAircraftRegistry"/> (R1: F-15 and F-16), shown as
+    /// clickable cards. Clicking a card selects it in <see cref="MavGameSession"/>, updates the model and the
+    /// details, and points FLY at that aircraft's launch path. FLY is enabled only for a launchable aircraft;
+    /// otherwise the card says what blocks it. Nothing is ever substituted.
+    ///
+    /// Unfinished aircraft are not in the player list. They sit behind the DEVELOPMENT toggle, labelled as legacy
+    /// flight model, with a separate development launch. Keyboard: Left/Right switch cards, Enter FLY, Esc lobby.
+    /// </summary>
     public class MavHangarBootstrap : MonoBehaviour
     {
         [Header("Manual aircraft visual slots (optional)")]
@@ -20,250 +32,345 @@ namespace MaverickFresh
         public GameObject f35Prefab;
 
         [Header("Scene Visual Auto Resolve")]
-        public bool autoFindSceneAircraftVisuals = true;
+        public bool autoFindSceneAircraftVisuals = false;
 
         [Header("Hangar")]
         public bool buildOnStart = true;
+        [Tooltip("Unused since R1 (one aircraft is shown at a time); kept for scene compatibility.")]
         public float slideSpacing = 10f;
         public float slideSmooth = 7f;
         public Vector3 aircraftRootPosition = new Vector3(0f, 1.15f, 0f);
         public Vector3 cameraPosition = new Vector3(0f, 3.2f, -12f);
         public Vector3 cameraLookAt = new Vector3(0f, 1.2f, 0f);
 
-        private readonly List<MavAircraftRuntimeProfile> profiles = new List<MavAircraftRuntimeProfile>();
-        private readonly List<GameObject> displayRoots = new List<GameObject>();
-        private int selectedIndex = 0;
+        [Header("Presentation")]
+        [Tooltip("One scale for every aircraft, so their relative sizes are right.")]
+        public float displayScale = 0.33f;
+        public float turntableDegreesPerSecond = 12f;
+
+        [Header("Runtime (read-only)")]
+        public string lastLaunchMessage = "";
+
+        private readonly List<MavPlayableAircraftDefinition> playerAircraft = new List<MavPlayableAircraftDefinition>();
+        private readonly List<MavPlayableAircraftDefinition> developmentAircraft = new List<MavPlayableAircraftDefinition>();
+        private int selectedIndex;
+        private bool showDevelopment;
+        private GameObject displayRoot;
+        private GameObject displayModel;
+        private float displayYaw = 200f;
+        private float transition = 1f;
         private Camera cam;
-        private GUIStyle titleStyle;
-        private GUIStyle normalStyle;
-        private GUIStyle buttonStyle;
-        private GUIStyle statStyle;
-        private bool modePanelOpen;
+
+        public MavPlayableAircraftDefinition Selected
+        {
+            get { return playerAircraft.Count > 0 ? playerAircraft[Mathf.Clamp(selectedIndex, 0, playerAircraft.Count - 1)] : null; }
+        }
+
+        public IList<MavPlayableAircraftDefinition> PlayerAircraft
+        {
+            get { return playerAircraft; }
+        }
 
         private void Start()
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            Time.timeScale = 1f;
             if (buildOnStart)
                 BuildHangar();
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) Previous();
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) Next();
-            if (Input.GetKeyDown(KeyCode.Return)) Launch(MavGameMode.FreeFlight);
-            if (Input.GetKeyDown(KeyCode.Escape)) MavSceneLoader.LoadSceneSafe(MavSceneNames.MainLobby);
-
-            for (int i = 0; i < displayRoots.Count; i++)
-            {
-                if (displayRoots[i] == null) continue;
-                float offset = i - selectedIndex;
-                Vector3 target = aircraftRootPosition + new Vector3(offset * slideSpacing, 0f, Mathf.Abs(offset) * 1.2f);
-                displayRoots[i].transform.position = Vector3.Lerp(displayRoots[i].transform.position, target, Time.deltaTime * slideSmooth);
-                float targetScale = Mathf.Abs(offset) < 0.1f ? 1f : 0.72f;
-                displayRoots[i].transform.localScale = Vector3.Lerp(displayRoots[i].transform.localScale, Vector3.one * targetScale, Time.deltaTime * slideSmooth);
-            }
         }
 
         [ContextMenu("Build Hangar")]
         public void BuildHangar()
         {
-            profiles.Clear();
-            profiles.AddRange(MavAircraftCatalog.CreateBuiltInProfiles());
+            playerAircraft.Clear();
+            playerAircraft.AddRange(MavPlayableAircraftRegistry.PlayerFacing());
+            developmentAircraft.Clear();
+            developmentAircraft.AddRange(MavPlayableAircraftRegistry.Development());
 
-            MavAircraftKind requested = MavGameSession.HasSelection
-                ? MavGameSession.SelectedAircraft
-                : MavGameSession.DefaultAircraft;
-
-            int requestedIndex = FindProfileIndex(requested);
-            if (requestedIndex < 0)
-            {
-                // The hangar cannot display the aircraft that is selected. It says so instead of
-                // quietly selecting a different one on the pilot's behalf.
-                Debug.LogError(
-                    "[Maverick/Aircraft] Hangar has no slot for the selected aircraft "
-                    + "MavAircraftKind." + requested + ". The selection was left unchanged and no "
-                    + "other aircraft was substituted for it.", this);
-                MavGameSession.LastSceneError =
-                    "Hangar cannot display " + requested + ".";
-            }
-            else
-            {
-                selectedIndex = requestedIndex;
-            }
-
-            selectedIndex = Mathf.Clamp(selectedIndex, 0, Mathf.Max(0, profiles.Count - 1));
-
-            if (autoFindSceneAircraftVisuals)
-                AutoResolveSceneVisuals();
+            // Show the session's selection when it is a player aircraft. Otherwise the F-15 card is highlighted, but
+            // the session is NOT rewritten: only the player's own click or FLY changes the selection.
+            int index = MavGameSession.HasSelection ? IndexOf(MavGameSession.SelectedAircraft) : -1;
+            if (index < 0)
+                index = Mathf.Max(0, IndexOf(MavPlayableAircraftRegistry.DefaultPlayerAircraft));
+            selectedIndex = index;
 
             EnsureEnvironment();
-            BuildAircraftDisplays();
-
-            // Only re-publish the selection when the hangar is genuinely showing that aircraft.
-            MavAircraftRuntimeProfile current = CurrentProfile();
-            if (requestedIndex >= 0 && current != null)
-                MavGameSession.SelectAircraft(current.aircraft);
+            ShowSelectedModel(true);
         }
 
-        public void Next()
+        /// <summary>A click on a card: select it, record it, show it. FLY now points at this aircraft.</summary>
+        public void SelectCard(MavAircraftKind aircraft)
         {
-            if (profiles.Count == 0) return;
-            selectedIndex = (selectedIndex + 1) % profiles.Count;
-            PublishSelection();
-        }
-
-        public void Previous()
-        {
-            if (profiles.Count == 0) return;
-            selectedIndex--;
-            if (selectedIndex < 0) selectedIndex = profiles.Count - 1;
-            PublishSelection();
-        }
-
-        private void PublishSelection()
-        {
-            MavAircraftRuntimeProfile p = CurrentProfile();
-            if (p != null)
-                MavGameSession.SelectAircraft(p.aircraft);
-        }
-
-        private void Launch(MavGameMode mode)
-        {
-            MavAircraftRuntimeProfile p = CurrentProfile();
-            if (p == null)
-            {
-                Debug.LogError(
-                    "[Maverick/Aircraft] Hangar has no valid aircraft selected, so nothing was "
-                    + "launched.", this);
+            int index = IndexOf(aircraft);
+            if (index < 0)
                 return;
+            bool changed = index != selectedIndex;
+            selectedIndex = index;
+            MavGameSession.SelectAircraft(aircraft);
+            lastLaunchMessage = "";
+            if (changed || displayModel == null)
+                ShowSelectedModel(false);
+        }
+
+        public bool CanFly(out string reason)
+        {
+            MavPlayableAircraftDefinition d = Selected;
+            if (d == null)
+            {
+                reason = "No aircraft selected";
+                return false;
             }
 
-            MavGameSession.Launch(p.aircraft, mode);
+            MavPlayableAircraftDefinition checkedDefinition;
+            return MavPlayableAircraftRegistry.CanLaunchAsPlayer(d.aircraft, out checkedDefinition, out reason);
         }
 
-        /// <summary>
-        /// Index of the slot for this aircraft, or -1.
-        ///
-        /// It used to answer an unknown aircraft with the F-22A slot, and index 0 if even that was
-        /// missing. That is how a session that had selected the F-16 could arrive in the hangar
-        /// showing - and then launching - an F-22: the selection was silently rewritten to whatever
-        /// the hangar could display.
-        /// </summary>
-        private int FindProfileIndex(MavAircraftKind aircraft)
+        /// <summary>FLY: launch the selected aircraft, or refuse with the reason and change nothing else.</summary>
+        public bool Fly()
         {
-            for (int i = 0; i < profiles.Count; i++)
+            MavPlayableAircraftDefinition d = Selected;
+            if (d == null)
+                return false;
+
+            string reason;
+            bool ok = MavFlightLauncher.TryLaunch(d.aircraft, out reason);
+            lastLaunchMessage = ok ? "" : reason;
+            return ok;
+        }
+
+        private void Update()
+        {
+            if (MavFreshInput.GetKeyDown(KeyCode.LeftArrow) || MavFreshInput.GetKeyDown(KeyCode.A))
+                Step(-1);
+            if (MavFreshInput.GetKeyDown(KeyCode.RightArrow) || MavFreshInput.GetKeyDown(KeyCode.D))
+                Step(1);
+            if (MavFreshInput.GetKeyDown(KeyCode.Return))
             {
-                if (profiles[i] != null && profiles[i].aircraft == aircraft)
+                string reason;
+                if (CanFly(out reason))
+                    Fly();
+                else
+                    lastLaunchMessage = reason;
+            }
+
+            if (MavFreshInput.GetKeyDown(KeyCode.Escape))
+                MavSceneLoader.LoadSceneSafe(MavSceneNames.MainLobby);
+
+            if (displayRoot != null)
+            {
+                displayYaw += turntableDegreesPerSecond * Time.deltaTime;
+                transition = Mathf.MoveTowards(transition, 1f, Time.deltaTime * 2.5f);
+                float eased = 1f - (1f - transition) * (1f - transition);
+                displayRoot.transform.position = aircraftRootPosition + new Vector3(0f, 0.6f * (1f - eased), 0f);
+                displayRoot.transform.rotation = Quaternion.Euler(0f, displayYaw, 0f);
+                displayRoot.transform.localScale = Vector3.one * (displayScale * Mathf.Lerp(0.85f, 1f, eased));
+            }
+        }
+
+        private void Step(int delta)
+        {
+            if (playerAircraft.Count == 0)
+                return;
+            int next = (selectedIndex + delta + playerAircraft.Count) % playerAircraft.Count;
+            SelectCard(playerAircraft[next].aircraft);
+        }
+
+        private int IndexOf(MavAircraftKind aircraft)
+        {
+            for (int i = 0; i < playerAircraft.Count; i++)
+            {
+                if (playerAircraft[i].aircraft == aircraft)
                     return i;
             }
 
             return -1;
         }
 
-        /// <summary>The selected profile, or null when there is nothing valid selected.</summary>
-        private MavAircraftRuntimeProfile CurrentProfile()
-        {
-            if (profiles.Count == 0)
-                return null;
-
-            return profiles[Mathf.Clamp(selectedIndex, 0, profiles.Count - 1)];
-        }
+        // ------------------------------------------------------------------ presentation
 
         private void OnGUI()
         {
-            EnsureStyles();
-            MavAircraftRuntimeProfile p = CurrentProfile();
+            MavGameplayUiStyle.Ensure();
+            float w = Screen.width, h = Screen.height;
 
-            GUI.Label(new Rect(42f, 32f, 600f, 48f), "HANGAR", titleStyle);
+            GUI.Label(new Rect(40f, 26f, 700f, 50f), "SELECT AIRCRAFT", MavGameplayUiStyle.Title);
+            GUI.Label(new Rect(44f, 76f, 700f, 24f), "FREE FLIGHT", MavGameplayUiStyle.Tinted(MavGameplayUiStyle.Small, MavGameplayUiStyle.Accent));
 
-            if (p == null)
+            MavPlayableAircraftDefinition d = Selected;
+            if (d == null)
             {
-                // No valid aircraft to describe. Say so rather than drawing another aircraft's card.
-                GUI.Label(
-                    new Rect(44f, 84f, 900f, 28f),
-                    "No valid aircraft profile is available. Check the console for the aircraft "
-                    + "identity error.", normalStyle);
+                GUI.Label(new Rect(44f, 110f, 700f, 30f), "No aircraft is available.", MavGameplayUiStyle.Body);
                 return;
             }
 
-            GUI.Label(new Rect(44f, 84f, 760f, 28f), "F-22A is the primary aircraft. A/D or Arrow Keys: switch aircraft   Enter: test flight   Esc: lobby", normalStyle);
+            DrawCards(w, h);
+            DrawDetails(d, w, h);
 
-            float panelW = 430f;
-            float x = Screen.width - panelW - 42f;
-            float y = 62f;
-            GUI.Box(new Rect(x - 18f, y - 18f, panelW + 36f, 510f), "");
-            GUI.Label(new Rect(x, y, panelW, 36f), p.displayName, titleStyle);
-            GUI.Label(new Rect(x, y + 48f, panelW, 26f), p.role, normalStyle);
-            GUI.Label(new Rect(x, y + 86f, panelW, 70f), p.description, normalStyle);
+            if (GUI.Button(new Rect(40f, h - 64f, 150f, 42f), "BACK", MavGameplayUiStyle.Button))
+                MavSceneLoader.LoadSceneSafe(MavSceneNames.MainLobby);
 
-            DrawStat(x, y + 168f, "SPEED", p.statSpeed);
-            DrawStat(x, y + 204f, "TURN", p.statTurn);
-            DrawStat(x, y + 240f, "STABILITY", p.statStability);
-            DrawStat(x, y + 276f, "PAYLOAD", p.statPayload);
-            DrawStat(x, y + 312f, "DIFFICULTY", p.statDifficulty);
-
-            if (GUI.Button(new Rect(x, y + 365f, 190f, 42f), "TEST FLIGHT", buttonStyle))
-                Launch(MavGameMode.FreeFlight);
-
-            if (GUI.Button(new Rect(x + 205f, y + 365f, 190f, 42f), "MODE SELECT", buttonStyle))
-                modePanelOpen = !modePanelOpen;
-
-            if (GUI.Button(new Rect(x, y + 420f, 190f, 38f), "< PREV", buttonStyle))
-                Previous();
-
-            if (GUI.Button(new Rect(x + 205f, y + 420f, 190f, 38f), "NEXT >", buttonStyle))
-                Next();
-
-            if (modePanelOpen)
-                DrawModePanel(x - 260f, y + 365f);
+            string devLabel = showDevelopment ? "HIDE DEVELOPMENT" : "DEVELOPMENT";
+            if (GUI.Button(new Rect(200f, h - 58f, 170f, 32f), devLabel, MavGameplayUiStyle.Button))
+                showDevelopment = !showDevelopment;
+            if (showDevelopment)
+                DrawDevelopment(h);
 
             if (!string.IsNullOrEmpty(MavGameSession.LastSceneError))
-                GUI.Label(new Rect(40f, Screen.height - 70f, Screen.width - 80f, 50f), MavGameSession.LastSceneError, normalStyle);
+                GUI.Label(new Rect(390f, h - 58f, w - 800f, 40f), MavGameSession.LastSceneError,
+                    MavGameplayUiStyle.Tinted(MavGameplayUiStyle.Small, MavGameplayUiStyle.Danger));
         }
 
-        private void DrawModePanel(float x, float y)
+        private void DrawCards(float w, float h)
         {
-            GUI.Box(new Rect(x, y - 12f, 240f, 252f), "");
-            GUI.Label(new Rect(x + 14f, y, 210f, 26f), "SELECT MODE", normalStyle);
-            if (GUI.Button(new Rect(x + 14f, y + 34f, 210f, 34f), "FREE FLIGHT", buttonStyle)) Launch(MavGameMode.FreeFlight);
-            if (GUI.Button(new Rect(x + 14f, y + 74f, 210f, 34f), "TEST RANGE", buttonStyle)) Launch(MavGameMode.TestRange);
-            if (GUI.Button(new Rect(x + 14f, y + 114f, 210f, 34f), "DOGFIGHT", buttonStyle)) Launch(MavGameMode.Dogfight);
-            if (GUI.Button(new Rect(x + 14f, y + 154f, 210f, 34f), "GROUND ATTACK", buttonStyle)) Launch(MavGameMode.GroundAttack);
-            if (GUI.Button(new Rect(x + 14f, y + 194f, 210f, 34f), "CARRIER TEST", buttonStyle)) Launch(MavGameMode.CarrierTest);
+            const float cardW = 300f, cardH = 92f, gap = 20f;
+            float total = playerAircraft.Count * cardW + (playerAircraft.Count - 1) * gap;
+            float x = Mathf.Max(40f, (w - 480f - total) * 0.5f);
+            float y = h - cardH - 90f;
+            for (int i = 0; i < playerAircraft.Count; i++)
+            {
+                MavPlayableAircraftDefinition card = playerAircraft[i];
+                bool selected = i == selectedIndex;
+                Rect r = new Rect(x + i * (cardW + gap), y, cardW, cardH);
+                string label = card.displayName + "\n" + card.statusText;
+                if (GUI.Button(r, label, selected ? MavGameplayUiStyle.CardSelected : MavGameplayUiStyle.Card))
+                    SelectCard(card.aircraft);
+                if (selected)
+                    MavGameplayUiStyle.Fill(new Rect(r.x, r.y + r.height - 4f, r.width, 4f), MavGameplayUiStyle.Accent);
+            }
         }
 
-        private void DrawStat(float x, float y, string label, float value)
+        private void DrawDetails(MavPlayableAircraftDefinition d, float w, float h)
         {
-            GUI.Label(new Rect(x, y, 110f, 24f), label, statStyle);
-            GUI.Box(new Rect(x + 120f, y + 5f, 220f, 14f), "");
-            GUI.Box(new Rect(x + 120f, y + 5f, Mathf.Clamp01(value / 10f) * 220f, 14f), "");
-            GUI.Label(new Rect(x + 350f, y, 60f, 24f), value.ToString("0.0"), statStyle);
+            float panelW = 440f;
+            Rect p = new Rect(w - panelW - 32f, 30f, panelW, h - 60f);
+            MavGameplayUiStyle.Panel(p);
+            float x = p.x + 22f, y = p.y + 18f, cw = panelW - 44f;
+
+            GUI.Label(new Rect(x, y, cw, 34f), d.displayName, MavGameplayUiStyle.Heading);
+            y += 34f;
+            GUI.Label(new Rect(x, y, cw, 22f), d.role, MavGameplayUiStyle.Small);
+            y += 30f;
+
+            bool ready = d.IsLaunchable;
+            Color badge = ready ? MavGameplayUiStyle.Accent : MavGameplayUiStyle.Warning;
+            MavGameplayUiStyle.Fill(new Rect(x, y + 2f, 10f, 20f), badge);
+            GUI.Label(new Rect(x + 18f, y, cw, 24f), d.statusText + "   " + d.flightModelLabel,
+                MavGameplayUiStyle.Tinted(MavGameplayUiStyle.Body, badge));
+            y += 34f;
+
+            GUI.Label(new Rect(x, y, cw, 64f), d.description, MavGameplayUiStyle.Body);
+            y += 72f;
+
+            for (int i = 0; i < d.facts.Length; i++)
+            {
+                string[] kv = d.facts[i].Split('|');
+                GUI.Label(new Rect(x, y, 150f, 22f), kv[0].ToUpperInvariant(), MavGameplayUiStyle.Small);
+                GUI.Label(new Rect(x + 150f, y - 2f, cw - 150f, 22f), kv.Length > 1 ? kv[1] : "", MavGameplayUiStyle.Body);
+                y += 26f;
+            }
+
+            if (d.blockers.Length > 0)
+            {
+                y += 8f;
+                GUI.Label(new Rect(x, y, cw, 22f), "WHY IT CANNOT FLY YET", MavGameplayUiStyle.Tinted(MavGameplayUiStyle.Small, MavGameplayUiStyle.Warning));
+                y += 24f;
+                for (int i = 0; i < d.blockers.Length; i++)
+                {
+                    GUI.Label(new Rect(x, y, cw, 22f), "-  " + d.blockers[i], MavGameplayUiStyle.Body);
+                    y += 24f;
+                }
+            }
+
+            y += 10f;
+            GUI.Label(new Rect(x, y, cw, 40f), "CONTROLS   " + d.controlHint, MavGameplayUiStyle.Small);
+
+            string reason;
+            bool canFly = CanFly(out reason);
+            GUI.enabled = canFly;
+            if (GUI.Button(new Rect(x, p.yMax - 96f, cw, 60f), canFly ? "FLY" : "NOT AVAILABLE", MavGameplayUiStyle.BigButton))
+                Fly();
+            GUI.enabled = true;
+            string note = !string.IsNullOrEmpty(lastLaunchMessage) ? lastLaunchMessage : (canFly ? "Enter" : "");
+            GUI.Label(new Rect(x, p.yMax - 32f, cw, 24f), note, MavGameplayUiStyle.Small);
+        }
+
+        private void DrawDevelopment(float h)
+        {
+            Rect p = new Rect(40f, 120f, 420f, 70f + developmentAircraft.Count * 44f);
+            MavGameplayUiStyle.Panel(p, true);
+            GUI.Label(new Rect(p.x + 16f, p.y + 10f, p.width - 32f, 40f),
+                "DEVELOPMENT - legacy flight model, not validated, not part of the player release",
+                MavGameplayUiStyle.Tinted(MavGameplayUiStyle.Small, MavGameplayUiStyle.Warning));
+            for (int i = 0; i < developmentAircraft.Count; i++)
+            {
+                MavPlayableAircraftDefinition dev = developmentAircraft[i];
+                float y = p.y + 56f + i * 44f;
+                GUI.Label(new Rect(p.x + 16f, y + 6f, 250f, 24f), dev.displayName, MavGameplayUiStyle.Small);
+                if (GUI.Button(new Rect(p.x + p.width - 150f, y, 134f, 34f), "DEV LAUNCH", MavGameplayUiStyle.Button))
+                {
+                    string reason;
+                    if (!MavFlightLauncher.TryDevelopmentLaunch(dev.aircraft, out reason))
+                        lastLaunchMessage = reason;
+                }
+            }
+        }
+
+        // ------------------------------------------------------------------ 3D
+
+        private void ShowSelectedModel(bool instant)
+        {
+            if (displayRoot == null)
+                displayRoot = new GameObject("Mav_Hangar_AircraftDisplay");
+            if (displayModel != null)
+                Destroy(displayModel);
+
+            MavPlayableAircraftDefinition d = Selected;
+            if (d == null)
+                return;
+
+            GameObject manual = GetPrefab(d.aircraft);
+            if (manual != null)
+            {
+                displayModel = Instantiate(manual, displayRoot.transform);
+                displayModel.transform.localPosition = Vector3.zero;
+                displayModel.transform.localRotation = Quaternion.identity;
+                MavGameplayVisuals.RemoveColliders(displayModel);
+            }
+            else
+            {
+                displayModel = MavGameplayVisuals.BuildAircraftModel(d.aircraft, displayRoot.transform);
+            }
+
+            transition = instant ? 1f : 0f;
         }
 
         private void EnsureEnvironment()
         {
-            if (Camera.main == null)
+            cam = Camera.main;
+            if (cam == null)
             {
                 GameObject camGo = new GameObject("Main Camera");
+                camGo.tag = "MainCamera";
                 cam = camGo.AddComponent<Camera>();
-                cam.tag = "MainCamera";
+                camGo.AddComponent<AudioListener>();
             }
-            else cam = Camera.main;
 
-            cam.transform.position = cameraPosition;
-            cam.transform.LookAt(cameraLookAt);
-            cam.clearFlags = CameraClearFlags.Skybox;
-            cam.fieldOfView = 48f;
+            // Framed on the aircraft, which sits a little left of centre: the details panel covers the right side.
+            cam.transform.position = cameraPosition + new Vector3(3.2f, 0.6f, 1.5f);
+            cam.transform.LookAt(cameraLookAt + new Vector3(2.6f, 0.2f, 0f));
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.06f, 0.07f, 0.09f);
+            cam.fieldOfView = 42f;
 
             if (GameObject.Find("Mav_Hangar_KeyLight") == null)
             {
                 GameObject lightGo = new GameObject("Mav_Hangar_KeyLight");
                 Light l = lightGo.AddComponent<Light>();
                 l.type = LightType.Directional;
-                l.intensity = 1.2f;
-                lightGo.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
+                l.intensity = 1.25f;
+                l.shadows = LightShadows.Soft;
+                lightGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
             }
 
             if (GameObject.Find("Mav_Hangar_FillLight") == null)
@@ -271,49 +378,23 @@ namespace MaverickFresh
                 GameObject lightGo = new GameObject("Mav_Hangar_FillLight");
                 Light l = lightGo.AddComponent<Light>();
                 l.type = LightType.Point;
-                l.intensity = 3.0f;
+                l.intensity = 4.0f;
                 l.range = 30f;
+                l.color = new Color(0.75f, 0.85f, 1f);
                 lightGo.transform.position = new Vector3(-4f, 5.5f, -6f);
             }
 
             if (GameObject.Find("Mav_Hangar_Platform") == null)
-            {
-                GameObject platform = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                platform.name = "Mav_Hangar_Platform";
-                platform.transform.position = new Vector3(0f, 0f, 0f);
-                platform.transform.localScale = new Vector3(4.8f, 0.15f, 4.8f);
-            }
+                MavGameplayVisuals.Primitive(PrimitiveType.Cylinder, "Mav_Hangar_Platform", null, new Vector3(0f, 0.05f, 0f),
+                    new Vector3(8.5f, 0.1f, 8.5f), MavGameplayVisuals.NewMaterial(new Color(0.20f, 0.22f, 0.25f), 0.6f));
 
             if (GameObject.Find("Mav_Hangar_Floor") == null)
-            {
-                GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                floor.name = "Mav_Hangar_Floor";
-                floor.transform.position = new Vector3(0f, -0.12f, 0f);
-                floor.transform.localScale = new Vector3(34f, 0.1f, 24f);
-            }
-        }
+                MavGameplayVisuals.Primitive(PrimitiveType.Cube, "Mav_Hangar_Floor", null, new Vector3(0f, -0.12f, 0f),
+                    new Vector3(60f, 0.1f, 60f), MavGameplayVisuals.NewMaterial(new Color(0.11f, 0.12f, 0.14f), 0.25f));
 
-        private void BuildAircraftDisplays()
-        {
-            GameObject oldRoot = GameObject.Find("Mav_Hangar_AircraftDisplays");
-            if (oldRoot != null)
-                Destroy(oldRoot);
-
-            GameObject root = new GameObject("Mav_Hangar_AircraftDisplays");
-            displayRoots.Clear();
-
-            for (int i = 0; i < profiles.Count; i++)
-            {
-                if (profiles[i] == null)
-                    continue;
-
-                GameObject slot = new GameObject("HangarSlot_" + profiles[i].shortName);
-                slot.transform.SetParent(root.transform, true);
-                slot.transform.position = aircraftRootPosition + new Vector3((i - selectedIndex) * slideSpacing, 0f, 0f);
-                slot.transform.localScale = Vector3.one * (i == selectedIndex ? 1f : 0.72f);
-                MavAircraftVisualFactory.CreateDisplayVisual(profiles[i], slot.transform, GetPrefab(profiles[i].aircraft), true);
-                displayRoots.Add(slot);
-            }
+            if (GameObject.Find("Mav_Hangar_Backdrop") == null)
+                MavGameplayVisuals.Primitive(PrimitiveType.Cube, "Mav_Hangar_Backdrop", null, new Vector3(0f, 8f, 14f),
+                    new Vector3(80f, 20f, 0.5f), MavGameplayVisuals.NewMaterial(new Color(0.09f, 0.10f, 0.12f), 0.1f));
         }
 
         private GameObject GetPrefab(MavAircraftKind kind)
@@ -329,106 +410,6 @@ namespace MaverickFresh
         private static GameObject FirstNonNull(GameObject preferred, GameObject legacy)
         {
             return preferred != null ? preferred : legacy;
-        }
-
-        private void AutoResolveSceneVisuals()
-        {
-            if (f15exVisual == null && f15Prefab == null) f15exVisual = FindSceneVisual(MavAircraftKind.F15E);
-            if (f16Visual == null && f16Prefab == null) f16Visual = FindSceneVisual(MavAircraftKind.F16C);
-            if (f18Visual == null && fa18Prefab == null) f18Visual = FindSceneVisual(MavAircraftKind.FA18E);
-            if (f22Visual == null && f22Prefab == null) f22Visual = FindSceneVisual(MavAircraftKind.F22A);
-            if (f35Visual == null && f35Prefab == null) f35Visual = FindSceneVisual(MavAircraftKind.F35A);
-        }
-
-        private GameObject FindSceneVisual(MavAircraftKind kind)
-        {
-            string[] tokens = TokensFor(kind);
-            Transform[] all = FindObjectsOfType<Transform>(true);
-            Transform best = null;
-            int bestScore = -1;
-
-            for (int i = 0; i < all.Length; i++)
-            {
-                Transform t = all[i];
-                if (t == null) continue;
-                GameObject go = t.gameObject;
-                if (IsInsideGeneratedHangarDisplay(t)) continue;
-                if (go.GetComponent<Camera>() != null || go.GetComponent<Light>() != null) continue;
-                if (go.GetComponent<MavHangarBootstrap>() != null || go.GetComponent<MavInGameBootstrap>() != null) continue;
-                if (go.name.StartsWith("Mav_") || go.name.StartsWith("MaverickFresh_")) continue;
-                if (go.GetComponentInChildren<Renderer>(true) == null) continue;
-
-                int score = ScoreName(t.name.ToLowerInvariant(), tokens);
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    best = t;
-                }
-            }
-
-            return best != null && bestScore > 0 ? best.gameObject : null;
-        }
-
-
-        private bool IsInsideGeneratedHangarDisplay(Transform t)
-        {
-            while (t != null)
-            {
-                if (t.name == "Mav_Hangar_AircraftDisplays" || t.name.StartsWith("HangarSlot_"))
-                    return true;
-                t = t.parent;
-            }
-            return false;
-        }
-
-        private static string[] TokensFor(MavAircraftKind kind)
-        {
-            switch (kind)
-            {
-                case MavAircraftKind.F15E: return new[] { "f15ex", "f-15ex", "f15_ex", "f15 ex", "f15", "f-15", "f15e" };
-                case MavAircraftKind.F16C: return new[] { "f16", "f-16", "f16c", "f_16" };
-                case MavAircraftKind.FA18E: return new[] { "f18", "f-18", "fa18", "fa-18", "f/a-18", "f_18" };
-                case MavAircraftKind.F22A: return new[] { "f22", "f-22", "f22a", "f_22" };
-                case MavAircraftKind.F35A: return new[] { "f35", "f-35", "f35a", "f_35" };
-                default: return new string[0];
-            }
-        }
-
-        private static int ScoreName(string lowerName, string[] tokens)
-        {
-            if (string.IsNullOrEmpty(lowerName) || tokens == null) return -1;
-            int score = -1;
-            for (int i = 0; i < tokens.Length; i++)
-            {
-                string token = tokens[i];
-                if (string.IsNullOrEmpty(token)) continue;
-                if (lowerName == token) score = Mathf.Max(score, 100 + token.Length);
-                else if (lowerName.Contains(token)) score = Mathf.Max(score, 10 + token.Length);
-            }
-            return score;
-        }
-
-        private void EnsureStyles()
-        {
-            if (titleStyle != null) return;
-            titleStyle = new GUIStyle(GUI.skin.label);
-            titleStyle.fontSize = 28;
-            titleStyle.fontStyle = FontStyle.Bold;
-            titleStyle.normal.textColor = Color.white;
-
-            normalStyle = new GUIStyle(GUI.skin.label);
-            normalStyle.fontSize = 16;
-            normalStyle.normal.textColor = new Color(0.88f, 0.92f, 0.96f);
-            normalStyle.wordWrap = true;
-
-            statStyle = new GUIStyle(GUI.skin.label);
-            statStyle.fontSize = 14;
-            statStyle.fontStyle = FontStyle.Bold;
-            statStyle.normal.textColor = Color.white;
-
-            buttonStyle = new GUIStyle(GUI.skin.button);
-            buttonStyle.fontSize = 15;
-            buttonStyle.fontStyle = FontStyle.Bold;
         }
     }
 }

@@ -1,22 +1,26 @@
 using UnityEngine;
+using MaverickFresh.Gameplay;
 
 namespace MaverickFresh
 {
+    /// <summary>
+    /// Main Lobby: title, HANGAR (choose an aircraft), QUICK FLIGHT (straight into the F-15), QUIT.
+    /// The quick flight goes through the same launch contract as the hangar's FLY button.
+    /// </summary>
     public class MavMainLobbyBootstrap : MonoBehaviour
     {
         public string title = "MAVERICK";
-        public string subtitle = "F-22 Primary Jet Combat Sandbox Prototype";
+        public string subtitle = "Flight simulator";
         public bool buildEnvironment = true;
         public bool lockCursor = false;
 
-        private Camera cam;
-        private GUIStyle titleStyle;
-        private GUIStyle normalStyle;
-        private GUIStyle buttonStyle;
         private float spin;
+        private GameObject showcase;
+        private string message = "";
 
         private void Start()
         {
+            Time.timeScale = 1f;
             if (buildEnvironment)
                 BuildEnvironment();
 
@@ -26,95 +30,72 @@ namespace MaverickFresh
 
         private void Update()
         {
-            spin += Time.deltaTime * 18f;
-            GameObject logo = GameObject.Find("Mav_Lobby_RotatingAircraft");
-            if (logo != null)
-                logo.transform.rotation = Quaternion.Euler(0f, spin, 0f);
+            spin += Time.deltaTime * 14f;
+            if (showcase != null)
+                showcase.transform.rotation = Quaternion.Euler(0f, spin, 0f);
         }
 
         private void OnGUI()
         {
-            EnsureStyles();
+            MavGameplayUiStyle.Ensure();
+            float x = 64f, y = 70f, w = 420f;
 
-            float w = Mathf.Min(520f, Screen.width * 0.42f);
-            float x = 56f;
-            float y = 60f;
+            GUI.Label(new Rect(x, y, w, 60f), title, MavGameplayUiStyle.Title);
+            GUI.Label(new Rect(x + 2f, y + 58f, w, 26f), subtitle.ToUpperInvariant(),
+                MavGameplayUiStyle.Tinted(MavGameplayUiStyle.Small, MavGameplayUiStyle.Accent));
 
-            GUI.Label(new Rect(x, y, w, 54f), title, titleStyle);
-            GUI.Label(new Rect(x, y + 58f, w, 32f), subtitle, normalStyle);
-            GUI.Label(new Rect(x, y + 100f, w, 72f), "F-22A is the primary aircraft. Main Lobby -> 3D Hangar -> In-Game Flight", normalStyle);
-
-            if (GUI.Button(new Rect(x, y + 190f, 280f, 46f), "ENTER HANGAR", buttonStyle))
+            if (GUI.Button(new Rect(x, y + 120f, 320f, 54f), "HANGAR", MavGameplayUiStyle.BigButton))
                 MavSceneLoader.LoadSceneSafe(MavSceneNames.Hangar);
 
-            if (GUI.Button(new Rect(x, y + 248f, 280f, 42f), "QUICK F-22 FREE FLIGHT", buttonStyle))
-                MavGameSession.Launch(MavAircraftKind.F22A, MavGameMode.FreeFlight);
+            if (GUI.Button(new Rect(x, y + 186f, 320f, 46f), "QUICK FLIGHT - " + MavPlayableAircraftRegistry.F15DisplayName, MavGameplayUiStyle.Button))
+            {
+                string reason;
+                if (!MavFlightLauncher.TryLaunch(MavPlayableAircraftRegistry.DefaultPlayerAircraft, out reason))
+                    message = reason;
+            }
 
-            if (GUI.Button(new Rect(x, y + 300f, 280f, 42f), "QUICK F-16 DOGFIGHT", buttonStyle))
-                MavGameSession.Launch(MavAircraftKind.F16C, MavGameMode.Dogfight);
+            if (GUI.Button(new Rect(x, y + 244f, 320f, 42f), "QUIT", MavGameplayUiStyle.Button))
+                Application.Quit();
 
-            if (!string.IsNullOrEmpty(MavGameSession.LastSceneError))
-                GUI.Label(new Rect(x, Screen.height - 80f, Screen.width - 120f, 60f), MavGameSession.LastSceneError, normalStyle);
+            string error = !string.IsNullOrEmpty(message) ? message : MavGameSession.LastSceneError;
+            if (!string.IsNullOrEmpty(error))
+                GUI.Label(new Rect(x, Screen.height - 80f, Screen.width - 120f, 60f), error,
+                    MavGameplayUiStyle.Tinted(MavGameplayUiStyle.Small, MavGameplayUiStyle.Danger));
         }
 
         private void BuildEnvironment()
         {
-            if (Camera.main == null)
+            Camera cam = Camera.main;
+            if (cam == null)
             {
                 GameObject camGo = new GameObject("Main Camera");
+                camGo.tag = "MainCamera";
                 cam = camGo.AddComponent<Camera>();
-                cam.tag = "MainCamera";
-                cam.transform.position = new Vector3(0f, 3.2f, -10f);
-                cam.transform.rotation = Quaternion.Euler(13f, 0f, 0f);
-                cam.clearFlags = CameraClearFlags.Skybox;
+                camGo.AddComponent<AudioListener>();
             }
-            else
-            {
-                cam = Camera.main;
-            }
+
+            cam.transform.position = new Vector3(0f, 3.2f, -10f);
+            cam.transform.rotation = Quaternion.Euler(13f, 0f, 0f);
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.05f, 0.06f, 0.08f);
 
             if (GameObject.Find("Mav_Lobby_KeyLight") == null)
             {
                 GameObject lightGo = new GameObject("Mav_Lobby_KeyLight");
                 Light l = lightGo.AddComponent<Light>();
                 l.type = LightType.Directional;
-                l.intensity = 1.1f;
+                l.intensity = 1.2f;
                 lightGo.transform.rotation = Quaternion.Euler(45f, -35f, 0f);
             }
 
-            if (GameObject.Find("Mav_Lobby_RotatingAircraft") == null)
+            showcase = GameObject.Find("Mav_Lobby_RotatingAircraft");
+            if (showcase == null)
             {
-                // Lobby decoration. This is an explicit request for the F-22A as set dressing, not
-                // a fallback for a failed selection.
-                MavAircraftRuntimeProfile p = MavAircraftCatalog.GetBuiltIn(MavAircraftKind.F22A);
-                if (p != null)
-                {
-                    GameObject logo = new GameObject("Mav_Lobby_RotatingAircraft");
-                    logo.transform.position = new Vector3(2.7f, 1.7f, 0.7f);
-                    logo.transform.localScale = Vector3.one * 0.65f;
-                    MavAircraftVisualFactory.CreateDisplayVisual(p, logo.transform, null, true);
-                }
+                showcase = new GameObject("Mav_Lobby_RotatingAircraft");
+                showcase.transform.position = new Vector3(2.9f, 1.4f, 0.8f);
+                showcase.transform.localScale = Vector3.one * 0.26f;
+                MavGameplayVisuals.BuildAircraftModel(MavPlayableAircraftRegistry.DefaultPlayerAircraft, showcase.transform);
             }
-        }
-
-        private void EnsureStyles()
-        {
-            if (titleStyle != null)
-                return;
-
-            titleStyle = new GUIStyle(GUI.skin.label);
-            titleStyle.fontSize = 44;
-            titleStyle.fontStyle = FontStyle.Bold;
-            titleStyle.normal.textColor = Color.white;
-
-            normalStyle = new GUIStyle(GUI.skin.label);
-            normalStyle.fontSize = 17;
-            normalStyle.normal.textColor = new Color(0.88f, 0.92f, 0.96f);
-            normalStyle.wordWrap = true;
-
-            buttonStyle = new GUIStyle(GUI.skin.button);
-            buttonStyle.fontSize = 18;
-            buttonStyle.fontStyle = FontStyle.Bold;
         }
     }
 }

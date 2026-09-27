@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MaverickFresh.MavMainLobbyBootstrap
   title: MAVERICK
-  subtitle: Jet Combat Sandbox Prototype
+  subtitle: Flight simulator
   buildEnvironment: 1
   lockCursor: 0
 --- !u!4 &1722126963
