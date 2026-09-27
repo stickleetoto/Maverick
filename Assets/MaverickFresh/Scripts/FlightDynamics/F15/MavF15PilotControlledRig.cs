@@ -13,6 +13,19 @@ namespace MaverickFresh.FlightDynamics.F15
     }
 
     /// <summary>
+    /// Which Maverick pilot-control law flies the rig. Both are MAVERICK_TUNED_NON_AUTHORITATIVE and neither
+    /// is the F-15 FCS; see Docs/Reference/F15_PILOT_CONTROLLED_V1.md and F15_PILOT_CONTROLLED_V2.md.
+    /// </summary>
+    public enum MavF15PilotControlMode
+    {
+        /// <summary>V1: direct stick-to-surface gearing about the trim (<see cref="MavF15PilotControlLaw"/>). The regression baseline.</summary>
+        DirectV1 = 0,
+
+        /// <summary>V2: closed-loop rate / sideslip augmentation (<see cref="MavF15PilotControlLawV2"/>).</summary>
+        AssistedV2 = 1
+    }
+
+    /// <summary>
     /// The pilot-controlled F-15 research aircraft (V1) as ONE rig: the component stack, its wiring,
     /// the trim start and the ownership entry, in one place, so the aircraft a human flies and the
     /// aircraft the Play Mode validation flies are built by the same code.
@@ -32,6 +45,11 @@ namespace MaverickFresh.FlightDynamics.F15
     /// rig, and the pilot-controlled owner is entered. Refused anywhere: nothing is armed, and the status
     /// says why.
     ///
+    /// CONTROL LAW (<see cref="controlMode"/>): Direct V1 (default - the regression baseline, and the only law
+    /// a V1 rig carries) or Assisted V2. Exactly one pilot-control law is enabled and bound to the body; the
+    /// other, when present, is disabled, so there is never a second surface requester.
+    /// <see cref="TrySetControlMode"/> switches in flight with the stick and pedals centred.
+    ///
     /// NOT the frozen research validation rig (untouched), not NASA 836, not the production F-15 FCS.
     /// </summary>
     [DefaultExecutionOrder(-500)]
@@ -40,6 +58,9 @@ namespace MaverickFresh.FlightDynamics.F15
     {
         [Header("Rig")]
         public MavF15PilotCommandSourceKind commandSourceKind = MavF15PilotCommandSourceKind.Keyboard;
+
+        [Tooltip("Direct V1 (the regression baseline) or Assisted V2. Switch in flight with TrySetControlMode (HUD: F2).")]
+        public MavF15PilotControlMode controlMode = MavF15PilotControlMode.DirectV1;
 
         [Tooltip("Start from the validated trim and enter the pilot-controlled owner on the first physics step.")]
         public bool startOnFirstPhysicsStep = true;
@@ -53,6 +74,7 @@ namespace MaverickFresh.FlightDynamics.F15
         public MavF15PilotControlledAeroModel aero;
         public MavPilotCommandSourceBase commandSource;
         public MavF15PilotControlLaw law;
+        public MavF15PilotControlLawV2 lawV2;
         public MavF15ControlActuator actuator;
         public MavF15PilotControlledFixedThrust thrust;
         public MavSixDoFBody body;
@@ -71,13 +93,26 @@ namespace MaverickFresh.FlightDynamics.F15
         public static MavF15PilotControlledRig Create(
             string name, MavF15PilotCommandSourceKind sourceKind, bool startOnFirstPhysicsStep)
         {
+            return Create(name, sourceKind, startOnFirstPhysicsStep, MavF15PilotControlMode.DirectV1);
+        }
+
+        public static MavF15PilotControlledRig Create(
+            string name, MavF15PilotCommandSourceKind sourceKind, bool startOnFirstPhysicsStep, MavF15PilotControlMode mode)
+        {
             GameObject go = new GameObject(name);
             go.SetActive(false);
             MavF15PilotControlledRig rig = go.AddComponent<MavF15PilotControlledRig>();
             rig.commandSourceKind = sourceKind;
             rig.startOnFirstPhysicsStep = startOnFirstPhysicsStep;
+            rig.controlMode = mode;
             go.SetActive(true);
             return rig;
+        }
+
+        /// <summary>The pilot-control law bound to the body: V1 or V2, per <see cref="controlMode"/>.</summary>
+        public MavFlightControlLawBase ActiveLaw
+        {
+            get { return controlMode == MavF15PilotControlMode.AssistedV2 ? (MavFlightControlLawBase)lawV2 : law; }
         }
 
         private void Awake()
@@ -114,6 +149,11 @@ namespace MaverickFresh.FlightDynamics.F15
             commandSource = ResolveCommandSource();
 
             law = Get<MavF15PilotControlLaw>();
+
+            // A V1 rig carries only the V1 law. V2 is added when selected (or kept when already present).
+            lawV2 = controlMode == MavF15PilotControlMode.AssistedV2
+                ? Get<MavF15PilotControlLawV2>()
+                : GetComponent<MavF15PilotControlLawV2>();
             actuator = Get<MavF15ControlActuator>();
             actuator.limits = profile.gameplayControlAuthority.ToActuatorTravel();
             thrust = Get<MavF15PilotControlledFixedThrust>();
@@ -122,7 +162,6 @@ namespace MaverickFresh.FlightDynamics.F15
             body.profileProvider = profile;
             body.aerodynamicModel = aero;
             body.controlSurfaceActuator = actuator;
-            body.controlLaw = law;
             body.pilotCommandSource = commandSource;
             body.propulsionModel = thrust;
             body.autoApplyProfileConfiguration = true;
@@ -141,11 +180,38 @@ namespace MaverickFresh.FlightDynamics.F15
             law.actuator = actuator;
             law.commandSource = commandSource;
             law.driveActuatorInFixedUpdate = true;
+            BindControlLaw();
             actuator.sixDoFBody = body;
             aero.surfaceOwner = actuator;
 
             body.ApplyConfiguredProfile(true);
             body.NotifyOwnershipChanged();
+        }
+
+        /// <summary>
+        /// Binds the selected pilot-control law and only that: the V2 law is added if V2 is selected and
+        /// missing, wired to the same profile, actuator and command source as V1; the selected law is enabled
+        /// and becomes the body's law, the other is disabled - never two surface requesters. Touches nothing
+        /// else (no mass, profile or physics state), so it is safe in flight.
+        /// </summary>
+        private void BindControlLaw()
+        {
+            if (controlMode == MavF15PilotControlMode.AssistedV2 && lawV2 == null)
+                lawV2 = Get<MavF15PilotControlLawV2>();
+
+            if (lawV2 != null)
+            {
+                lawV2.configuration = profile;
+                lawV2.sixDoFBody = body;
+                lawV2.actuator = actuator;
+                lawV2.commandSource = commandSource;
+                lawV2.driveActuatorInFixedUpdate = true;
+            }
+
+            law.enabled = controlMode == MavF15PilotControlMode.DirectV1;
+            if (lawV2 != null)
+                lawV2.enabled = controlMode == MavF15PilotControlMode.AssistedV2;
+            body.controlLaw = ActiveLaw;
         }
 
         /// <summary>
@@ -178,6 +244,8 @@ namespace MaverickFresh.FlightDynamics.F15
                 neutral, profile.gameplayControlAuthority, (float)trim.symmetricStabilatorDeg);
             actuator.SetF15Command(MavF15RequestedSurfaceState.From(atTrim.requested), 0f);
             actuator.SnapToBoundedCommand();
+            if (lawV2 != null)
+                lawV2.ResetLawState();
 
             ownership = GetComponent<MavFlightPhysicsOwnership>();
             if (ownership == null)
@@ -193,6 +261,68 @@ namespace MaverickFresh.FlightDynamics.F15
             debugStartSucceeded = true;
             debugStartStatus = "STARTED at Table VII point " + trim.tableViiPoint + " trim; "
                 + MavF15PilotControlledIdentity.ConfigurationId + " is the sole live owner";
+            return true;
+        }
+
+        /// <summary>Largest stick / pedal deflection at which a law switch is accepted.</summary>
+        public const float SwitchCentredTolerance = 0.05f;
+
+        /// <summary>
+        /// Switches the pilot-control law - Direct V1 or Assisted V2 - on this rig, in flight or not.
+        /// Refused, changing nothing, unless the stick and pedals are centred (within
+        /// <see cref="SwitchCentredTolerance"/>): near the trim both laws then request about the trim bias
+        /// and zero lateral surfaces, so the switch does not step the surfaces. The newly selected law
+        /// starts with zero filter state; the other is disabled, so there is never a second requester. The
+        /// ownership grant, re-checked every physics step, accepts either law.
+        /// </summary>
+        public bool TrySetControlMode(MavF15PilotControlMode mode, out string reason)
+        {
+            if (mode == controlMode && body != null && ActiveLaw != null && body.controlLaw == ActiveLaw && ActiveLaw.enabled)
+            {
+                reason = "already " + mode;
+                return true;
+            }
+
+            MavPilotCommand current;
+            if (commandSource != null && commandSource.isActiveAndEnabled && commandSource.TryGetCommand(out current))
+            {
+                MavPilotCommand c = current.Clamped();
+                if (Mathf.Abs(c.pitch) > SwitchCentredTolerance || Mathf.Abs(c.roll) > SwitchCentredTolerance
+                    || Mathf.Abs(c.yaw) > SwitchCentredTolerance)
+                {
+                    reason = "law switch refused: centre the stick and pedals first (|pitch|, |roll|, |yaw| <= "
+                        + SwitchCentredTolerance + ")";
+                    return false;
+                }
+            }
+
+            controlMode = mode;
+            if (body == null || law == null)
+            {
+                EnsureStack();
+            }
+            else
+            {
+                BindControlLaw();
+                body.NotifyOwnershipChanged();
+            }
+
+            if (lawV2 != null)
+                lawV2.ResetLawState();
+
+            // Inside a physics step a newly enabled (or newly added) law may not get its own FixedUpdate until the
+            // next step, and the body - which re-checks readiness after the change - would then find no command
+            // this step and withhold EVERY load, gravity included. So the new law is evaluated here, once, from the
+            // same published flight state it would read at its own turn: the surfaces get its request this step
+            // and the body keeps flying. V2 then skips its own turn in this same step (no double filter step).
+            if (Time.inFixedTimeStep && body != null)
+            {
+                if (controlMode == MavF15PilotControlMode.AssistedV2)
+                    lawV2.StepPilotControlLawForThisPhysicsStep(Time.fixedDeltaTime);
+                else
+                    law.StepPilotControlLaw(Time.fixedDeltaTime);
+            }
+            reason = "pilot-control law switched to " + mode + ": " + ActiveLaw.ControlLawName;
             return true;
         }
 

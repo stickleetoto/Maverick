@@ -31,7 +31,7 @@
   "expected_python_surface_count": 3,
   "enumeration_scope": "AUTHORITY_AND_HEAD",
   "enumeration_note": "The runner enumerates the declared roots at the authority commit AND at the checkout HEAD. The authority enumeration is a subset check - everything frozen there must still be listed - while the HEAD enumeration is exact, so a C# surface added to an authority root after the authority commit is a hard failure until it is listed here. Post-authority additions cannot be invisible.",
-  "expected_head_cs_surface_count": 73
+  "expected_head_cs_surface_count": 76
  },
  "implementation_paths": [
   "Tools/run_fdm_validation.ps1",
@@ -934,7 +934,7 @@
   {
    "id": "f15_pilot_controlled_prefab_builder",
    "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotControlledPrefabBuilder.cs",
-   "git_blob": "b6862d20b2067344fbc077c32d84ed6b91889e19",
+   "git_blob": "46abe7e7e6de0d5c0ab163b389a6c323bc5a0379",
    "pinned_at": "HEAD",
    "classification": "EXCLUDED_WITH_REASON",
    "role": "F-15 pilot-controlled prefab builder (editor tooling)",
@@ -962,6 +962,39 @@
    "role": "F-15 pilot-controlled Play Mode flight-test runner",
    "counted": false,
    "reason": "runner component consumed by the F-15 pilot-controlled Play Mode flight-test driver (MavF15PilotControlledFlightValidation); not an independent suite; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "f15_pilot_control_v2_flight_validation",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotControlledV2FlightValidation.cs",
+   "git_blob": "89537baec6b1bb22832d2e2630bf311979a16c9c",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "F-15 pilot-control V2 Play Mode flight-test driver",
+   "counted": false,
+   "reason": "F-15 pilot-control V2 Play Mode flight test with the V1 vs V2 comparison, run through its own RunBatch per Docs/Reference/F15_PILOT_CONTROLLED_V2.md; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "f15_pilot_control_v2_validation",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlV2Validation.cs",
+   "git_blob": "869c7c8440b77a1d761efbc5ccf172489acef760",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "F-15 pilot-control V2 headless validation suite",
+   "counted": false,
+   "reason": "F-15 pilot-control V2 (Maverick closed-loop law) headless suite (identities, signs, bounds, provenance, ownership, source scan), run with the F-15 suites per Docs/Reference/F15_PILOT_CONTROLLED_V2.md; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "f15_pilot_control_v2_flight_validation_runner",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlledV2FlightValidationRunner.cs",
+   "git_blob": "227737bf3b32fc1e1f21f5df2b0c1c1fbd7b6cbc",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "F-15 pilot-control V2 Play Mode flight-test runner",
+   "counted": false,
+   "reason": "runner component consumed by the F-15 pilot-control V2 Play Mode flight-test driver (MavF15PilotControlledV2FlightValidation); not an independent suite; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
    "execution_mode": "EXCLUDED"
   }
  ],

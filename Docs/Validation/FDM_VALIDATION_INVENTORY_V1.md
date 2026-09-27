@@ -169,3 +169,19 @@ The counted set, the totals, the authority commit and every earlier entry are un
 | 74 | `f15_pilot_controlled_prefab_builder` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotControlledPrefabBuilder.cs` — F-15 pilot-controlled prefab builder (editor tooling) |
 | 75 | `f15_pilot_control_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlValidation.cs` — F-15 pilot-controlled research aircraft headless validation suite |
 | 76 | `f15_pilot_controlled_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlledFlightValidationRunner.cs` — F-15 pilot-controlled Play Mode flight-test runner |
+
+## F-15 pilot control V2, 2026-09-27
+
+F-15 pilot control V2 (a Maverick closed-loop control law for the same pilot-controlled aircraft) adds **3 C# files** under the declared roots:
+- the headless suite `MavF15PilotControlV2Validation`;
+- the Play Mode flight-test runner (V2 flight test + V1 vs V2 comparison) and its driver.
+
+It also changes one listed file, the editor prefab builder `MavF15PilotControlledPrefabBuilder` (it now builds the V2 prefab as well). Its entry keeps its id and classification; only its `git_blob` is re-pinned.
+
+`expected_head_cs_surface_count` goes from 73 to 76. Same convention as above: `EXCLUDED_WITH_REASON`, not counted, `pinned_at: HEAD` with the file's blob; the procedure is in `Docs/Reference/F15_PILOT_CONTROLLED_V2.md`. The counted set, the totals, the authority commit and every other entry are unchanged.
+
+| # | ID | Classification | Counted | Source cardinality | Path / role |
+|---:|---|---|:---:|---:|---|
+| 77 | `f15_pilot_control_v2_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotControlledV2FlightValidation.cs` — F-15 pilot-control V2 Play Mode flight-test driver |
+| 78 | `f15_pilot_control_v2_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlV2Validation.cs` — F-15 pilot-control V2 headless validation suite |
+| 79 | `f15_pilot_control_v2_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlledV2FlightValidationRunner.cs` — F-15 pilot-control V2 Play Mode flight-test runner |
