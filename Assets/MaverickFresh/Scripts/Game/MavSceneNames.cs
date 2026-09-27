@@ -20,13 +20,34 @@ namespace MaverickFresh
         CarrierTest = 4
     }
 
+    /// <summary>
+    /// The game-level session: which aircraft and mode the player selected, and the flight they asked to launch.
+    /// Never simulation state - aero, surfaces, ownership and engine state belong to the aircraft.
+    /// </summary>
     public static class MavGameSession
     {
-        public const MavAircraftKind DefaultAircraft = MavAircraftKind.F22A;
+        /// <summary>The aircraft used only when nothing has been selected at all (R1: the F-15).</summary>
+        public const MavAircraftKind DefaultAircraft = MavAircraftKind.F15E;
         public static MavAircraftKind SelectedAircraft = DefaultAircraft;
         public static MavGameMode SelectedMode = MavGameMode.FreeFlight;
         public static bool HasSelection;
         public static string LastSceneError;
+
+        /// <summary>The flight the player asked for; read by the flight session in Mav_InGame. Not persisted.</summary>
+        public static MaverickFresh.Gameplay.MavFlightLaunchRequest CurrentLaunch;
+        public static bool HasLaunchRequest;
+
+        public static void SetLaunchRequest(MaverickFresh.Gameplay.MavFlightLaunchRequest request)
+        {
+            CurrentLaunch = request;
+            HasLaunchRequest = true;
+        }
+
+        public static void ClearLaunchRequest()
+        {
+            CurrentLaunch = default(MaverickFresh.Gameplay.MavFlightLaunchRequest);
+            HasLaunchRequest = false;
+        }
 
         public static void SelectAircraft(MavAircraftKind aircraft)
         {
