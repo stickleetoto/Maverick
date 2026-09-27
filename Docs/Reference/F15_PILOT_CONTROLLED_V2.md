@@ -275,6 +275,18 @@ Conditions: dt 0.02, `captureFramerate` 50, from Table VII point 36, real Unity 
 | Pilot V2 headless / Play Mode | **40 / 0** headless; Play Mode **52 / 0**, two runs byte-identical |
 | Official Baseline v1 gate (F-16/shared) | **PASS 1585 / 0** (25 counted suites), physics delta NONE |
 
+**Final cleanup (fail-closed switch), clean worktree of 7550e85:**
+
+| Gate | Result |
+|---|---|
+| Compile (Unity Roslyn: runtime, runtime + editor, editor assemblies) | 0 errors |
+| Frozen F-15 suites (17) | **757 / 0**, every check line identical to the run above |
+| Frozen research Play Mode closeout | **39 / 0**, byte-identical to the committed report |
+| Pilot V1 headless / Play Mode | **49 / 0** / **31 / 0**, identical to the V1 record |
+| Pilot V2 headless | **54 / 0**, the 40 earlier check lines unchanged |
+| Pilot V2 Play Mode | **57 / 0**; two runs byte-identical, and the 52 earlier lines unchanged |
+| Official Baseline v1 gate (F-16/shared) | **PASS 1585 / 0**, physics delta NONE |
+
 ---
 
 ## 8. Ownership and the one shared-core change
