@@ -829,6 +829,9 @@ namespace MaverickFresh.FlightDynamics
         /// </summary>
         private MavSixDoFBody researchBody;
 
+        /// <summary>The aircraft-layer grant the pilot-controlled owner was entered with; re-run every step.</summary>
+        private IMavResearchOwnershipGrant pilotControlledGrant;
+
         /// <summary>
         /// Makes the governed F-15 research body the sole live owner of physics, for validation.
         ///
@@ -980,6 +983,13 @@ namespace MaverickFresh.FlightDynamics
                     debugPilotControlledOwnershipStatus = "LOST: " + reason;
                     EnterFault("pilot-controlled ownership preconditions no longer hold: " + reason);
                 }
+                else if (pilotControlledGrant != null && !pilotControlledGrant.TryGrantResearchOwnership(researchBody, out reason))
+                {
+                    // The aircraft layer's own conditions (e.g. exactly one pilot-control law requesting
+                    // surfaces) are re-checked too, not only at entry.
+                    debugPilotControlledOwnershipStatus = "LOST: " + reason;
+                    EnterFault("pilot-controlled ownership preconditions no longer hold: the aircraft-layer grant refused: " + reason);
+                }
 
                 return;
             }
@@ -1060,6 +1070,7 @@ namespace MaverickFresh.FlightDynamics
             SetOwner(MavFlightPhysicsOwner.F15PilotControlledResearch,
                 "pilot-controlled research aircraft: " + F15PilotControlledConfigurationId + " is the sole live FDM owner");
             researchBody = body;
+            pilotControlledGrant = grant;
             EnforceArmingForCurrentOwner();
 
             if (ViolatesExclusiveOwnership(owner) || !IsReplacementPhysicsAllowed(owner)

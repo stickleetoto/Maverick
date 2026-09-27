@@ -34,6 +34,10 @@ namespace MaverickFresh.FlightDynamics.F15
         public string aerodynamicStatus;
 
         [Header("Control")]
+        [Tooltip("DIRECT V1, ASSISTED V2, or none: which Maverick pilot-control law is bound to the body.")]
+        public string controlLaw;
+        public bool assistedV2;
+        public MavF15PilotControlLawV2Debug v2;
         public bool gameplayControlActive;
         public string commandResolution;
         public bool envelopeLimited;
@@ -83,15 +87,28 @@ namespace MaverickFresh.FlightDynamics.F15
             }
 
             MavF15PilotControlLaw law = body.controlLaw as MavF15PilotControlLaw;
+            MavF15PilotControlLawV2 lawV2 = body.controlLaw as MavF15PilotControlLawV2;
             if (law != null)
             {
+                d.controlLaw = "DIRECT V1 (direct gearing about the trim)";
                 d.gameplayControlActive = law.isActiveAndEnabled && law.debugDroveActuator;
                 d.commandResolution = law.debugCommandResolution.ToString();
                 d.envelopeLimited = law.debugEnvelopeLimited;
                 d.throttle01 = law.debugThrottleInactive01;
             }
+            else if (lawV2 != null)
+            {
+                d.controlLaw = "ASSISTED V2 (rate/sideslip loops + " + MavF15PilotControlProvenance.GameplayResearchAssist + ")";
+                d.assistedV2 = true;
+                d.v2 = lawV2.debugLaw;
+                d.gameplayControlActive = lawV2.isActiveAndEnabled && lawV2.debugDroveActuator;
+                d.commandResolution = lawV2.debugCommandResolution.ToString();
+                d.envelopeLimited = lawV2.debugEnvelopeLimited;
+                d.throttle01 = lawV2.debugThrottleInactive01;
+            }
             else
             {
+                d.controlLaw = "none";
                 d.commandResolution = "no pilot-control law";
             }
 
@@ -135,6 +152,15 @@ namespace MaverickFresh.FlightDynamics.F15
               .AppendLine(coefficientsExtrapolatedFromFit ? " | coefficients EXTRAPOLATED from the M 0.6 fit" : "");
             sb.Append("inside source-exercised speed 218.5-699.7 ft/s: ").Append(insideSourceExercisedSpeed ? "yes" : "NO")
               .Append(" | inside transcribed alpha/beta span: ").AppendLine(insideTranscribedAlphaBetaSpan ? "yes" : "NO");
+            sb.Append("control law: ").AppendLine(controlLaw);
+            if (assistedV2)
+            {
+                sb.Append("  V2 cmd q ").Append(v2.commandedPitchRateRadSec.ToString("F3"))
+                  .Append(" p_s ").Append(v2.commandedRollRateRadSec.ToString("F3"))
+                  .Append(" rad/s, beta ").Append(v2.commandedSideslipDeg.ToString("F2"))
+                  .Append(" deg | gain scale ").Append(v2.gainScale.ToString("F2"))
+                  .AppendLine(v2.stateUsable ? "" : " | STATE NOT FINITE - feedback zeroed");
+            }
             sb.Append("gameplay control: ").Append(gameplayControlActive ? "ACTIVE" : "inactive").Append(" (")
               .Append(commandResolution).Append(")").AppendLine(envelopeLimited ? " | gameplay envelope limiting" : "");
             sb.Append("stab ").Append(actualSurfaces.symmetricStabilatorDeg.ToString("F2"))

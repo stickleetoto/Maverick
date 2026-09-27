@@ -357,6 +357,53 @@ namespace MaverickFresh.FlightDynamics.F15
             s.unbounded.rudderDeg =
                 MavF15PilotControlConventions.YawNoseRightRudderSign * c.yaw * authority.yawRudderDegPerUnit;
 
+            Bound(ref s, authority);
+            return s;
+        }
+
+        /// <summary>
+        /// The same mapping from a closed-loop law's surface DEMANDS instead of stick gearing - used by
+        /// <see cref="MavF15PilotControlLawV2"/>, so V1 and V2 share one owner of the sign conventions,
+        /// the research differential-tail relation and the gameplay envelopes:
+        ///
+        ///   symmetric stabilator = trim bias + NoseUpStabilatorSign x nose-up demand
+        ///   aileron              = RollRightAileronSign x roll-right demand
+        ///   differential stab.   = 0.3 x commanded aileron          (research model relation)
+        ///   rudder               = YawNoseRightRudderSign x nose-right demand
+        ///
+        /// each clamped to its gameplay envelope. Zero demands return exactly the trim bias and zero
+        /// lateral surfaces. A non-finite demand is treated as zero (a fault upstream is centred, never
+        /// passed on). <paramref name="command"/> is only carried through for throttle and telemetry.
+        /// </summary>
+        public static MavF15PilotControlSolution SolveFromDemands(
+            MavPilotCommand command,
+            float noseUpDemandDeg,
+            float rollRightDemandDeg,
+            float noseRightDemandDeg,
+            MavF15GameplayControlAuthority authority,
+            float trimStabilatorBiasDeg)
+        {
+            MavF15PilotControlSolution s = new MavF15PilotControlSolution();
+            s.command = Finite(command).Clamped();
+
+            float bias = IsFinite(trimStabilatorBiasDeg) ? trimStabilatorBiasDeg : 0f;
+            float pitch = IsFinite(noseUpDemandDeg) ? noseUpDemandDeg : 0f;
+            float roll = IsFinite(rollRightDemandDeg) ? rollRightDemandDeg : 0f;
+            float yaw = IsFinite(noseRightDemandDeg) ? noseRightDemandDeg : 0f;
+            float aileronCommand = MavF15PilotControlConventions.RollRightAileronSign * roll;
+
+            s.unbounded.symmetricStabilatorDeg = bias + MavF15PilotControlConventions.NoseUpStabilatorSign * pitch;
+            s.unbounded.aileronDeg = aileronCommand;
+            s.unbounded.differentialStabilatorDeg =
+                MavF15PilotControlConventions.DifferentialTailPerCommandedAileron * aileronCommand;
+            s.unbounded.rudderDeg = MavF15PilotControlConventions.YawNoseRightRudderSign * yaw;
+
+            Bound(ref s, authority);
+            return s;
+        }
+
+        private static void Bound(ref MavF15PilotControlSolution s, MavF15GameplayControlAuthority authority)
+        {
             s.requested.symmetricStabilatorDeg = authority.symmetricStabilator.Clamp(s.unbounded.symmetricStabilatorDeg);
             s.requested.aileronDeg = authority.aileron.Clamp(s.unbounded.aileronDeg);
             s.requested.differentialStabilatorDeg = authority.differentialStabilator.Clamp(s.unbounded.differentialStabilatorDeg);
@@ -366,7 +413,6 @@ namespace MaverickFresh.FlightDynamics.F15
             s.aileronLimited = s.requested.aileronDeg != s.unbounded.aileronDeg;
             s.differentialLimited = s.requested.differentialStabilatorDeg != s.unbounded.differentialStabilatorDeg;
             s.rudderLimited = s.requested.rudderDeg != s.unbounded.rudderDeg;
-            return s;
         }
 
         private static MavPilotCommand Finite(MavPilotCommand c)

@@ -157,9 +157,26 @@ namespace MaverickFresh.FlightDynamics.F15
                 }
             }
 
-            if (!(body.controlLaw is MavF15PilotControlLaw))
+            if (!(body.controlLaw is MavF15PilotControlLaw) && !(body.controlLaw is MavF15PilotControlLawV2))
             {
-                reason = "the control law is not the Maverick pilot-control law";
+                reason = "the control law is not a Maverick pilot-control law (V1 direct or V2 assisted)";
+                return false;
+            }
+
+            // One surface requester: the bound law is the only enabled pilot-control law on the aircraft.
+            MavF15PilotControlLaw v1 = body.GetComponent<MavF15PilotControlLaw>();
+            MavF15PilotControlLawV2 v2 = body.GetComponent<MavF15PilotControlLawV2>();
+            bool v1Requests = v1 != null && v1.enabled;
+            bool v2Requests = v2 != null && v2.enabled;
+            if (v1Requests && v2Requests)
+            {
+                reason = "both pilot-control laws (V1 and V2) are enabled; exactly one may request surfaces";
+                return false;
+            }
+
+            if (!body.controlLaw.enabled || body.controlLaw.gameObject != body.gameObject)
+            {
+                reason = "the bound pilot-control law is disabled or not on the aircraft";
                 return false;
             }
 
