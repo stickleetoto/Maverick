@@ -46,6 +46,12 @@ namespace MaverickFresh.FlightDynamics.F15
         public bool lateralSurfacesInsideSourceExercised;
         public bool commandExceedsSourceExercisedInputs;
 
+        [Header("Actuator dynamics (pilot physics revision)")]
+        public MavF15PilotPhysicsRevision physicsRevision;
+        public bool actuatorLagsActive;
+        [Tooltip("Largest |requested - actual| over the four channels, deg: how far the lagged surfaces trail the command.")]
+        public float largestSurfaceLagDeg;
+
         [Header("Thrust")]
         public float throttle01;
         public string throttleStatus;
@@ -114,7 +120,20 @@ namespace MaverickFresh.FlightDynamics.F15
 
             MavF15ControlActuator actuator = body.controlSurfaceActuator as MavF15ControlActuator;
             if (actuator != null)
+            {
                 d.actualSurfaces = actuator.ActualF15SurfaceState.channels;
+                d.actuatorLagsActive = actuator.dynamics.AnyLag;
+                for (int i = 0; i < 4; i++)
+                {
+                    MavF15SurfaceChannel channel = (MavF15SurfaceChannel)i;
+                    d.largestSurfaceLagDeg = Mathf.Max(d.largestSurfaceLagDeg,
+                        Mathf.Abs(actuator.requested.channels.Get(channel) - d.actualSurfaces.Get(channel)));
+                }
+            }
+
+            MavF15PilotControlledFlightDynamicsProfile profile = body.profileProvider as MavF15PilotControlledFlightDynamicsProfile;
+            if (profile != null)
+                d.physicsRevision = profile.physicsRevision;
 
             d.symmetricStabilatorInsideSourceExercised =
                 SourceExercised.symmetricStabilator.Contains(d.actualSurfaces.symmetricStabilatorDeg);
@@ -167,6 +186,13 @@ namespace MaverickFresh.FlightDynamics.F15
               .Append("  ail ").Append(actualSurfaces.aileronDeg.ToString("F2"))
               .Append("  diff ").Append(actualSurfaces.differentialStabilatorDeg.ToString("F2"))
               .Append("  rud ").Append(actualSurfaces.rudderDeg.ToString("F2")).AppendLine(" deg");
+            // R1 prints nothing new, so every recorded R1 readout is unchanged.
+            if (physicsRevision != MavF15PilotPhysicsRevision.R1InstantaneousSurfaces || actuatorLagsActive)
+            {
+                sb.Append("actuators: ").Append(MavF15PilotPhysics.Describe(physicsRevision))
+                  .Append(" | surfaces trail the command by up to ").Append(largestSurfaceLagDeg.ToString("F2")).AppendLine(" deg");
+            }
+
             sb.AppendLine(commandExceedsSourceExercisedInputs
                 ? "surfaces EXCEED the source-exercised inputs (Table VII: stab -25..-5, lateral 0)"
                 : "surfaces inside the source-exercised inputs");

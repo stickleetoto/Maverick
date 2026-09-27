@@ -109,6 +109,26 @@ namespace MaverickFresh.FlightDynamics.F15
             return rig;
         }
 
+        /// <summary>
+        /// As above, flying the given pilot physics revision: the profile is created first, with its revision set,
+        /// so the stack is wired for that revision from the start.
+        /// </summary>
+        public static MavF15PilotControlledRig Create(
+            string name, MavF15PilotCommandSourceKind sourceKind, bool startOnFirstPhysicsStep, MavF15PilotControlMode mode,
+            MavF15PilotPhysicsRevision revision)
+        {
+            GameObject go = new GameObject(name);
+            go.SetActive(false);
+            MavF15PilotControlledFlightDynamicsProfile profile = go.AddComponent<MavF15PilotControlledFlightDynamicsProfile>();
+            profile.physicsRevision = revision;
+            MavF15PilotControlledRig rig = go.AddComponent<MavF15PilotControlledRig>();
+            rig.commandSourceKind = sourceKind;
+            rig.startOnFirstPhysicsStep = startOnFirstPhysicsStep;
+            rig.controlMode = mode;
+            go.SetActive(true);
+            return rig;
+        }
+
         /// <summary>The pilot-control law bound to the body: V1 or V2, per <see cref="controlMode"/>.</summary>
         public MavFlightControlLawBase ActiveLaw
         {
@@ -156,6 +176,9 @@ namespace MaverickFresh.FlightDynamics.F15
                 : GetComponent<MavF15PilotControlLawV2>();
             actuator = Get<MavF15ControlActuator>();
             actuator.limits = profile.gameplayControlAuthority.ToActuatorTravel();
+            // The profile's physics revision decides the actuator dynamics: none for R1 (the recorded plant), the
+            // research model's own first-order lags for R2. Travel and every other part of the stack are unchanged.
+            actuator.dynamics = MavF15PilotPhysics.ActuatorDynamicsFor(profile.physicsRevision);
             thrust = Get<MavF15PilotControlledFixedThrust>();
             body = Get<MavSixDoFBody>();
 

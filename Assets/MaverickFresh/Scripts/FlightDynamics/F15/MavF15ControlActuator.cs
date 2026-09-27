@@ -48,6 +48,10 @@ namespace MaverickFresh.FlightDynamics.F15
         [Tooltip("Travel and rate authority per channel, each carrying its own provenance. Default is fully unavailable, which refuses all surface motion. Populate a channel only from a source you can name, and mark what that source is.")]
         public MavF15SurfaceLimits limits = MavF15SurfaceLimits.UnavailableExactTarget();
 
+        [Header("Actuator Dynamics (bandwidth, separate from rate limits)")]
+        [Tooltip("First-order lag per channel, each with its provenance. Default: none - every channel follows its bounded command instantly, exactly as before. The pilot-controlled R2 revision sets the research model's own lags (MavF15ResearchModelActuatorLags); nothing else sets them.")]
+        public MavF15ActuatorDynamics dynamics = MavF15ActuatorDynamics.None;
+
         [Header("Debug / Actual Surface State")]
         [Tooltip("What the aircraft's surfaces are actually doing. Owned here, read-only everywhere else. Only this component may construct a MavF15ActualSurfaceState.")]
         public MavF15ActualSurfaceState actualF15Surfaces;
@@ -161,7 +165,7 @@ namespace MaverickFresh.FlightDynamics.F15
             bool refused;
             MavF15SurfaceState bounded = BoundCommand(out refused);
             actualF15Surfaces = MavF15ActualSurfaceState.FromActuator(
-                StepChannels(actualF15Surfaces.channels, bounded, limits, deltaTime));
+                StepChannels(actualF15Surfaces.channels, bounded, limits, dynamics, deltaTime));
         }
 
         /// <summary>
@@ -183,6 +187,22 @@ namespace MaverickFresh.FlightDynamics.F15
             MavF15SurfaceLimits limits,
             float deltaTime)
         {
+            return StepChannels(current, boundedTarget, limits, MavF15ActuatorDynamics.None, deltaTime);
+        }
+
+        /// <summary>
+        /// As above, with a first-order lag per channel where one is declared (<see cref="MavF15ChannelLag.HasLag"/>).
+        /// The lag moves the channel toward its bounded target by the exact zero-order-hold solution
+        /// (<see cref="MavF15PilotPhysics.StepFirstOrderLag"/>); a sourced rate limit, if any, then caps that step.
+        /// A channel with no lag behaves exactly as the four-argument form - bit for bit.
+        /// </summary>
+        public static MavF15SurfaceState StepChannels(
+            MavF15SurfaceState current,
+            MavF15SurfaceState boundedTarget,
+            MavF15SurfaceLimits limits,
+            MavF15ActuatorDynamics dynamics,
+            float deltaTime)
+        {
             float dt = Mathf.Max(0f, deltaTime);
             MavF15SurfaceState next = current;
 
@@ -190,9 +210,13 @@ namespace MaverickFresh.FlightDynamics.F15
             {
                 MavF15SurfaceChannel channel = (MavF15SurfaceChannel)i;
                 MavF15SurfaceChannelLimits channelLimits = limits.Get(channel);
+                MavF15ChannelLag lag = dynamics.Get(channel);
 
                 float target = boundedTarget.Get(channel);
                 float from = current.Get(channel);
+                float toward = lag.HasLag
+                    ? MavF15PilotPhysics.StepFirstOrderLag(from, target, lag.lagPerSec, dt)
+                    : target;
 
                 // MoveTowards handles dt == 0 correctly by itself - it returns `from`. Guarding
                 // the rate branch on dt > 0 instead would fall through to the instant branch on a
@@ -201,8 +225,8 @@ namespace MaverickFresh.FlightDynamics.F15
                 next.Set(
                     channel,
                     channelLimits.HasSourcedRate
-                        ? Mathf.MoveTowards(from, target, channelLimits.rateLimitDegSec * dt)
-                        : target
+                        ? Mathf.MoveTowards(from, toward, channelLimits.rateLimitDegSec * dt)
+                        : toward
                 );
             }
 
