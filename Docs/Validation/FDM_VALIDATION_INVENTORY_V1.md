@@ -199,3 +199,11 @@ F-15 pilot physics R2 (the research model's own first-order actuator lags as an 
 | 80 | `f15_pilot_physics_r2_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotPhysicsR2Validation.cs` — F-15 pilot physics R2 headless validation suite |
 | 81 | `f15_pilot_physics_r2_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotPhysicsR2FlightValidationRunner.cs` — F-15 pilot physics R2 Play Mode flight-test runner |
 | 82 | `f15_pilot_physics_r2_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotPhysicsR2FlightValidation.cs` — F-15 pilot physics R2 Play Mode flight-test driver |
+
+### R2 made the default pilot physics, 2026-09-28
+
+R2 became the default revision of the pilot-controlled F-15. **No C# file is added**, `expected_head_cs_surface_count` stays 79, and nothing is counted. Seven existing entries are re-pinned to their new blobs:
+- the four V1/V2 files (#75, #76, #78, #79), which now select R1 explicitly so their historical records reproduce;
+- the three R2 files (#80, #81, #82), for the default-is-R2 checks.
+
+Classification, reasons, the counted set, the totals and the authority commit are unchanged.
