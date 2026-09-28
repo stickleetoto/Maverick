@@ -131,6 +131,11 @@ namespace MaverickFresh.FlightDynamics.EditorTools
                 SessionState.SetInt(KeyPhase, PhaseInPlay);
                 try
                 {
+                    // Static fields do not survive the domain reload into Play Mode: the normal V2 prefab is handed over
+                    // here, so the runner can check what placing the ordinary pilot-controlled F-15 actually flies.
+                    MavF15PilotPhysicsR2FlightValidationRunner.PrefabToTest =
+                        AssetDatabase.LoadAssetAtPath<GameObject>(MavF15PilotControlledPrefabBuilder.PrefabPathV2);
+                    MavF15PilotPhysicsR2FlightValidationRunner.PrefabPath = MavF15PilotControlledPrefabBuilder.PrefabPathV2;
                     GameObject host = new GameObject("f15r2-runner");
                     host.AddComponent<MavF15PilotPhysicsR2FlightValidationRunner>();
                 }

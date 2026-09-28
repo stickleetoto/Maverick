@@ -51,8 +51,8 @@ namespace MaverickFresh.FlightDynamics.F15
         public MavF15PilotTrimStart trimStart = MavF15PilotTrimStart.TableViiPoint36();
 
         [Header("Pilot Physics Revision")]
-        [Tooltip("R1 (default): the recorded pilot physics - surfaces move to their bounded command instantly; every V1/V2 record was made on it. R2: adds the research model's own first-order surface lags (Davison 1992 STATE12: stab 20, aileron 20, differential 20, rudder 28 1/s). Nothing else differs. Read by the rig when it wires the actuator.")]
-        public MavF15PilotPhysicsRevision physicsRevision = MavF15PilotPhysicsRevision.R1InstantaneousSurfaces;
+        [Tooltip("R2 (default): the current pilot physics - the research model's own first-order surface lags (Davison 1992 STATE12: stab 20, aileron 20, differential 20, rudder 28 1/s). R1: the historical pilot physics every V1/V2 record was made on - surfaces move to their bounded command instantly; kept for regression and comparison and selected explicitly. Nothing else differs. Read by the rig when it wires the actuator.")]
+        public MavF15PilotPhysicsRevision physicsRevision = MavF15PilotPhysicsRevision.R2SourceActuatorLags;
 
         [Header("Debug")]
         public MavFlightDynamicsProfile debugBuiltProfile;

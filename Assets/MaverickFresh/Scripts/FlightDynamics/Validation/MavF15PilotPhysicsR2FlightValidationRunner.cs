@@ -32,6 +32,10 @@ namespace MaverickFresh.FlightDynamics.Validation
         public static int Failed;
         public static string Report = "";
 
+        /// <summary>The normal V2 prefab, set by the editor driver: [N] checks that placing it flies R2.</summary>
+        public static GameObject PrefabToTest;
+        public static string PrefabPath = "(none)";
+
         public const int CaptureFramerate = 50;
         public const float BaseDt = 0.02f;
         public const float PulseAmplitude = 0.5f;
@@ -77,6 +81,8 @@ namespace MaverickFresh.FlightDynamics.Validation
         private bool done;
         private double[] equilibrium;
         private MavF15GameplayControlAuthority authority;
+        private bool normalPrefabR2;
+        private string normalPrefabNote = "not placed";
 
         public static void Clear()
         {
@@ -174,6 +180,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             if (runIndex >= runs.Count)
             {
                 done = true;
+                PlaceNormalPrefab();
                 Complete();
                 return;
             }
@@ -234,6 +241,53 @@ namespace MaverickFresh.FlightDynamics.Validation
             {
                 run.failure = "exception: " + e.GetType().Name + ": " + e.Message;
                 Finish(run);
+            }
+        }
+
+        /// <summary>
+        /// Places the normal V2 prefab, exactly as the scene menu does, after every run is finished. Its Awake wires the
+        /// stack; nothing is changed by the test, and the instance is removed before it ever steps.
+        /// </summary>
+        private void PlaceNormalPrefab()
+        {
+            if (PrefabToTest == null)
+            {
+                normalPrefabNote = "no V2 prefab was handed over (" + PrefabPath + ")";
+                return;
+            }
+
+            GameObject instance = null;
+            try
+            {
+                instance = Object.Instantiate(PrefabToTest);
+                MavF15PilotControlledRig placed = instance.GetComponent<MavF15PilotControlledRig>();
+                if (placed == null || placed.profile == null || placed.actuator == null)
+                {
+                    normalPrefabNote = "the placed prefab has no wired pilot-controlled rig";
+                    return;
+                }
+
+                MavF15ActuatorDynamics d = placed.actuator.dynamics;
+                normalPrefabR2 = placed.controlMode == MavF15PilotControlMode.AssistedV2
+                                 && placed.profile.physicsRevision == MavF15PilotPhysicsRevision.R2SourceActuatorLags
+                                 && d.symmetricStabilator.lagPerSec == MavF15ResearchModelActuatorLags.SymmetricStabilatorPerSec
+                                 && d.aileron.lagPerSec == MavF15ResearchModelActuatorLags.AileronPerSec
+                                 && d.differentialStabilator.lagPerSec == MavF15ResearchModelActuatorLags.DifferentialTailPerSec
+                                 && d.rudder.lagPerSec == MavF15ResearchModelActuatorLags.RudderPerSec;
+                normalPrefabNote = PrefabPath + ": law " + placed.controlMode + ", revision " + placed.profile.physicsRevision
+                                   + ", actuator lags stab " + d.symmetricStabilator.lagPerSec.ToString(CultureInfo.InvariantCulture)
+                                   + " / aileron " + d.aileron.lagPerSec.ToString(CultureInfo.InvariantCulture)
+                                   + " / differential " + d.differentialStabilator.lagPerSec.ToString(CultureInfo.InvariantCulture)
+                                   + " / rudder " + d.rudder.lagPerSec.ToString(CultureInfo.InvariantCulture) + " 1/s";
+            }
+            catch (Exception e)
+            {
+                normalPrefabNote = "placing the prefab threw " + e.GetType().Name + ": " + e.Message;
+            }
+            finally
+            {
+                if (instance != null)
+                    Object.DestroyImmediate(instance);
             }
         }
 
@@ -305,6 +359,7 @@ namespace MaverickFresh.FlightDynamics.Validation
             Comparison();
             Sequence();
             Convergence();
+            NormalAircraft();
 
             sb.AppendLine();
             sb.Append("RESULT: ").Append(Failed == 0 ? "PASS" : "FAIL").Append("  passed=").Append(Passed).Append(" failed=").Append(Failed);
@@ -556,6 +611,13 @@ namespace MaverickFresh.FlightDynamics.Validation
             double m = 0;
             foreach (double v in d) m = Math.Max(m, v);
             return m;
+        }
+
+        private void NormalAircraft()
+        {
+            sb.AppendLine();
+            sb.AppendLine("[N] The normal pilot-controlled F-15 (the V2 prefab, placed with no settings changed) flies R2");
+            Check(normalPrefabR2, "N", normalPrefabNote);
         }
 
         private static string DescribeStates(double[] d)

@@ -19,7 +19,7 @@ namespace MaverickFresh.FlightDynamics.Validation
     ///   [A3] lag mathematics: exact zero-order-hold step, time constant, no overshoot, unit static gain, dt-independent
     ///   [A4] differential tail: 0.3 x the commanded aileron through the stabilator lag, as F(12)
     ///   [A5] bounds and fail-safes: travel first, NaN / Infinity / dt edge cases, no NaN out
-    ///   [A6] rig wiring: R1 default and no lag; R2 lags on the actuator; ownership still granted; frozen research unaffected
+    ///   [A6] rig wiring: R2 is the default; R1 only when named and without lag; R2 lags on the actuator; ownership still granted
     ///   [A7] trim: point 36 is still an equilibrium of the R2 plant - residuals reported, identical to R1
     ///   [A8] response through the real rig (SHADOW): the stabilator follows the lag; moment sign unchanged
     ///   [A9] source scan: the R2 layer writes no physics and names no research-only type
@@ -290,12 +290,28 @@ namespace MaverickFresh.FlightDynamics.Validation
         {
             report.AppendLine();
             report.AppendLine("[A6] Rig wiring");
-            MavF15PilotControlledRig legacy = Rig(created, "a6-default", MavF15PilotControlMode.AssistedV2, null);
+            MavF15PilotControlledRig normal = Rig(created, "a6-default", MavF15PilotControlMode.AssistedV2, null);
+            MavF15PilotControlledRig normalV1 = MavF15PilotControlledRig.Create("a6-default-v1", MavF15PilotCommandSourceKind.Scripted, false);
+            normalV1.gameObject.hideFlags = HideFlags.HideAndDontSave;
+            normalV1.EnsureStack();
+            created.Add(normalV1.gameObject);
             MavF15PilotControlledRig r1 = Rig(created, "a6-r1", MavF15PilotControlMode.AssistedV2, MavF15PilotPhysicsRevision.R1InstantaneousSurfaces);
             MavF15PilotControlledRig r2 = Rig(created, "a6-r2", MavF15PilotControlMode.AssistedV2, MavF15PilotPhysicsRevision.R2SourceActuatorLags);
             MavF15PilotControlledRig r2v1 = Rig(created, "a6-r2v1", MavF15PilotControlMode.DirectV1, MavF15PilotPhysicsRevision.R2SourceActuatorLags);
-            Record(legacy.profile.physicsRevision == MavF15PilotPhysicsRevision.R1InstantaneousSurfaces && !legacy.actuator.dynamics.AnyLag && !r1.actuator.dynamics.AnyLag,
-                "the default rig (and every existing prefab, which serializes no revision) is R1: no lag", report, ref passed, ref failed);
+
+            // The default is R2: a fresh profile, and both Create overloads that name no revision, fly the lags. The two
+            // prefabs serialize no revision, so they take the same field default. R1 is reached only by naming it.
+            GameObject bare = new GameObject("a6-bare-profile") { hideFlags = HideFlags.HideAndDontSave };
+            created.Add(bare);
+            MavF15PilotPhysicsRevision fresh = bare.AddComponent<MavF15PilotControlledFlightDynamicsProfile>().physicsRevision;
+            const MavF15PilotPhysicsRevision R2 = MavF15PilotPhysicsRevision.R2SourceActuatorLags;
+            string prefabNote;
+            bool prefabsR2 = PrefabsDefaultToR2(out prefabNote);
+            Record(fresh == R2 && normal.profile.physicsRevision == R2 && normal.actuator.dynamics.AnyLag
+                   && normalV1.profile.physicsRevision == R2 && normalV1.actuator.dynamics.AnyLag && prefabsR2
+                   && r1.profile.physicsRevision == MavF15PilotPhysicsRevision.R1InstantaneousSurfaces && !r1.actuator.dynamics.AnyLag,
+                "the default is R2: a fresh profile and the normal rig (V2 and V1 Create with no revision) carry the lags; " + prefabNote
+                + "; R1 is explicit: a rig created with R1 has no lag", report, ref passed, ref failed);
             MavF15ActuatorDynamics d = r2.actuator.dynamics;
             Record(d.symmetricStabilator.lagPerSec == 20f && d.aileron.lagPerSec == 20f && d.differentialStabilator.lagPerSec == 20f && d.rudder.lagPerSec == 28f
                    && r2v1.actuator.dynamics.AnyLag && r2.actuator.limits.symmetricStabilator.minDeg == r1.actuator.limits.symmetricStabilator.minDeg,
@@ -495,6 +511,54 @@ namespace MaverickFresh.FlightDynamics.Validation
         }
 
         // ---------------------------------------------------------------- helpers
+
+        private static readonly string[] PilotPrefabs =
+        {
+            "MaverickFresh/Prefabs/F15/F15_PilotControlledResearch_V1.prefab",
+            "MaverickFresh/Prefabs/F15/F15_PilotControlledResearch_V2.prefab"
+        };
+
+        /// <summary>
+        /// True when both pilot prefabs exist and neither pins a revision other than R2. The committed prefabs predate the
+        /// field and serialize none, so Unity keeps the field default (R2) on load; a rebuilt prefab would serialize R2
+        /// itself. The Play Mode test instantiates the V2 prefab and checks the result directly.
+        /// </summary>
+        private static bool PrefabsDefaultToR2(out string note)
+        {
+            string r2Line = "physicsRevision: " + (int)MavF15PilotPhysicsRevision.R2SourceActuatorLags;
+            int unpinned = 0;
+            foreach (string rel in PilotPrefabs)
+            {
+                string full = Path.Combine(Application.dataPath, rel);
+                if (!File.Exists(full))
+                {
+                    note = "prefab missing: " + rel;
+                    return false;
+                }
+
+                bool pinned = false;
+                foreach (string line in File.ReadAllLines(full))
+                {
+                    string t = line.Trim();
+                    if (!t.StartsWith("physicsRevision:", StringComparison.Ordinal))
+                        continue;
+                    pinned = true;
+                    if (t != r2Line)
+                    {
+                        note = "prefab pins a revision other than R2 (" + t + "): " + rel;
+                        return false;
+                    }
+                }
+
+                if (!pinned)
+                    unpinned++;
+            }
+
+            note = unpinned == PilotPrefabs.Length
+                ? "both pilot prefabs serialize no revision, so they load with the R2 default"
+                : "neither pilot prefab pins a revision other than R2";
+            return true;
+        }
 
         private static MavF15PilotControlledRig Rig(List<Object> created, string name, MavF15PilotControlMode mode, MavF15PilotPhysicsRevision? revision)
         {
