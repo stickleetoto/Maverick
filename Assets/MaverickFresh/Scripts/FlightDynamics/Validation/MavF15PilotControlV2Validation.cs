@@ -114,7 +114,7 @@ namespace MaverickFresh.FlightDynamics.Validation
 
         private static MavF15PilotControlledRig PilotRig(List<Object> created, string name, MavF15PilotControlMode mode)
         {
-            MavF15PilotControlledRig rig = MavF15PilotControlledRig.Create(name, MavF15PilotCommandSourceKind.Scripted, false, mode);
+            MavF15PilotControlledRig rig = MavF15PilotControlledRig.Create(name, MavF15PilotCommandSourceKind.Scripted, false, mode, MavF15PilotPhysicsRevision.R1InstantaneousSurfaces);
             rig.gameObject.hideFlags = HideFlags.HideAndDontSave;
 
             // Edit mode calls no Awake: build the (idempotent) stack explicitly, exactly as Awake does in Play Mode.

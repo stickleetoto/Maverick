@@ -264,15 +264,20 @@ namespace MaverickFresh.FlightDynamics.Validation
                     GameObject instance = Object.Instantiate(PrefabToTest);
                     instance.name = "f15pc-human-prefab";
                     rig = instance.GetComponent<MavF15PilotControlledRig>();
+                    // This record was flown on R1. The prefab serializes no revision and now loads with the R2
+                    // default, so R1 is named before the rig first steps.
+                    string revisionNote;
+                    if (rig != null && !rig.TrySelectPhysicsRevision(MavF15PilotPhysicsRevision.R1InstantaneousSurfaces, out revisionNote))
+                        throw new InvalidOperationException(revisionNote);
                 }
                 else
                 {
-                    rig = MavF15PilotControlledRig.Create("f15pc-human-keyboard-rig", MavF15PilotCommandSourceKind.Keyboard, true);
+                    rig = MavF15PilotControlledRig.Create("f15pc-human-keyboard-rig", MavF15PilotCommandSourceKind.Keyboard, true, MavF15PilotControlMode.DirectV1, MavF15PilotPhysicsRevision.R1InstantaneousSurfaces);
                 }
             }
             else
             {
-                rig = MavF15PilotControlledRig.Create("f15pc-" + run.id, MavF15PilotCommandSourceKind.Scripted, false);
+                rig = MavF15PilotControlledRig.Create("f15pc-" + run.id, MavF15PilotCommandSourceKind.Scripted, false, MavF15PilotControlMode.DirectV1, MavF15PilotPhysicsRevision.R1InstantaneousSurfaces);
             }
         }
 

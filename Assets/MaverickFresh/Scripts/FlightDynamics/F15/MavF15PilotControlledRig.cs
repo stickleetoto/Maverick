@@ -89,6 +89,8 @@ namespace MaverickFresh.FlightDynamics.F15
         /// <summary>
         /// Builds a rig on a new GameObject, configured BEFORE its stack is built (the object is created
         /// inactive, so Awake runs only on activation). Used by validation, which drives the start itself.
+        /// The profile it adds carries the default pilot physics revision (R2); the historical V1/V2 records
+        /// select R1 explicitly through the overload that takes a revision.
         /// </summary>
         public static MavF15PilotControlledRig Create(
             string name, MavF15PilotCommandSourceKind sourceKind, bool startOnFirstPhysicsStep)
@@ -127,6 +129,27 @@ namespace MaverickFresh.FlightDynamics.F15
             rig.controlMode = mode;
             go.SetActive(true);
             return rig;
+        }
+
+        /// <summary>
+        /// Selects the pilot physics revision of a rig that has not started yet - e.g. an instantiated prefab, whose
+        /// Awake has already wired the default - and re-wires the actuator dynamics for it. Refused once the rig has
+        /// started: the surfaces have then moved on the other revision.
+        /// </summary>
+        public bool TrySelectPhysicsRevision(MavF15PilotPhysicsRevision revision, out string reason)
+        {
+            if (debugStarted)
+            {
+                reason = "the rig has already started; the physics revision is chosen before the start";
+                return false;
+            }
+
+            if (profile == null || actuator == null)
+                EnsureStack();
+            profile.physicsRevision = revision;
+            actuator.dynamics = MavF15PilotPhysics.ActuatorDynamicsFor(revision);
+            reason = MavF15PilotPhysics.Describe(revision);
+            return true;
         }
 
         /// <summary>The pilot-control law bound to the body: V1 or V2, per <see cref="controlMode"/>.</summary>
