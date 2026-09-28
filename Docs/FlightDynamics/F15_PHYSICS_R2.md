@@ -22,7 +22,7 @@ Branch `claude/f15-physics-r2`, from `main` @ `f0f9519`.
 | Trim start | Table VII point 36 (300.8 ft/s, α 17.4865°, θ 14.5460°, stab −15.1453°) |
 | Control | V2 (active), V1 (regression / development) |
 
-## 2. New physical model (R2)
+## 2. New physical model (R2, the default)
 
 **R2 = R1 + the research model's own first-order surface actuator lags.** Nothing else differs.
 
@@ -86,13 +86,26 @@ Order of operations: travel clamp first (unchanged), then the lag, then any sour
 - No frozen or hash-locked file was modified; `[A9]` scans them for any reference to the R2 layer.
 - The four-argument `MavF15ControlActuator.StepChannels`, which the frozen control-path suite uses, delegates with no dynamics and is bit-identical (`[A2]`, 500 cases).
 
-**Default:** the profile's `physicsRevision` defaults to **R1**. Every existing prefab and rig therefore flies exactly the recorded plant, and every V1/V2 record reproduces byte for byte (§8).
+### Current pilot physics: R2 is the default
 
-**To fly R2:**
-- set `Physics Revision = R2SourceActuatorLags` on the F-15 profile component (for example on a placed `F15_PilotControlledResearch_V2` instance); or
-- build a rig with `MavF15PilotControlledRig.Create(..., MavF15PilotPhysicsRevision.R2SourceActuatorLags)`.
+The profile's `physicsRevision` now defaults to **R2SourceActuatorLags**. The normal pilot-controlled F-15 is therefore the **V2 control law on the R2 plant**, with no Inspector change and no extra menu step:
+- the scene menu **Maverick → F-15 → Place Pilot-Controlled Research F-15 V2 (Assisted) In Scene** places the V2 prefab. That prefab serializes no revision, so it loads with the R2 default (`[N]` checks this in Play Mode);
+- any rig built by `MavF15PilotControlledRig.Create(...)` without a revision is R2.
 
-Making R2 the default is a one-line change. It would re-baseline the recorded V1/V2 pilot numerics, which is why it is left as a decision.
+History: R2 first went in as opt-in, with R1 as the default (`b6358af`). It was made the default after review.
+
+### R1 is kept, and selected explicitly
+
+R1 is not removed. It stays as the **historical regression revision**, for the recorded V1/V2 results, for comparison and for reproducibility.
+- Every V1/V2 test names R1 explicitly: `Create(..., MavF15PilotPhysicsRevision.R1InstantaneousSurfaces)`.
+- The V1/V2 Play Mode prefab runs call `MavF15PilotControlledRig.TrySelectPhysicsRevision(R1)` right after instantiating, before the rig first steps. The rig refuses a revision change once it has started.
+- The historical V1/V2 expected outputs were **not** rewritten. They reproduce byte for byte on explicit R1 (§8).
+
+To fly R1 by hand, set `Physics Revision = R1InstantaneousSurfaces` on the F-15 profile component before pressing Play.
+
+### The frozen research path is unchanged
+
+The frozen research reference never read `physicsRevision` and does not now: its surfaces are the static source-defined hold (table above).
 
 ## 4. Atmosphere — unchanged (deliberately)
 
@@ -136,6 +149,8 @@ Every residual is bit-identical to R1. No residual is hidden by feedback (V1 has
 
 ## 8. Validation
 
+### At the opt-in commit (R1 default, `3af4e98` / `b6358af`)
+
 Baseline `main` @ `f0f9519` vs candidate, each run in its own clean worktree on the same machine, compared report against report:
 
 | Gate | Result |
@@ -148,6 +163,27 @@ Baseline `main` @ `f0f9519` vs candidate, each run in its own clean worktree on 
 | **Pilot R2 headless** (new) | **24 / 0** |
 | **Pilot R2 Play Mode** (new) | **38 / 0**; two runs byte-identical, and identical after the driver move |
 | Official Baseline v1 gate (shared / F-16) | **PASS 1585 / 0**, physics delta NONE, on `3af4e98` |
+
+### After making R2 the default (`b2e89c6`)
+
+Candidate run in a clean worktree, compared with the same `main` @ `f0f9519` baseline reports:
+
+| Gate | Result |
+|---|---|
+| Compile (Unity Roslyn: runtime, runtime + editor, editor) | **0 errors** |
+| Frozen F-15 suites (17) | **757 / 0**. Every check line is identical to baseline, apart from the same scanned-file counts as above. |
+| Frozen F-15 Play Mode (closeout) | **39 / 0**, byte-identical |
+| Pilot V1 on explicit R1, headless / Play Mode | **49 / 0** / **31 / 0**, both byte-identical to baseline (prefab run included) |
+| Pilot V2 on explicit R1, headless / Play Mode | **54 / 0** / **57 / 0**, both byte-identical to baseline (prefab run included) |
+| Pilot R2 headless | **24 / 0**. The only changed line is `[A6]`, now "the default is R2", replacing "the default is R1". |
+| Pilot R2 Play Mode | **39 / 0**: the 38 earlier checks, byte-identical, plus `[N]`. Two runs are byte-identical. |
+| Official Baseline v1 gate (shared / F-16) | **PASS 1585 / 0**, physics delta NONE |
+
+The default is R2 at four levels:
+- `[A6]`: a fresh profile component is R2;
+- `[A6]`: `Create(...)` without a revision gives R2, for both the V2 and the V1 overload;
+- `[A6]`: neither prefab pins a revision;
+- `[N]`: in Play Mode, the V2 prefab placed with nothing changed comes up in Assisted V2 on R2, with lags 20 / 20 / 20 / 28 s⁻¹.
 
 **R2 highlights:**
 - **Headless:** 500-case bit-identity of the R1 step.
@@ -164,7 +200,7 @@ Baseline `main` @ `f0f9519` vs candidate, each run in its own clean worktree on 
   ```
   -executeMethod MaverickFresh.FlightDynamics.EditorTools.MavF15PilotPhysicsR2FlightValidation.RunBatch -f15r2Out <path>
   ```
-  Do not pass `-quit`. Checks: `[M]` mechanics, `[H]` neutral hold, `[L]` the lag in flight, `[S]` pulses, `[C]` R1 vs R2, `[Q]` sequence, `[D]` dt refinement.
+  Do not pass `-quit`. Checks: `[M]` mechanics, `[H]` neutral hold, `[L]` the lag in flight, `[S]` pulses, `[C]` R1 vs R2, `[Q]` sequence, `[D]` dt refinement, `[N]` the normal V2 prefab flies R2.
 
 **One gate failure, found and fixed.** On `d25941f` the official gate failed one counted assertion: `shared_propulsion_unity` U-003g (1584/1), because the Play Mode driver sat in `Validation/`. Moved to `Editor/` in `3af4e98`, the gate is back to PASS 1585/0. It was this change's own defect, not an F-16 regression.
 
@@ -189,15 +225,15 @@ Baseline `main` @ `f0f9519` vs candidate, each run in its own clean worktree on 
 - **Altitude has no aerodynamic effect;** thrust is fixed.
 - **The lag is the research model's**, not verified F-15 hardware. There are no rate limits and no hinge-moment saturation.
 - **Positive printed Cmq over α ≈ 10.6–14.3°:** a pilot holding α in that band flies destabilizing pitch damping from the source.
-- **R2 is opt-in** (default R1, §3).
+- **R2 is the default** pilot physics (§3); R1 is a regression revision only, selected explicitly.
 - **Not flown by a human in this work:** scripted Play Mode only.
 
 ## 11. Manual flight checklist (R2)
 
 1. Open the project (Unity 6000.3.16f1). In an empty scene run **Maverick → F-15 → Place Pilot-Controlled Research F-15 V2 (Assisted) In Scene**.
-2. On the placed object's **F-15 profile** component, set **Physics Revision = R2SourceActuatorLags**.
+2. Leave the settings alone: the placed aircraft is already R2 (the **F-15 profile** component shows **Physics Revision = R2SourceActuatorLags**).
 3. Press Play. The aircraft starts at point 36. The developer HUD (shown by default; F1 toggles it) shows `actuators: R2: research-model actuator lags …`.
 4. W/S, A/D, Q/E: surfaces now trail the stick for ~0.15 s (stab/aileron) or ~0.11 s (rudder) to 95 %. The HUD line shows how far they trail.
-5. Compare with R1: set the revision back, restart, and fly the same inputs. The response magnitudes should be within a few percent.
+5. Compare with R1: set the revision to `R1InstantaneousSurfaces`, restart, and fly the same inputs. The response magnitudes should be within a few percent.
 6. Stay inside **218.5–699.7 ft/s**. The HUD reports a research-domain refusal (aero and thrust off) outside it.
 7. Avoid sustained α 10.6–14.3°, the source's positive-Cmq band.
