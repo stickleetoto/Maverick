@@ -16,10 +16,11 @@
 |---|---|---|---|
 | NESC check-case site (landing, Bodies, Datum, Gravity, Atmosphere, Output specs, case pages acc01–acc17, errata) | `https://nescacademy.nasa.gov/flightsim/2015` | yes | PV |
 | NASA/TM-2015-218675 **Vol I** (31 pp.), Murri, Jackson, Shelton, Jan 2015 | NTRS 20150001263 | full text | PV |
-| NASA/TM-2015-218675 **Vol II** (appendices, 614 pp.) | NTRS 20150001264 | **not read** (file > 10 MB, beyond the fetch tool) | UV |
+| NASA/TM-2015-218675 **Vol II** (appendices, 614 pp.) | NESC site `Reports/NASA-TM-2015-218675-EOM_checkcase_appendices.pdf` | **downloaded with the user's approval; text layer searched by the lead** (§B.1.3, §B.1.5, §C.1.2–C.1.4, §C.3 Table 73, §E.1 incl. Eq. 38 and Table 80) | PV (lead) |
 | AIAA 2015-1810 (Jackson, Madden et al., final results, 34 pp.) | NESC site, Reports | full text | PV |
 | AIAA 2013-5071 (Jackson, Shelton et al., preliminary, 156 pp.) | NESC site, Reports | partial | PV |
-| Data zips: `Atmospheric_checkcases.zip` (24.9 MB), `Orbital_checkcases.zip` (11.1 MB), model zips (`Atmospheric_models.zip`, `All_models.zip`, `F16_package.zip`), `Initial_Conditions.xlsx` | NESC landing page | listed; not downloaded | PV (existence) |
+| Data and models: `Atmospheric_checkcases.zip` (24 932 914 B, 225 entries), `Atmospheric_models.zip` (contains `F16_package.zip`), `Initial_Conditions.xlsx` | NESC landing page | **downloaded, integrity-tested, SHA-256 recorded** in `NESC_DOWNLOAD_MANIFEST.md`; stored locally, not committed | PV (lead) |
+| NESC `F16_package` files vs the library's simupy-flight copies | five `.dml` files + README | **SHA-256 identical** to the hashes in `Docs/Research/Aerospace/SOURCE_FILES_MANIFEST.json`; the library's line-level verification therefore applies to NASA's own distribution | PV (lead) |
 | NASA `simupy-flight` redistribution of the F-16 DAVE-ML files and case 11/13/15/16 CSVs | `github.com/nasa/simupy-flight` | partial | PV |
 | Repository library file-level verification of `F16_aero.dml`, `F16_inertia.dml`, `F16_prop.dml`, `F16_control.dml`, README v6, 24 F-16 CSVs | `Docs/Research/Aerospace/Aircraft/F16/KNOWN_DATA.md` (R2) | lead read the library record | REPO_DOC |
 
@@ -61,10 +62,10 @@ Orbital cases (ISS, sphere, cylinder; high-order gravity, third bodies, a non-pu
 
 | Item | Value / statement | Source | Class |
 |---|---|---|---|
-| Aero | `F16_aero.dml` "based on" Garza & Morelli NASA/TM-2003-212145, which implements the TP-1538 wind-tunnel data in tables | README v6 | SV (NASA redistribution) |
+| Aero | Vol II §B.1.5: Stevens & Lewis provided a FORTRAN model for subsonic flight; Garza & Morelli "expanded this model with additional wind-tunnel data" from TP-1538 (Vol II ref. [4] = Nguyen et al.); converted from their MATLAB scripts to S-119; aero and propulsion as function tables | Vol II PDF pp. 18–19 | PV (lead) |
 | Aero table grid | α −10:5:45 (12), elevator −24:12:24, \|β\| 0:5:30 | library, file-verified | REPO_DOC (file level) |
 | Propulsion, inertia | Stevens & Lewis 2nd ed.; steady-state net thrust; MIL at PLA 50; no engine lag | README v6; `F16_prop.dml` | SV / REPO_DOC |
-| Mass | 637.1595 slug (DAVE-ML) vs **637.26 slug on the NESC Bodies page** (0.016 % disagreement, recorded, unresolved) | library; Bodies page | REPO_DOC / PV |
+| Mass | 637.1595 slug in `F16_inertia.dml` (`XMASS`, lead-read in the downloaded file) vs **637.26 slug in Vol II Table 7** and on the Bodies page (0.016 % disagreement inside NASA's own documents; unresolved). Use the DAVE-ML value: it is what the tools executed | DAVE-ML; Vol II Table 7 (PDF p. 19) | PV (lead) |
 | Inertia, geometry | 9 496 / 55 814 / 63 100 / Ixz 982 slug·ft²; S 300 ft², b 30 ft, c̄ 11.32 ft; MRC 35 % MAC; case CG 25 % MAC | library; Bodies page | REPO_DOC / PV |
 | Controller | LQR SAS and autopilot designed at 10 000 ft / 287 KEAS; perfect state feedback; no integrators ("Type 0"); **not an F-16 FCS** | README v6 | SV |
 | Envelope | "vicinity of 10,000 ft MSL and 287.8 knots equivalent airspeed" | README v6 | SV |
@@ -76,6 +77,8 @@ Orbital cases (ISS, sphere, cylinder; high-order gravity, third bodies, a non-pu
 - Main sources of disagreement: atmosphere implementation; geodetic vs geocentric gravity direction; geodetic → geocentric initial conditions; **F-16 trim definition (especially trimmed rotational rate)**; integration method (hypothesized) — Vol I §7.1, §8.1 (PV).
 - Case 11 after 180 s: two tools within about **4 ft** of each other; a third about **666 ft** away, traced to gravity-direction handling — AIAA 2015-1810 p. 19 (PV).
 - Logged aero moments are about the MRC in one tool and about the CM in others, so they are not directly comparable across tools — AIAA 2015-1810 p. 19 (PV).
+- **Quantitative match measure (Vol II §E.1.1, Eq. 38, lead PV):** `δu_pct = 100 · max|u(t) − u_ref(t)| / max_{0≤t≤t_end}|u_ref|`, with `u_ref` the ensemble average (or SIM 5 for wrapped angles).
+- **Observed inter-tool spread for the fixed-wing cases 11–16 (Vol II Table 80, PDF p. 598, lead PV)**, after NASA excluded SIM 2 (trim differences) and the first 8 s of every F-16 case, comparing SIM 4 and SIM 5: altitude 0.003 %, Mach 0.017 %, q̄ 0.034 %, pitch angle 0.53 %, roll and yaw angle ≈ 2.5–2.7 %, horizontal velocity components ≤ 0.45 %, vertical velocity 7.1 % (driven by tiny values in case 12), body rates 7.7–16.3 %, aero forces 7.6–19.5 %, aero moments 1.6–13.0 % (several attributed to mismatched timing of transients). **This is NASA's own measured floor for two mature tools on the same model; Maverick comparisons should be judged against it, not against an invented tolerance.**
 
 ### 1.6 Reuse
 
@@ -135,9 +138,9 @@ Goal: prove that Maverick integrates rigid-body motion correctly, independent of
 
 | Check | Reference | How | Removes |
 |---|---|---|---|
-| L1-a Torque-free rotation | Case 2 (tumbling brick, initial rates relative to the local frame 9.9958, 20, 30 deg/s, inertial 10, 20, 30) | run the brick's inertia with zero loads in Maverick; compare **inertial** body rates and angular-momentum magnitude | Earth rotation is a frame effect here: compare inertial rates, or remove the 0.004178 deg/s Earth term (EI). Expect drift of Euler angles relative to NED over 30 s from Earth rotation |
-| L1-b Inertial coupling with damping | Case 3 | add Clp = Cmq = Cnr = −1 through a test aero model | the damping is non-dimensionalised by V and the case starts at V = 0; how the reference handles this is **UV** (Vol II) — resolve before use |
-| L1-c Translational / gravity | Case 4 (non-rotating round earth, inverse-square gravity, CD = 0.1 sphere) | flat Maverick with g(h) = μ/(R+h)² and the same drag | μ and R come from Vol II (**UV**); without them use the CSV's own gravity column |
+| L1-a Torque-free rotation | Case 2 (tumbling brick, same inertia as L1-b, all aero coefficients zero; body x north, z down; initial rates relative to the rotating Earth 9.995821927, 20, 30 deg/s so that inertial rates are 10, 20, 30; Vol II §C.1.2 Table 26, lead PV) | run the brick's inertia with zero loads in Maverick; compare **inertial** body rates and angular-momentum magnitude | Earth rotation is a frame effect here: compare inertial rates, or remove the 0.004178 deg/s Earth term (EI). Expect drift of Euler angles relative to NED over 30 s from Earth rotation |
+| L1-b Inertial coupling with damping | Case 3 (brick: Ixx 0.001894220, Iyy 0.006211019, Izz 0.007194665 slug·ft², m 0.155404754 slug, S 0.22222 ft², b 0.33333 ft, c̄ 0.66667 ft, Clp = Cmq = Cnr = −1, CD set to zero; Vol II Tables 4–5, §C.1.3, lead PV) | test aero model with rate damping only | Vol II states the damping "should start to damp out as … airspeed increased" from zero. Dimensionally the damping moment is `¼ρ V S b² Clp p` (moment ∝ V), so it is zero, not singular, at V = 0 (EI). Earlier concern resolved |
+| L1-c Translational / gravity | Case 4 (non-rotating round earth, inverse-square gravity, CD = 0.1 sphere) | flat Maverick with g(h) = μ/(r₂+h)² and the same drag | Vol II Table 73 (lead PV): sphere-Earth radius r₂ = 6 371 007.1809 m (20 902 254.5305 ft); μ = 3.986004418 × 10¹⁴ m³/s²; for the WGS-84 cases also a = 6 378 137.0 m, J2 = 0.00108262982, 1/f = 298.257223563, ω = 7.292115 × 10⁻⁵ rad/s |
 | L1-d Repository analogue | Maverick already runs a torque-free probe (U5CR-008 case 2) and `MavGyroscopicMomentValidation` | extend to the case 2 brick inertia and initial rates | — |
 | L1-e Step convergence | all Level 1 runs | repeat at dt, dt/2, dt/4 (fixed-step, `captureFramerate` pinned); estimate convergence order p = log₂(‖e_dt − e_dt/2‖ / ‖e_dt/2 − e_dt/4‖) | separates integration error from modelling error |
 | L1-f Energy | case 2 | rotational kinetic energy and ‖H‖ must be constant torque-free; report their relative drift per second vs dt | detects integrator energy error |
@@ -203,9 +206,9 @@ Recommendation: the NESC route (§4) comes first because it needs no third-party
 
 | Step | Work | Location | Blocking? |
 |---|---|---|---|
-| 1 | Acquire `F16_package.zip` and `Atmospheric_checkcases.zip` from the NESC site; store with SHA-256 in a test-fixture folder; record provenance | `Docs/Reference/Data/NESC/` (proposal) | needs a download decision |
+| 1 | ~~Acquire the NESC data~~ **Done (2026-11-17)**: downloaded, integrity-tested, hashed (`NESC_DOWNLOAD_MANIFEST.md`). Remaining: decide which small subset to commit as test fixtures (proposal: `F16_package` + case 2, 3, 11, 13.x CSVs) under `Docs/Reference/Data/NESC/` | — | commit decision |
 | 2 | L1-a/L1-e: case 2 brick in Maverick | `FlightDynamics/Validation/` | no |
 | 3 | L2-a/L2-b: static shots and coefficient sweep (Morelli vs NESC tables) | Validation, offline-eligible | no |
 | 4 | L2-c: case 11 trim in a validation profile | Validation | needs the NESC thrust table as a validation-only deck |
 | 5 | L3-b: port the check-case LQR as a validation-only law; run 13.1–13.4 | Validation | larger effort |
-| 6 | Read Vol II (constants, App. B F-16 description, App. E match metrics) | research | download > 10 MB |
+| 6 | ~~Read Vol II~~ **Done** for constants (Table 73), F-16 description (§B.1.5), brick cases (§B.1.3, §C.1.2–3), match metrics (§E.1, Table 80). Not yet read: Appendix D plots per case | research | — |

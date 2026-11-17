@@ -17,6 +17,7 @@
 | 07 | [NASA 6-DoF benchmark study](07_NASA_6DOF_BENCHMARK_STUDY.md) | NESC cases, models, licensing; lineage link to Maverick; three-level validation; error separation; JSBSim role |
 | 08 | [Flight-model roadmap](08_FLIGHT_MODEL_ROADMAP.md) | aircraft readiness; ranked improvements; handoffs H1–H6; blocked items; long-term path |
 | 09 | [Research sources](09_RESEARCH_SOURCES.md) | bibliography with inspector and class; discrepancy register; acquisition status |
+| — | [NESC download manifest](NESC_DOWNLOAD_MANIFEST.md) | URLs, sizes and SHA-256 of the NESC data, models and reports downloaded for validation (stored locally, not committed) |
 
 ## Ten most important findings
 
@@ -27,7 +28,7 @@
 5. **TP-1538 Table VI page-checked:** T_max at M 0.8, sea level is 26 070 lb (SI 115 959 N). The NESC file's 28 070 lb belongs to that configuration only. The repository transcription is confirmed at the checked cells, and the NTRS PDF is hash-identical to the repository's copy (doc 02).
 6. **A sourced physical term is missing:** engine angular momentum 216.9 kg·m²/s (TP-1538 App. B; +X body per Garza & Morelli) is available but set to `NotAvailable` for the F-16 (doc 02; handoff H4).
 7. **Two repository documents still say the F-16 thrust deck is not frozen**, which Phase 5D superseded; the "LEF fixed at 25°" and "Morelli fitted TP-1538" statements also need correcting (doc 08 H3).
-8. **No NESC case is flat-earth.** Every F-16 case runs on a rotating WGS-84 Earth with J2 gravity; an uncorrected Coriolis effect is of order 790 ft lateral at 180 s (EI). Validation must be split into EOM checks (tumbling brick), coefficient/trim checks, and relative closed-loop responses (cases 13.1–13.4). NASA set **no tolerances**; the reference tools' own spread is the only defensible floor (doc 07).
+8. **No NESC case is flat-earth.** Every F-16 case runs on a rotating WGS-84 Earth with J2 gravity; an uncorrected Coriolis effect is of order 790 ft lateral at 180 s (EI). Validation must be split into EOM checks (tumbling brick), coefficient/trim checks, and relative closed-loop responses (cases 13.1–13.4). NASA set **no tolerances**; the reference tools' own spread is the only defensible floor. Vol II Table 80 quantifies it for the F-16 cases: two mature tools agree to ≈ 0.003 % in altitude and 0.5 % in pitch attitude, but differ by up to 16 % in body rates and 19.5 % in aero forces from transient timing (doc 07).
 9. **Loop-separation ratios (4×, 5–10×, 10×) are rules of thumb** with process-control provenance; none is a sourced aircraft requirement. The development branch's outer-gain rationale ("damping ≈ 0.45") is an estimate. NASA's multisine / frequency-domain / loop-breaking methods let Maverick *measure* inner-loop dynamics, separation and margins instead (docs 05–06).
 10. **No public source extends the F-15 research model beyond its single M 0.6 / 20 000 ft condition, and no defensible F-22 model is possible.** The F-15 is the right instructor *correctness and identification* testbed; aircraft-data effort belongs on the F-16 path (docs 03–04).
 
@@ -51,13 +52,13 @@
 
 | Category | Items |
 |---|---|
-| **Directly verified by the lead** | TP-1538 pp. 15, 43–46, 49, 51, 99 (hash-matched PDF); Morelli 1998 full text; Morelli AIAA-99-4043 key statements; repository records and code cited in docs 01–02, 05, 07; development-branch configuration (read only) |
+| **Directly verified by the lead** | TP-1538 pp. 15, 43–46, 49, 51, 99 (hash-matched PDF); Morelli 1998 full text; Morelli AIAA-99-4043 key statements; NESC Vol II (§B.1.3, §B.1.5, §C.1.2–4, Table 73, §E.1, Table 80) and the downloaded F-16 package (byte-identical to the library copies); repository records and code cited in docs 01–02, 05, 07; development-branch configuration (read only) |
 | **Verified by sub-agents (PV in their reading, not re-read by the lead)** | Garza & Morelli F-16 section (incl. engine axis); TP-1538 p. 38 Mach statement; NESC site, Vol I, AIAA 2015-1810; F-15/HARV/F-22 NASA reports listed in doc 09; NASA identification papers |
 | **Inferred (EI)** | Coriolis magnitudes; delay phase costs; damping estimates; TP-1538 vs NESC thrust smoothness argument; NESC/Maverick comparability via shared lineage |
-| **Requires further investigation** | NESC Vol II; Garza & Morelli axis re-check by the lead; LEF base state of the simplified tables; AFIT thesis full texts; DTIC ADA327869; TP-1538 figs. 62–66 transcription; whether the dev branch's outer-loop damping matches its estimate |
+| **Requires further investigation** | NESC Vol II Appendix D plots; which NESC files to commit as fixtures; Garza & Morelli axis re-check by the lead; LEF base state of the simplified tables; AFIT thesis full texts; DTIC ADA327869; TP-1538 figs. 62–66 transcription; whether the dev branch's outer-loop damping matches its estimate |
 
 ## Open questions for the user
 
 1. Should Maverick invest in a **TP-1538 tabular aero model to α 90°** (a large, careful transcription) or keep the Morelli domain and only make violations visible?
-2. May the NESC data zips and Vol II be **downloaded and stored as validation fixtures** (public-use NASA material; the case-data zip alone is 24.9 MB, Vol II is over 10 MB)?
+2. ~~May the NESC data be downloaded?~~ **Approved and done** (`NESC_DOWNLOAD_MANIFEST.md`). Open: should a small subset (F-16 package + cases 2, 3, 11, 13.x) be **committed** as fixtures under `Docs/Reference/Data/NESC/`, or stay local?
 3. Should the **NESC validation profile** become a permanent third F-16 configuration in the test suites?

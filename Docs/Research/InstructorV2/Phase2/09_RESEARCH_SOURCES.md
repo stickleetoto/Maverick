@@ -7,6 +7,7 @@
 | NASA TP-1538 (Nguyen et al., Dec 1979) | NTRS 19800005879; 233-page scan; SHA-256 `aae0ece64474291368c0b4c816d3ab327c6100329e6eb030c2f4545d0913feb3` (**identical to the repository manifest**) | PDF p. 15 (report p. 9: data basis, M 0.1–0.2, α −20…90°, β ±30°, no Mach/Re/aeroelastic effects, 1/32 s integration); pp. 43–46 (report 37–40: build-up equations, engine simulation, 216.9 kg·m²/s); p. 49 (Table I); p. 51 (Table III, Cx at δh −25°); p. 99 (Table VI); contact sheets of pp. 46–65 and 86–98 to locate tables |
 | Morelli, "Global Nonlinear Parametric Modeling with Application to F-16 Aerodynamics" | NTRS 20040110310; 6 pages; text layer | full text: §3, Eqs. 12–18, Tables 1–2, references |
 | Morelli, "Real-Time Parameter Estimation in the Frequency Domain", AIAA-99-4043 | NTRS 20040087105; 11 pages; text layer | title page; p. 4 band/spacing statement; collinearity statement; Eqs. 15–17 |
+| NASA/TM-2015-218675 Vol II and the NESC F-16 package (downloaded 2026-11-17 with user approval) | hashes in `NESC_DOWNLOAD_MANIFEST.md` | Vol II §B.1.3, §B.1.5, §C.1.2–C.1.4, Table 73, §E.1, Table 80; `F16_inertia.dml`, `F16_prop.dml` spot checks |
 | Repository records | `Docs/Reference/F16_TP1538_*`, `Docs/Research/Aerospace/**`, `Docs/Reference/F15_*`, F-15 V1/V2 records, code listed in docs 01–02, 05 | as cited in each document |
 | Development branch (read only) | local commit `90add24` on `claude/realistic-mouse-instructor-v2` (unpushed at the time of reading) | `MavMouseAimGuidance.cs` configuration and rationale; runner scenario list |
 
@@ -37,7 +38,8 @@ Classes: `PRIMARY_VERIFIED` (PV), `SECONDARY_VERIFIED` (SV), `ENGINEERING_INFERE
 |---|---|---|---|---|---|---|---|---|
 | NESC check-case site and case pages | NASA NESC | 2015 (page updated 2025) | https://nescacademy.nasa.gov/flightsim/2015 | landing, Bodies, Datum, Gravity, Atmosphere, Output specs, acc01–acc17, errata | case list, models, ICs, files, mass 637.26 slug on the Bodies page | S | PV | no licence text |
 | NASA/TM-2015-218675 Vol I | Murri, Jackson, Shelton / NESC | 2015 | https://ntrs.nasa.gov/citations/20150001263 | §4–12, pp. 8–24 | models, tools, no tolerances, findings | S | PV | — |
-| NASA/TM-2015-218675 Vol II | same | 2015 | https://ntrs.nasa.gov/citations/20150001264 | — | constants, F-16 description, match metrics | — | **UV** | > 10 MB; not retrieved |
+| NASA/TM-2015-218675 Vol II | same | 2015 | https://ntrs.nasa.gov/citations/20150001264; NESC copy hashed in `NESC_DOWNLOAD_MANIFEST.md` | §B.1.3, §B.1.5 (PDF pp. 18–19), §C.1.2–C.1.4, Table 73 (p. 97), §E.1 Eq. 38, Table 80 (p. 598) | brick properties; F-16 lineage (S&L FORTRAN → Garza & Morelli + TP-1538 data); Earth constants; match measure; inter-tool spread | **L** | PV | Appendix D plots not read |
+| NESC data and model zips | NASA NESC | 2015 | see `NESC_DOWNLOAD_MANIFEST.md` | `F16_inertia.dml`, `F16_prop.dml` spot checks | F-16 package byte-identical to the library copies; XMASS; T_max rows | **L** | PV | stored locally, not committed |
 | AIAA 2015-1810 | Jackson, Madden et al. | 2015 | NESC site, Reports | pp. 3–34 | case 11 open loop; 4 ft / 666 ft spread; moments MRC vs CM; tool list | S | PV | AIAA copyright |
 | AIAA 2013-5071 | Jackson, Shelton et al. | 2013 | NESC site, Reports | pp. 5, 12–22 | free choice of integrator; geodesy | S | PV (partial) | — |
 | F16_package README v6 | E. B. Jackson / NASA Langley | 2013 | via nasa/simupy-flight | whole | aero via Garza & Morelli; propulsion/inertia from Stevens & Lewis 2nd ed.; controller; envelope | S | SV | not compared with the NESC zip |
@@ -90,7 +92,8 @@ Classes: `PRIMARY_VERIFIED` (PV), `SECONDARY_VERIFIED` (SV), `ENGINEERING_INFERE
 | P2-D4 | Repository: "LEF fixed at 25°" | TP-1538 build-up (lead PV); fitted sources silent (S) | Unresolved; wording "not stated by the fitted source" |
 | P2-D5 | Repository README and propulsion reference: "thrust deck not frozen" | `F16_TP1538_THRUST_DECK_V0.1.md`, Phase 5D runtime semantics | Stale documentation (doc 08 H3) |
 | P2-D6 | NESC F-16 aero lineage: "Stevens & Lewis table model" (library) vs "based on Garza & Morelli, implementing TP-1538" (README) | library; README (S) | Consistent once the chain TP-1538 → S&L simplified → Garza & Morelli is written out (doc 07 §2) |
-| P2-D7 | NESC mass 637.1595 slug (DAVE-ML) vs 637.26 slug (Bodies page) | library; NESC site (S) | Unresolved (0.016 %); use the DAVE-ML value inside the validation profile |
+| P2-D7 | NESC mass 637.1595 slug (DAVE-ML `XMASS`) vs 637.26 slug (Vol II Table 7 and the Bodies page) | DAVE-ML and Vol II (both lead PV) | Unresolved inside NASA's own documents (0.016 %); use the DAVE-ML value, which the tools executed |
+| P2-D11 | NESC T_max M 0.6 / 50 000 ft = 3215.3 lb vs TP-1538 3 215 lb | DAVE-ML (lead PV) vs TP-1538 p. 99 (lead PV) | Rounding-level; recorded only |
 | P2-D8 | Engine angular momentum not integrated though sourced | TP-1538 App. B (lead PV); Garza & Morelli axis (S); `MavF16PropulsionInstallation.cs:78` | Handoff H4 |
 | P2-D9 | F-15 reference span 42.8 ft (repository) vs 42.7 ft (837 reference set) | repo vs TM-2003-212027 (S) | Already registered as `F15-X4` (physical vs reference span); impact ≈ 0.2 % on Cl/Cn |
 | P2-D10 | Phase-delay equation sign in TP-2004-212046 Eq. 5 as printed | sub-agent reading | Recorded; use the physically consistent form (doc 05 §4.5) |
@@ -104,8 +107,8 @@ Classes: `PRIMARY_VERIFIED` (PV), `SECONDARY_VERIFIED` (SV), `ENGINEERING_INFERE
 | TP-1538 | acquired (NTRS), hash-identical to the repository copy | Table III transcription only if H6 is approved |
 | Morelli 1998 | acquired | none |
 | Garza & Morelli TM-2003-212145 | acquired by sub-agent | lead re-check of the engine axis statement |
-| NESC site, Vol I, AIAA papers | read by sub-agent | download data zips as fixtures (doc 07 §6) |
-| NESC Vol II | **not acquired** (size) | download decision |
+| NESC site, Vol I, AIAA papers | read by sub-agent; Vol I downloaded | — |
+| NESC Vol II, atmospheric data and model zips, initial-conditions sheet | **acquired 2026-11-17** (user-approved), hashed, stored locally untracked (`NESC_DOWNLOAD_MANIFEST.md`) | decide which subset to commit as fixtures |
 | AFIT theses, DTIC ADA327869, AIAA-2018-0525 | **blocked** (403 / paywall) | retry from an unblocked host or library access |
 | TP-3355 microfiche tables | not online | archive request if ever needed |
 | Production FCS gains, production engine decks, F-22 data | not public | none |
