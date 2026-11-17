@@ -1,0 +1,122 @@
+PURE PROBE: production MavMouseAimGuidance.Step, default config, wings level, level flight path, alpha 17.5 unless stated
+
+[K1] desired bank for a target BELOW and to the LEFT of the flight path (one evaluation from wings level)
+speed m/s | down deg | left deg | desiredBank | rawRoll | rawPitch | liftReqG | InvertedRollDeferred
+91.7 | 2 | 0 | 0 | 0 | -0.171 | 0.804 | False
+91.7 | 2 | 0.25 | -1.743 | -0.116 | -0.171 | 0.805 | False
+91.7 | 2 | 0.5 | -3.483 | -0.232 | -0.171 | 0.806 | False
+91.7 | 2 | 1 | -6.94 | -0.463 | -0.171 | 0.81 | False
+91.7 | 2 | 2 | -13.683 | -0.912 | -0.171 | 0.828 | False
+91.7 | 2 | 4 | -25.965 | -1.731 | -0.172 | 0.894 | False
+91.7 | 4 | 0 | 0 | 0 | -0.343 | 0.608 | False
+91.7 | 4 | 0.25 | -2.301 | -0.153 | -0.343 | 0.609 | False
+91.7 | 4 | 0.5 | -4.594 | -0.306 | -0.343 | 0.61 | False
+91.7 | 4 | 1 | -9.13 | -0.609 | -0.343 | 0.616 | False
+91.7 | 4 | 2 | -17.821 | -1.188 | -0.343 | 0.639 | False
+91.7 | 4 | 4 | -32.748 | -2.183 | -0.343 | 0.723 | False
+91.7 | 6 | 0 | 0 | 0 | -0.514 | 0.412 | False
+91.7 | 6 | 0.25 | -3.384 | -0.226 | -0.514 | 0.413 | False
+91.7 | 6 | 0.5 | -6.745 | -0.45 | -0.514 | 0.415 | False
+91.7 | 6 | 1 | -13.309 | -0.887 | -0.514 | 0.424 | False
+91.7 | 6 | 2 | -25.324 | -1.688 | -0.514 | 0.456 | False
+91.7 | 6 | 4 | -43.447 | -2.896 | -0.515 | 0.567 | False
+91.7 | 8 | 0 | 0 | 0 | -0.686 | 0.217 | False
+91.7 | 8 | 0.25 | -6.406 | -0.398 | -0.686 | 0.218 | False
+91.7 | 8 | 0.5 | -12.656 | -0.799 | -0.686 | 0.222 | False
+91.7 | 8 | 1 | -24.188 | -1.594 | -0.686 | 0.237 | False
+91.7 | 8 | 2 | -41.95 | -2.797 | -0.686 | 0.291 | False
+91.7 | 8 | 4 | -60.967 | -4.064 | -0.686 | 0.445 | False
+91.7 | 12 | 0 | 0 | 0 | -1 | 0 | True
+91.7 | 12 | 0.25 | -90 | 0 | -1 | 0.023 | True
+91.7 | 12 | 0.5 | -90 | 0 | -0.999 | 0.047 | True
+91.7 | 12 | 1 | -90 | -0.728 | -0.997 | 0.093 | True
+91.7 | 12 | 2 | -90 | -4.514 | -0.987 | 0.185 | True
+91.7 | 12 | 4 | -90 | -6 | -0.95 | 0.356 | True
+91.7 | 20 | 0 | 0 | 0 | -1 | 0 | True
+91.7 | 20 | 0.25 | -90 | 0 | -1 | 0.014 | True
+91.7 | 20 | 0.5 | -90 | 0 | -1 | 0.027 | True
+91.7 | 20 | 1 | -90 | -0.01 | -0.999 | 0.055 | True
+91.7 | 20 | 2 | -90 | -1.26 | -0.995 | 0.109 | True
+91.7 | 20 | 4 | -90 | -5.514 | -0.982 | 0.215 | True
+150 | 2 | 0 | 0 | 0 | -0.171 | 0.68 | False
+150 | 2 | 0.25 | -3.371 | -0.225 | -0.171 | 0.681 | False
+150 | 2 | 0.5 | -6.718 | -0.448 | -0.171 | 0.684 | False
+150 | 2 | 1 | -13.256 | -0.884 | -0.171 | 0.698 | False
+150 | 2 | 2 | -25.23 | -1.682 | -0.171 | 0.751 | False
+150 | 2 | 4 | -43.31 | -2.887 | -0.172 | 0.934 | False
+150 | 4 | 0 | 0 | 0 | -0.343 | 0.359 | False
+150 | 4 | 0.25 | -6.349 | -0.423 | -0.343 | 0.362 | False
+150 | 4 | 0.5 | -12.547 | -0.836 | -0.343 | 0.368 | False
+150 | 4 | 1 | -23.995 | -1.6 | -0.343 | 0.393 | False
+150 | 4 | 2 | -41.685 | -2.779 | -0.343 | 0.481 | False
+150 | 4 | 4 | -60.713 | -4.048 | -0.343 | 0.733 | False
+150 | 6 | 0 | 0 | 0 | -0.514 | 0.039 | False
+150 | 6 | 0.25 | -45.698 | -0.007 | -0.514 | 0.056 | False
+150 | 6 | 0.5 | -63.995 | -0.419 | -0.514 | 0.089 | False
+150 | 6 | 1 | -76.304 | -3.084 | -0.514 | 0.164 | False
+150 | 6 | 2 | -83.079 | -5.539 | -0.514 | 0.322 | False
+150 | 6 | 4 | -86.579 | -5.772 | -0.515 | 0.64 | False
+150 | 8 | 0 | 0 | 0 | -0.686 | 0 | True
+150 | 8 | 0.25 | -90 | 0 | -0.686 | 0.04 | True
+150 | 8 | 0.5 | -90 | -0.355 | -0.686 | 0.08 | True
+150 | 8 | 1 | -90 | -3.41 | -0.686 | 0.159 | True
+150 | 8 | 2 | -90 | -6 | -0.686 | 0.318 | True
+150 | 8 | 4 | -90 | -6 | -0.686 | 0.637 | True
+150 | 12 | 0 | 0 | 0 | -1 | 0 | True
+150 | 12 | 0.25 | -90 | 0 | -1 | 0.038 | True
+150 | 12 | 0.5 | -90 | -0.291 | -0.999 | 0.077 | True
+150 | 12 | 1 | -90 | -3.131 | -0.997 | 0.153 | True
+150 | 12 | 2 | -90 | -6 | -0.987 | 0.303 | True
+150 | 12 | 4 | -90 | -6 | -0.95 | 0.583 | True
+150 | 20 | 0 | 0 | 0 | -1 | 0 | True
+150 | 20 | 0.25 | -90 | 0 | -1 | 0.022 | True
+150 | 20 | 0.5 | -90 | 0 | -1 | 0.045 | True
+150 | 20 | 1 | -90 | -0.61 | -0.999 | 0.09 | True
+150 | 20 | 2 | -90 | -4.242 | -0.995 | 0.178 | True
+150 | 20 | 4 | -90 | -6 | -0.982 | 0.352 | True
+
+[K2] guidance bank equilibrium: aircraft held at bank phi, target 8 down / 2 left at 91.7 m/s -> bank error (deg)
+  bank 0 -> bankError -41.95 desiredBank -41.95 rawPitch -0.686
+  bank -10 -> bankError -31.95 desiredBank -41.95 rawPitch -0.646
+  bank -20 -> bankError -21.95 desiredBank -41.95 rawPitch -0.586
+  bank -30 -> bankError -11.95 desiredBank -41.95 rawPitch -0.509
+  bank -40 -> bankError -1.95 desiredBank -41.95 rawPitch -0.416
+  bank -50 -> bankError 8.05 desiredBank -41.95 rawPitch -0.31
+  bank -60 -> bankError 18.05 desiredBank -41.95 rawPitch -0.195
+  bank -70 -> bankError 28.05 desiredBank -41.95 rawPitch -0.075
+  bank -80 -> bankError 38.05 desiredBank -41.95 rawPitch 0.049
+  bank -90 -> bankError 48.05 desiredBank -41.95 rawPitch 0.17
+  bank -100 -> bankError 58.05 desiredBank -41.95 rawPitch 0.287
+
+[K3] continuity of the deferral: desired bank vs down angle, left 1 deg, 91.7 m/s
+  down 0 -> desiredBank -5.593 rawRoll -0.373 liftG 1.005
+  down 2 -> desiredBank -6.94 rawRoll -0.463 liftG 0.81
+  down 4 -> desiredBank -9.13 rawRoll -0.609 liftG 0.616
+  down 6 -> desiredBank -13.309 rawRoll -0.887 liftG 0.424
+  down 8 -> desiredBank -24.188 rawRoll -1.594 liftG 0.237
+  down 10 -> desiredBank -77.923 rawRoll -0.786 liftG 0.099
+  down 12 -> desiredBank -90 rawRoll -0.728 liftG 0.093
+  down 14 -> desiredBank -90 rawRoll -0.359 liftG 0.08
+  down 16 -> desiredBank -90 rawRoll -0.158 liftG 0.069
+  down 18 -> desiredBank -90 rawRoll -0.055 liftG 0.061
+  down 20 -> desiredBank -90 rawRoll -0.01 liftG 0.055
+  down 22 -> desiredBank -90 rawRoll 0 liftG 0.049
+  down 24 -> desiredBank -90 rawRoll 0 liftG 0.045
+  down 26 -> desiredBank -90 rawRoll 0 liftG 0.041
+  down 28 -> desiredBank -90 rawRoll 0 liftG 0.037
+  down 30 -> desiredBank -90 rawRoll 0 liftG 0.035
+  down 32 -> desiredBank -93.29 rawRoll 0 liftG 0.032
+
+[E1] aim re-anchoring with the +-85 deg elevation clamp (MavMouseAimInput.TryAnglesFromDirection, the source's AnchorAimOnReference path)
+  path elevation 80 -> anchored aim elevation 80, residual aim error after re-anchor 0 deg
+  path elevation 85 -> anchored aim elevation 85, residual aim error after re-anchor 0 deg
+  path elevation 86 -> anchored aim elevation 85, residual aim error after re-anchor 1 deg
+  path elevation 88 -> anchored aim elevation 85, residual aim error after re-anchor 3 deg
+  path elevation 89.5 -> anchored aim elevation 85, residual aim error after re-anchor 4.5 deg
+  path elevation -88 -> anchored aim elevation -85, residual aim error after re-anchor 3 deg
+
+[R1] target swept through 'behind' (az 150 -> 210 at 0.5 deg/step, history kept): raw roll sign changes
+  flips 1: az 190 (Tracking)
+
+[H1] hands-off / input-loss command at bank (neutral stick): what the guidance asks
+  bank 45, hands off -> raw p/r/y 0 / 0 / 0 (mode HandsOff)
