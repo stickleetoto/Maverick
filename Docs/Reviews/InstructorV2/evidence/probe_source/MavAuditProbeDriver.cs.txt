@@ -1,0 +1,157 @@
+// AUDIT PROBE driver (independent audit of PR #35, NOT part of the PR). Throwaway checkout only.
+// -executeMethod MaverickFresh.FlightDynamics.EditorTools.MavAuditProbeDriver.RunBatch -auditOut <dir>   (no -quit)
+using System;
+using System.Globalization;
+using System.IO;
+using System.Text;
+using UnityEditor;
+using UnityEngine;
+using MaverickFresh.FlightDynamics.Validation;
+
+namespace MaverickFresh.FlightDynamics.EditorTools
+{
+    [InitializeOnLoad]
+    public static class MavAuditProbeDriver
+    {
+        const string KPhase = "Mav.Audit.Phase", KOut = "Mav.Audit.Out", KDeadline = "Mav.Audit.Deadline", KSum = "Mav.Audit.Sum";
+
+        static MavAuditProbeDriver()
+        {
+            EditorApplication.playModeStateChanged -= OnPlay; EditorApplication.playModeStateChanged += OnPlay;
+            EditorApplication.update -= OnUpdate; EditorApplication.update += OnUpdate;
+        }
+
+        public static void RunBatch()
+        {
+            string dir = null;
+            string[] a = Environment.GetCommandLineArgs();
+            for (int i = 0; i < a.Length - 1; i++) if (a[i] == "-auditOut") dir = a[i + 1];
+            SessionState.SetString(KOut, dir ?? "");
+            File.WriteAllText(Path.Combine(dir, "pure_probe.txt"), PureProbe());
+            SessionState.SetFloat(KDeadline, (float)EditorApplication.timeSinceStartup + 3600f);
+            SessionState.SetInt(KPhase, 1);
+        }
+
+        static void OnUpdate()
+        {
+            int p = SessionState.GetInt(KPhase, 0);
+            if (p == 0) return;
+            if (EditorApplication.timeSinceStartup > SessionState.GetFloat(KDeadline, 0f)) { SessionState.SetInt(KPhase, 0); Done("TIMEOUT phase " + p); return; }
+            if (p == 1) { if (!EditorApplication.isPlayingOrWillChangePlaymode) EditorApplication.isPlaying = true; return; }
+            if (p == 2 && EditorApplication.isPlaying && MavAuditProbeRunner.Finished)
+            {
+                SessionState.SetString(KSum, MavAuditProbeRunner.Summary);
+                SessionState.SetInt(KPhase, 3);
+                EditorApplication.isPlaying = false;
+            }
+        }
+
+        static void OnPlay(PlayModeStateChange c)
+        {
+            int p = SessionState.GetInt(KPhase, 0);
+            if (c == PlayModeStateChange.EnteredPlayMode && p == 1)
+            {
+                SessionState.SetInt(KPhase, 2);
+                MavAuditProbeRunner.OutDir = SessionState.GetString(KOut, "");
+                new GameObject("audit-runner").AddComponent<MavAuditProbeRunner>();
+            }
+            else if (c == PlayModeStateChange.EnteredEditMode && p == 3)
+            {
+                SessionState.SetInt(KPhase, 0);
+                Done(SessionState.GetString(KSum, "(none)"));
+            }
+        }
+
+        static void Done(string text)
+        {
+            string dir = SessionState.GetString(KOut, "");
+            try { File.WriteAllText(Path.Combine(dir, "playmode_probe_summary.txt"), text); } catch { }
+            Console.WriteLine(text);
+            EditorApplication.Exit(0);
+        }
+
+        // ---------------------------------------------------------------- pure guidance probes (production MavMouseAimGuidance.Step)
+        const float G = 9.80665f, Dt = 0.02f;
+
+        static MavMouseAimGuidanceInput Pose(float bankDeg, float alphaDeg, float speed, Vector3 target)
+        {
+            // level flight path along world +Z; nose pitched up by alpha; bank about the flight path (+ right wing down)
+            Quaternion r = Quaternion.AngleAxis(-bankDeg, Vector3.forward) * Quaternion.Euler(-alphaDeg, 0f, 0f);
+            return MavMouseAimGuidanceInput.FromPose(r, Vector3.forward * speed, target, G);
+        }
+
+        static MavMouseAimGuidanceOutput Once(MavMouseAimGuidanceInput i)
+        {
+            MavMouseAimGuidanceState s = MavMouseAimGuidanceState.Reset;
+            return MavMouseAimGuidance.Step(i, MavMouseAimGuidanceConfig.Default(), ref s, Dt);
+        }
+
+        static string F(float x) { return x.ToString("0.###", CultureInfo.InvariantCulture); }
+
+        static string PureProbe()
+        {
+            StringBuilder sb = new StringBuilder();
+            MavMouseAimGuidanceConfig cfg = MavMouseAimGuidanceConfig.Default();
+            sb.AppendLine("PURE PROBE: production MavMouseAimGuidance.Step, default config, wings level, level flight path, alpha 17.5 unless stated");
+            sb.AppendLine();
+            sb.AppendLine("[K1] desired bank for a target BELOW and to the LEFT of the flight path (one evaluation from wings level)");
+            sb.AppendLine("speed m/s | down deg | left deg | desiredBank | rawRoll | rawPitch | liftReqG | InvertedRollDeferred");
+            foreach (float v in new[] { 91.7f, 150f })
+                foreach (float dn in new[] { 2f, 4f, 6f, 8f, 12f, 20f })
+                    foreach (float lf in new[] { 0f, 0.25f, 0.5f, 1f, 2f, 4f })
+                    {
+                        Vector3 tgt = MavMouseAimInput.DirectionFromAngles(-lf, -dn);
+                        MavMouseAimGuidanceOutput o = Once(Pose(0f, 17.5f, v, tgt));
+                        sb.AppendLine(F(v) + " | " + F(dn) + " | " + F(lf) + " | " + F(o.desiredBankDeg) + " | " + F(o.rawCommand.roll) + " | " + F(o.rawCommand.pitch)
+                            + " | " + F(o.requestedLiftG) + " | " + ((o.limiters & MavAimGuidanceLimiter.InvertedRollDeferred) != 0));
+                    }
+
+            sb.AppendLine();
+            sb.AppendLine("[K2] guidance bank equilibrium: aircraft held at bank phi, target 8 down / 2 left at 91.7 m/s -> bank error (deg)");
+            Vector3 t82 = MavMouseAimInput.DirectionFromAngles(-2f, -8f);
+            for (int b = 0; b >= -100; b -= 10)
+            {
+                MavMouseAimGuidanceOutput o = Once(Pose(b, 17.5f, 91.7f, t82));
+                sb.AppendLine("  bank " + b + " -> bankError " + F(o.bankErrorDeg) + " desiredBank " + F(o.desiredBankDeg) + " rawPitch " + F(o.rawCommand.pitch));
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("[K3] continuity of the deferral: desired bank vs down angle, left 1 deg, 91.7 m/s");
+            for (float dn = 0f; dn <= 32f; dn += 2f)
+            {
+                MavMouseAimGuidanceOutput o = Once(Pose(0f, 17.5f, 91.7f, MavMouseAimInput.DirectionFromAngles(-1f, -dn)));
+                sb.AppendLine("  down " + F(dn) + " -> desiredBank " + F(o.desiredBankDeg) + " rawRoll " + F(o.rawCommand.roll) + " liftG " + F(o.requestedLiftG));
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("[E1] aim re-anchoring with the +-85 deg elevation clamp (MavMouseAimInput.TryAnglesFromDirection, the source's AnchorAimOnReference path)");
+            foreach (float el in new[] { 80f, 85f, 86f, 88f, 89.5f, -88f })
+            {
+                Vector3 path = MavMouseAimInput.DirectionFromAngles(30f, el);
+                MavMouseAimAngles a; MavMouseAimInput.TryAnglesFromDirection(path, MavMouseAimInput.DefaultElevationLimitDeg, out a);
+                sb.AppendLine("  path elevation " + F(el) + " -> anchored aim elevation " + F(a.elevationDeg) + ", residual aim error after re-anchor " + F(Vector3.Angle(path, a.Direction)) + " deg");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("[R1] target swept through 'behind' (az 150 -> 210 at 0.5 deg/step, history kept): raw roll sign changes");
+            MavMouseAimGuidanceState s = MavMouseAimGuidanceState.Reset;
+            float last = 0f; int flips = 0; string where = "";
+            for (int k = 0; k <= 120; k++)
+            {
+                float az = 150f + 0.5f * k;
+                MavMouseAimGuidanceOutput o = MavMouseAimGuidance.Step(Pose(0f, 17.5f, 91.7f, MavMouseAimInput.DirectionFromAngles(az, 0f)), cfg, ref s, Dt);
+                float sg = Mathf.Sign(o.rawCommand.roll);
+                if (k > 0 && sg != last) { flips++; where += " az " + F(az) + " (" + o.mode + ")"; }
+                last = sg;
+            }
+            sb.AppendLine("  flips " + flips + ":" + where);
+
+            sb.AppendLine();
+            sb.AppendLine("[H1] hands-off / input-loss command at bank (neutral stick): what the guidance asks");
+            MavMouseAimGuidanceInput h = Pose(45f, 17.5f, 91.7f, Vector3.forward); h.handsOff = true;
+            MavMouseAimGuidanceOutput ho = Once(h);
+            sb.AppendLine("  bank 45, hands off -> raw p/r/y " + F(ho.rawCommand.pitch) + " / " + F(ho.rawCommand.roll) + " / " + F(ho.rawCommand.yaw) + " (mode " + ho.mode + ")");
+            return sb.ToString();
+        }
+    }
+}

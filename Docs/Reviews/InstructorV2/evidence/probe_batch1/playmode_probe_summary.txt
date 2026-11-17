@@ -1,0 +1,56 @@
+DROP10_RESTORE [drop@3.0 restore@13.0]
+  err start 25.0 | t3=22.2(dAz -22.3,dEl -0.1,bank 30) t5=20.5(dAz -20.5,dEl -0.4,bank 64) t8=20.5(dAz -20.5,dEl -0.4,bank 94) t10=20.5(dAz -20.5,dEl -0.4,bank 123) t13=20.5(dAz -20.5,dEl -0.4,bank 164) t15=29.9(dAz -16.2,dEl -25.6,bank 111) t18=31.7(dAz -0.7,dEl -31.7,bank 35) t20=26.2(dAz 7.5,dEl -25.2,bank 2) t23=17.6(dAz 4.7,dEl -17.0,bank -12) t25=10.0(dAz 0.1,dEl -10.0,bank -9) t28=4.9(dAz -1.3,dEl -4.7,bank 3) t30=1.9(dAz 0.4,dEl -1.9,bank 4)
+  TAS 84.0..105.0 | alpha 13.4..53.5 | |beta| 18.18 | bank -13..177 | Nz 0.66..2.02 | path el -34.9..-2.9 | |omega| max 45.6 deg/s | dh -631 m
+  steps 1500, loads 1000, withheld 500, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+DROP3_RESTORE [drop@3.0 restore@6.0]
+  err start 25.0 | t2=24.2(dAz -24.2,dEl 0.0,bank 16) t3=20.5(dAz -20.5,dEl -0.4,bank 42) t5=20.5(dAz -20.5,dEl -0.4,bank 64) t7=15.0(dAz -14.5,dEl -3.8,bank 85) t8=16.3(dAz -4.3,dEl -15.7,bank 92) t10=23.7(dAz 4.9,dEl -23.2,bank 52) t12=26.0(dAz 11.9,dEl -23.4,bank 18) t13=22.7(dAz 13.4,dEl -18.6,bank -6) t15=17.1(dAz 10.1,dEl -13.9,bank -19) t17=11.2(dAz 4.9,dEl -10.2,bank -21) t18=6.7(dAz 0.4,dEl -6.7,bank -14) t20=4.3(dAz -1.3,dEl -4.1,bank 1)
+  TAS 86.9..104.7 | alpha 14.2..33.7 | |beta| 4.90 | bank -22..95 | Nz 0.78..1.76 | path el -27.1..-2.9 | |omega| max 26.9 deg/s | dh -432 m
+  steps 1000, loads 850, withheld 150, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+HANDSOFF_IN_TURN_120S [handsoff@8.0]
+  err start 30.0 | t10=9.6(dAz 5.2,dEl -8.2,bank 24) t20=25.7(dAz 24.5,dEl -8.3,bank 14) t30=37.4(dAz 37.4,dEl 2.5,bank 10) t40=46.9(dAz 46.1,dEl 9.3,bank 7) t50=51.8(dAz 51.7,dEl 3.0,bank 5) t60=55.1(dAz 55.1,dEl -5.8,bank 3) t70=57.2(dAz 57.3,dEl -4.5,bank 2) t80=58.7(dAz 58.7,dEl 2.0,bank 1) t90=59.7(dAz 59.6,dEl 4.3,bank 1) t100=60.1(dAz 60.2,dEl 0.4,bank 0) t110=60.4(dAz 60.5,dEl -3.1,bank 0) t120=60.6(dAz 60.8,dEl -1.6,bank 0)
+  TAS 81.5..106.7 | alpha 16.1..24.2 | |beta| 1.42 | bank 0..49 | Nz 0.81..1.21 | path el -13.9..6.3 | |omega| max 16.9 deg/s | dh -727 m
+  steps 6000, loads 6000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+INPUTLOSS_NEUTRAL_120S [loss@8.0]
+  err start 30.0 | t10=9.6(dAz 5.2,dEl -8.2,bank 24) t20=25.7(dAz 24.5,dEl -8.3,bank 14) t30=37.4(dAz 37.4,dEl 2.5,bank 10) t40=46.9(dAz 46.1,dEl 9.3,bank 7) t50=51.8(dAz 51.7,dEl 3.0,bank 5) t60=55.1(dAz 55.1,dEl -5.8,bank 3) t70=57.2(dAz 57.3,dEl -4.5,bank 2) t80=58.7(dAz 58.7,dEl 2.0,bank 1) t90=59.7(dAz 59.6,dEl 4.3,bank 1) t100=60.1(dAz 60.2,dEl 0.4,bank 0) t110=60.4(dAz 60.5,dEl -3.1,bank 0) t120=60.6(dAz 60.8,dEl -1.6,bank 0)
+  TAS 81.5..106.7 | alpha 16.1..24.2 | |beta| 1.42 | bank 0..49 | Nz 0.81..1.21 | path el -13.9..6.3 | |omega| max 16.9 deg/s | dh -727 m
+  steps 6000, loads 6000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+MOVING_2DPS_120S []
+  err start 0.0 | t10=4.1(dAz -4.0,dEl -0.9,bank 17) t20=4.6(dAz -4.1,dEl -2.1,bank 18) t30=5.8(dAz -4.8,dEl -3.3,bank 18) t40=7.8(dAz -5.8,dEl -5.2,bank 16) t50=15.0(dAz -11.3,dEl -10.0,bank 18) t60=19.6(dAz -15.8,dEl -11.9,bank 12) t70=26.4(dAz -24.1,dEl -11.5,bank 14) t80=28.7(dAz -26.8,dEl -11.1,bank 18) t90=29.3(dAz -27.5,dEl -11.3,bank 18) t100=29.7(dAz -27.9,dEl -11.3,bank 18) t110=29.9(dAz -28.0,dEl -11.3,bank 18) t120=29.9(dAz -28.1,dEl -11.3,bank 18)
+  TAS 77.2..91.7 | alpha 17.5..24.7 | |beta| 3.37 | bank 0..24 | Nz 0.88..1.02 | path el -14.8..-2.9 | |omega| max 10.8 deg/s | dh -1843 m
+  steps 6000, loads 6000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+TURN15R_40S []
+  err start 15.0 | t3=9.1(dAz -9.1,dEl -0.6,bank 41) t7=5.0(dAz 3.5,dEl -3.5,bank 12) t10=3.1(dAz -0.5,dEl -3.1,bank -15) t13=2.9(dAz 0.6,dEl -2.9,bank 10) t17=2.9(dAz -0.5,dEl -2.9,bank -8) t20=3.0(dAz 0.4,dEl -3.0,bank 7) t23=3.1(dAz -0.3,dEl -3.1,bank -5) t27=3.2(dAz 0.3,dEl -3.2,bank 4) t30=3.3(dAz -0.2,dEl -3.3,bank -4) t33=3.5(dAz 0.1,dEl -3.5,bank 3) t37=3.7(dAz 0.0,dEl -3.7,bank -2) t40=3.9(dAz 0.0,dEl -3.9,bank 2)
+  TAS 84.3..91.7 | alpha 17.5..21.2 | |beta| 0.84 | bank -18..43 | Nz 0.97..1.12 | path el -6.8..-2.9 | |omega| max 20.1 deg/s | dh -351 m
+  steps 2000, loads 2000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+TURN90L_40S []
+  err start 89.8 | t3=83.9(dAz 84.1,dEl -0.8,bank -43) t7=66.1(dAz 66.3,dEl -6.2,bank -47) t10=51.2(dAz 50.9,dEl -9.3,bank -34) t13=38.8(dAz 37.7,dEl -11.1,bank -33) t17=27.2(dAz 24.8,dEl -12.0,bank -27) t20=19.1(dAz 15.6,dEl -11.3,bank -17) t23=14.2(dAz 9.7,dEl -10.4,bank -11) t27=11.8(dAz 6.4,dEl -9.9,bank -6) t30=11.3(dAz 5.1,dEl -10.1,bank -2) t33=11.5(dAz 4.6,dEl -10.5,bank -2) t37=11.8(dAz 4.4,dEl -10.9,bank -1) t40=12.1(dAz 4.5,dEl -11.2,bank 0)
+  TAS 78.0..91.7 | alpha 17.4..25.0 | |beta| 1.60 | bank -51..0 | Nz 0.96..1.13 | path el -14.9..-2.9 | |omega| max 17.1 deg/s | dh -676 m
+  steps 2000, loads 2000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+DESC8_LAT0 []
+  err start 8.0 | t2=7.5(dAz 0.0,dEl 7.5,bank 0) t3=5.1(dAz 0.0,dEl 5.1,bank 0) t5=3.7(dAz 0.0,dEl 3.7,bank 0) t7=4.3(dAz 0.0,dEl 4.3,bank 0) t8=4.6(dAz 0.0,dEl 4.6,bank 0) t10=5.2(dAz 0.0,dEl 5.2,bank 0) t12=5.8(dAz 0.0,dEl 5.8,bank 0) t13=6.7(dAz 0.0,dEl 6.7,bank 0) t15=7.5(dAz 0.0,dEl 7.5,bank 0) t17=8.6(dAz 0.0,dEl 8.6,bank 0) t18=9.8(dAz 0.0,dEl 9.8,bank 0) t20=11.1(dAz 0.0,dEl 11.1,bank 0)
+  TAS 91.6..108.8 | alpha 10.4..17.5 | |beta| 0.00 | bank 0..0 | Nz 0.61..1.13 | path el -7.3..0.2 | |omega| max 5.9 deg/s | dh -155 m
+  steps 1000, loads 1000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+DESC8_LAT2L []
+  err start 8.2 | t2=7.5(dAz 1.2,dEl 7.4,bank -18) t3=5.6(dAz -2.2,dEl 5.1,bank -14) t5=3.8(dAz -1.7,dEl 3.4,bank 19) t7=3.7(dAz 1.5,dEl 3.4,bank 8) t8=3.9(dAz 0.2,dEl 3.9,bank -18) t10=4.7(dAz -1.7,dEl 4.4,bank 4) t12=5.0(dAz 1.1,dEl 4.9,bank 17) t13=6.0(dAz 1.6,dEl 5.8,bank -15) t15=6.5(dAz -2.3,dEl 6.1,bank -18) t17=7.8(dAz -2.7,dEl 7.3,bank 16) t18=7.6(dAz 2.6,dEl 7.1,bank 38) t20=10.2(dAz 6.9,dEl 7.6,bank 8)
+  TAS 91.6..109.6 | alpha 11.9..17.5 | |beta| 0.55 | bank -25..39 | Nz 0.71..1.18 | path el -7.6..-2.9 | |omega| max 22.9 deg/s | dh -192 m
+  steps 1000, loads 1000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+DESC12_LAT3R []
+  err start 12.4 | t2=11.6(dAz -2.2,dEl 11.4,bank 18) t3=8.7(dAz 2.5,dEl 8.4,bank 40) t5=7.8(dAz 6.0,dEl 5.1,bank 11) t7=7.6(dAz 5.4,dEl 5.5,bank -19) t8=4.5(dAz -0.3,dEl 4.5,bank -40) t10=6.6(dAz -5.2,dEl 4.2,bank -12) t12=7.1(dAz -4.3,dEl 5.7,bank 23) t13=5.8(dAz 2.1,dEl 5.4,bank 40) t15=9.1(dAz 6.7,dEl 6.3,bank 9) t17=9.9(dAz 5.2,dEl 8.5,bank -27) t18=8.3(dAz -2.1,dEl 8.1,bank -56) t20=12.2(dAz -10.4,dEl 6.8,bank -35)
+  TAS 91.6..117.0 | alpha 10.9..17.5 | |beta| 0.61 | bank -56..42 | Nz 0.67..1.33 | path el -11.0..-2.9 | |omega| max 22.2 deg/s | dh -298 m
+  steps 1000, loads 1000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+DIVE30_HOLD_60S []
+  err start 30.0 | t5=25.0(dAz 0.0,dEl 25.0,bank 0) t10=25.0(dAz 0.0,dEl 25.0,bank 0) t15=29.0(dAz 0.0,dEl 29.0,bank 0) t20=34.8(dAz 0.0,dEl 34.8,bank 0) t25=39.4(dAz 0.6,dEl 39.4,bank 11) t30=39.9(dAz 3.8,dEl 39.8,bank -40) t35=34.0(dAz -15.9,dEl 30.6,bank -8) t40=21.5(dAz 1.6,dEl 21.5,bank 85) t45=26.0(dAz 26.3,dEl -17.4,bank 179) t50=35.4(dAz -34.0,dEl -27.7,bank -5) t55=1.7(dAz -1.9,dEl -0.8,bank 27) t60=30.1(dAz -5.5,dEl 29.6,bank 16)
+  TAS 91.6..178.4 | alpha 10.2..17.5 | |beta| 0.45 | bank -180..179 | Nz 0.61..3.07 | path el -69.9..7.2 | |omega| max 25.9 deg/s | dh -1907 m
+  steps 3000, loads 3000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+DIVE60_HOLD_60S []
+  err start 60.0 | t5=50.5(dAz 13.8,dEl 49.5,bank 85) t10=17.8(dAz 31.2,dEl 8.1,bank -149) t15=14.0(dAz -22.7,dEl 7.9,bank 5) t20=29.8(dAz 17.3,dEl 27.8,bank 26) t25=48.3(dAz -2.5,dEl 48.3,bank -79) t30=18.2(dAz -34.0,dEl 6.8,bank 159) t35=21.3(dAz 28.9,dEl 14.3,bank -17) t40=38.0(dAz -21.6,dEl 35.3,bank -25) t45=57.2(dAz 2.2,dEl 57.2,bank 91) t50=14.8(dAz 21.9,dEl 9.5,bank -127) t55=29.4(dAz -25.8,dEl 24.9,bank 23) t60=30.0(dAz 27.4,dEl 25.0,bank 112)
+  TAS 91.6..200.7 | alpha 12.6..17.5 | |beta| 0.34 | bank -180..180 | Nz 0.77..3.88 | path el -70.2..-2.9 | |omega| max 29.1 deg/s | dh -5621 m
+  steps 3000, loads 3000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+CLIMB80_HOLD_60S []
+  err start 80.0 | t5=76.4(dAz 0.0,dEl -76.4,bank 0) t10=83.1(dAz 0.0,dEl -83.1,bank 0) t15=88.1(dAz 0.0,dEl -88.1,bank 0) t20=90.1(dAz 0.0,dEl -90.1,bank 0) t25=91.1(dAz 0.0,dEl -91.1,bank 0) t30=91.5(dAz 0.0,dEl -91.5,bank 0) t35=91.6(dAz 0.0,dEl -91.6,bank 0) t40=91.6(dAz 0.0,dEl -91.6,bank 0) t45=91.5(dAz 0.0,dEl -91.5,bank 0) t50=91.5(dAz 0.0,dEl -91.5,bank 0) t55=91.5(dAz 0.0,dEl -91.5,bank 0) t60=91.5(dAz 0.0,dEl -91.5,bank 0)
+  TAS 73.8..91.8 | alpha 17.5..25.8 | |beta| 0.00 | bank 0..0 | Nz 0.70..1.32 | path el -14.5..0.6 | |omega| max 6.9 deg/s | dh -936 m
+  steps 3000, loads 3000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True
+REVERSAL180_120S []
+  err start 174.1 | t10=129.8(dAz -135.2,dEl -18.7,bank 57) t20=65.1(dAz -63.3,dEl -24.8,bank 44) t30=8.2(dAz -6.5,dEl -5.0,bank 31) t40=7.1(dAz -2.4,dEl 6.7,bank -5) t50=6.4(dAz -4.6,dEl 4.5,bank 26) t60=3.4(dAz 2.1,dEl 2.7,bank 6) t70=2.9(dAz -0.2,dEl 2.9,bank 16) t80=2.5(dAz -0.5,dEl 2.4,bank 12) t90=2.0(dAz -0.5,dEl 1.9,bank 8) t100=1.6(dAz -0.5,dEl 1.5,bank 3) t110=1.4(dAz -0.3,dEl 1.3,bank 0) t120=1.2(dAz -0.2,dEl 1.2,bank -1)
+  TAS 88.8..120.7 | alpha 13.5..21.6 | |beta| 0.59 | bank -43..65 | Nz 0.96..1.83 | path el -29.8..4.3 | |omega| max 22.3 deg/s | dh -1067 m
+  steps 6000, loads 6000, withheld 0, aero refused 0, thrust refused 0, owner end F15PilotControlledResearch, finite True

@@ -1,0 +1,62 @@
+import csv, sys, math
+def load(p):
+    with open(p) as f: return list(csv.DictReader(f))
+d = sys.argv[1]
+def show(name, t0, t1, every, cols):
+    rows = load(d + "/probe_" + name + ".csv")
+    print("==", name, cols)
+    for r in rows:
+        t = float(r["t"])
+        if t0 <= t <= t1 and abs((t / every) - round(t / every)) < 1e-6:
+            print("  " + " ".join(f"{c}={r[c]}" for c in ["t"] + cols))
+def extrema(name, col, t0):
+    rows = load(d + "/probe_" + name + ".csv")
+    ts=[float(r["t"]) for r in rows]; v=[float(r[col]) for r in rows]
+    ex=[]
+    for i in range(1,len(v)-1):
+        if ts[i]>=t0 and ((v[i]>v[i-1] and v[i]>=v[i+1]) or (v[i]<v[i-1] and v[i]<=v[i+1])) and abs(v[i])>1:
+            ex.append((ts[i],v[i]))
+    print("==", name, col, "extrema after", t0, ":", " ".join(f"{t:.1f}:{x:.1f}" for t,x in ex[:30]))
+extrema("TURN15R_40S","bank",6)
+extrema("DESC8_LAT2L","bank",0)
+extrema("DESC12_LAT3R","bank",0)
+extrema("REVERSAL180_120S","bank",30)
+show("TURN15R_40S", 8, 16, 0.5, ["bank","cmdR","cmdY","p","r","beta","dAz","dEl","err","mode"])
+show("DESC8_LAT2L", 0, 20, 1.0, ["bank","cmdR","cmdP","dAz","dEl","desBank","tas","limiters"])
+show("DROP10_RESTORE", 2, 20, 1.0, ["alpha","beta","bank","p","q","r","tas","pathEl","signal","nz"])
+show("DIVE60_HOLD_60S", 0, 60, 2.5, ["tas","alpha","bank","pathEl","dEl","nz","cmdP","cmdR","mode"])
+import csv, sys
+d=sys.argv[1]
+def ex(name,col,t0,t1=1e9):
+    rows=list(csv.DictReader(open(d+"/probe_"+name+".csv")))
+    ts=[float(r["t"]) for r in rows]; v=[float(r[col]) for r in rows]
+    out=[(ts[i],v[i]) for i in range(1,len(v)-1) if t0<=ts[i]<=t1 and ((v[i]>v[i-1] and v[i]>=v[i+1]) or (v[i]<v[i-1] and v[i]<=v[i+1]))]
+    print(name,col,":", " ".join(f"{t:.1f}:{x:.1f}" for t,x in out[:40]))
+ex("HANDSOFF_IN_TURN_120S","bank",8)
+ex("HANDSOFF_IN_TURN_120S","pathEl",8)
+ex("MOVING_2DPS_120S","tas",0)
+ex("CLIMB80_HOLD_60S","pathEl",0)
+import csv, sys, math
+d=sys.argv[1]
+def rows(n): return list(csv.DictReader(open(d+"/probe_"+n+".csv")))
+r=rows("DIVE85_HOLD_90S")
+cross=next((x for x in r if float(x["tas"])>213.36),None)
+ref=next((x for x in r if x["aeroRefused"]=="1"),None)
+print("DIVE85 first TAS>213.36 m/s at t", cross["t"], "tas",cross["tas"],"alpha",cross["alpha"],"pathEl",cross["pathEl"],"nz",cross["nz"], "aeroRefused",cross["aeroRefused"])
+print("DIVE85 first aero refused sample t", ref["t"], "tas",ref["tas"],"alpha",ref["alpha"],"beta",ref["beta"])
+back=[x for x in r if float(x["t"])>float(ref["t"]) and x["aeroRefused"]=="0"]
+print("DIVE85 samples back in domain after first refusal:", len(back), (back[0]["t"] if back else "-"))
+for x in r:
+    t=float(x["t"])
+    if 20<=t<=34 and abs(t-round(t))<1e-6: print("  t",x["t"],"tas",x["tas"],"alpha",x["alpha"],"beta",x["beta"],"bank",x["bank"],"pathEl",x["pathEl"],"nz",x["nz"],"cmdP",x["cmdP"],"aeroRef",x["aeroRefused"],"thrRef",x["thrustRefused"],"lim",x["limiters"])
+print("DIVE85 end", r[-1]["t"], "tas", r[-1]["tas"], "pathEl", r[-1]["pathEl"], "alt", r[-1]["altM"])
+r=rows("DROP15_RESTORE")
+for x in r:
+    t=float(x["t"])
+    if (12<=t<=24 and abs(t*2-round(t*2))<1e-6): print("  DROP15 t",x["t"],"alpha",x["alpha"],"beta",x["beta"],"bank",x["bank"],"tas",x["tas"],"pathEl",x["pathEl"],"signal",x["signal"],"aeroRef",x["aeroRefused"],"nz",x["nz"])
+def ex(name,col,t0):
+    rr=rows(name); ts=[float(a["t"]) for a in rr]; v=[float(a[col]) for a in rr]
+    out=[(ts[i],v[i]) for i in range(1,len(v)-1) if ts[i]>=t0 and ((v[i]>v[i-1] and v[i]>=v[i+1]) or (v[i]<v[i-1] and v[i]<=v[i+1])) and abs(v[i])>0.5]
+    print(name,col,":", " ".join(f"{t:.1f}:{x:.1f}" for t,x in out[:30]))
+for n in ["TURN15R_40S_BASE","TURN15R_40S_K0.3","TURN15R_40S_TAU2","TURN5R_30S","DESC8_LAT2L_40S"]:
+    ex(n,"bank",4)

@@ -1,0 +1,196 @@
+// AUDIT PROBE (independent audit of PR #35, NOT part of the PR). Lives only in a throwaway checkout.
+// Flies the PR's own MouseAim F-15 rig (Assisted V2) from the validated trim with scripted targets and events,
+// and logs per-0.1 s CSV + a summary. Reads state only; never writes the aircraft.
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Text;
+using UnityEngine;
+using MaverickFresh.FlightDynamics.F15;
+using Object = UnityEngine.Object;
+
+namespace MaverickFresh.FlightDynamics.Validation
+{
+    [DefaultExecutionOrder(-600)]
+    public sealed class MavAuditProbeRunner : MonoBehaviour
+    {
+        public static bool Finished;
+        public static string Summary = "";
+        public static string OutDir = "";
+
+        const float Dt = 0.02f;
+
+        sealed class Ev { public float t; public string what; }
+
+        sealed class Scn
+        {
+            public string id; public float seconds; public float az, el; public float movingDegSec; public float movingStart = 2f;
+            public List<Ev> events = new List<Ev>();
+            public Scn At(float t, string what) { events.Add(new Ev { t = t, what = what }); return this; }
+        }
+
+        readonly List<Scn> scns = new List<Scn>();
+        int idx, phase, step;
+        MavF15PilotControlledRig rig;
+        MavMouseAimPilotCommandSource src;
+        float az0, el0;
+        StringBuilder csv;
+        readonly StringBuilder sum = new StringBuilder();
+        // per-run stats
+        float tasMin, tasMax, aMin, aMax, bAbsMax, bankMin, bankMax, nzMin, nzMax, elMin, elMax, alt0, e0, rateMax;
+        int aeroRef, thrRef, withheld0, loads0, firstAeroRef, steps0;
+        float errAtT(List<float> e, float t) { int i = Mathf.Clamp(Mathf.RoundToInt(t / Dt) - 1, 0, e.Count - 1); return e.Count > 0 ? e[i] : float.NaN; }
+        List<float> errs = new List<float>(), dAzs = new List<float>(), dEls = new List<float>(), banks = new List<float>();
+        string evLog;
+
+        void Awake()
+        {
+            Finished = false;
+            Time.captureFramerate = 50;
+            Time.fixedDeltaTime = Dt;
+            S("DROP15_RESTORE", 40f, 25f, 0f).At(3f, "drop").At(18f, "restore");
+            S("DIVE85_HOLD_90S", 90f, 0f, -85f);
+            S("DESC8_LAT0p5L", 20f, -0.5f, -8f);
+            S("DESC8_LAT2L_40S", 40f, -2f, -8f);
+            S("TURN15R_40S_BASE", 40f, 15f, 0f);
+            S("TURN15R_40S_NOYAW", 40f, 15f, 0f).At(0.02f, "noyaw");
+            S("TURN15R_40S_K0.3", 40f, 15f, 0f).At(0.02f, "k03");
+            S("TURN15R_40S_TAU2", 40f, 15f, 0f).At(0.02f, "tau2");
+            S("TURN5R_30S", 30f, 5f, 0f);
+            S("TURN5UP_30S", 30f, 0f, 5f);
+        }
+
+        Scn S(string id, float sec, float az, float el) { Scn s = new Scn { id = id, seconds = sec, az = az, el = el }; scns.Add(s); return s; }
+
+        void FixedUpdate()
+        {
+            if (Finished) return;
+            if (idx >= scns.Count) { Finished = true; Summary = sum.ToString(); return; }
+            Scn s = scns[idx];
+            try
+            {
+                if (phase == 0)
+                {
+                    Time.fixedDeltaTime = Dt;
+                    rig = MavF15PilotControlledRig.Create("audit-" + s.id, MavF15PilotCommandSourceKind.MouseAim, false, MavF15PilotControlMode.AssistedV2);
+                    src = (MavMouseAimPilotCommandSource)rig.commandSource;
+                    src.readDeviceInput = false;
+                    src.requireAimCamera = false;
+                    phase = 1; return;
+                }
+                if (phase == 1)
+                {
+                    if (!rig.StartFromTrim()) { sum.AppendLine(s.id + ": START REFUSED " + rig.debugStartStatus); End(s); return; }
+                    MavMouseAimAngles a; MavMouseAimInput.TryAnglesFromDirection(rig.body3d.linearVelocity, 89.9f, out a);
+                    az0 = a.azimuthDeg; el0 = a.elevationDeg;
+                    src.SetScriptedTargetDirection(Target(s, 0f));
+                    step = 0; csv = new StringBuilder();
+                    csv.AppendLine("t,tas,alpha,beta,bank,pathEl,dAz,dEl,err,nz,p,q,r,cmdP,cmdR,cmdY,signal,loads,withheld,aeroRefused,thrustRefused,owner,mode,desBank,limiters,altM");
+                    tasMin = aMin = nzMin = elMin = bankMin = float.MaxValue; tasMax = aMax = nzMax = elMax = bankMax = float.MinValue; bAbsMax = 0; rateMax = 0;
+                    aeroRef = thrRef = 0; firstAeroRef = -1; withheld0 = rig.body.debugRejectedNotLiveReadyApplications; loads0 = rig.body.debugLoadApplications;
+                    alt0 = rig.body3d.position.y; errs.Clear(); dAzs.Clear(); dEls.Clear(); banks.Clear(); evLog = "";
+                    phase = 2; return;
+                }
+                Tick(s);
+            }
+            catch (Exception e) { sum.AppendLine(s.id + ": EXCEPTION " + e); End(s); }
+        }
+
+        Vector3 Target(Scn s, float t)
+        {
+            float az = az0 + s.az + (s.movingDegSec != 0f ? s.movingDegSec * Mathf.Max(0f, t - s.movingStart) : 0f);
+            return MavMouseAimInput.DirectionFromAngles(az, el0 + s.el);
+        }
+
+        void Tick(Scn s)
+        {
+            step++;
+            float t = step * Dt;
+            MavSixDoFBody body = rig.body;
+            Rigidbody rb = rig.body3d;
+            MavFlightState st = body.debugState;
+            Vector3 v = rb.linearVelocity;
+            Vector3 tgt = Target(s, t);
+            if (s.movingDegSec != 0f) src.SetScriptedTargetDirection(tgt);
+
+            foreach (Ev e in s.events)
+            {
+                if (Mathf.RoundToInt(e.t / Dt) != step) continue;
+                evLog += " " + e.what + "@" + e.t.ToString("F1");
+                if (e.what == "drop") { src.inputLossPolicy = MavMouseAimInputLossPolicy.DropCommandSignal; src.requireAimCamera = true; }
+                else if (e.what == "restore") { src.requireAimCamera = false; }
+                else if (e.what == "handsoff") src.SetHandsOff(true);
+                else if (e.what == "loss") src.requireAimCamera = true;
+                else if (e.what == "noyaw") src.guidance.fineAimYawPerDeg = 0f;
+                else if (e.what == "k03") src.guidance.flightPathRateGainPerSec = 0.3f;
+                else if (e.what == "tau2") src.guidance.bankTimeConstantSeconds = 2f;
+            }
+
+            MavMouseAimAngles va; MavMouseAimInput.TryAnglesFromDirection(v, 89.9f, out va);
+            MavMouseAimAngles ta; MavMouseAimInput.TryAnglesFromDirection(tgt, 89.9f, out ta);
+            float dAz = Mathf.DeltaAngle(ta.azimuthDeg, va.azimuthDeg);
+            float dEl = va.elevationDeg - ta.elevationDeg;
+            float err = v.sqrMagnitude > 1f ? Vector3.Angle(v, tgt) : 0f;
+            float bank = st.attitude.valid ? st.attitude.BankAngleDeg : 0f;
+            MavF15PilotControlledAeroModel aero = body.aerodynamicModel as MavF15PilotControlledAeroModel;
+            bool ar = aero != null && aero.debugRefused;
+            bool tr = rig.thrust != null && rig.thrust.debugRefused;
+            if (ar) { aeroRef++; if (firstAeroRef < 0) firstAeroRef = step; }
+            if (tr) thrRef++;
+            float tas = v.magnitude;
+            tasMin = Mathf.Min(tasMin, tas); tasMax = Mathf.Max(tasMax, tas);
+            aMin = Mathf.Min(aMin, st.AlphaDeg); aMax = Mathf.Max(aMax, st.AlphaDeg); bAbsMax = Mathf.Max(bAbsMax, Mathf.Abs(st.BetaDeg));
+            bankMin = Mathf.Min(bankMin, bank); bankMax = Mathf.Max(bankMax, bank);
+            if (st.specificForceValid) { nzMin = Mathf.Min(nzMin, st.LoadFactorNz); nzMax = Mathf.Max(nzMax, st.LoadFactorNz); }
+            elMin = Mathf.Min(elMin, va.elevationDeg); elMax = Mathf.Max(elMax, va.elevationDeg);
+            rateMax = Mathf.Max(rateMax, rb.angularVelocity.magnitude * Mathf.Rad2Deg);
+            errs.Add(err); dAzs.Add(dAz); dEls.Add(dEl); banks.Add(bank);
+            if (step % 5 == 0)
+            {
+                Vector3 pqr = st.aeroBodyRatesRadSec * Mathf.Rad2Deg;
+                MavPilotCommand c = src.debugCommand;
+                MavMouseAimGuidanceOutput g = src.debugGuidance;
+                csv.AppendLine(string.Join(",", new[] {
+                    F(t), F(tas), F(st.AlphaDeg), F(st.BetaDeg), F(bank), F(va.elevationDeg), F(dAz), F(dEl), F(err),
+                    st.specificForceValid ? F(st.LoadFactorNz) : "nan", F(pqr.x), F(pqr.y), F(pqr.z), F(c.pitch), F(c.roll), F(c.yaw),
+                    src.HasCommandSignal ? "1" : "0", (body.debugLoadApplications - loads0).ToString(), (body.debugRejectedNotLiveReadyApplications - withheld0).ToString(),
+                    ar ? "1" : "0", tr ? "1" : "0", rig.ownership != null ? rig.ownership.owner.ToString() : "-", g.mode.ToString(), F(g.desiredBankDeg),
+                    ((int)g.limiters).ToString(), F(rb.position.y) }));
+            }
+            if (step == 1) e0 = err;
+            if (step >= Mathf.RoundToInt(s.seconds / Dt)) End(s);
+        }
+
+        static string F(float x) { return x.ToString("0.###", CultureInfo.InvariantCulture); }
+
+        void End(Scn s)
+        {
+            if (rig != null && csv != null)
+            {
+                int n = errs.Count;
+                StringBuilder q = new StringBuilder();
+                for (int k = 1; k <= 12; k++)
+                {
+                    float tt = s.seconds * k / 12f;
+                    q.Append(" t" + tt.ToString("F0") + "=" + errAtT(errs, tt).ToString("F1") + "(dAz " + errAtT(dAzs, tt).ToString("F1") + ",dEl " + errAtT(dEls, tt).ToString("F1") + ",bank " + errAtT(banks, tt).ToString("F0") + ")");
+                }
+                sum.AppendLine(s.id + " [" + evLog.Trim() + "]");
+                sum.AppendLine("  err start " + e0.ToString("F1") + " |" + q);
+                sum.AppendLine("  TAS " + tasMin.ToString("F1") + ".." + tasMax.ToString("F1") + " | alpha " + aMin.ToString("F1") + ".." + aMax.ToString("F1")
+                    + " | |beta| " + bAbsMax.ToString("F2") + " | bank " + bankMin.ToString("F0") + ".." + bankMax.ToString("F0") + " | Nz " + nzMin.ToString("F2") + ".." + nzMax.ToString("F2")
+                    + " | path el " + elMin.ToString("F1") + ".." + elMax.ToString("F1") + " | |omega| max " + rateMax.ToString("F1") + " deg/s | dh " + (rig.body3d.position.y - alt0).ToString("F0") + " m");
+                sum.AppendLine("  steps " + n + ", loads " + (rig.body.debugLoadApplications - loads0) + ", withheld " + (rig.body.debugRejectedNotLiveReadyApplications - withheld0)
+                    + ", aero refused " + aeroRef + (firstAeroRef > 0 ? " (first at t " + (firstAeroRef * Dt).ToString("F2") + " s: " + (rig.aero != null ? rig.aero.debugStatus : "") + ")" : "")
+                    + ", thrust refused " + thrRef + ", owner end " + (rig.ownership != null ? rig.ownership.owner.ToString() : "-") + ", finite " + MavMouseAimGuidance.IsFinite(rig.body3d.linearVelocity));
+                try { if (!string.IsNullOrEmpty(OutDir)) File.WriteAllText(Path.Combine(OutDir, "probe_" + s.id + ".csv"), csv.ToString()); } catch (Exception e) { sum.AppendLine("  csv write failed " + e.Message); }
+            }
+            if (rig != null)
+            {
+                if (rig.ownership != null && rig.ownership.owner != MavFlightPhysicsOwner.Fault) rig.ownership.ReturnToLegacy("audit probe run complete");
+                Object.DestroyImmediate(rig.gameObject);
+            }
+            rig = null; src = null; csv = null; idx++; phase = 0;
+        }
+    }
+}

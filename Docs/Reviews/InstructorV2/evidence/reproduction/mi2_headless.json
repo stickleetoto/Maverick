@@ -1,0 +1,9 @@
+{
+    "schema_version": 1,
+    "suite": "mi2",
+    "status": "PASS",
+    "passed": 61,
+    "failed": 0,
+    "detail": "invoked MaverickFresh.FlightDynamics.Validation.MavMouseAimInstructorV2Validation.RunAll; validator-reported counts are authoritative",
+    "unity_version": "6000.3.16f1"
+}
