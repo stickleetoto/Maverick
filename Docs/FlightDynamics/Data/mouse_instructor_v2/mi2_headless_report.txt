@@ -1,0 +1,94 @@
+REALISTIC MOUSE INSTRUCTOR V2 - headless validation
+Maverick realistic mouse instructor v2 (aim guidance -> normalized pilot intent; MAVERICK_TUNED_NON_AUTHORITATIVE) - NOT War Thunder's instructor, NOT an F-15 / F-16 production FCS
+Production guidance + input + source + opt-in F-15 rig wiring. Nothing is flown here.
+
+[MI1] Identity and provenance
+  PASS  label "Maverick realistic mouse instructor v2 (aim guidance -> normalized pilot intent; MAVERICK_TUNED_NON_AUTHORITATIVE) - NOT War Thunder's instructor, NOT an F-15 / F-16 production FCS"
+  PASS  every float of the guidance config (32) is listed with value, unit, reason and protected limit; self-consistent
+  PASS  first-slice semantics: the aim is a desired FLIGHT PATH; default stick scale equals the unchanged V2 law's full-stick rates (7 / 15 deg/s)
+  PASS  execution order -350: after the ownership authority (-400), before the control law (-300), actuator (-200), body (-100)
+
+[MI2] Axes and signs at canonical headings (level flight path, wings level, alpha 17.5 deg, 91.7 m/s)
+  PASS  aim along the flight path -> zero pitch / roll / yaw, OnTarget, at headings 0/90/180/270/37
+  PASS  target right -> roll right (+) and fine-aim pedal right (+); left -> roll left (-), pedal left (-)
+  PASS  target above the flight path -> pitch up (+); below -> push (-); no roll for a purely vertical error. 4 deg right p 0.000 r 1.426 y 0.039; 4 deg up p 0.343 r 0.000 y 0.000; 4 deg down p -0.343 r 0.000 y 0.000
+  PASS  left/right exact mirror (roll and yaw negate, pitch equal) and invariant under heading
+  PASS  semantics are never conflated: aiming at the NOSE under flight-path semantics is a 17.50 deg climb request (pitch 1.00); under nose semantics it is on target, and the level flight path is a push (-1.00)
+
+[MI3] Rolled and inverted aircraft (level flight path)
+  PASS  banked with the target ahead -> roll back to wings level: bank +90 roll -6.00, +60 -4.00, -60 4.00 (bank telemetry +60 / -60 deg exact)
+  PASS  inverted, target ahead -> full roll toward upright (raw 12.00), no pitch
+  PASS  inverted, target 3 deg above (world) -> PUSH (aircraft lift points down): raw pitch -0.257, settled -0.257 (push capped at -0.6)
+
+[MI4] Near-vertical targets and flight path
+  PASS  zenith from level -> full pull (1.000), no roll, flight-path rate capped at the law's full-stick rate (7.00 deg/s)
+  PASS  zenith while banked 90 right -> roll left toward the lift-up attitude first, no pull while the lift is sideways (pitch 0.000)
+  PASS  nadir from level -> roll to inverted (bank error 180.0) and pull rather than push: settled push -0.600 limited to -0.6
+  PASS  flight path vertical (89.5 deg), target on the horizon ahead / to the side -> finite, bounded commands (push toward the belly-side horizon -0.89; side target roll 5.96)
+
+[MI5] Target behind (180 deg)
+  PASS  exactly behind: Reversal mode; wings level -> deterministic right turn (roll 3.25), banked left -> keeps turning left (-2.69); no pedal
+  PASS  a target that swung LEFT to behind keeps the left turn through the reversal band (roll -3.25)
+  PASS  dithering +-0.05 deg about 180 deg for 100 steps: 0 roll-sign flips (no thrash)
+
+[MI6] Invalid inputs fail closed (no non-finite command; neutral when invalid)
+  PASS  9 invalid inputs refused with a reason and an exactly neutral command; the next valid step is finite: zero target: aim target direction is negligible (zero vector); NaN target: aim target direction is not finite; +Inf target: aim target direction is not finite; NaN flight path: aircraft flight-path vector is not finite; NaN attitude: aircraft attitude is not a finite basis; zero attitude: aircraft attitude is not a finite basis; dt 0: dt is not a positive finite step; dt NaN: dt is not a positive finite step; NaN gravity: world up / gravity is not finite
+  PASS  1 m/s: the flight path is not a usable direction -> nose reference, FLAGGED (FlightPathRateCapped, LowSpeedPullCap, NoseReferenceFallback)
+
+[MI7] Bounds and continuity (deterministic sweep, 4000 steps)
+  PASS  random poses (any heading, |gamma| <= 80, any bank, alpha -8..32, 0.5..250 m/s), random and behind targets: every command finite, pitch in [-0.6, 1], |roll| <= 1, |yaw| <= 0.15
+  PASS  even with the scenario jumping every step, no channel moves more than commandRate x dt = 0.080 per step (worst 0.0800)
+  PASS  180-deg mouse reversal: the roll command ramps (worst step 0.080, reaches 0.99 after 0.5 s); the guidance output has no pose, velocity or rate field - only bounded intent
+
+[MI8] Banked turn, not flat yaw (aircraft body axes)
+  PASS  horizontal targets right: the instructor banks (full roll, desired bank > 20 deg) and asks NO pedal beyond 5 deg: 10 deg: roll 1.00 yaw 0.00 desired bank 44; 30 deg: roll 1.00 yaw 0.00 desired bank 49; 60 deg: roll 1.00 yaw 0.00 desired bank 49; 90 deg: roll 1.00 yaw 0.00 desired bank 49; 135 deg: roll 1.00 yaw 0.00 desired bank 49
+  PASS  1 deg right: fine-aim pedal 0.050 (<= 0.15) alongside the bank 0.37
+
+[MI9] Gravity compensation: a level turn emerges
+  PASS  wings level, 8 deg right: desired bank 38.07 deg = atan(V w / g) = 38.07
+  PASS  at that bank: bank error 0.000 deg, pitch 0.4228 = w sin(bank) / q_full = 0.4228 (the level-turn body pitch rate)
+  PASS  without gravity compensation the same error asks a knife-edge 90.0 deg bank - the compensation is what keeps small errors small
+  PASS  112 m/s, 12 deg nose-down correction: no roll (0.0000), push -1.00 (inverted roll deferred); 75 deg below: roll to inverted (bank error 180) and pull
+
+[MI10] Envelope soft caps (command ceilings, labelled with the model limit they protect)
+  PASS  30 deg climb request: 90 m/s pull 1.00, 77 m/s 0.45 (cap), 70 m/s -0.10 (nose-down ceiling) - protects the research TAS floor 66.60 m/s
+  PASS  alpha 27 deg: pull faded to 0.16 (protects the exercised alpha region); alpha 1 deg: push faded to -0.09 (protects the -4 deg transcribed floor)
+  PASS  caps are explicit: disabled, none is reported (and none acts)
+
+[MI11] Mouse aim input (the production component, fed scripted frames)
+  PASS  delta-accumulated world aim: one (10, 5) unit frame == ten (1, 0.5) frames -> az 12.000 el 6.000 (mouse right = aim right, mouse up = aim up; 1.2 deg/unit)
+  PASS  free look: a (30, -12) frame with the key held turns the VIEW only; the aim target is bit-identical; released -> view back on the aim
+  PASS  non-finite mouse samples and non-finite / zero scripted targets are rejected and counted; the aim is unchanged
+  PASS  mouse elevation clamps at +-85 deg (the yaw axis never degenerates; zenith targets come from scripted aims)
+  PASS  a frame with the device unavailable moves nothing and is reported as input loss
+  PASS  same mouse trace at 50 / 30 / 60 / 144 / jittered fps vs fixed 0.02 s: every physics-step snapshot lags the continuous trace by at most one render frame of motion (worst 0.983 deg, bound <= 0.985); the aim after the trace is identical at every fps (worst 3.8E-005 deg). Unavoidable difference: a snapshot sees input up to the last rendered frame
+
+[MI12] Source readiness and fail-closed policies
+  PASS  no aircraft bound: declared operational but NO signal, TryGetCommand false + neutral: "NO COMMAND SIGNAL: no aircraft Rigidbody bound"
+  PASS  valid guidance: signal true, steering (p 0.000 r 0.982 y 0.000); TryGetCommand has no side effects (two reads identical)
+  PASS  camera required and missing, NeutralStickHoldThrottle (default): ramps to neutral stick, throttle held, still a deliberate command (p 0.000 r 0.000 y 0.000)
+  PASS  HoldAimTarget (opt-in): keeps steering toward the frozen aim (p 0.000 r 0.982 y 0.000)
+  PASS  DropCommandSignal: no signal at all (the law then applies the declared NeutralCommand policy and readiness withholds loads - see [MI13])
+  PASS  a disabled source reports no signal
+  PASS  hands off: the command ramps to neutral (p 0.000 r 0.000 y 0.000) and the aim follows the flight path
+
+[MI13] Opt-in F-15 rig (F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1, Assisted V2)
+  PASS  MouseAim = 2 is additive; Keyboard = 0 stays every rig's default, Scripted = 1 unchanged
+  PASS  opt-in OFF: keyboard and scripted rigs carry no mouse-instructor component; their sources are unchanged
+  PASS  MouseAim rig: one source wired to body AND law (identity), exactly one law (V2) enabled and bound, the source scaled by the V2 law's own gains (read, unchanged)
+  PASS  the existing pilot-controlled grant accepts the rig unchanged (it constrains law, actuator, aero, thrust - not the input device): pilot-controlled ownership granted: F15_AFIT_BAUMANN_DAVISON_PILOT_CONTROLLED_V1, research physics + Maverick control approximation, source environment
+  PASS  trim start, untouched mouse: the aim anchors on the flight path (error 2.1E-007 deg) and V2 requests the trim bias (stab -15.1453 vs -15.1453, ail/rud ~0); one load per step, law fed by the source
+  PASS  target 30 deg right: intent p -0.014 r 0.995 y 0.000 -> V2 request ail 18.23 rud -10.42 -> actual ail 18.23 (roll-right sign); 35 / 35 loads, no duplicate; the source wrote no pose, velocity or position
+  PASS  signal dropped (camera lost, DropCommandSignal): the law flies its declared NeutralCommand policy - NOT the inspector bench command (0.9 / -0.9 / 0.9) - and live-readiness withholds all 5 loads (fail closed, counted)
+  PASS  signal restored: loads resume, one per step
+  PASS  a second enabled law is still refused by the unchanged grant: both pilot-control laws (V1 and V2) are enabled; exactly one may request surfaces
+  PASS  under Direct V1 (not a rate-command law) the source flies neutral stick only, flagged: "NEUTRAL STICK: bound law is not a rate-command law (Maverick F-15 pilot-control approximation V1 (direct gearing about the validated trim; MAVERICK_TUNED_NON_AUTHORITATIVE) - NOT F-15 CAS / FLCS, NOT NASA 836)"
+  PASS  F2 law switch: refused while the instructor deflects the stick ("law switch refused: centre the stick and pedals first (|pitch|, |roll|, |yaw| <= 0.05)"); accepted in hands-off, and the source is re-declared for V1 (neutral only)
+
+[MI14] Source scan of the new layer (4 files)
+  PASS  no force / torque / velocity / pose write in any new file (the camera moves only itself, through SetPositionAndRotation)
+  PASS  no new file arms a body or enters an owner
+  PASS  the Core layer names no aircraft type, and no physics-side code reads render delta time
+  PASS  the guidance is a pure function (no MonoBehaviour / Rigidbody / Transform / Time); the repository-wide ownership scan is clean (188 files)
+
+RESULT: PASS  passed=61 failed=0

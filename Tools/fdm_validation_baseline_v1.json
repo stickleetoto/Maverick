@@ -31,7 +31,7 @@
   "expected_python_surface_count": 3,
   "enumeration_scope": "AUTHORITY_AND_HEAD",
   "enumeration_note": "The runner enumerates the declared roots at the authority commit AND at the checkout HEAD. The authority enumeration is a subset check - everything frozen there must still be listed - while the HEAD enumeration is exact, so a C# surface added to an authority root after the authority commit is a hard failure until it is listed here. Post-authority additions cannot be invisible.",
-  "expected_head_cs_surface_count": 76
+  "expected_head_cs_surface_count": 80
  },
  "implementation_paths": [
   "Tools/run_fdm_validation.ps1",
@@ -995,6 +995,50 @@
    "role": "F-15 pilot-control V2 Play Mode flight-test runner",
    "counted": false,
    "reason": "runner component consumed by the F-15 pilot-control V2 Play Mode flight-test driver (MavF15PilotControlledV2FlightValidation); not an independent suite; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "mouse_instructor_v2_flight_validation",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavMouseAimInstructorV2FlightValidation.cs",
+   "git_blob": "68bae6c2202af185414ff8054d9f3a28bb7a2e0a",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "Realistic mouse instructor v2 Play Mode flight-test driver (and headless menu)",
+   "counted": false,
+   "reason": "Realistic mouse instructor v2 (opt-in mouse-aim guidance over the unchanged F-15 pilot-control V2 law) Play Mode flight-test driver, run through its own RunBatch per Docs/FlightDynamics/REALISTIC_MOUSE_INSTRUCTOR_V2_REPORT.md; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "mouse_instructor_v2_setup",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavMouseAimInstructorV2Setup.cs",
+   "git_blob": "7e4731b1c150d5beaeab4470b657f12e7ba702d4",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "Realistic mouse instructor v2 playtest-rig placement (editor tooling, writes no asset)",
+   "counted": false,
+   "reason": "editor menu that places the experimental mouse instructor v2 playtest rig in the open scene (no prefab or scene asset written); editor tooling, not a suite; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "mouse_instructor_v2_validation",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavMouseAimInstructorV2Validation.cs",
+   "git_blob": "98bcbada023ea922cec16fd91d26f42563fec35e",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "Realistic mouse instructor v2 headless validation suite",
+   "counted": false,
+   "reason": "Realistic mouse instructor v2 headless suite (production guidance geometry, signs, bounds, input timing, fail-closed source policies, opt-in F-15 rig wiring, source scan), run with the F-15 pilot suites per Docs/FlightDynamics/REALISTIC_MOUSE_INSTRUCTOR_V2_REPORT.md; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "mouse_instructor_v2_flight_validation_runner",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavMouseAimInstructorV2FlightValidationRunner.cs",
+   "git_blob": "cede315953bca63c9e5358312a62b5384aba95af",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "Realistic mouse instructor v2 Play Mode flight-test runner",
+   "counted": false,
+   "reason": "runner component consumed by the mouse instructor v2 Play Mode flight-test driver (MavMouseAimInstructorV2FlightValidation); not an independent suite; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
    "execution_mode": "EXCLUDED"
   }
  ],

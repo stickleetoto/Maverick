@@ -185,3 +185,23 @@ It also changes one listed file, the editor prefab builder `MavF15PilotControlle
 | 77 | `f15_pilot_control_v2_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotControlledV2FlightValidation.cs` — F-15 pilot-control V2 Play Mode flight-test driver |
 | 78 | `f15_pilot_control_v2_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlV2Validation.cs` — F-15 pilot-control V2 headless validation suite |
 | 79 | `f15_pilot_control_v2_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlledV2FlightValidationRunner.cs` — F-15 pilot-control V2 Play Mode flight-test runner |
+
+## Realistic mouse instructor v2 (EXPERIMENTAL), 2026-11-17
+
+The opt-in realistic mouse instructor v2 adds **4 C# files** under the declared roots:
+- the headless suite `MavMouseAimInstructorV2Validation`;
+- the Play Mode flight-test runner and its driver;
+- an editor menu that places the playtest rig in the open scene. It writes no asset.
+
+`expected_head_cs_surface_count` goes from 76 to 80. Same convention as above:
+- `EXCLUDED_WITH_REASON`, not counted, `pinned_at: HEAD` with the file's blob;
+- the procedure is in `Docs/FlightDynamics/REALISTIC_MOUSE_INSTRUCTOR_V2_REPORT.md`.
+
+The counted set, the totals, the authority commit and every other entry are unchanged. The four runtime files the instructor adds (`Core/MavMouseAim*.cs`) are outside the declared authority roots.
+
+| # | ID | Classification | Counted | Source cardinality | Path / role |
+|---:|---|---|:---:|---:|---|
+| 80 | `mouse_instructor_v2_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavMouseAimInstructorV2FlightValidation.cs` — mouse instructor v2 Play Mode flight-test driver (and headless menu) |
+| 81 | `mouse_instructor_v2_setup` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavMouseAimInstructorV2Setup.cs` — playtest-rig placement (editor tooling, writes no asset) |
+| 82 | `mouse_instructor_v2_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavMouseAimInstructorV2Validation.cs` — mouse instructor v2 headless validation suite |
+| 83 | `mouse_instructor_v2_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavMouseAimInstructorV2FlightValidationRunner.cs` — mouse instructor v2 Play Mode flight-test runner |
