@@ -185,3 +185,18 @@ It also changes one listed file, the editor prefab builder `MavF15PilotControlle
 | 77 | `f15_pilot_control_v2_flight_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Editor/MavF15PilotControlledV2FlightValidation.cs` — F-15 pilot-control V2 Play Mode flight-test driver |
 | 78 | `f15_pilot_control_v2_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlV2Validation.cs` — F-15 pilot-control V2 headless validation suite |
 | 79 | `f15_pilot_control_v2_flight_validation_runner` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavF15PilotControlledV2FlightValidationRunner.cs` — F-15 pilot-control V2 Play Mode flight-test runner |
+
+## Post-authority additions: NASA 6-DoF validation R1
+
+NASA independent 6-DoF validation R1 adds **6 C# files** under `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/`: two suites (NASA NESC check cases 2/3 through `MavSixDoFBody` + PhysX; NASA F-16 static aerodynamics and case 11 trim) and four supporting files (generated reference data, an independent rigid-body reference, a validation-only brick aero model, an independent DAVE-ML evaluator). The F-16 suite needs NASA's `F16_package` files from an external, hash-verified path that is not committed.
+
+`expected_head_cs_surface_count` goes from 76 to 82. Same convention as above: `EXCLUDED_WITH_REASON`, not counted, `pinned_at: HEAD` with the file's blob; the procedure and results are in `Docs/Validation/NASA/`. The counted set, the totals, the authority commit and every other entry are unchanged.
+
+| # | ID | Classification | Counted | Source cardinality | Path / role |
+|---:|---|---|:---:|---:|---|
+| 80 | `nasa_brick_reference_data` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaBrickReferenceData.cs` — generated NASA check-case 2/3 reference data |
+| 81 | `nasa_rigid_body_reference` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaRigidBodyReference.cs` — independent RK4 rigid-body reference |
+| 82 | `nasa_brick_aero_model` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaBrickAeroModel.cs` — validation-only brick aero model |
+| 83 | `nasa_brick_checkcase_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaBrickCheckCaseValidation.cs` — NASA check cases 2 and 3 suite |
+| 84 | `dave_ml_evaluator` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavDaveMlEvaluator.cs` — independent DAVE-ML evaluator |
+| 85 | `nasa_f16_static_aero_validation` | `EXCLUDED_WITH_REASON` | no | — | `Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaF16StaticAeroValidation.cs` — NASA F-16 static aero / case 11 trim suite |
