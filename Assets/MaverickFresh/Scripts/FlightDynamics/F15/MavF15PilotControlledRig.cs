@@ -9,7 +9,14 @@ namespace MaverickFresh.FlightDynamics.F15
         Keyboard = 0,
 
         /// <summary>A scripted source (<see cref="MavManualPilotCommandSource"/>), declared operational - tests.</summary>
-        Scripted = 1
+        Scripted = 1,
+
+        /// <summary>
+        /// EXPERIMENTAL, opt-in: the realistic mouse instructor v2 (<see cref="MavMouseAimPilotCommandSource"/>). Mouse aim ->
+        /// guidance -> normalized intent for the bound pilot-control law. Designed for the Assisted V2 rate-command law;
+        /// under Direct V1 the source commands neutral stick only. Nothing selects it by default.
+        /// </summary>
+        MouseAim = 2
     }
 
     /// <summary>
@@ -212,6 +219,24 @@ namespace MaverickFresh.FlightDynamics.F15
             if (lawV2 != null)
                 lawV2.enabled = controlMode == MavF15PilotControlMode.AssistedV2;
             body.controlLaw = ActiveLaw;
+            DeclareLawToMouseAimSource();
+        }
+
+        /// <summary>
+        /// The mouse-aim source scales its intent for a RATE-command law; it is told which law is bound and, for V2, the law's
+        /// own full-stick rates (read, never changed). Under V1 it is told to command neutral stick only. No other source is touched.
+        /// </summary>
+        private void DeclareLawToMouseAimSource()
+        {
+            MavMouseAimPilotCommandSource mouse = commandSource as MavMouseAimPilotCommandSource;
+            if (mouse == null)
+                return;
+
+            if (controlMode == MavF15PilotControlMode.AssistedV2 && lawV2 != null)
+                mouse.ConfigureForRateCommandLaw(
+                    lawV2.gains.commandedPitchRateAtFullStickDegSec, lawV2.gains.commandedRollRateAtFullStickDegSec, lawV2.ControlLawName);
+            else
+                mouse.ConfigureForNonRateCommandLaw(law != null ? law.ControlLawName : "none");
         }
 
         /// <summary>
@@ -246,6 +271,11 @@ namespace MaverickFresh.FlightDynamics.F15
             actuator.SnapToBoundedCommand();
             if (lawV2 != null)
                 lawV2.ResetLawState();
+
+            // A mouse-aim source re-anchors its aim on the new flight path and forgets its guidance state.
+            MavMouseAimPilotCommandSource mouseSource = commandSource as MavMouseAimPilotCommandSource;
+            if (mouseSource != null)
+                mouseSource.ResetGuidanceAndAim();
 
             ownership = GetComponent<MavFlightPhysicsOwnership>();
             if (ownership == null)
@@ -398,6 +428,18 @@ namespace MaverickFresh.FlightDynamics.F15
                 scripted.treatAsOperationalSource = true;
                 scripted.commandAvailable = true;
                 return scripted;
+            }
+
+            if (commandSourceKind == MavF15PilotCommandSourceKind.MouseAim)
+            {
+                // One human input path: a keyboard source already on the object (e.g. from a prefab) is disabled, not removed.
+                MavKeyboardPilotCommandSource keyboard = GetComponent<MavKeyboardPilotCommandSource>();
+                if (keyboard != null)
+                    keyboard.enabled = false;
+                MavMouseAimPilotCommandSource mouse = Get<MavMouseAimPilotCommandSource>();
+                mouse.aircraftBody = body3d;
+                mouse.sixDoFBody = GetComponent<MavSixDoFBody>();
+                return mouse;
             }
 
             return Get<MavKeyboardPilotCommandSource>();
