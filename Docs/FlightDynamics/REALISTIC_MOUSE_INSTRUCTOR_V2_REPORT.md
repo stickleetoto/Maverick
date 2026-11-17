@@ -259,7 +259,7 @@ The check lines were then compared.
 
 With the instructor off, the V1 and V2 baselines are bit-identical in Play Mode.
 
-**Official Baseline v1 gate** (`Tools/run_fdm_validation.ps1`, F-16 / shared): result recorded in the follow-up commit.
+**Official Baseline v1 gate** (`Tools/run_fdm_validation.ps1`, F-16 / shared, clean committed tree at `d1740fb`): **PASS 1585 / 0** over 25 counted suites (28 suites, all PASS), physics delta NONE, manifest head count 80. That equals the frozen 1585 / 0.
 
 
 ### 5.3 Tuning history (all MAVERICK_TUNED_NON_AUTHORITATIVE, each change driven by a recorded run)
