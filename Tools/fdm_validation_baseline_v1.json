@@ -31,7 +31,7 @@
   "expected_python_surface_count": 3,
   "enumeration_scope": "AUTHORITY_AND_HEAD",
   "enumeration_note": "The runner enumerates the declared roots at the authority commit AND at the checkout HEAD. The authority enumeration is a subset check - everything frozen there must still be listed - while the HEAD enumeration is exact, so a C# surface added to an authority root after the authority commit is a hard failure until it is listed here. Post-authority additions cannot be invisible.",
-  "expected_head_cs_surface_count": 76
+  "expected_head_cs_surface_count": 82
  },
  "implementation_paths": [
   "Tools/run_fdm_validation.ps1",
@@ -995,6 +995,72 @@
    "role": "F-15 pilot-control V2 Play Mode flight-test runner",
    "counted": false,
    "reason": "runner component consumed by the F-15 pilot-control V2 Play Mode flight-test driver (MavF15PilotControlledV2FlightValidation); not an independent suite; outside the F-16/shared Baseline v1 scope, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "nasa_brick_reference_data",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaBrickReferenceData.cs",
+   "git_blob": "37dacaee8bab0c69424a909de75a2613ebb25fb1",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "NASA NESC check cases 2/3 reference data (generated, hash-pinned sources)",
+   "counted": false,
+   "reason": "generated data file for the NASA 6-DoF R1 validation (docs: Docs/Validation/NASA/); not a suite",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "nasa_rigid_body_reference",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaRigidBodyReference.cs",
+   "git_blob": "5e26026581785120b394c3cab66e28fccde98a82",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "independent RK4 rigid-body reference for the NASA brick cases",
+   "counted": false,
+   "reason": "independent reference solution used by the NASA 6-DoF R1 suites; not a suite",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "nasa_brick_aero_model",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaBrickAeroModel.cs",
+   "git_blob": "3ca2239730d64f539facc8b7ab7505dbc5d837b2",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "validation-only aero model of the NASA brick (brick_aero.dml)",
+   "counted": false,
+   "reason": "validation-only component consumed by the NASA brick suite; not a suite",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "nasa_brick_checkcase_validation",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaBrickCheckCaseValidation.cs",
+   "git_blob": "582db287e93a4cdd244a9349201d5388e360f35b",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "NASA NESC 6-DoF check cases 2 and 3 through MavSixDoFBody + PhysX",
+   "counted": false,
+   "reason": "post-authority NASA 6-DoF R1 suite, run through MavFdmValidationBatchAdapter (Docs/Validation/NASA/NASA_6DOF_R1_PLAN.md); outside the frozen F-16/shared Baseline v1 counted set, so it is inventoried and hash-verified here but not counted, and the Baseline v1 totals are unchanged",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "dave_ml_evaluator",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavDaveMlEvaluator.cs",
+   "git_blob": "25f7f337f3fb7e7de0508ffd1096f4ff28acedd6",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "independent minimal ANSI/AIAA S-119 (DAVE-ML) evaluator",
+   "counted": false,
+   "reason": "independent evaluator used by the NASA F-16 suite; not a suite",
+   "execution_mode": "EXCLUDED"
+  },
+  {
+   "id": "nasa_f16_static_aero_validation",
+   "path": "Assets/MaverickFresh/Scripts/FlightDynamics/Validation/MavNasaF16StaticAeroValidation.cs",
+   "git_blob": "24c37578aa9db3ae082ce2dc0fbba4408504764a",
+   "pinned_at": "HEAD",
+   "classification": "EXCLUDED_WITH_REASON",
+   "role": "NASA NESC F-16 static aero and case 11 trim comparison",
+   "counted": false,
+   "reason": "post-authority NASA 6-DoF R1 suite; requires the NASA F16_package files from an external, hash-verified path (not committed) and reports NOT RUN as a failure without them; outside the frozen Baseline v1 counted set, so not counted and the totals are unchanged",
    "execution_mode": "EXCLUDED"
   }
  ],
