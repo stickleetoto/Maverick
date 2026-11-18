@@ -82,3 +82,30 @@ Unity.exe ... -fdmSuite nasa_f16 -fdmType MavNasaF16StaticAeroValidation -fdmMet
 | `F16_STATIC_AERO_REPORT.md` | B3, B4 |
 | `NUMERICAL_CONVERGENCE.md` | step-size studies, orders, invariant drift, threshold bases |
 | `VALIDATION_LIMITATIONS.md` | what was not compared and why; what the results do not mean |
+
+---
+
+## 6. Results and regression
+
+All runs used Unity `6000.3.16f1`, headless, in a separate throwaway worktree at commit `2e1b6cf` (the R1 validators), so nothing in a working checkout was touched.
+
+### 6.1 New R1 suites
+
+| Suite | Result | Note |
+|---|---|---|
+| `MavNasaBrickCheckCaseValidation` (cases 2, 3) | **83 / 0** | the first run gave 82 / 1 on an unjustified self-check gate; see `CASE2_TORQUE_FREE_REPORT.md` §6 |
+| `MavNasaF16StaticAeroValidation` (F-16 static aerodynamics, case 11 trim) | **37 / 1** | the one failure is the attributed Cn_β sign discrepancy D-F3 (Morelli polynomial vs NESC tables at α 30°). It is kept as a FAIL on purpose. It is not an implementation defect. |
+
+### 6.2 Existing regressions (all unchanged)
+
+| Suite set | Result | Known-good |
+|---|---|---|
+| Official Baseline v1 gate, `Tools/run_fdm_validation.ps1` (manifest with the six R1 surfaces, 82 HEAD `.cs` surfaces) | **PASS**: **1 585 / 0** over 25 counted suites, plus 3 Python TP-1538 checks PASS (not counted) | 1 585 / 0 |
+| 17 frozen headless F-15 suites | **757 / 0** (mass 45, geometry 51, transcription 28, control path 79, propulsion 198, contamination 32, research profile 35, research pipeline 13, FCS structure 24, validation data 16, research authority 21, source condition 26, research trim 34, turning trim 31, stability 40, time domain 30, runtime prerequisites 54) | 757 / 0 |
+| F-15 research Play Mode closeout | **39 / 0**, byte-identical to `Docs/Reference/Data/F15/runtime_closeout/f15rt_playmode_report.txt` | 39 / 0 |
+| F-15 pilot V1, headless / Play Mode | **49 / 0** / **31 / 0** | 49 / 0 / 31 / 0 |
+| F-15 pilot V2, headless / Play Mode | **54 / 0** / **57 / 0** | 54 / 0 / 57 / 0 |
+
+**Compile:** 421 sources (runtime + editor, `UNITY_EDITOR` defined), 0 errors, with Unity's own Roslyn compiler. Unity also imported and compiled the project in every batch run above.
+
+**Not part of the commit:** after a fresh import, Unity re-serialises `ProjectSettings/*.asset` to the current file format with unchanged values. Those changes were not committed.
